@@ -348,13 +348,44 @@ function exportReport(r,name,he,interp){
   const link=document.createElement("a");link.download=`oracle-${name}.png`;link.href=c.toDataURL("image/png");link.click();
 }
 
+// ═══════════════════ MASTER NUMBERS ═══════════════════
+const MASTER={
+  11:{t:"המאיר",te:"The Illuminator",he:"ערוץ רוחני עוצמתי. אינטואיציה חריפה, כריזמה רוחנית, יכולת להאיר את הדרך לאחרים. האתגר: עצבנות, רגישות יתר, חרדה.",en:"Powerful spiritual channel. Sharp intuition, spiritual charisma, ability to illuminate the path for others. Challenge: nervousness, oversensitivity, anxiety.",c:"#E0B0FF"},
+  22:{t:"בונה המאסטר",te:"The Master Builder",he:"הכוח להפוך חלומות גדולים למציאות מוחשית. חזון גלובלי עם יכולת מעשית. האתגר: לחץ עצום, ציפיות מעצמו גבוהות מדי.",en:"The power to turn grand dreams into tangible reality. Global vision with practical ability. Challenge: immense pressure, expectations too high.",c:"#FFD700"},
+  33:{t:"המרפא",te:"The Master Healer",he:"אנרגיית אהבה אוניברסלית. יכולת ריפוי עמוקה, מורה רוחני מלידה. האתגר: הקרבה עצמית קיצונית, נטל רגשי כבד.",en:"Universal love energy. Deep healing ability, born spiritual teacher. Challenge: extreme self-sacrifice, heavy emotional burden.",c:"#7FFFD4"},
+};
+
+const NUM_LIB={
+  1:{icon:"☀️",he:{k:"התחלה, עצמאות, מנהיגות",p:"אנרגיה חלוצית של פעולה ויוזמה. מספר 1 מייצג את הניצוץ הראשוני של הבריאה."},en:{k:"Beginning, Independence, Leadership",p:"Pioneering energy of action and initiative. Number 1 represents the initial spark of creation."}},
+  2:{icon:"🌙",he:{k:"שותפות, אינטואיציה, איזון",p:"אנרגיה נשית של קבלה והקשבה. מספר 2 מייצג את הדואליות וההרמוניה."},en:{k:"Partnership, Intuition, Balance",p:"Feminine energy of receptivity and listening. Number 2 represents duality and harmony."}},
+  3:{icon:"🎨",he:{k:"יצירתיות, ביטוי, שמחה",p:"אנרגיה של ביטוי עצמי ותקשורת. מספר 3 מייצג את שילוש הבריאה."},en:{k:"Creativity, Expression, Joy",p:"Energy of self-expression and communication. Number 3 represents the trinity of creation."}},
+  4:{icon:"🏛️",he:{k:"יציבות, סדר, עבודה",p:"אנרגיה של בנייה ויסודות. מספר 4 מייצג את ארבע הפינות, את המוצק והבטוח."},en:{k:"Stability, Order, Work",p:"Energy of building and foundations. Number 4 represents the four corners, the solid and secure."}},
+  5:{icon:"🌊",he:{k:"חופש, שינוי, הרפתקה",p:"אנרגיה דינמית של תנועה ושינוי. מספר 5 מייצג את חמשת החושים ואת החופש."},en:{k:"Freedom, Change, Adventure",p:"Dynamic energy of movement and change. Number 5 represents the five senses and freedom."}},
+  6:{icon:"💚",he:{k:"אהבה, אחריות, משפחה",p:"אנרגיה מטפחת של אהבה ללא תנאים. מספר 6 מייצג את הבית, המשפחה והיופי."},en:{k:"Love, Responsibility, Family",p:"Nurturing energy of unconditional love. Number 6 represents home, family and beauty."}},
+  7:{icon:"🔮",he:{k:"רוחניות, חקירה, חכמה",p:"אנרגיה פנימית של חיפוש אחר אמת. מספר 7 מייצג את המסתורין ואת העומק."},en:{k:"Spirituality, Inquiry, Wisdom",p:"Inner energy of truth-seeking. Number 7 represents mystery and depth."}},
+  8:{icon:"♾️",he:{k:"כוח, שפע, הגשמה",p:"אנרגיה של כוח ואינסוף. מספר 8 מייצג את הזרימה בין הרוחני לחומרי."},en:{k:"Power, Abundance, Manifestation",p:"Energy of power and infinity. Number 8 represents the flow between spiritual and material."}},
+  9:{icon:"🕊️",he:{k:"חמלה, סיום, חכמה עליונה",p:"אנרגיה של השלמה ואוניברסליות. מספר 9 מייצג את סוף המחזור ואת החכמה שנצברה."},en:{k:"Compassion, Completion, Higher Wisdom",p:"Energy of completion and universality. Number 9 represents the end of the cycle and accumulated wisdom."}},
+  11:{icon:"⚡",he:{k:"אינטואיציה, השראה, הארה",p:"מספר מאסטר. ערוץ רוחני שמחבר בין עולמות. רגישות גבוהה במיוחד ויכולת לראות מעבר."},en:{k:"Intuition, Inspiration, Illumination",p:"Master number. Spiritual channel connecting worlds. Exceptionally high sensitivity and ability to see beyond."}},
+  22:{icon:"🏗️",he:{k:"בנייה גדולה, חזון, הגשמה",p:"מספר מאסטר. הכוח להפוך חזון גדול למציאות. שילוב נדיר של רוחניות ומעשיות."},en:{k:"Grand Building, Vision, Manifestation",p:"Master number. Power to turn grand vision into reality. Rare combination of spirituality and practicality."}},
+  33:{icon:"💫",he:{k:"ריפוי, אהבה אוניברסלית, הוראה",p:"מספר מאסטר. אנרגיית אהבה ברמה הגבוהה ביותר. מורה ומרפא מלידה."},en:{k:"Healing, Universal Love, Teaching",p:"Master number. Love energy at the highest level. Born teacher and healer."}},
+};
+
+// Master-aware LP
+function LPm(d,m,y){const s=[...`${String(d).padStart(2,"0")}${String(m).padStart(2,"0")}${y}`].reduce((a,c)=>a+ +c,0);if(s===11||s===22||s===33)return s;let n=s;while(n>=10){n=[...String(n)].reduce((a,c)=>a+ +c,0);if(n===11||n===22||n===33)return n;}return n;}
+
+// Name generator by target number
+function genNames(target,he){
+  const hNames={1:["אורי","אילן","אדם","עדי"],2:["נועה","מיכל","דניאל","רוני"],3:["יובל","שיר","אלה","ליאור"],4:["עומר","תמר","דוד","רות"],5:["גיל","ניר","הדר","רון"],6:["אהבה","שלום","נעמי","חנה"],7:["אור","עדן","יונתן","מורן"],8:["שגב","עוז","אמיר","גבריאל"],9:["נתן","חיים","רחל","שרה"]};
+  const eNames={1:["Adam","Ava","Ian","Una"],2:["Beth","Dana","Noah","Ruth"],3:["Joy","Leo","Maya","Sky"],4:["Dean","Kate","Mark","Sara"],5:["Alex","Iris","Noel","Vera"],6:["Anna","Emma","Luke","Rosa"],7:["Alan","Gaia","Seth","Zara"],8:["Brock","Diana","Hugo","Stella"],9:["Grace","Ira","Luna","Sage"]};
+  return(he?hNames:eNames)[target]||[];
+}
+
 // ═══════════════════ TABLES WIDGET ═══════════════════
 function TablesWidget({he,dk}){
   const ac=dk?"#d4af37":"#8B6914";
   const tm=dk?"#e8e0d0":"#2a2520";
   const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
   const isRtl=he;
-
   const[firstName,setFirstName]=useState("");
   const[lastName,setLastName]=useState("");
   const[dob,setDob]=useState("");
@@ -363,49 +394,23 @@ function TablesWidget({he,dk}){
   const[error,setError]=useState("");
   const[animIn,setAnimIn]=useState(false);
   const[showExtra,setShowExtra]=useState(false);
-
   const doCalc=()=>{
-    try{
-      setError("");
-      const parts=dob.split(".");if(parts.length!==3)throw 0;
-      const[d,m,y]=parts.map(Number);
-      if(!d||!m||!y||d>31||m>12||y<1900)throw 0;
-      const fullName=(firstName+" "+lastName).trim();
-      AU.init();AU.p("reveal");
-      const r=fullCalc(d,m,y,fullName,addOne);
-      setResults(r);setShowExtra(false);setAnimIn(false);
-      setTimeout(()=>setAnimIn(true),50);
-    }catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
+    try{setError("");const parts=dob.split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const r=fullCalc(d,m,y,fullName,addOne);setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
   };
-
   const thStyle={padding:"11px 14px",fontSize:12,fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`,letterSpacing:.3};
   const tdStyle={padding:"11px 14px",fontSize:14,fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
   const tdLabel={...tdStyle,fontWeight:600,color:ts,fontSize:13,textAlign:isRtl?"right":"left"};
   const tdValue={...tdStyle,fontSize:20,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"};
-
   const cycleLabels=he?["חיפוש","מציאה","יתד","שיא"]:["Search","Discovery","Anchor","Summit"];
-
   return(<div style={{animation:"fadeInUp .5s ease-out"}}>
-    {/* Input Form */}
     <div className="gc" style={{marginBottom:20}}>
-      <div style={{textAlign:"center",marginBottom:20}}>
-        <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:4,marginBottom:6}}>{he?"פרטים למילוי":"Enter Details"}</div>
-      </div>
+      <div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:4,marginBottom:6}}>{he?"פרטים למילוי":"Enter Details"}</div></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-        <div>
-          <label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם פרטי":"First Name"}</label>
-          <input className="gi" placeholder={he?"שם פרטי...":"First name..."} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/>
-        </div>
-        <div>
-          <label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם משפחה":"Last Name"}</label>
-          <input className="gi" placeholder={he?"שם משפחה...":"Last name..."} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/>
-        </div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם פרטי":"First Name"}</label><input className="gi" placeholder={he?"שם פרטי...":"First name..."} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם משפחה":"Last Name"}</label><input className="gi" placeholder={he?"שם משפחה...":"Last name..."} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,alignItems:"end",marginBottom:14}}>
-        <div>
-          <label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
-          <input className="gi" placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doCalc();}}/>
-        </div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doCalc();}}/></div>
         <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",paddingBottom:4,height:54,paddingTop:22}} onClick={()=>setAddOne(!addOne)}>
           <div style={{width:20,height:20,borderRadius:6,border:`1.5px solid ${ac}44`,background:addOne?`${ac}1a`:dk?"rgba(8,8,18,.6)":"rgba(255,255,255,.7)",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .3s",flexShrink:0}}>{addOne&&<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 7L6 10L11 4" stroke={ac} strokeWidth="2" strokeLinecap="round"/></svg>}</div>
           <span style={{fontSize:11,color:ts,whiteSpace:"nowrap"}}>{he?"הוסף 1":"Add 1"}</span>
@@ -414,193 +419,551 @@ function TablesWidget({he,dk}){
       {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:14,textAlign:"center"}}>{error}</div>}
       <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doCalc}>{he?"חשב":"Calculate"}</button>
     </div>
-
-    {/* ═══ RESULTS ═══ */}
     {results&&animIn&&(<div style={{animation:"fadeInUp .7s ease-out"}}>
-
-      {/* ── TABLE 1: General Results (Core) ── */}
       <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
-        <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}>
-          <h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"תוצאות כלליות":"General Results"}</h4>
-        </div>
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse"}}>
-            <thead>
-              <tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(139,105,20,.02)"}}>
-                <th style={{...thStyle,textAlign:isRtl?"right":"left",paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{he?"קטגוריה":"Category"}</th>
-                <th style={thStyle}>{he?"ערך":"Value"}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                {l:he?"ערך השם":"Name Value",v:results.nv},
-                {l:he?"שביל הגורל":"Life Path",v:results.lp},
-                {l:he?"שנה אישית":"Personal Year",v:results.py},
-                {l:he?"שנה נסתרת":"Hidden Year",v:results.hy},
-                {l:he?"גיל נוכחי":"Current Age",v:results.age},
-              ].map((row,i)=>(
-                <tr key={i} style={{background:i%2===0?"transparent":(dk?"rgba(212,175,55,.015)":"rgba(139,105,20,.01)")}}>
-                  <td style={{...tdLabel,paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{row.l}</td>
-                  <td style={tdValue}>{row.v}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"תוצאות כלליות":"General Results"}</h4></div>
+        <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(139,105,20,.02)"}}><th style={{...thStyle,textAlign:isRtl?"right":"left",paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{he?"קטגוריה":"Category"}</th><th style={thStyle}>{he?"ערך":"Value"}</th></tr></thead>
+          <tbody>{[{l:he?"ערך השם":"Name Value",v:results.nv},{l:he?"שביל הגורל":"Life Path",v:results.lp},{l:he?"שנה אישית":"Personal Year",v:results.py},{l:he?"שנה נסתרת":"Hidden Year",v:results.hy},{l:he?"גיל נוכחי":"Current Age",v:results.age}].map((row,i)=>(
+            <tr key={i} style={{background:i%2===0?"transparent":(dk?"rgba(212,175,55,.015)":"rgba(139,105,20,.01)")}}><td style={{...tdLabel,paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{row.l}</td><td style={tdValue}>{row.v}</td></tr>
+          ))}</tbody>
+        </table></div>
       </div>
-
-      {/* ── TABLE 2: Life Cycles (Core) ── */}
       <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
-        <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}>
-          <h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזורי חיים | פסגות ואתגרים":"Life Cycles | Peaks & Challenges"}</h4>
-        </div>
-        <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse"}}>
-            <thead>
-              <tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(139,105,20,.02)"}}>
-                <th style={{...thStyle,fontSize:11}}>{he?"מחזור חיים":"Life Cycle"}</th>
-                <th style={{...thStyle,fontSize:11}}>{he?"פסגה":"Peak"}</th>
-                <th style={{...thStyle,fontSize:11}}>{he?"אתגר":"Challenge"}</th>
-                <th style={{...thStyle,fontSize:11}}>{he?"פסגה נסתרת":"Hidden Peak"}</th>
-                <th style={{...thStyle,fontSize:11}}>{he?"אתגר נסתר":"Hidden Chal."}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cycleLabels.map((label,i)=>{
-                const sa=results.exit+i*9;
-                const active=results.age>=sa&&results.age<sa+9;
-                return(
-                  <tr key={i} style={{background:active?(dk?"rgba(212,175,55,.06)":"rgba(212,175,55,.05)"):(i%2===0?"transparent":(dk?"rgba(212,175,55,.015)":"rgba(139,105,20,.01)"))}}>
-                    <td style={{...tdStyle,fontWeight:600,color:active?ac:ts,fontSize:12,whiteSpace:"nowrap"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
-                        {active&&<span style={{display:"inline-block",width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,flexShrink:0}}/>}
-                        <span>{label}</span>
-                        <span style={{fontSize:9,color:ts,opacity:.5}}>{sa}-{sa+9}</span>
-                      </div>
-                    </td>
-                    <td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td>
-                    <td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td>
-                    <td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td>
-                    <td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88bb":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hc[i]}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזורי חיים | פסגות ואתגרים":"Life Cycles | Peaks & Challenges"}</h4></div>
+        <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(139,105,20,.02)"}}><th style={{...thStyle,fontSize:11}}>{he?"מחזור חיים":"Life Cycle"}</th><th style={{...thStyle,fontSize:11}}>{he?"פסגה":"Peak"}</th><th style={{...thStyle,fontSize:11}}>{he?"אתגר":"Challenge"}</th><th style={{...thStyle,fontSize:11}}>{he?"פסגה נסתרת":"Hidden Peak"}</th><th style={{...thStyle,fontSize:11}}>{he?"אתגר נסתר":"Hidden Chal."}</th></tr></thead>
+          <tbody>{cycleLabels.map((label,i)=>{const sa=results.exit+i*9;const active=results.age>=sa&&results.age<sa+9;return(
+            <tr key={i} style={{background:active?(dk?"rgba(212,175,55,.06)":"rgba(212,175,55,.05)"):(i%2===0?"transparent":(dk?"rgba(212,175,55,.015)":"rgba(139,105,20,.01)"))}}><td style={{...tdStyle,fontWeight:600,color:active?ac:ts,fontSize:12,whiteSpace:"nowrap"}}><div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>{active&&<span style={{display:"inline-block",width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,flexShrink:0}}/>}<span>{label}</span><span style={{fontSize:9,color:ts,opacity:.5}}>{sa}-{sa+9}</span></div></td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88bb":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hc[i]}</td></tr>
+          );})}</tbody>
+        </table></div>
       </div>
-
-      {/* ── EXPAND BUTTON for extras ── */}
-      <div style={{textAlign:"center",margin:"20px 0"}}>
-        <button className="ghost" onClick={()=>{setShowExtra(!showExtra);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center",gap:8}}>
-          <span>{he?(showExtra?"הסתר תוצאות נוספות":"הצג תוצאות נוספות"):(showExtra?"Hide Extra Results":"Show Extra Results")}</span>
-          <span style={{transform:showExtra?"rotate(180deg)":"rotate(0)",transition:"transform .3s",display:"inline-block"}}>▾</span>
-        </button>
-      </div>
-
-      {/* ── EXTRA SECTION (expandable) ── */}
+      <div style={{textAlign:"center",margin:"20px 0"}}><button className="ghost" onClick={()=>{setShowExtra(!showExtra);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center",gap:8}}><span>{he?(showExtra?"הסתר תוצאות נוספות":"הצג תוצאות נוספות"):(showExtra?"Hide Extra Results":"Show Extra Results")}</span><span style={{transform:showExtra?"rotate(180deg)":"rotate(0)",transition:"transform .3s",display:"inline-block"}}>▾</span></button></div>
       {showExtra&&(<div style={{animation:"fadeInUp .5s ease-out"}}>
-
-        {/* Extra: Soul & Expression */}
         <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
-          <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}>
-            <h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"נשמה וביטוי":"Soul & Expression"}</h4>
-          </div>
-          <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse"}}>
-              <thead>
-                <tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(139,105,20,.02)"}}>
-                  <th style={{...thStyle,textAlign:isRtl?"right":"left",paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{he?"קטגוריה":"Category"}</th>
-                  <th style={thStyle}>{he?"ערך":"Value"}</th>
-                  <th style={thStyle}>{he?"ארכיטיפ":"Archetype"}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  {l:he?"קול הנשמה":"Soul Urge",v:results.su},
-                  {l:he?"מספר הביטוי":"Expression",v:results.ex},
-                  {l:he?"חודש אישי":"Personal Month",v:results.pm},
-                  {l:he?"יום אישי":"Personal Day",v:results.pd},
-                ].map((row,i)=>(
-                  <tr key={i} style={{background:i%2===0?"transparent":(dk?"rgba(212,175,55,.015)":"rgba(139,105,20,.01)")}}>
-                    <td style={{...tdLabel,paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{row.l}</td>
-                    <td style={tdValue}>{row.v}</td>
-                    <td style={{...tdStyle,fontSize:12,color:D[row.v]?.c||ac,opacity:.8}}>{row.v>0&&row.v<=9?(he?D[row.v]?.t:D[row.v]?.te):""}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"נשמה וביטוי":"Soul & Expression"}</h4></div>
+          <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(139,105,20,.02)"}}><th style={{...thStyle,textAlign:isRtl?"right":"left",paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{he?"קטגוריה":"Category"}</th><th style={thStyle}>{he?"ערך":"Value"}</th><th style={thStyle}>{he?"ארכיטיפ":"Archetype"}</th></tr></thead>
+            <tbody>{[{l:he?"קול הנשמה":"Soul Urge",v:results.su},{l:he?"מספר הביטוי":"Expression",v:results.ex},{l:he?"חודש אישי":"Personal Month",v:results.pm},{l:he?"יום אישי":"Personal Day",v:results.pd}].map((row,i)=>(
+              <tr key={i} style={{background:i%2===0?"transparent":(dk?"rgba(212,175,55,.015)":"rgba(139,105,20,.01)")}}><td style={{...tdLabel,paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{row.l}</td><td style={tdValue}>{row.v}</td><td style={{...tdStyle,fontSize:12,color:D[row.v]?.c||ac,opacity:.8}}>{row.v>0&&row.v<=9?(he?D[row.v]?.t:D[row.v]?.te):""}</td></tr>
+            ))}</tbody>
+          </table></div>
         </div>
-
-        {/* Extra: Karmic Debts */}
         <div className="gc" style={{marginBottom:16}}>
-          <div style={{textAlign:"center",marginBottom:12}}>
-            <h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"חובות קארמיים":"Karmic Debts"}</h4>
-          </div>
-          {results.kd.length===0?(
-            <div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:12}}>
-              <span style={{fontSize:18}}>🕊</span>
-              <span style={{fontSize:13,color:ts,marginRight:8,marginLeft:8}}>{he?"אין חוב קארמי":"No karmic debt"}</span>
-            </div>
-          ):(
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {results.kd.map(k=>(
-                <div key={k} style={{padding:"12px 14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:20,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span>
-                  <span style={{fontSize:12,lineHeight:1.7,color:ts}}>{KARMA[k]?.[he?"he":"en"]}</span>
-                </div>
-              ))}
-            </div>
-          )}
+          <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"חובות קארמיים":"Karmic Debts"}</h4></div>
+          {results.kd.length===0?(<div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:12}}><span style={{fontSize:18}}>🕊</span><span style={{fontSize:13,color:ts,marginRight:8,marginLeft:8}}>{he?"אין חוב קארמי":"No karmic debt"}</span></div>):(<div style={{display:"flex",flexDirection:"column",gap:8}}>{results.kd.map(k=>(<div key={k} style={{padding:"12px 14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:20,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span><span style={{fontSize:12,lineHeight:1.7,color:ts}}>{KARMA[k]?.[he?"he":"en"]}</span></div>))}</div>)}
         </div>
-
-        {/* Extra: Lo Shu Grid */}
         <div className="gc" style={{marginBottom:16}}>
-          <div style={{textAlign:"center",marginBottom:12}}>
-            <h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid</h4>
-            {results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}
-          </div>
+          <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid</h4>{results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
           <LoShu ls={results.ls} dk={dk} he={he}/>
         </div>
-
-        {/* Extra: Year Projection */}
         <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
-          <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}>
-            <h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4>
+          <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
+          <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(139,105,20,.02)"}}><th style={thStyle}>{he?"שנה":"Year"}</th><th style={thStyle}>{he?"שנה אישית":"P. Year"}</th><th style={thStyle}>{he?"אנרגיה":"Energy"}</th></tr></thead>
+            <tbody>{results.proj.map((p,i)=>(
+              <tr key={i} style={{background:p.isCurrent?(dk?"rgba(212,175,55,.06)":"rgba(212,175,55,.05)"):(i%2===0?"transparent":(dk?"rgba(212,175,55,.015)":"rgba(139,105,20,.01)"))}}><td style={{...tdStyle,fontWeight:p.isCurrent?700:400,color:p.isCurrent?ac:ts,fontSize:13}}>{p.year}{p.isCurrent&&<span style={{fontSize:8,color:ac,opacity:.6,marginRight:4,marginLeft:4}}>◀</span>}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}</td><td style={{...tdStyle,fontSize:11,color:p.isCurrent?ac:ts}}>{he?D[p.py]?.t:D[p.py]?.te}</td></tr>
+            ))}</tbody>
+          </table></div>
+        </div>
+      </div>)}
+      <div style={{textAlign:"center",marginTop:8}}><button className="ghost" onClick={()=>{setResults(null);setFirstName("");setLastName("");setDob("");setAddOne(false);setShowExtra(false);AU.init();AU.p("click");}}>{he?"חישוב חדש":"New Calculation"}</button></div>
+    </div>)}
+  </div>);
+}
+
+// ═══════════════════ CALCULATORS WIDGET ═══════════════════
+function CalculatorsWidget({he,dk}){
+  const ac=dk?"#d4af37":"#8B6914";
+  const tm=dk?"#e8e0d0":"#2a2520";
+  const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
+  const isRtl=he;
+
+  const[cat,setCat]=useState(0);
+  const[calc,setCalc]=useState(null); // which calculator is open
+  const[error,setError]=useState("");
+
+  // Shared input state
+  const[firstName,setFirstName]=useState("");
+  const[lastName,setLastName]=useState("");
+  const[dob,setDob]=useState("");
+  const[addOne,setAddOne]=useState(false);
+  const[results,setResults]=useState(null);
+  const[animIn,setAnimIn]=useState(false);
+
+  // Match inputs
+  const[m1name,setM1name]=useState("");const[m1dob,setM1dob]=useState("");
+  const[m2name,setM2name]=useState("");const[m2dob,setM2dob]=useState("");
+  const[matchRes,setMatchRes]=useState(null);
+
+  // Number library
+  const[libNum,setLibNum]=useState(null);
+
+  // Name generator
+  const[genTarget,setGenTarget]=useState(1);
+
+  const parseDob=(s)=>{const p=s.split(".");if(p.length!==3)return null;const[d,m,y]=p.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)return null;return{d,m,y};};
+
+  const labelSt={display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500};
+  const thSt={padding:"10px 12px",fontSize:11,fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`};
+  const tdSt={padding:"10px 12px",fontSize:14,fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
+  const tdLb={...tdSt,fontWeight:600,color:ts,fontSize:12,textAlign:isRtl?"right":"left"};
+  const tdVl={...tdSt,fontSize:19,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"};
+
+  const categories=[
+    {i:"🔢",l:he?"נומרולוגיה אישית":"Personal Numerology"},
+    {i:"💑",l:he?"התאמה":"Compatibility"},
+    {i:"📖",l:he?"משמעות מספרים":"Number Meanings"},
+    {i:"🃏",l:he?"קלפים":"Cards"},
+    {i:"🛠️",l:he?"כלים":"Tools"},
+  ];
+
+  // ── PERSONAL CALC ──
+  const doPersonalCalc=()=>{
+    setError("");const d=parseDob(dob);
+    if(!d||!firstName.trim()){setError(he?"מלא שם ותאריך לידה":"Enter name and date of birth");return;}
+    AU.init();AU.p("reveal");
+    const nm=(firstName+" "+lastName).trim();
+    const r=fullCalc(d.d,d.m,d.y,nm,addOne);
+    r.lpm=LPm(d.d,d.m,d.y); // master-aware LP
+    setResults(r);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);
+  };
+
+  // ── MATCH CALC ──
+  const doMatchCalc=(type)=>{
+    setError("");const d1=parseDob(m1dob),d2=parseDob(m2dob);
+    if(!d1||!d2||!m1name.trim()||!m2name.trim()){setError(he?"מלא את כל השדות":"Fill all fields");return;}
+    AU.init();AU.p("reveal");
+    const lp1=LP(d1.d,d1.m,d1.y),lp2=LP(d2.d,d2.m,d2.y);
+    const nv1=NV(m1name),nv2=NV(m2name),su1=SU(m1name),su2=SU(m2name),ex1=EX(m1name),ex2=EX(m2name);
+    const lpm1=LPm(d1.d,d1.m,d1.y),lpm2=LPm(d2.d,d2.m,d2.y);
+    let score=50;
+    if(lp1===lp2)score+=20;else if(Math.abs(lp1-lp2)<=2)score+=15;else if(Math.abs(lp1-lp2)>=5)score-=5;
+    if(su1===su2)score+=15;else if(Math.abs(su1-su2)<=1)score+=8;
+    if(nv1===nv2)score+=10;
+    const compPairs=[[1,2],[3,4],[5,6],[7,8],[1,9]];
+    if(compPairs.some(p=>(p[0]===lp1&&p[1]===lp2)||(p[1]===lp1&&p[0]===lp2)))score+=12;
+    if(type==="twin"&&lp1===lp2)score+=10;
+    if(type==="twin"&&lpm1===lpm2&&[11,22,33].includes(lpm1))score+=8;
+    if(type==="biz"){score-=5;if([4,8].includes(lp1)&&[4,8].includes(lp2))score+=15;if([1,8].includes(lp1)&&[1,8].includes(lp2))score+=10;}
+    score=Math.max(20,Math.min(99,score));
+    const k1=`${Math.min(lp1,lp2)}-${Math.max(lp1,lp2)}`;
+    const compat=LP_COMPAT[k1]||null;
+    setMatchRes({lp1,lp2,nv1,nv2,su1,su2,ex1,ex2,lpm1,lpm2,score,compat,type,
+      harmony:Math.min(10,Math.round(score/10)),tension:Math.min(10,Math.round((100-score)/12)),growth:Math.min(10,Math.round(Math.abs(lp1-lp2)+Math.abs(su1-su2)/2+2))});
+  };
+
+  const resetCalc=()=>{setCalc(null);setResults(null);setMatchRes(null);setError("");setAnimIn(false);};
+
+  // ── CARD: calculator tile ──
+  const CalcTile=({icon,title,desc,onClick})=>(
+    <div onClick={onClick} style={{padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.45)",border:`1px solid ${ac}0a`,borderRadius:16,cursor:"pointer",transition:"all .3s",textAlign:"center"}} onMouseEnter={e=>e.currentTarget.style.borderColor=ac+"44"} onMouseLeave={e=>e.currentTarget.style.borderColor=ac+"0a"}>
+      <div style={{fontSize:28,marginBottom:6}}>{icon}</div>
+      <div style={{fontSize:13,fontWeight:600,color:ac,marginBottom:3}}>{title}</div>
+      <div style={{fontSize:10,color:ts,lineHeight:1.5}}>{desc}</div>
+    </div>
+  );
+
+  // ── BACK BUTTON ──
+  const BackBtn=()=>(<button className="ghost" onClick={resetCalc} style={{marginBottom:14,fontSize:12,padding:"8px 16px"}}>← {he?"חזרה":"Back"}</button>);
+
+  // ══════ RENDER ══════
+  return(<div style={{animation:"fadeInUp .5s ease-out"}}>
+
+    {/* Category tabs */}
+    <div style={{display:"flex",gap:4,marginBottom:16,overflowX:"auto",WebkitOverflowScrolling:"touch",padding:"2px 0"}}>
+      {categories.map((c,i)=>(
+        <div key={i} onClick={()=>{setCat(i);resetCalc();AU.init();AU.p("click");}} style={{flex:"0 0 auto",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .3s",whiteSpace:"nowrap",background:cat===i?(dk?"rgba(212,175,55,.1)":"rgba(139,105,20,.06)"):"transparent",color:cat===i?ac:ts,border:`1px solid ${cat===i?ac+"33":"transparent"}`}}>{c.i} {c.l}</div>
+      ))}
+    </div>
+
+    {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:14,textAlign:"center"}}>{error}</div>}
+
+    {/* ═══════ CATEGORY 1: Personal Numerology ═══════ */}
+    {cat===0&&!calc&&(
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <CalcTile icon="🔢" title={he?"כל המספרים שלי":"All My Numbers"} desc={he?"LP, גורל, נשמה, ביטוי ועוד":"LP, Destiny, Soul, Expression & more"} onClick={()=>setCalc("allnums")}/>
+        <CalcTile icon="📅" title={he?"נומרוסקופ יומי":"Daily Numeroscope"} desc={he?"אנרגיות יום/חודש/שנה":"Day/Month/Year energies"} onClick={()=>setCalc("daily")}/>
+        <CalcTile icon="🔄" title={he?"מחזורי חיים":"Life Cycles"} desc={he?"פסגות, אתגרים, תקופות":"Peaks, Challenges, Periods"} onClick={()=>setCalc("cycles")}/>
+        <CalcTile icon="📊" title={he?"Lo Shu Grid":"Lo Shu Grid"} desc={he?"רשת האיזון האנרגטי":"Energy balance grid"} onClick={()=>setCalc("loshu")}/>
+        <CalcTile icon="⚡" title={he?"חובות קארמיים":"Karmic Debts"} desc={he?"מה הנשמה באה לתקן":"What the soul came to fix"} onClick={()=>setCalc("karma")}/>
+        <CalcTile icon="📈" title={he?"מחזור שנים":"Year Cycle"} desc={he?"13 שנים קדימה":"13 years ahead"} onClick={()=>setCalc("yearcycle")}/>
+      </div>
+    )}
+
+    {/* ── ALL NUMBERS CALC ── */}
+    {cat===0&&calc==="allnums"&&(<div>
+      <BackBtn/>
+      <div className="gc" style={{marginBottom:16}}>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:28}}>🔢</div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"כל המספרים שלי":"All My Numbers"}</div></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם פרטי...":"First name..."}/></div>
+          <div><label style={labelSt}>{he?"שם משפחה":"Last Name"}</label><input className="gi" value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם משפחה...":"Last name..."}/></div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:10,alignItems:"end",marginBottom:12}}>
+          <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
+          <div style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",userSelect:"none",paddingBottom:4,height:54,paddingTop:22}} onClick={()=>setAddOne(!addOne)}>
+            <div style={{width:18,height:18,borderRadius:5,border:`1.5px solid ${ac}44`,background:addOne?`${ac}1a`:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .3s"}}>{addOne&&<span style={{color:ac,fontSize:12}}>✓</span>}</div>
+            <span style={{fontSize:10,color:ts}}>{he?"הוסף 1":"Add 1"}</span>
           </div>
-          <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse"}}>
-              <thead>
-                <tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(139,105,20,.02)"}}>
-                  <th style={thStyle}>{he?"שנה":"Year"}</th>
-                  <th style={thStyle}>{he?"שנה אישית":"P. Year"}</th>
-                  <th style={thStyle}>{he?"אנרגיה":"Energy"}</th>
+        </div>
+        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב מספרים":"Calculate Numbers"}</button>
+      </div>
+
+      {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}>
+        {/* Master number alert */}
+        {[11,22,33].includes(results.lpm)&&(<div className="gc" style={{marginBottom:14,padding:14,textAlign:"center",background:`${MASTER[results.lpm].c}08`,border:`1px solid ${MASTER[results.lpm].c}33`}}>
+          <div style={{fontSize:22}}>⚡</div>
+          <div style={{fontSize:16,fontWeight:700,color:MASTER[results.lpm].c,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מספר מאסטר":"Master Number"} {results.lpm} — {he?MASTER[results.lpm].t:MASTER[results.lpm].te}</div>
+          <p style={{fontSize:12,color:ts,lineHeight:1.7,marginTop:6}}>{MASTER[results.lpm][he?"he":"en"]}</p>
+        </div>)}
+
+        {/* Core numbers */}
+        <div className="gc" style={{marginBottom:14,padding:0,overflow:"hidden"}}>
+          <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}>
+            <h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"תוצאות כלליות":"General Results"}</h4>
+          </div>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(0,0,0,.015)"}}>
+              <th style={{...thSt,textAlign:isRtl?"right":"left",paddingRight:isRtl?18:12,paddingLeft:isRtl?12:18}}>{he?"קטגוריה":"Category"}</th>
+              <th style={thSt}>{he?"ערך":"Value"}</th>
+              <th style={thSt}>{he?"ארכיטיפ":"Archetype"}</th>
+            </tr></thead>
+            <tbody>
+              {[{l:he?"שביל הגורל":"Life Path",v:results.lp},{l:he?"ערך השם":"Name Value",v:results.nv},{l:he?"קול הנשמה":"Soul Urge",v:results.su},{l:he?"מספר הביטוי":"Expression",v:results.ex},{l:he?"שנה אישית":"Personal Year",v:results.py},{l:he?"שנה נסתרת":"Hidden Year",v:results.hy},{l:he?"חודש אישי":"Personal Month",v:results.pm},{l:he?"יום אישי":"Personal Day",v:results.pd},{l:he?"גיל נוכחי":"Current Age",v:results.age}].map((r,i)=>(
+                <tr key={i} style={{background:i%2?(dk?"rgba(212,175,55,.015)":"rgba(0,0,0,.01)"):"transparent"}}>
+                  <td style={{...tdLb,paddingRight:isRtl?18:12,paddingLeft:isRtl?12:18}}>{r.l}</td>
+                  <td style={tdVl}>{r.v}</td>
+                  <td style={{...tdSt,fontSize:11,color:D[r.v]?.c||ac,opacity:.8}}>{r.v>0&&r.v<=9?(he?D[r.v]?.t:D[r.v]?.te):""}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {results.proj.map((p,i)=>(
-                  <tr key={i} style={{background:p.isCurrent?(dk?"rgba(212,175,55,.06)":"rgba(212,175,55,.05)"):(i%2===0?"transparent":(dk?"rgba(212,175,55,.015)":"rgba(139,105,20,.01)"))}}>
-                    <td style={{...tdStyle,fontWeight:p.isCurrent?700:400,color:p.isCurrent?ac:ts,fontSize:13}}>
-                      {p.year}{p.isCurrent&&<span style={{fontSize:8,color:ac,opacity:.6,marginRight:4,marginLeft:4}}>◀</span>}
-                    </td>
-                    <td style={{...tdStyle,fontSize:18,fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}</td>
-                    <td style={{...tdStyle,fontSize:11,color:p.isCurrent?ac:ts}}>{he?D[p.py]?.t:D[p.py]?.te}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Visual orbs */}
+        <div className="gc" style={{marginBottom:14}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+            {[{l:he?"שביל":"Path",v:results.lp},{l:he?"נשמה":"Soul",v:results.su},{l:he?"ביטוי":"Expr.",v:results.ex},{l:he?"שם":"Name",v:results.nv},{l:he?"שנה":"Year",v:results.py},{l:he?"יום":"Day",v:results.pd}].map((it,i)=>(
+              <div key={i} style={{textAlign:"center"}}>
+                <div className="orb" style={{margin:"0 auto 4px",width:48,height:48,fontSize:18,color:D[it.v]?.c||ac,borderColor:(D[it.v]?.c||ac)+"44"}}>{it.v}</div>
+                <div style={{fontSize:9,color:ts}}>{it.l}</div>
+                {it.v>0&&it.v<=9&&<div style={{fontSize:8,color:D[it.v]?.c||ac,opacity:.6}}>{he?D[it.v]?.t:D[it.v]?.te}</div>}
+              </div>
+            ))}
+          </div>
+          <div style={{textAlign:"center",marginTop:14,padding:12,background:`${ac}06`,borderRadius:12}}>
+            <p style={{fontSize:13,lineHeight:1.9,color:ts,fontStyle:"italic"}}>{he?D[results.lp]?.narrative:D[results.lp]?.narrativeE}</p>
           </div>
         </div>
       </div>)}
+    </div>)}
 
-      {/* Reset */}
-      <div style={{textAlign:"center",marginTop:8}}>
-        <button className="ghost" onClick={()=>{setResults(null);setFirstName("");setLastName("");setDob("");setAddOne(false);setShowExtra(false);AU.init();AU.p("click");}}>
-          {he?"חישוב חדש":"New Calculation"}
-        </button>
+    {/* ── DAILY NUMEROSCOPE ── */}
+    {cat===0&&calc==="daily"&&(<div>
+      <BackBtn/>
+      <div className="gc" style={{marginBottom:16}}>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:28}}>📅</div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"נומרוסקופ יומי":"Daily Numeroscope"}</div></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+          <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
+        </div>
+        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
+      </div>
+      {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
+          {[{l:he?"יום":"Day",v:results.pd,desc:he?"האנרגיה של היום":"Today's energy"},{l:he?"חודש":"Month",v:results.pm,desc:he?"האנרגיה החודשית":"Monthly energy"},{l:he?"שנה":"Year",v:results.py,desc:he?"האנרגיה השנתית":"Yearly energy"}].map((it,i)=>(
+            <div key={i} className="gc" style={{textAlign:"center",padding:16}}>
+              <div style={{fontSize:9,color:ts,letterSpacing:1}}>{it.l}</div>
+              <div style={{fontSize:36,fontWeight:700,color:D[it.v]?.c||ac,fontFamily:"'Cormorant Garamond',serif",margin:"4px 0"}}>{it.v}</div>
+              <div style={{fontSize:12,fontWeight:600,color:D[it.v]?.c||ac}}>{he?D[it.v]?.t:D[it.v]?.te}</div>
+              <div style={{fontSize:10,color:ts,marginTop:4}}>{it.desc}</div>
+              <div style={{marginTop:8,padding:"8px",background:`${ac}06`,borderRadius:8}}><p style={{fontSize:11,lineHeight:1.7,color:ts}}>{YEAR_ENERGY[it.v]?.[he?"he":"en"]}</p></div>
+            </div>
+          ))}
+        </div>
+      </div>)}
+    </div>)}
+
+    {/* ── LIFE CYCLES ── */}
+    {cat===0&&calc==="cycles"&&(<div>
+      <BackBtn/>
+      <div className="gc" style={{marginBottom:16}}>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:28}}>🔄</div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחזורי חיים":"Life Cycles"}</div></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <div><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+          <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
+        </div>
+        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
+      </div>
+      {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}>
+        <div className="gc" style={{padding:0,overflow:"hidden"}}>
+          <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"פסגות ואתגרים":"Peaks & Challenges"}</h4></div>
+          <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(0,0,0,.015)"}}>
+              <th style={{...thSt,fontSize:10}}>{he?"מחזור":"Cycle"}</th><th style={{...thSt,fontSize:10}}>{he?"פסגה":"Peak"}</th><th style={{...thSt,fontSize:10}}>{he?"אתגר":"Chal."}</th><th style={{...thSt,fontSize:10}}>{he?"פ.נסתרת":"H.Peak"}</th><th style={{...thSt,fontSize:10}}>{he?"א.נסתר":"H.Chal."}</th>
+            </tr></thead>
+            <tbody>
+              {(he?["חיפוש","מציאה","יתד","שיא"]:["Search","Discovery","Anchor","Summit"]).map((lb,i)=>{
+                const sa=results.exit+i*9,active=results.age>=sa&&results.age<sa+9;
+                return(<tr key={i} style={{background:active?(dk?"rgba(212,175,55,.06)":"rgba(212,175,55,.05)"):(i%2?"rgba(212,175,55,.015)":"transparent")}}>
+                  <td style={{...tdSt,fontWeight:600,color:active?ac:ts,fontSize:11}}><div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"center"}}>{active&&<span style={{width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,display:"inline-block"}}/>}{lb}<span style={{fontSize:8,color:ts,opacity:.5,marginRight:2,marginLeft:2}}>{sa}-{sa+9}</span></div></td>
+                  <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td>
+                  <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td>
+                  <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td>
+                  <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?"#e88bb":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hc[i]}</td>
+                </tr>);
+              })}
+            </tbody>
+          </table></div>
+        </div>
+      </div>)}
+    </div>)}
+
+    {/* ── LO SHU ── */}
+    {cat===0&&calc==="loshu"&&(<div>
+      <BackBtn/>
+      <div className="gc" style={{marginBottom:16}}>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:28}}>📊</div></div>
+        <div style={{marginBottom:12}}><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
+        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const ls=loShu(d.d,d.m,d.y);setResults({ls,lp:LP(d.d,d.m,d.y)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
+      </div>
+      {results&&animIn&&results.ls&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc">
+        <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:16,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid</h4>{results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
+        <LoShu ls={results.ls} dk={dk} he={he}/>
+      </div></div>)}
+    </div>)}
+
+    {/* ── KARMIC DEBTS ── */}
+    {cat===0&&calc==="karma"&&(<div>
+      <BackBtn/>
+      <div className="gc" style={{marginBottom:16}}>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:28}}>⚡</div></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+          <div><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+          <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
+        </div>
+        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
+      </div>
+      {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc">
+        {results.kd?.length===0?(<div style={{textAlign:"center",padding:16,background:`${ac}06`,borderRadius:12}}><span style={{fontSize:22}}>🕊</span><div style={{fontSize:14,color:ts,marginTop:6}}>{he?"אין חוב קארמי — הנשמה שלך נקייה!":"No karmic debt — your soul is clear!"}</div></div>):(
+          <div>{results.kd?.map(k=>(<div key={k} style={{padding:14,background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:24,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span>
+            <span style={{fontSize:12,lineHeight:1.8,color:ts}}>{KARMA[k]?.[he?"he":"en"]}</span>
+          </div>))}</div>
+        )}
+      </div></div>)}
+    </div>)}
+
+    {/* ── YEAR CYCLE ── */}
+    {cat===0&&calc==="yearcycle"&&(<div>
+      <BackBtn/>
+      <div className="gc" style={{marginBottom:16}}>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:28}}>📈</div></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:10,alignItems:"end",marginBottom:12}}>
+          <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
+          <div style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",userSelect:"none",paddingBottom:4,height:54,paddingTop:22}} onClick={()=>setAddOne(!addOne)}>
+            <div style={{width:18,height:18,borderRadius:5,border:`1.5px solid ${ac}44`,background:addOne?`${ac}1a`:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>{addOne&&<span style={{color:ac,fontSize:12}}>✓</span>}</div>
+            <span style={{fontSize:10,color:ts}}>{he?"הוסף 1":"Add 1"}</span>
+          </div>
+        </div>
+        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const cy=new Date().getFullYear();const proj=[];for(let i=-2;i<=10;i++){const yr=cy+i;proj.push({year:yr,py:PY(d.d,d.m,yr,addOne),isCurrent:yr===cy});}setResults({proj});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
+      </div>
+      {results&&animIn&&results.proj&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc" style={{padding:0,overflow:"hidden"}}>
+        <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(0,0,0,.015)"}}><th style={thSt}>{he?"שנה":"Year"}</th><th style={thSt}>{he?"שנה אישית":"P.Y."}</th><th style={thSt}>{he?"אנרגיה":"Energy"}</th></tr></thead>
+          <tbody>{results.proj.map((p,i)=>(
+            <tr key={i} style={{background:p.isCurrent?(dk?"rgba(212,175,55,.06)":"rgba(212,175,55,.05)"):(i%2?"rgba(212,175,55,.015)":"transparent")}}>
+              <td style={{...tdSt,fontWeight:p.isCurrent?700:400,color:p.isCurrent?ac:ts,fontSize:12}}>{p.year}{p.isCurrent&&<span style={{fontSize:8,color:ac,marginRight:3,marginLeft:3}}>◀</span>}</td>
+              <td style={{...tdSt,fontSize:18,fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}</td>
+              <td style={{...tdSt,fontSize:11,color:p.isCurrent?ac:ts}}>{he?D[p.py]?.t:D[p.py]?.te}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div></div>)}
+    </div>)}
+
+    {/* ═══════ CATEGORY 2: Compatibility ═══════ */}
+    {cat===1&&!calc&&(
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <CalcTile icon="💑" title={he?"התאמה זוגית":"Love Match"} desc={he?"שבילי גורל + נשמה + ביטוי":"Life paths + soul + expression"} onClick={()=>setCalc("love")}/>
+        <CalcTile icon="🔥" title={he?"להבה תאומה":"Twin Flame"} desc={he?"חיבור נשמתי עמוק":"Deep soul connection"} onClick={()=>setCalc("twin")}/>
+        <CalcTile icon="💼" title={he?"שותפות עסקית":"Business Match"} desc={he?"התאמה מקצועית":"Professional compatibility"} onClick={()=>setCalc("biz")}/>
+        <CalcTile icon="👨‍👧" title={he?"הורה-ילד":"Parent-Child"} desc={he?"החיבור הנשמתי":"The soul connection"} onClick={()=>setCalc("parent")}/>
+      </div>
+    )}
+
+    {/* ── MATCH CALCULATORS (love/twin/biz/parent) ── */}
+    {cat===1&&calc&&(<div>
+      <BackBtn/>
+      <div className="gc" style={{marginBottom:16}}>
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:28}}>{calc==="love"?"💑":calc==="twin"?"🔥":calc==="biz"?"💼":"👨‍👧"}</div>
+          <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>
+            {calc==="love"?(he?"התאמה זוגית":"Love Compatibility"):calc==="twin"?(he?"להבה תאומה":"Twin Flame"):calc==="biz"?(he?"שותפות עסקית":"Business Match"):(he?"הורה-ילד":"Parent-Child")}
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+          <div style={{padding:14,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:14}}>
+            <div style={{textAlign:"center",fontSize:11,fontWeight:600,color:ac,marginBottom:8}}>{calc==="parent"?(he?"הורה":"Parent"):(he?"צד א":"Person A")}</div>
+            <div style={{marginBottom:8}}><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" value={m1name} onChange={e=>setM1name(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם בעברית...":"Name..."}/></div>
+            <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={m1dob} onChange={e=>setM1dob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
+          </div>
+          <div style={{padding:14,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:14}}>
+            <div style={{textAlign:"center",fontSize:11,fontWeight:600,color:ac,marginBottom:8}}>{calc==="parent"?(he?"ילד/ה":"Child"):(he?"צד ב":"Person B")}</div>
+            <div style={{marginBottom:8}}><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" value={m2name} onChange={e=>setM2name(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם בעברית...":"Name..."}/></div>
+            <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={m2dob} onChange={e=>setM2dob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
+          </div>
+        </div>
+        <button className="gb" disabled={!m1name.trim()||!m2name.trim()||!m1dob.trim()||!m2dob.trim()} onClick={()=>doMatchCalc(calc)}>{he?"חשב התאמה":"Check Match"}</button>
+      </div>
+
+      {matchRes&&(<div style={{animation:"fadeInUp .7s ease-out"}}>
+        <div className="gc">
+          {/* Score ring */}
+          <div style={{position:"relative",width:130,height:130,margin:"0 auto 14px"}}><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="57" fill="none" stroke={`${ac}10`} strokeWidth="5"/><circle cx="65" cy="65" r="57" fill="none" stroke={matchRes.score>=75?"#4ECDC4":matchRes.score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${matchRes.score*114*Math.PI/100} ${114*Math.PI}`} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dasharray 1.5s ease"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:30,fontWeight:700,color:ac}}>{matchRes.score}%</span><span style={{fontSize:9,color:ts}}>{he?"התאמה":"Match"}</span></div></div>
+
+          {/* LP comparison */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,marginBottom:14,alignItems:"center"}}>
+            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m1name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{matchRes.lp1}</div><div style={{fontSize:10,color:D[matchRes.lp1]?.c||ac,opacity:.7}}>{he?D[matchRes.lp1]?.t:D[matchRes.lp1]?.te}</div></div>
+            <div style={{fontSize:18,color:`${ac}44`}}>{calc==="parent"?"♡":"⟷"}</div>
+            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m2name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{matchRes.lp2}</div><div style={{fontSize:10,color:D[matchRes.lp2]?.c||ac,opacity:.7}}>{he?D[matchRes.lp2]?.t:D[matchRes.lp2]?.te}</div></div>
+          </div>
+
+          {/* Twin flame badge */}
+          {calc==="twin"&&matchRes.lpm1===matchRes.lpm2&&[11,22,33].includes(matchRes.lpm1)&&(<div style={{textAlign:"center",padding:12,background:`${MASTER[matchRes.lpm1].c}08`,border:`1px solid ${MASTER[matchRes.lpm1].c}33`,borderRadius:12,marginBottom:12}}><div style={{fontSize:18}}>🔥</div><div style={{fontSize:13,fontWeight:700,color:MASTER[matchRes.lpm1].c}}>{he?"מספר מאסטר משותף!":"Shared Master Number!"} {matchRes.lpm1}</div></div>)}
+
+          {/* Bars */}
+          {[{l:he?"הרמוניה":"Harmony",v:matchRes.harmony,c:"#4ECDC4"},{l:he?"מתח":"Tension",v:matchRes.tension,c:"#E74C3C"},{l:he?"צמיחה":"Growth",v:matchRes.growth,c:"#FFD700"}].map((it,i)=>(
+            <div key={i} style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:ts}}>{it.l}</span><span style={{fontSize:11,fontWeight:700,color:it.c}}>{it.v}/10</span></div><div style={{height:5,background:dk?"rgba(20,20,40,.4)":"rgba(0,0,0,.05)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${it.v*10}%`,background:it.c,borderRadius:3,transition:"width 1.5s ease"}}/></div></div>
+          ))}
+
+          {/* Connection & Challenges */}
+          {matchRes.compat&&(<div style={{marginTop:14}}>
+            <div style={{padding:12,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:12,marginBottom:8}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span>💚</span><span style={{fontSize:12,fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר":"Connection"}</span></div>
+              <p style={{fontSize:12,lineHeight:1.8,color:ts}}>{matchRes.compat[he?"he":"en"].con}</p>
+            </div>
+            <div style={{padding:12,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span>⚡</span><span style={{fontSize:12,fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים":"Challenges"}</span></div>
+              <p style={{fontSize:12,lineHeight:1.8,color:ts}}>{matchRes.compat[he?"he":"en"].ch}</p>
+            </div>
+            <div style={{padding:12,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:12}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span>💡</span><span style={{fontSize:12,fontWeight:600,color:ac}}>{he?"עצה":"Advice"}</span></div>
+              <p style={{fontSize:12,lineHeight:1.8,color:ts}}>{matchRes.compat[he?"he":"en"].tip}</p>
+            </div>
+          </div>)}
+
+          {/* Numbers table */}
+          <div style={{marginTop:14,overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(0,0,0,.015)"}}><th style={{...thSt,fontSize:10}}></th><th style={{...thSt,fontSize:10}}>{m1name.split(" ")[0]}</th><th style={{...thSt,fontSize:10}}>{m2name.split(" ")[0]}</th></tr></thead><tbody>
+            {[{l:he?"שביל":"Path",a:matchRes.lp1,b:matchRes.lp2},{l:he?"שם":"Name",a:matchRes.nv1,b:matchRes.nv2},{l:he?"נשמה":"Soul",a:matchRes.su1,b:matchRes.su2},{l:he?"ביטוי":"Expr.",a:matchRes.ex1,b:matchRes.ex2}].map((r,i)=>(
+              <tr key={i} style={{borderBottom:`1px solid ${ac}08`}}><td style={{...tdSt,fontSize:11,color:ts,fontWeight:600}}>{r.l}</td><td style={{...tdSt,fontSize:17,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>{r.a}</td><td style={{...tdSt,fontSize:17,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>{r.b}</td></tr>
+            ))}
+          </tbody></table></div>
+        </div>
+      </div>)}
+    </div>)}
+
+    {/* ═══════ CATEGORY 3: Number Meanings ═══════ */}
+    {cat===2&&(<div>
+      <div className="gc">
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:28}}>📖</div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"ספריית המספרים":"Number Library"}</div></div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
+          {[1,2,3,4,5,6,7,8,9].map(n=>(
+            <div key={n} onClick={()=>{setLibNum(libNum===n?null:n);AU.init();AU.p("click");}} style={{textAlign:"center",padding:"14px 6px",borderRadius:12,cursor:"pointer",border:`1.5px solid ${libNum===n?(D[n]?.c||ac)+"66":ac+"0a"}`,background:libNum===n?`${D[n]?.c||ac}0a`:"transparent",transition:"all .3s"}}>
+              <div style={{fontSize:24,fontWeight:700,color:D[n]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{n}</div>
+              <div style={{fontSize:9,color:D[n]?.c||ac,opacity:.7}}>{he?D[n]?.t:D[n]?.te}</div>
+            </div>
+          ))}
+        </div>
+        {/* Master numbers */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+          {[11,22,33].map(n=>(
+            <div key={n} onClick={()=>{setLibNum(libNum===n?null:n);AU.init();AU.p("click");}} style={{textAlign:"center",padding:"12px 6px",borderRadius:12,cursor:"pointer",border:`1.5px solid ${libNum===n?(MASTER[n]?.c||ac)+"66":ac+"0a"}`,background:libNum===n?`${MASTER[n]?.c||ac}0a`:"transparent",transition:"all .3s"}}>
+              <div style={{fontSize:9,color:MASTER[n]?.c,letterSpacing:1}}>{he?"מאסטר":"MASTER"}</div>
+              <div style={{fontSize:22,fontWeight:700,color:MASTER[n]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{n}</div>
+              <div style={{fontSize:9,color:MASTER[n]?.c||ac,opacity:.7}}>{he?MASTER[n]?.t:MASTER[n]?.te}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Detail panel */}
+        {libNum&&NUM_LIB[libNum]&&(<div style={{animation:"fadeInUp .4s ease-out",padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${(libNum<=9?D[libNum]?.c:MASTER[libNum]?.c)||ac}22`,borderRadius:14}}>
+          <div style={{textAlign:"center",marginBottom:10}}>
+            <span style={{fontSize:28}}>{NUM_LIB[libNum].icon}</span>
+            <div style={{fontSize:28,fontWeight:700,color:(libNum<=9?D[libNum]?.c:MASTER[libNum]?.c)||ac,fontFamily:"'Cormorant Garamond',serif"}}>{libNum}</div>
+            <div style={{fontSize:12,fontWeight:600,color:(libNum<=9?D[libNum]?.c:MASTER[libNum]?.c)||ac}}>{libNum<=9?(he?D[libNum]?.t:D[libNum]?.te):(he?MASTER[libNum]?.t:MASTER[libNum]?.te)}</div>
+          </div>
+          <div style={{fontSize:11,fontWeight:600,color:ac,marginBottom:6}}>{NUM_LIB[libNum][he?"he":"en"].k}</div>
+          <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{NUM_LIB[libNum][he?"he":"en"].p}</p>
+          {libNum<=9&&(<div style={{marginTop:12,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            {[{i:"💎",l:he?"אבן":"Stone",v:D[libNum]?.stone},{i:"🎨",l:he?"צבע":"Color",v:D[libNum]?.color},{i:"🔥",l:he?"יסוד":"Element",v:D[libNum]?.el},{i:"💼",l:he?"קריירה":"Career",v:D[libNum]?.career}].map((it,i)=>(
+              <div key={i} style={{padding:8,background:`${ac}05`,borderRadius:8,textAlign:"center"}}><span style={{fontSize:14}}>{it.i}</span><div style={{fontSize:9,color:ts}}>{it.l}</div><div style={{fontSize:11,fontWeight:600,color:ac}}>{it.v}</div></div>
+            ))}
+          </div>)}
+        </div>)}
       </div>
     </div>)}
+
+    {/* ═══════ CATEGORY 4: Cards ═══════ */}
+    {cat===3&&(<div>
+      <div className="gc" style={{marginBottom:14}}>
+        <div style={{textAlign:"center",marginBottom:14}}><div style={{fontSize:28}}>🃏</div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"קלפי נומרולוגיה":"Numerology Cards"}</div><p style={{fontSize:11,color:ts,marginTop:4}}>{he?"לחץ על קלף להפיכה":"Tap a card to flip"}</p></div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,justifyItems:"center"}}>
+          {[1,2,3,4,5,6,7,8,9].map(n=><TarotCard key={n} number={n} dk={dk}/>)}
+        </div>
+      </div>
+    </div>)}
+
+    {/* ═══════ CATEGORY 5: Tools ═══════ */}
+    {cat===4&&!calc&&(
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <CalcTile icon="✨" title={he?"מחולל שמות":"Name Generator"} desc={he?"שמות לפי מספר נומרולוגי":"Names by numerology number"} onClick={()=>setCalc("namegen")}/>
+        <CalcTile icon="📤" title={he?"ייצוא תוצאות":"Export Results"} desc={he?"שמור את הקריאה שלך":"Save your reading"} onClick={()=>setCalc("export")}/>
+      </div>
+    )}
+
+    {/* ── NAME GENERATOR ── */}
+    {cat===4&&calc==="namegen"&&(<div>
+      <BackBtn/>
+      <div className="gc">
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:28}}>✨</div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחולל שמות":"Name Generator"}</div></div>
+        <div style={{marginBottom:14}}>
+          <label style={labelSt}>{he?"בחר מספר יעד":"Choose target number"}</label>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(9,1fr)",gap:4}}>
+            {[1,2,3,4,5,6,7,8,9].map(n=>(
+              <div key={n} onClick={()=>{setGenTarget(n);AU.init();AU.p("click");}} style={{textAlign:"center",padding:"10px 4px",borderRadius:10,cursor:"pointer",border:`1.5px solid ${genTarget===n?(D[n]?.c||ac)+"66":"transparent"}`,background:genTarget===n?`${D[n]?.c||ac}0a`:"transparent",transition:"all .3s"}}>
+                <div style={{fontSize:18,fontWeight:700,color:genTarget===n?(D[n]?.c||ac):`${ac}55`,fontFamily:"'Cormorant Garamond',serif"}}>{n}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{padding:16,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",borderRadius:14,border:`1px solid ${ac}0a`}}>
+          <div style={{textAlign:"center",marginBottom:10}}><div style={{fontSize:14,fontWeight:600,color:D[genTarget]?.c||ac}}>{he?D[genTarget]?.t:D[genTarget]?.te} — {genTarget}</div></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            {genNames(genTarget,he).map((name,i)=>(
+              <div key={i} style={{textAlign:"center",padding:"12px",background:`${ac}06`,borderRadius:10}}>
+                <div style={{fontSize:16,fontWeight:600,color:ac}}>{name}</div>
+                <div style={{fontSize:10,color:ts}}>{he?"ערך: ":"Value: "}{NV(name)}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{textAlign:"center",marginTop:10}}><p style={{fontSize:10,color:ts,fontStyle:"italic"}}>{he?"שמות אלה מותאמים לאנרגיה של מספר "+genTarget:"These names are aligned with the energy of number "+genTarget}</p></div>
+        </div>
+      </div>
+    </div>)}
+
+    {/* ── EXPORT ── */}
+    {cat===4&&calc==="export"&&(<div>
+      <BackBtn/>
+      <div className="gc" style={{textAlign:"center"}}>
+        <div style={{fontSize:28,marginBottom:10}}>📤</div>
+        <p style={{fontSize:13,color:ts,lineHeight:1.8,marginBottom:16}}>{he?"כדי לייצא תוצאות, ערוך קריאה בטאב הקריאה ולחץ על ״שמור דו״ח״ בסוף הקריאה.":"To export results, run a reading in the Reading tab and click 'Save Report' at the end."}</p>
+        <div style={{fontSize:44,opacity:.15,margin:"20px 0"}}>📑</div>
+      </div>
+    </div>)}
+
   </div>);
 }
 
@@ -706,12 +1069,14 @@ export default function App(){
       {/* ═══ INPUT TABS ═══ */}
       {!showRes&&(<>
         <div className="tabs" style={{animation:"fadeInUp .5s ease-out .2s both"}}>
-          {[{k:"reading",i:"🔮",l:he?"קריאה":"Reading"},{k:"tables",i:"📊",l:he?"טבלאות":"Tables"},{k:"match",i:"💫",l:he?"התאמה":"Match"},{k:"daily",i:"✨",l:he?"יומי":"Daily"},{k:"cards",i:"🃏",l:he?"קלפים":"Cards"}].map(tb=>(
+          {[{k:"reading",i:"🔮",l:he?"קריאה":"Reading"},{k:"tables",i:"📊",l:he?"טבלאות":"Tables"},{k:"match",i:"💫",l:he?"התאמה":"Match"},{k:"daily",i:"✨",l:he?"יומי":"Daily"},{k:"cards",i:"🃏",l:he?"קלפים":"Cards"},{k:"calc",i:"🧮",l:he?"מחשבונים":"Calculators"}].map(tb=>(
             <div key={tb.k} className={`ti ${tab===tb.k?"act":""}`} onClick={()=>{setTab(tb.k);AU.init();AU.p("click");}}>{tb.i} {tb.l}</div>
           ))}
         </div>
 
         {tab==="tables"&&<TablesWidget he={he} dk={dk}/>}
+
+        {tab==="calc"&&<CalculatorsWidget he={he} dk={dk}/>}
 
         {tab==="match"&&<CompatWidget he={he} dk={dk}/>}
 
