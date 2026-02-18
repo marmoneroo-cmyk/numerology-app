@@ -616,11 +616,11 @@ export default function App(){
   useEffect(()=>{AU.on=snd;},[snd]);
 
   useEffect(()=>{
-    try{const raw=localStorage.getItem("streak");if(raw){const d=JSON.parse(raw);const today=new Date().toDateString();if(d.last===today)setStreak(d.count);else if(d.last===new Date(Date.now()-86400000).toDateString())setStreak(d.count+1);else setStreak(1);}}catch(e){}
+    (async()=>{try{const r=await window.storage?.get("streak");if(r){const d=JSON.parse(r.value);const today=new Date().toDateString();if(d.last===today)setStreak(d.count);else if(d.last===new Date(Date.now()-86400000).toDateString())setStreak(d.count+1);else setStreak(1);}}catch(e){}})();
   },[]);
 
-  const saveStreak=useCallback(()=>{
-    try{const today=new Date().toDateString();localStorage.setItem("streak",JSON.stringify({count:streak||1,last:today}));}catch(e){}
+  const saveStreak=useCallback(async()=>{
+    try{const today=new Date().toDateString();await window.storage?.set("streak",JSON.stringify({count:streak||1,last:today}));}catch(e){}
   },[streak]);
 
   const revealChapter=(i)=>{AU.init();AU.p("chapter");const next=[...chapters];next[i]=true;setChapters(next);};
@@ -849,27 +849,401 @@ export default function App(){
 }
 
 // ═══════════════════ COMPAT WIDGET ═══════════════════
+// ═══════════════════ COMPATIBILITY DATA ═══════════════════
+const LP_COMPAT = {
+  "1-1":{he:{con:"שני מנהיגים חזקים — כוח אדיר כשפועלים יחד",ch:"מאבקי אגו ותחרות על שליטה",tip:"למדו לחלק תחומי אחריות ולתת כבוד לעצמאות של כל אחד"},en:{con:"Two strong leaders — immense power together",ch:"Ego battles and competition for control",tip:"Learn to divide responsibilities and respect each other's independence"}},
+  "1-2":{he:{con:"מנהיג ומגשר — שילוב מושלם של כוח ורגישות",ch:"ה-1 עלול לדרוס את ה-2 הרגיש, ה-2 עלול להרגיש בלתי נראה",tip:"ה-1 צריך להאט ולהקשיב, ה-2 צריך לבטא צרכים בבירור"},en:{con:"Leader and mediator — perfect blend of strength and sensitivity",ch:"The 1 may overpower the sensitive 2",tip:"The 1 needs to slow down and listen, the 2 needs to express needs clearly"}},
+  "1-3":{he:{con:"אנרגיה גבוהה, יצירתיות ופעולה — זוג מלהיב",ch:"שניהם רוצים תשומת לב ועלולים להתפזר",tip:"מקדו את האנרגיה המשותפת לפרויקטים יצירתיים"},en:{con:"High energy, creativity and action — exciting pair",ch:"Both want attention and may scatter",tip:"Focus shared energy on creative projects"}},
+  "1-4":{he:{con:"חזון ומעשה — ה-1 מוביל וה-4 בונה",ch:"ה-1 חסר סבלנות, ה-4 איטי ושיטתי — חיכוכים בקצב",tip:"כבדו את הקצב השונה — שניכם חיוניים להצלחה"},en:{con:"Vision and action — the 1 leads, the 4 builds",ch:"The 1 is impatient, the 4 is slow and methodical",tip:"Respect the different pace — you're both essential"}},
+  "1-5":{he:{con:"הרפתקה, חופש ואנרגיה בלתי נגמרת — שילוב מרגש",ch:"שניהם לא אוהבים שגרה — מי מייצב?",tip:"צרו בסיס יציב שממנו אתם יוצאים להרפתקאות"},en:{con:"Adventure, freedom and endless energy",ch:"Neither likes routine — who stabilizes?",tip:"Create a stable base from which you launch adventures"}},
+  "1-6":{he:{con:"ה-1 מוביל בחוץ, ה-6 מנהל את הבית — שותפות קלאסית",ch:"ה-1 עלול להזניח את הבית, ה-6 עלול להרגיש מנוצל",tip:"איזון בין שאיפות אישיות לצרכי המשפחה"},en:{con:"The 1 leads outside, the 6 manages home — classic partnership",ch:"The 1 may neglect home, the 6 may feel exploited",tip:"Balance personal ambitions with family needs"}},
+  "1-7":{he:{con:"פעולה ומחשבה — שילוב עוצמתי של עשייה וחכמה",ch:"ה-1 חיצוני, ה-7 פנימי — קושי בתקשורת רגשית",tip:"תנו מרחב זה לזה ומצאו שפה משותפת"},en:{con:"Action and thought — powerful blend of doing and wisdom",ch:"The 1 is external, the 7 is internal — emotional communication gap",tip:"Give each other space and find a common language"}},
+  "1-8":{he:{con:"שני כוחות — יחד יכולים לכבוש עולמות",ch:"מאבקי כוח אינטנסיביים, שניהם רוצים לשלוט",tip:"הפנו את הכוח החוצה — לפרויקטים משותפים, לא אחד נגד השני"},en:{con:"Two powerhouses — together they can conquer worlds",ch:"Intense power struggles, both want control",tip:"Direct power outward — to shared projects, not against each other"}},
+  "1-9":{he:{con:"ה-1 מתחיל, ה-9 משלים — מעגל שלם",ch:"ה-9 גדול מדי לדברים קטנים, ה-1 לא תמיד רואה את התמונה הגדולה",tip:"למדו מהפרספקטיבה של השני"},en:{con:"The 1 begins, the 9 completes — a full circle",ch:"The 9 is too big for small things, the 1 doesn't always see the big picture",tip:"Learn from each other's perspective"}},
+  "2-2":{he:{con:"רגישות כפולה, אמפתיה עמוקה ושותפות הרמונית",ch:"חוסר החלטיות כפול, תלות רגשית",tip:"פתחו עצמאות אישית לצד הקשר"},en:{con:"Double sensitivity, deep empathy, harmonious partnership",ch:"Double indecisiveness, emotional dependency",tip:"Develop personal independence alongside the bond"}},
+  "2-3":{he:{con:"ה-2 מקשיב וה-3 מבטא — שילוב יצירתי ורגשי",ch:"ה-3 עלול להיות שטחי מדי עבור ה-2 הרגיש",tip:"ה-3 צריך להעמיק, ה-2 צריך להקל"},en:{con:"The 2 listens, the 3 expresses — creative emotional blend",ch:"The 3 may be too superficial for the sensitive 2",tip:"The 3 needs to go deeper, the 2 needs to lighten up"}},
+  "2-4":{he:{con:"יציבות רגשית — שניהם מחפשים ביטחון ונאמנות",ch:"עלולים להיתקע בשגרה ולהימנע משינוי",tip:"הכניסו ספונטניות ושינוי לשגרה"},en:{con:"Emotional stability — both seek security and loyalty",ch:"May get stuck in routine and avoid change",tip:"Introduce spontaneity into the routine"}},
+  "2-5":{he:{con:"ה-5 מרגש את ה-2 ומוציא אותו מאזור הנוחות",ch:"ה-2 רוצה יציבות, ה-5 רוצה חופש — מתח בסיסי",tip:"מצאו את האיזון בין הרפתקה לביטחון"},en:{con:"The 5 excites the 2 and pushes them out of comfort zone",ch:"The 2 wants stability, the 5 wants freedom — basic tension",tip:"Find balance between adventure and security"}},
+  "2-6":{he:{con:"שני לבבות אוהבים — קשר מלא חום ודאגה הדדית",ch:"הקרבה עצמית כפולה — מי דואג לעצמו?",tip:"למדו לקבל, לא רק לתת"},en:{con:"Two loving hearts — warm and caring bond",ch:"Double self-sacrifice — who takes care of themselves?",tip:"Learn to receive, not just give"}},
+  "2-7":{he:{con:"אינטואיציה כפולה — חיבור רוחני עמוק",ch:"שניהם פנימיים — קושי להוציא רגשות",tip:"צרו טקסים של שיתוף רגשי"},en:{con:"Double intuition — deep spiritual connection",ch:"Both are inward — difficulty expressing emotions",tip:"Create rituals for emotional sharing"}},
+  "2-8":{he:{con:"ה-2 מרכך את ה-8 — כוח עם לב",ch:"ה-8 עלול לשלוט, ה-2 עלול לוותר על עצמו",tip:"ה-2 חייב לשמור על גבולות"},en:{con:"The 2 softens the 8 — power with heart",ch:"The 8 may dominate, the 2 may lose themselves",tip:"The 2 must maintain boundaries"}},
+  "2-9":{he:{con:"חמלה כפולה — שניהם רוצים לתקן את העולם",ch:"מי דואג לזוגיות עצמה?",tip:"שימו את הזוגיות במרכז, לא רק אחרים"},en:{con:"Double compassion — both want to heal the world",ch:"Who takes care of the relationship itself?",tip:"Put the relationship at the center, not just others"}},
+  "3-3":{he:{con:"יצירתיות כפולה, שמחה ותקשורת מצוינת",ch:"פיזור, שטחיות, בריחה מעומק",tip:"העמיקו — מאחורי השמחה יש עומק לגלות"},en:{con:"Double creativity, joy and excellent communication",ch:"Scattering, superficiality, avoidance of depth",tip:"Go deeper — behind the joy there's depth to discover"}},
+  "3-4":{he:{con:"ה-3 מביא צבע וה-4 מביא מבנה — יופי מאורגן",ch:"ה-3 רואה את ה-4 משעמם, ה-4 רואה את ה-3 לא רציני",tip:"למדו להעריך את המתנה ההפוכה"},en:{con:"The 3 brings color, the 4 brings structure",ch:"The 3 sees the 4 as boring, the 4 sees the 3 as unserious",tip:"Learn to appreciate the opposite gift"}},
+  "3-5":{he:{con:"חיים כמו חגיגה — יצירתיות, הרפתקה ועוצמה",ch:"אין עוגן — שניהם עפים, מי נוחת?",tip:"בנו שורשים, גם אם קטנים"},en:{con:"Life as celebration — creativity, adventure, intensity",ch:"No anchor — both fly, who lands?",tip:"Build roots, even small ones"}},
+  "3-6":{he:{con:"אהבה, יופי ויצירה — בית מלא חיים",ch:"ה-6 עלול לחנוק את ה-3 החופשי",tip:"תנו מרחב יצירתי בתוך מסגרת אוהבת"},en:{con:"Love, beauty and creation — a home full of life",ch:"The 6 may smother the free 3",tip:"Give creative space within a loving framework"}},
+  "3-7":{he:{con:"ביטוי ומחשבה — שילוב של אמנות ופילוסופיה",ch:"ה-3 חברתי, ה-7 בודד — קונפליקט בסיסי",tip:"כבדו את הצורך השונה — לפעמים יחד, לפעמים לבד"},en:{con:"Expression and thought — art meets philosophy",ch:"The 3 is social, the 7 is solitary — basic conflict",tip:"Respect the different needs — sometimes together, sometimes apart"}},
+  "3-8":{he:{con:"כריזמה וכוח — זוג שמושך תשומת לב",ch:"שניהם אוהבים את הבמה — מי מאחורי הקלעים?",tip:"חלקו את האור הזרקורים"},en:{con:"Charisma and power — an attention-drawing couple",ch:"Both love the spotlight — who's backstage?",tip:"Share the spotlight"}},
+  "3-9":{he:{con:"יצירתיות ברמה הגבוהה — שניהם מבטאים את הנשמה",ch:"רגשות חזקים מדי לפעמים — דרמה",tip:"תעלו רגשות ליצירה במקום לקונפליקט"},en:{con:"High-level creativity — both express the soul",ch:"Sometimes emotions are too intense — drama",tip:"Channel emotions into creation, not conflict"}},
+  "4-4":{he:{con:"יציבות מוחלטת — בניין מוצק של אמון",ch:"נוקשות כפולה, פחד משינוי",tip:"שברו שגרה מדי פעם — זה לא מסוכן"},en:{con:"Absolute stability — solid foundation of trust",ch:"Double rigidity, fear of change",tip:"Break routine sometimes — it's not dangerous"}},
+  "4-5":{he:{con:"ה-4 מעגן וה-5 מרגש — מתח יצירתי",ch:"קונפליקט בסיסי בין יציבות לחופש",tip:"ה-4 צריך להרפות, ה-5 צריך להתחייב קצת"},en:{con:"The 4 anchors, the 5 excites — creative tension",ch:"Basic conflict between stability and freedom",tip:"The 4 needs to loosen up, the 5 needs to commit a bit"}},
+  "4-6":{he:{con:"בית חלומות — שניהם בונים ומטפחים",ch:"עבודת יתר למען המשפחה — שוכחים את עצמם",tip:"השקיעו גם בזוגיות, לא רק במשפחה"},en:{con:"Dream home — both build and nurture",ch:"Overworking for family — forgetting themselves",tip:"Invest in the couple, not just the family"}},
+  "4-7":{he:{con:"שיטתיות ועומק — קשר אינטלקטואלי חזק",ch:"שניהם רציניים מדי — איפה הקלילות?",tip:"הכניסו צחוק והנאה"},en:{con:"Method and depth — strong intellectual bond",ch:"Both too serious — where's the lightness?",tip:"Bring in laughter and fun"}},
+  "4-8":{he:{con:"בנייה וכוח — יחד יכולים להקים אימפריה",ch:"עבודה, עבודה, עבודה — איפה האהבה?",tip:"קבעו זמן קדוש לרומנטיקה"},en:{con:"Building and power — together they can build an empire",ch:"Work, work, work — where's the love?",tip:"Set sacred time for romance"}},
+  "4-9":{he:{con:"מעשיות וחכמה — ה-4 בונה את חזון ה-9",ch:"ה-9 חולם בגדול, ה-4 חושב בקטן",tip:"שלבו בין הפרקטי לרוחני"},en:{con:"Practicality and wisdom — the 4 builds the 9's vision",ch:"The 9 dreams big, the 4 thinks small",tip:"Combine practical with spiritual"}},
+  "5-5":{he:{con:"הרפתקה כפולה — חיים מלאי ריגוש",ch:"אין יציבות בכלל — כאוס",tip:"בנו מבנה מינימלי — גם חופשיים צריכים בסיס"},en:{con:"Double adventure — life full of excitement",ch:"No stability at all — chaos",tip:"Build minimal structure — even free spirits need a base"}},
+  "5-6":{he:{con:"ה-5 מביא ריגוש וה-6 מביא חום ביתי",ch:"ה-5 בורח, ה-6 נצמד — מרחק רגשי",tip:"מצאו את הנוסחה בין מרחב לקרבה"},en:{con:"The 5 brings excitement, the 6 brings warmth",ch:"The 5 runs, the 6 clings — emotional distance",tip:"Find the formula between space and closeness"}},
+  "5-7":{he:{con:"חופש וחכמה — שניהם חוקרים את העולם",ch:"ה-5 חוקר בחוץ, ה-7 חוקר בפנים",tip:"שתפו את הגילויים שלכם"},en:{con:"Freedom and wisdom — both explore the world",ch:"The 5 explores outside, the 7 inside",tip:"Share your discoveries with each other"}},
+  "5-8":{he:{con:"אנרגיה ושאיפה — זוג דינמי שמושך הצלחה",ch:"שניהם עסוקים מדי — הזוגיות נשחקת",tip:"הזוגיות היא ההשקעה הכי חשובה"},en:{con:"Energy and ambition — dynamic couple attracting success",ch:"Both too busy — relationship erodes",tip:"The relationship is the most important investment"}},
+  "5-9":{he:{con:"חיבור מבוסס חופש ואידיאלים משותפים",ch:"שניהם מתפזרים — חסר מיקוד",tip:"בחרו כיוון אחד ולכו בו יחד"},en:{con:"Connection based on freedom and shared ideals",ch:"Both scatter — lack of focus",tip:"Choose one direction and walk it together"}},
+  "6-6":{he:{con:"אהבה ללא תנאים — בית מלא חום",ch:"שליטה הדדית דרך אהבה, הקרבה כפולה",tip:"אהבו בלי לשלוט, תנו בלי לצפות"},en:{con:"Unconditional love — home full of warmth",ch:"Mutual control through love, double sacrifice",tip:"Love without controlling, give without expecting"}},
+  "6-7":{he:{con:"לב ושכל — ה-6 מרפא וה-7 מאיר",ch:"ה-6 רוצה קרבה, ה-7 רוצה מרחב",tip:"תנו זמן — החיבור הזה מעמיק עם השנים"},en:{con:"Heart and mind — the 6 heals, the 7 illuminates",ch:"The 6 wants closeness, the 7 wants space",tip:"Give it time — this connection deepens with years"}},
+  "6-8":{he:{con:"אהבה וכוח — בניית חיים מרשימים יחד",ch:"ויכוחים על כסף ואחריות",tip:"חלקו אחריות בשקיפות מלאה"},en:{con:"Love and power — building impressive lives together",ch:"Arguments about money and responsibility",tip:"Share responsibilities with full transparency"}},
+  "6-9":{he:{con:"שני לבבות גדולים — חמלה ואהבה לעולם כולו",ch:"מי דואג לזוגיות כשדואגים לכולם?",tip:"שימו את עצמכם ראשונים לפעמים"},en:{con:"Two big hearts — compassion and love for the whole world",ch:"Who cares for the relationship when caring for everyone?",tip:"Put yourselves first sometimes"}},
+  "7-7":{he:{con:"חיבור רוחני עמוק ונדיר — שתי נשמות מתקדמות",ch:"שניהם בעולמות פנימיים — בדידות בתוך הזוגיות",tip:"צרו גשר רגשי, לא רק אינטלקטואלי"},en:{con:"Deep and rare spiritual connection",ch:"Both in inner worlds — loneliness within the relationship",tip:"Create an emotional bridge, not just intellectual"}},
+  "7-8":{he:{con:"חכמה וכוח — שילוב נדיר של עומק והגשמה",ch:"עולמות שונים — ה-7 רוחני, ה-8 חומרי",tip:"למדו מהעולם של השני"},en:{con:"Wisdom and power — rare blend of depth and manifestation",ch:"Different worlds — the 7 spiritual, the 8 material",tip:"Learn from each other's world"}},
+  "7-9":{he:{con:"שתי נשמות ותיקות — חיבור מעבר לזמן",ch:"שניהם בעולמות גבוהים — מי על הקרקע?",tip:"עשו שורשים ביחד, גם אם רחוקים מהמון"},en:{con:"Two old souls — connection beyond time",ch:"Both in higher realms — who's grounded?",tip:"Put down roots together"}},
+  "8-8":{he:{con:"זוג כוח — יחד שולטים בעולם",ch:"מאבקי שליטה אינטנסיביים ובלתי פוסקים",tip:"הפנו את הכוח לפרויקט משותף גדול"},en:{con:"Power couple — together they rule the world",ch:"Intense, unrelenting power struggles",tip:"Direct power toward a grand shared project"}},
+  "8-9":{he:{con:"כוח עם חכמה — שילוב של עשייה ומשמעות",ch:"ה-8 רוצה תוצאות, ה-9 רוצה משמעות",tip:"שלבו בין הצלחה חומרית לתרומה לעולם"},en:{con:"Power with wisdom — doing meets meaning",ch:"The 8 wants results, the 9 wants meaning",tip:"Combine material success with contribution"}},
+  "9-9":{he:{con:"שני חכמים — חיבור נשמתי ברמה הגבוהה ביותר",ch:"שניהם מוותרים — מי נלחם על הזוגיות?",tip:"הזוגיות שלכם גם היא שליחות"},en:{con:"Two sages — soul connection at the highest level",ch:"Both give in — who fights for the relationship?",tip:"Your relationship is also a mission"}},
+};
+function getCompat(a,b){const k1=`${Math.min(a,b)}-${Math.max(a,b)}`;return LP_COMPAT[k1]||LP_COMPAT[`${a}-${b}`]||LP_COMPAT[`${b}-${a}`]||null;}
+
+const TRAITS={
+  1:{he:{str:["עצמאות ויוזמה","כושר מנהיגות טבעי","אומץ ונחישות"],ch:["קושי בשיתוף פעולה","חוסר סבלנות","נטייה לבדידות"],soul:"ללמוד שמנהיגות אמיתית היא שירות, לא שליטה"},en:{str:["Independence and initiative","Natural leadership","Courage and determination"],ch:["Difficulty in cooperation","Impatience","Tendency to isolation"],soul:"To learn that true leadership is service, not control"}},
+  2:{he:{str:["רגישות ואמפתיה עמוקה","כושר הקשבה יוצא דופן","דיפלומטיות"],ch:["חוסר החלטיות","תלות רגשית","ויתור על עצמו"],soul:"לפתח קול עצמאי ולהציב גבולות בריאים"},en:{str:["Deep sensitivity and empathy","Exceptional listening ability","Diplomacy"],ch:["Indecisiveness","Emotional dependency","Self-sacrifice"],soul:"To develop an independent voice and set healthy boundaries"}},
+  3:{he:{str:["כושר ביטוי מבריק","יצירתיות ודמיון","אופטימיות וכריזמה"],ch:["פיזור אנרגיה","שטחיות","בריחה מרגשות כבדים"],soul:"ללמוד שעומק ושמחה יכולים לדור יחד"},en:{str:["Brilliant expression ability","Creativity and imagination","Optimism and charisma"],ch:["Energy scattering","Superficiality","Avoidance of heavy emotions"],soul:"To learn that depth and joy can coexist"}},
+  4:{he:{str:["אמינות ויציבות","חריצות ומסירות","חשיבה שיטתית"],ch:["נוקשות ופחד משינוי","עבודת יתר","קושי לשחרר שליטה"],soul:"ללמוד שגמישות היא חוזק, לא חולשה"},en:{str:["Reliability and stability","Diligence and devotion","Systematic thinking"],ch:["Rigidity and fear of change","Overwork","Difficulty releasing control"],soul:"To learn that flexibility is strength, not weakness"}},
+  5:{he:{str:["כושר הסתגלות מדהים","תשוקה לחיים","מגנטיות ומשיכה"],ch:["חוסר מחויבות","חוסר שקט פנימי","התמכרות לגירויים"],soul:"למצוא את החופש האמיתי בתוך מחויבות"},en:{str:["Amazing adaptability","Passion for life","Magnetism and attraction"],ch:["Lack of commitment","Inner restlessness","Addiction to stimulation"],soul:"To find true freedom within commitment"}},
+  6:{he:{str:["אהבה ללא תנאים","אחריות ומסירות","חוש אסתטי מפותח"],ch:["שליטה דרך אהבה","הקרבה עצמית","נטל אחריות מוגזם"],soul:"ללמוד שאהבה אמיתית כוללת גם אהבה עצמית"},en:{str:["Unconditional love","Responsibility and devotion","Developed aesthetic sense"],ch:["Control through love","Self-sacrifice","Excessive burden of responsibility"],soul:"To learn that true love includes self-love"}},
+  7:{he:{str:["חכמה ותבונה פנימית","אינטואיציה חדה","יכולת ניתוח עמוקה"],ch:["ניתוק רגשי","ביקורתיות","בדידות נבחרת"],soul:"לאזן בין שכל ללב ולפתוח את הלב לאחרים"},en:{str:["Wisdom and inner insight","Sharp intuition","Deep analytical ability"],ch:["Emotional detachment","Criticism","Chosen solitude"],soul:"To balance mind and heart, and open the heart to others"}},
+  8:{he:{str:["כוח הגשמה עצום","ראייה עסקית חדה","כריזמה ואוטוריטה"],ch:["אובססיה לכוח","חומרנות","קושי בפגיעות רגשית"],soul:"ללמוד שהכוח האמיתי הוא ביכולת לתת ולשרת"},en:{str:["Immense manifestation power","Sharp business vision","Charisma and authority"],ch:["Power obsession","Materialism","Difficulty with emotional vulnerability"],soul:"To learn that true power is in the ability to give and serve"}},
+  9:{he:{str:["חמלה אינסופית","ראייה רחבה וגלובלית","חכמה של נשמה ותיקה"],ch:["קושי לשחרר","תחושת עליונות","נטילת עול העולם"],soul:"ללמוד לשחרר בשלום ולחיות בהווה"},en:{str:["Infinite compassion","Broad global vision","Old soul wisdom"],ch:["Difficulty letting go","Sense of superiority","Taking on the world's burden"],soul:"To learn to release in peace and live in the present"}},
+};
+
+// ═══════════════════ COMPAT WIDGET (FULL REWRITE) ═══════════════════
 function CompatWidget({he,dk}){
-  const ac=dk?"#d4af37":"#8B6914";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
-  const[n1,setN1]=useState("");const[n2,setN2]=useState("");const[res,setRes]=useState(null);const[anim,setAnim]=useState(false);
-  const check=()=>{if(!n1.trim()||!n2.trim())return;AU.init();AU.p("reveal");setAnim(true);setRes(null);setTimeout(()=>{const v1=NV(n1),v2=NV(n2);let s=100-Math.abs(v1-v2)*8;if(v1===v2)s=98;s=Math.max(15,Math.min(99,s));const harmony=Math.min(10,s/10);const tension=Math.min(10,(100-s)/12);const growth=Math.min(10,Math.abs(v1-v2)+3);setRes({v1,v2,score:s,harmony,tension,growth});setAnim(false);AU.p("chapter");},1500);};
-  const desc=(s)=>s>=85?(he?"התאמה יוצאת דופן!":"Exceptional match!"):s>=65?(he?"התאמה טובה מאוד.":"Very good match."):s>=40?(he?"התאמה מעניינת עם פוטנציאל.":"Interesting match with potential."):(he?"התאמה מאתגרת — אבל הניגודים יוצרים עומק.":"Challenging match — opposites create depth.");
-  return(<div className="gc" style={{marginTop:12,animation:"fadeInUp .5s ease-out"}}>
-    <h3 style={{textAlign:"center",fontSize:20,color:ac,marginBottom:20,fontWeight:600}}>{he?"מטריצת יחסים":"Relationship Matrix"}</h3>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-      <div><label style={{fontSize:11,color:`${ac}99`,marginBottom:4,display:"block"}}>{he?"שם ראשון":"First Name"}</label><input className="gi" value={n1} onChange={e=>setN1(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
-      <div><label style={{fontSize:11,color:`${ac}99`,marginBottom:4,display:"block"}}>{he?"שם שני":"Second Name"}</label><input className="gi" value={n2} onChange={e=>setN2(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+  const ac=dk?"#d4af37":"#8B6914";
+  const tm=dk?"#e8e0d0":"#2a2520";
+  const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
+  const isRtl=he;
+
+  const[mode,setMode]=useState("couple"); // couple | profile | parent
+  const[anim,setAnim]=useState(false);
+
+  // Couple state
+  const[c1name,setC1name]=useState("");const[c1dob,setC1dob]=useState("");
+  const[c2name,setC2name]=useState("");const[c2dob,setC2dob]=useState("");
+  const[coupleRes,setCoupleRes]=useState(null);
+
+  // Profile state
+  const[pName,setPName]=useState("");const[pDob,setPDob]=useState("");
+  const[profileRes,setProfileRes]=useState(null);
+
+  // Parent-child state
+  const[parentName,setParentName]=useState("");const[parentDob,setParentDob]=useState("");
+  const[childName,setChildName]=useState("");const[childDob,setChildDob]=useState("");
+  const[pcRes,setPcRes]=useState(null);
+
+  const[error,setError]=useState("");
+
+  const parseDob=(s)=>{const p=s.split(".");if(p.length!==3)return null;const[d,m,y]=p.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)return null;return{d,m,y};};
+
+  const calcCouple=()=>{
+    setError("");
+    const d1=parseDob(c1dob),d2=parseDob(c2dob);
+    if(!d1||!d2||!c1name.trim()||!c2name.trim()){setError(he?"אנא מלא את כל השדות":"Please fill all fields");return;}
+    AU.init();AU.p("reveal");setAnim(true);setCoupleRes(null);
+    setTimeout(()=>{
+      const lp1=LP(d1.d,d1.m,d1.y),lp2=LP(d2.d,d2.m,d2.y);
+      const nv1=NV(c1name),nv2=NV(c2name);
+      const su1=SU(c1name),su2=SU(c2name);
+      const ex1=EX(c1name),ex2=EX(c2name);
+      const compat=getCompat(lp1,lp2);
+      // Score calculation
+      let score=50;
+      if(lp1===lp2)score+=20;else if(Math.abs(lp1-lp2)<=2)score+=15;else if(Math.abs(lp1-lp2)>=5)score-=5;
+      if(su1===su2)score+=15;else if(Math.abs(su1-su2)<=1)score+=8;
+      if(nv1===nv2)score+=10;else if(Math.abs(nv1-nv2)<=2)score+=5;
+      // Complementary pairs
+      const compPairs=[[1,2],[3,4],[5,6],[7,8],[1,9]];
+      if(compPairs.some(p=>(p[0]===lp1&&p[1]===lp2)||(p[1]===lp1&&p[0]===lp2)))score+=12;
+      score=Math.max(20,Math.min(99,score));
+      const harmony=Math.min(10,Math.round(score/10));
+      const tension=Math.min(10,Math.round((100-score)/12));
+      const growth=Math.min(10,Math.round(Math.abs(lp1-lp2)+Math.abs(su1-su2)/2+2));
+      setCoupleRes({lp1,lp2,nv1,nv2,su1,su2,ex1,ex2,score,harmony,tension,growth,compat});
+      setAnim(false);AU.p("chapter");
+    },1200);
+  };
+
+  const calcProfile=()=>{
+    setError("");
+    const d=parseDob(pDob);
+    if(!d||!pName.trim()){setError(he?"אנא מלא את כל השדות":"Please fill all fields");return;}
+    AU.init();AU.p("reveal");setAnim(true);setProfileRes(null);
+    setTimeout(()=>{
+      const lp=LP(d.d,d.m,d.y),nv=NV(pName),su=SU(pName),ex=EX(pName);
+      const age=CA(d.d,d.m,d.y);
+      const traits=TRAITS[lp];
+      setProfileRes({lp,nv,su,ex,age,traits});
+      setAnim(false);AU.p("chapter");
+    },1000);
+  };
+
+  const calcPC=()=>{
+    setError("");
+    const dp=parseDob(parentDob),dc=parseDob(childDob);
+    if(!dp||!dc||!parentName.trim()||!childName.trim()){setError(he?"אנא מלא את כל השדות":"Please fill all fields");return;}
+    AU.init();AU.p("reveal");setAnim(true);setPcRes(null);
+    setTimeout(()=>{
+      const lpP=LP(dp.d,dp.m,dp.y),lpC=LP(dc.d,dc.m,dc.y);
+      const nvP=NV(parentName),nvC=NV(childName);
+      const suP=SU(parentName),suC=SU(childName);
+      const compat=getCompat(lpP,lpC);
+      let score=55;
+      if(lpP===lpC)score+=18;else if(Math.abs(lpP-lpC)<=2)score+=12;
+      if(suP===suC)score+=10;
+      const teachPairs={1:4,2:8,3:7,4:5,5:6,6:1,7:3,8:9,9:2};
+      if(teachPairs[lpP]===lpC||teachPairs[lpC]===lpP)score+=10;
+      score=Math.max(25,Math.min(99,score));
+      setPcRes({lpP,lpC,nvP,nvC,suP,suC,score,compat});
+      setAnim(false);AU.p("chapter");
+    },1200);
+  };
+
+  const InputField=({label,value,onChange,placeholder,dir="rtl",style:st})=>(
+    <div style={{marginBottom:12}}>
+      <label style={{display:"block",marginBottom:5,fontSize:11,color:`${ac}99`,fontWeight:500}}>{label}</label>
+      <input className="gi" value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} dir={dir} style={{textAlign:dir==="rtl"?"right":"center",...st}}/>
     </div>
-    <button className="gb" onClick={check} disabled={!n1.trim()||!n2.trim()}>{he?"בדוק":"Check"}</button>
-    {anim&&<div style={{textAlign:"center",marginTop:24}}><div style={{width:50,height:50,border:`2px solid ${ac}33`,borderTopColor:ac,borderRadius:"50%",margin:"0 auto",animation:"spin 1s linear infinite"}}/></div>}
-    {res&&!anim&&(<div style={{marginTop:24,textAlign:"center",animation:"fadeInUp .6s ease-out"}}>
-      <div style={{position:"relative",width:120,height:120,margin:"0 auto 16px"}}><svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="53" fill="none" stroke={`${ac}10`} strokeWidth="4"/><circle cx="60" cy="60" r="53" fill="none" stroke={ac} strokeWidth="4" strokeDasharray={`${res.score*3.33} 333`} strokeLinecap="round" transform="rotate(-90 60 60)" style={{transition:"stroke-dasharray 1.5s ease"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:30,fontWeight:700,color:ac}}>{res.score}%</span></div></div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,margin:"16px 0"}}>
-        {[{l:he?"הרמוניה":"Harmony",v:res.harmony,c:"#4ECDC4"},{l:he?"מתח":"Tension",v:res.tension,c:"#E74C3C"},{l:he?"צמיחה":"Growth",v:res.growth,c:"#FFD700"}].map((it,i)=>(
-          <div key={i} style={{textAlign:"center"}}><div style={{fontSize:10,color:ts,marginBottom:4}}>{it.l}</div><div style={{height:6,background:dk?"rgba(20,20,40,.4)":"rgba(0,0,0,.05)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${it.v*10}%`,background:it.c,borderRadius:3,transition:"width 1.5s ease"}}/></div><div style={{fontSize:12,fontWeight:700,color:it.c,marginTop:4}}>{it.v}/10</div></div>
+  );
+
+  const PersonBlock=({icon,title,name,setName,dob,setDob})=>(
+    <div style={{padding:16,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:16}}>
+      <div style={{textAlign:"center",marginBottom:10}}><span style={{fontSize:22}}>{icon}</span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{title}</div></div>
+      <InputField label={he?"שם מלא":"Full Name"} value={name} onChange={setName} placeholder={he?"שם בעברית...":"Name in Hebrew..."}/>
+      <InputField label={he?"תאריך לידה":"Date of Birth"} value={dob} onChange={setDob} placeholder="dd.mm.yyyy" dir="ltr" style={{letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}}/>
+    </div>
+  );
+
+  const NumBadge=({label,value,col})=>(
+    <div style={{textAlign:"center",padding:"10px 6px",background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.35)",border:`1px solid ${ac}0a`,borderRadius:12}}>
+      <div style={{fontSize:9,color:ts,letterSpacing:.5}}>{label}</div>
+      <div style={{fontSize:22,fontWeight:700,color:col||ac,fontFamily:"'Cormorant Garamond',serif",margin:"2px 0"}}>{value}</div>
+      {value>0&&value<=9&&D[value]&&<div style={{fontSize:9,color:D[value].c,opacity:.7}}>{he?D[value].t:D[value].te}</div>}
+    </div>
+  );
+
+  const ScoreRing=({score,size=130})=>(
+    <div style={{position:"relative",width:size,height:size,margin:"0 auto 16px"}}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={size/2} cy={size/2} r={size/2-8} fill="none" stroke={`${ac}10`} strokeWidth="5"/>
+        <circle cx={size/2} cy={size/2} r={size/2-8} fill="none" stroke={score>=75?"#4ECDC4":score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${score*((size-16)*Math.PI)/100} ${(size-16)*Math.PI}`} strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`} style={{transition:"stroke-dasharray 1.5s ease"}}/>
+      </svg>
+      <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+        <span style={{fontSize:32,fontWeight:700,color:ac}}>{score}%</span>
+        <span style={{fontSize:9,color:ts}}>{he?"התאמה":"Match"}</span>
+      </div>
+    </div>
+  );
+
+  const BarMeter=({label,value,max=10,color})=>(
+    <div style={{marginBottom:10}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+        <span style={{fontSize:11,color:ts}}>{label}</span>
+        <span style={{fontSize:12,fontWeight:700,color}}>{value}/{max}</span>
+      </div>
+      <div style={{height:6,background:dk?"rgba(20,20,40,.4)":"rgba(0,0,0,.05)",borderRadius:3,overflow:"hidden"}}>
+        <div style={{height:"100%",width:`${(value/max)*100}%`,background:color,borderRadius:3,transition:"width 1.5s ease"}}/>
+      </div>
+    </div>
+  );
+
+  return(<div style={{animation:"fadeInUp .5s ease-out"}}>
+    {/* Sub-tabs */}
+    <div className="gc" style={{padding:"6px",marginBottom:16}}>
+      <div style={{display:"flex",gap:2}}>
+        {[{k:"couple",i:"💑",l:he?"זוגיות":"Couple"},{k:"profile",i:"🧬",l:he?"פרופיל אישי":"Profile"},{k:"parent",i:"👨‍👧","l":he?"הורה-ילד":"Parent-Child"}].map(t=>(
+          <div key={t.k} className={`ti ${mode===t.k?"act":""}`} onClick={()=>{setMode(t.k);setError("");AU.init();AU.p("click");}} style={{flex:1}}>{t.i} {t.l}</div>
         ))}
       </div>
-      <p style={{fontSize:14,color:ts,lineHeight:1.8}}>{desc(res.score)}</p>
+    </div>
+
+    {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:14,textAlign:"center"}}>{error}</div>}
+
+    {/* ═══ COUPLE MODE ═══ */}
+    {mode==="couple"&&(<div>
+      <div className="gc">
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"התאמה זוגית":"Couple Compatibility"}</div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+          <PersonBlock icon="👤" title={he?"בן/בת זוג 1":"Partner 1"} name={c1name} setName={setC1name} dob={c1dob} setDob={setC1dob}/>
+          <PersonBlock icon="👤" title={he?"בן/בת זוג 2":"Partner 2"} name={c2name} setName={setC2name} dob={c2dob} setDob={setC2dob}/>
+        </div>
+        <button className="gb" onClick={calcCouple} disabled={!c1name.trim()||!c2name.trim()||!c1dob.trim()||!c2dob.trim()}>{he?"בדוק התאמה":"Check Compatibility"}</button>
+      </div>
+
+      {anim&&<div style={{textAlign:"center",marginTop:24}}><div style={{width:50,height:50,border:`2px solid ${ac}33`,borderTopColor:ac,borderRadius:"50%",margin:"0 auto",animation:"spin 1s linear infinite"}}/></div>}
+
+      {coupleRes&&!anim&&(<div style={{marginTop:16,animation:"fadeInUp .7s ease-out"}}>
+        <div className="gc">
+          <ScoreRing score={coupleRes.score}/>
+
+          {/* Life Path comparison */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,marginBottom:16,alignItems:"center"}}>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:10,color:ts}}>{c1name.split(" ")[0]}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{coupleRes.lp1}</div>
+              <div style={{fontSize:11,color:D[coupleRes.lp1]?.c||ac,opacity:.7}}>{he?D[coupleRes.lp1]?.t:D[coupleRes.lp1]?.te}</div>
+            </div>
+            <div style={{fontSize:20,color:`${ac}44`}}>⟷</div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:10,color:ts}}>{c2name.split(" ")[0]}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{coupleRes.lp2}</div>
+              <div style={{fontSize:11,color:D[coupleRes.lp2]?.c||ac,opacity:.7}}>{he?D[coupleRes.lp2]?.t:D[coupleRes.lp2]?.te}</div>
+            </div>
+          </div>
+
+          {/* Bars */}
+          <BarMeter label={he?"הרמוניה":"Harmony"} value={coupleRes.harmony} color="#4ECDC4"/>
+          <BarMeter label={he?"מתח":"Tension"} value={coupleRes.tension} color="#E74C3C"/>
+          <BarMeter label={he?"צמיחה":"Growth"} value={coupleRes.growth} color="#FFD700"/>
+
+          {/* Connection & Challenge */}
+          {coupleRes.compat&&(<div style={{marginTop:16}}>
+            <div style={{padding:14,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:18}}>💚</span><span style={{fontSize:13,fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר אתכם":"What connects you"}</span></div>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{coupleRes.compat[he?"he":"en"].con}</p>
+            </div>
+            <div style={{padding:14,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:14,marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:18}}>⚡</span><span style={{fontSize:13,fontWeight:600,color:"#E74C3C"}}>{he?"האתגרים":"Challenges"}</span></div>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{coupleRes.compat[he?"he":"en"].ch}</p>
+            </div>
+            <div style={{padding:14,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:18}}>💡</span><span style={{fontSize:13,fontWeight:600,color:ac}}>{he?"עצה":"Advice"}</span></div>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{coupleRes.compat[he?"he":"en"].tip}</p>
+            </div>
+          </div>)}
+
+          {/* Number comparison table */}
+          <div style={{marginTop:16,overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr style={{background:dk?"rgba(212,175,55,.03)":"rgba(0,0,0,.02)"}}>
+                <th style={{padding:"8px 10px",fontSize:11,fontWeight:700,color:ac,textAlign:"center"}}></th>
+                <th style={{padding:"8px 10px",fontSize:11,fontWeight:700,color:ac,textAlign:"center"}}>{c1name.split(" ")[0]||"1"}</th>
+                <th style={{padding:"8px 10px",fontSize:11,fontWeight:700,color:ac,textAlign:"center"}}>{c2name.split(" ")[0]||"2"}</th>
+              </tr></thead>
+              <tbody>
+                {[{l:he?"שביל הגורל":"Life Path",a:coupleRes.lp1,b:coupleRes.lp2},{l:he?"ערך השם":"Name",a:coupleRes.nv1,b:coupleRes.nv2},{l:he?"קול הנשמה":"Soul",a:coupleRes.su1,b:coupleRes.su2},{l:he?"ביטוי":"Expression",a:coupleRes.ex1,b:coupleRes.ex2}].map((r,i)=>(
+                  <tr key={i} style={{borderBottom:`1px solid ${ac}08`}}>
+                    <td style={{padding:"8px 10px",fontSize:12,color:ts,fontWeight:600}}>{r.l}</td>
+                    <td style={{padding:"8px 10px",fontSize:18,fontWeight:700,color:ac,textAlign:"center",fontFamily:"'Cormorant Garamond',serif"}}>{r.a}</td>
+                    <td style={{padding:"8px 10px",fontSize:18,fontWeight:700,color:ac,textAlign:"center",fontFamily:"'Cormorant Garamond',serif"}}>{r.b}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>)}
+    </div>)}
+
+    {/* ═══ PROFILE MODE ═══ */}
+    {mode==="profile"&&(<div>
+      <div className="gc">
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"פרופיל אישיותי":"Personality Profile"}</div>
+        </div>
+        <PersonBlock icon="🧬" title={he?"הפרטים שלך":"Your Details"} name={pName} setName={setPName} dob={pDob} setDob={setPDob}/>
+        <button className="gb" onClick={calcProfile} disabled={!pName.trim()||!pDob.trim()} style={{marginTop:12}}>{he?"גלה את עצמך":"Discover Yourself"}</button>
+      </div>
+
+      {anim&&<div style={{textAlign:"center",marginTop:24}}><div style={{width:50,height:50,border:`2px solid ${ac}33`,borderTopColor:ac,borderRadius:"50%",margin:"0 auto",animation:"spin 1s linear infinite"}}/></div>}
+
+      {profileRes&&!anim&&(<div style={{marginTop:16,animation:"fadeInUp .7s ease-out"}}>
+        <div className="gc">
+          <div style={{textAlign:"center",marginBottom:16}}>
+            <div style={{fontSize:10,color:ts}}>{pName}</div>
+            <div style={{fontSize:36,fontWeight:700,color:D[profileRes.lp]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{profileRes.lp}</div>
+            <div style={{fontSize:16,color:D[profileRes.lp]?.c||ac,fontWeight:600}}>{he?D[profileRes.lp]?.t:D[profileRes.lp]?.te}</div>
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
+            <NumBadge label={he?"ערך השם":"Name"} value={profileRes.nv}/>
+            <NumBadge label={he?"קול הנשמה":"Soul"} value={profileRes.su}/>
+            <NumBadge label={he?"ביטוי":"Expression"} value={profileRes.ex}/>
+          </div>
+
+          {/* Strengths */}
+          <div style={{padding:14,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,marginBottom:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><span style={{fontSize:18}}>💪</span><span style={{fontSize:14,fontWeight:600,color:"#4ECDC4"}}>{he?"חוזקות":"Strengths"}</span></div>
+            {profileRes.traits?.[he?"he":"en"]?.str?.map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0"}}><span style={{color:"#4ECDC4",fontSize:10}}>✦</span><span style={{fontSize:13,color:ts}}>{s}</span></div>))}
+          </div>
+
+          {/* Challenges */}
+          <div style={{padding:14,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:14,marginBottom:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><span style={{fontSize:18}}>🔥</span><span style={{fontSize:14,fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים":"Challenges"}</span></div>
+            {profileRes.traits?.[he?"he":"en"]?.ch?.map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0"}}><span style={{color:"#E74C3C",fontSize:10}}>✦</span><span style={{fontSize:13,color:ts}}>{s}</span></div>))}
+          </div>
+
+          {/* Soul Lesson */}
+          <div style={{padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14,textAlign:"center"}}>
+            <div style={{fontSize:22,marginBottom:6}}>🌟</div>
+            <div style={{fontSize:12,fontWeight:600,color:ac,marginBottom:6}}>{he?"שיעור הנשמה":"Soul Lesson"}</div>
+            <p style={{fontSize:14,lineHeight:1.9,color:ts,fontStyle:"italic"}}>{profileRes.traits?.[he?"he":"en"]?.soul}</p>
+          </div>
+        </div>
+      </div>)}
+    </div>)}
+
+    {/* ═══ PARENT-CHILD MODE ═══ */}
+    {mode==="parent"&&(<div>
+      <div className="gc">
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"חיבור הורה-ילד":"Parent-Child Connection"}</div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+          <PersonBlock icon="👨‍👩" title={he?"הורה":"Parent"} name={parentName} setName={setParentName} dob={parentDob} setDob={setParentDob}/>
+          <PersonBlock icon="👶" title={he?"ילד/ה":"Child"} name={childName} setName={setChildName} dob={childDob} setDob={setChildDob}/>
+        </div>
+        <button className="gb" onClick={calcPC} disabled={!parentName.trim()||!childName.trim()||!parentDob.trim()||!childDob.trim()}>{he?"בדוק חיבור":"Check Connection"}</button>
+      </div>
+
+      {anim&&<div style={{textAlign:"center",marginTop:24}}><div style={{width:50,height:50,border:`2px solid ${ac}33`,borderTopColor:ac,borderRadius:"50%",margin:"0 auto",animation:"spin 1s linear infinite"}}/></div>}
+
+      {pcRes&&!anim&&(<div style={{marginTop:16,animation:"fadeInUp .7s ease-out"}}>
+        <div className="gc">
+          <ScoreRing score={pcRes.score}/>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,marginBottom:16,alignItems:"center"}}>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:10,color:ts}}>{he?"הורה":"Parent"}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpP]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{pcRes.lpP}</div>
+              <div style={{fontSize:11,color:D[pcRes.lpP]?.c||ac,opacity:.7}}>{he?D[pcRes.lpP]?.t:D[pcRes.lpP]?.te}</div>
+            </div>
+            <div style={{fontSize:20,color:`${ac}44`}}>♡</div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:10,color:ts}}>{he?"ילד/ה":"Child"}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpC]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{pcRes.lpC}</div>
+              <div style={{fontSize:11,color:D[pcRes.lpC]?.c||ac,opacity:.7}}>{he?D[pcRes.lpC]?.t:D[pcRes.lpC]?.te}</div>
+            </div>
+          </div>
+
+          {pcRes.compat&&(<div>
+            <div style={{padding:14,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:18}}>🔗</span><span style={{fontSize:13,fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר ביניכם":"What connects you"}</span></div>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{pcRes.compat[he?"he":"en"].con}</p>
+            </div>
+            <div style={{padding:14,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:14,marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:18}}>⚡</span><span style={{fontSize:13,fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים בקשר":"Relationship challenges"}</span></div>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{pcRes.compat[he?"he":"en"].ch}</p>
+            </div>
+            <div style={{padding:14,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{fontSize:18}}>💡</span><span style={{fontSize:13,fontWeight:600,color:ac}}>{he?"עצה להורה":"Advice for parent"}</span></div>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{pcRes.compat[he?"he":"en"].tip}</p>
+            </div>
+          </div>)}
+
+          {/* What the child teaches the parent */}
+          <div style={{marginTop:14,padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14,textAlign:"center"}}>
+            <div style={{fontSize:22,marginBottom:6}}>✨</div>
+            <div style={{fontSize:12,fontWeight:600,color:ac,marginBottom:6}}>{he?"מה הילד בא ללמד אותך":"What the child comes to teach you"}</div>
+            <p style={{fontSize:14,lineHeight:1.9,color:ts,fontStyle:"italic"}}>{he?D[pcRes.lpC]?.growth:D[pcRes.lpC]?.growthE}</p>
+          </div>
+        </div>
+      </div>)}
     </div>)}
   </div>);
 }
