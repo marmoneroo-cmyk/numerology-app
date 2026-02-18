@@ -1002,53 +1002,11 @@ function CompatWidget({he,dk}){
     },1200);
   };
 
-  const InputField=({label,value,onChange,placeholder,dir="rtl",style:st})=>(
-    <div style={{marginBottom:12}}>
-      <label style={{display:"block",marginBottom:5,fontSize:11,color:`${ac}99`,fontWeight:500}}>{label}</label>
-      <input className="gi" value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} dir={dir} style={{textAlign:dir==="rtl"?"right":"center",...st}}/>
-    </div>
-  );
-
-  const PersonBlock=({icon,title,name,setName,dob,setDob})=>(
-    <div style={{padding:16,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:16}}>
-      <div style={{textAlign:"center",marginBottom:10}}><span style={{fontSize:22}}>{icon}</span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{title}</div></div>
-      <InputField label={he?"שם מלא":"Full Name"} value={name} onChange={setName} placeholder={he?"שם בעברית...":"Name in Hebrew..."}/>
-      <InputField label={he?"תאריך לידה":"Date of Birth"} value={dob} onChange={setDob} placeholder="dd.mm.yyyy" dir="ltr" style={{letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}}/>
-    </div>
-  );
-
-  const NumBadge=({label,value,col})=>(
-    <div style={{textAlign:"center",padding:"10px 6px",background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.35)",border:`1px solid ${ac}0a`,borderRadius:12}}>
-      <div style={{fontSize:9,color:ts,letterSpacing:.5}}>{label}</div>
-      <div style={{fontSize:22,fontWeight:700,color:col||ac,fontFamily:"'Cormorant Garamond',serif",margin:"2px 0"}}>{value}</div>
-      {value>0&&value<=9&&D[value]&&<div style={{fontSize:9,color:D[value].c,opacity:.7}}>{he?D[value].t:D[value].te}</div>}
-    </div>
-  );
-
-  const ScoreRing=({score,size=130})=>(
-    <div style={{position:"relative",width:size,height:size,margin:"0 auto 16px"}}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={size/2} cy={size/2} r={size/2-8} fill="none" stroke={`${ac}10`} strokeWidth="5"/>
-        <circle cx={size/2} cy={size/2} r={size/2-8} fill="none" stroke={score>=75?"#4ECDC4":score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${score*((size-16)*Math.PI)/100} ${(size-16)*Math.PI}`} strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`} style={{transition:"stroke-dasharray 1.5s ease"}}/>
-      </svg>
-      <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-        <span style={{fontSize:32,fontWeight:700,color:ac}}>{score}%</span>
-        <span style={{fontSize:9,color:ts}}>{he?"התאמה":"Match"}</span>
-      </div>
-    </div>
-  );
-
-  const BarMeter=({label,value,max=10,color})=>(
-    <div style={{marginBottom:10}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-        <span style={{fontSize:11,color:ts}}>{label}</span>
-        <span style={{fontSize:12,fontWeight:700,color}}>{value}/{max}</span>
-      </div>
-      <div style={{height:6,background:dk?"rgba(20,20,40,.4)":"rgba(0,0,0,.05)",borderRadius:3,overflow:"hidden"}}>
-        <div style={{height:"100%",width:`${(value/max)*100}%`,background:color,borderRadius:3,transition:"width 1.5s ease"}}/>
-      </div>
-    </div>
-  );
+  const inputLabelSt={display:"block",marginBottom:5,fontSize:11,color:`${ac}99`,fontWeight:500};
+  const personBlockSt={padding:16,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:16};
+  const personTitleSt={textAlign:"center",marginBottom:10};
+  const dobInputSt={textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"};
+  const numBadgeSt={textAlign:"center",padding:"10px 6px",background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.35)",border:`1px solid ${ac}0a`,borderRadius:12};
 
   return(<div style={{animation:"fadeInUp .5s ease-out"}}>
     {/* Sub-tabs */}
@@ -1069,8 +1027,16 @@ function CompatWidget({he,dk}){
           <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"התאמה זוגית":"Couple Compatibility"}</div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-          <PersonBlock icon="👤" title={he?"בן/בת זוג 1":"Partner 1"} name={c1name} setName={setC1name} dob={c1dob} setDob={setC1dob}/>
-          <PersonBlock icon="👤" title={he?"בן/בת זוג 2":"Partner 2"} name={c2name} setName={setC2name} dob={c2dob} setDob={setC2dob}/>
+          <div style={personBlockSt}>
+            <div style={personTitleSt}><span style={{fontSize:22}}>👤</span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"בן/בת זוג 1":"Partner 1"}</div></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={c1name} onChange={e=>setC1name(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={c1dob} onChange={e=>setC1dob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
+          </div>
+          <div style={personBlockSt}>
+            <div style={personTitleSt}><span style={{fontSize:22}}>👤</span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"בן/בת זוג 2":"Partner 2"}</div></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={c2name} onChange={e=>setC2name(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={c2dob} onChange={e=>setC2dob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
+          </div>
         </div>
         <button className="gb" onClick={calcCouple} disabled={!c1name.trim()||!c2name.trim()||!c1dob.trim()||!c2dob.trim()}>{he?"בדוק התאמה":"Check Compatibility"}</button>
       </div>
@@ -1079,7 +1045,7 @@ function CompatWidget({he,dk}){
 
       {coupleRes&&!anim&&(<div style={{marginTop:16,animation:"fadeInUp .7s ease-out"}}>
         <div className="gc">
-          <ScoreRing score={coupleRes.score}/>
+          <div style={{position:"relative",width:130,height:130,margin:"0 auto 16px"}}><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="57" fill="none" stroke={`${ac}10`} strokeWidth="5"/><circle cx="65" cy="65" r="57" fill="none" stroke={coupleRes.score>=75?"#4ECDC4":coupleRes.score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${coupleRes.score*114*Math.PI/100} ${114*Math.PI}`} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dasharray 1.5s ease"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:32,fontWeight:700,color:ac}}>{coupleRes.score}%</span><span style={{fontSize:9,color:ts}}>{he?"התאמה":"Match"}</span></div></div>
 
           {/* Life Path comparison */}
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,marginBottom:16,alignItems:"center"}}>
@@ -1097,9 +1063,9 @@ function CompatWidget({he,dk}){
           </div>
 
           {/* Bars */}
-          <BarMeter label={he?"הרמוניה":"Harmony"} value={coupleRes.harmony} color="#4ECDC4"/>
-          <BarMeter label={he?"מתח":"Tension"} value={coupleRes.tension} color="#E74C3C"/>
-          <BarMeter label={he?"צמיחה":"Growth"} value={coupleRes.growth} color="#FFD700"/>
+          {[{l:he?"הרמוניה":"Harmony",v:coupleRes.harmony,c:"#4ECDC4"},{l:he?"מתח":"Tension",v:coupleRes.tension,c:"#E74C3C"},{l:he?"צמיחה":"Growth",v:coupleRes.growth,c:"#FFD700"}].map((it,i)=>(
+            <div key={i} style={{marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:ts}}>{it.l}</span><span style={{fontSize:12,fontWeight:700,color:it.c}}>{it.v}/10</span></div><div style={{height:6,background:dk?"rgba(20,20,40,.4)":"rgba(0,0,0,.05)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${it.v*10}%`,background:it.c,borderRadius:3,transition:"width 1.5s ease"}}/></div></div>
+          ))}
 
           {/* Connection & Challenge */}
           {coupleRes.compat&&(<div style={{marginTop:16}}>
@@ -1146,7 +1112,11 @@ function CompatWidget({he,dk}){
         <div style={{textAlign:"center",marginBottom:16}}>
           <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"פרופיל אישיותי":"Personality Profile"}</div>
         </div>
-        <PersonBlock icon="🧬" title={he?"הפרטים שלך":"Your Details"} name={pName} setName={setPName} dob={pDob} setDob={setPDob}/>
+        <div style={personBlockSt}>
+          <div style={personTitleSt}><span style={{fontSize:22}}>🧬</span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"הפרטים שלך":"Your Details"}</div></div>
+          <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={pName} onChange={e=>setPName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
+          <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={pDob} onChange={e=>setPDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
+        </div>
         <button className="gb" onClick={calcProfile} disabled={!pName.trim()||!pDob.trim()} style={{marginTop:12}}>{he?"גלה את עצמך":"Discover Yourself"}</button>
       </div>
 
@@ -1161,9 +1131,9 @@ function CompatWidget({he,dk}){
           </div>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
-            <NumBadge label={he?"ערך השם":"Name"} value={profileRes.nv}/>
-            <NumBadge label={he?"קול הנשמה":"Soul"} value={profileRes.su}/>
-            <NumBadge label={he?"ביטוי":"Expression"} value={profileRes.ex}/>
+            {[{l:he?"ערך השם":"Name",v:profileRes.nv},{l:he?"קול הנשמה":"Soul",v:profileRes.su},{l:he?"ביטוי":"Expression",v:profileRes.ex}].map((it,i)=>(
+              <div key={i} style={numBadgeSt}><div style={{fontSize:9,color:ts,letterSpacing:.5}}>{it.l}</div><div style={{fontSize:22,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif",margin:"2px 0"}}>{it.v}</div>{it.v>0&&it.v<=9&&D[it.v]&&<div style={{fontSize:9,color:D[it.v].c,opacity:.7}}>{he?D[it.v].t:D[it.v].te}</div>}</div>
+            ))}
           </div>
 
           {/* Strengths */}
@@ -1195,8 +1165,16 @@ function CompatWidget({he,dk}){
           <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"חיבור הורה-ילד":"Parent-Child Connection"}</div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-          <PersonBlock icon="👨‍👩" title={he?"הורה":"Parent"} name={parentName} setName={setParentName} dob={parentDob} setDob={setParentDob}/>
-          <PersonBlock icon="👶" title={he?"ילד/ה":"Child"} name={childName} setName={setChildName} dob={childDob} setDob={setChildDob}/>
+          <div style={personBlockSt}>
+            <div style={personTitleSt}><span style={{fontSize:22}}>👨‍👩</span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"הורה":"Parent"}</div></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={parentName} onChange={e=>setParentName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={parentDob} onChange={e=>setParentDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
+          </div>
+          <div style={personBlockSt}>
+            <div style={personTitleSt}><span style={{fontSize:22}}>👶</span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"ילד/ה":"Child"}</div></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={childName} onChange={e=>setChildName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={childDob} onChange={e=>setChildDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
+          </div>
         </div>
         <button className="gb" onClick={calcPC} disabled={!parentName.trim()||!childName.trim()||!parentDob.trim()||!childDob.trim()}>{he?"בדוק חיבור":"Check Connection"}</button>
       </div>
@@ -1205,7 +1183,7 @@ function CompatWidget({he,dk}){
 
       {pcRes&&!anim&&(<div style={{marginTop:16,animation:"fadeInUp .7s ease-out"}}>
         <div className="gc">
-          <ScoreRing score={pcRes.score}/>
+          <div style={{position:"relative",width:130,height:130,margin:"0 auto 16px"}}><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="57" fill="none" stroke={`${ac}10`} strokeWidth="5"/><circle cx="65" cy="65" r="57" fill="none" stroke={pcRes.score>=75?"#4ECDC4":pcRes.score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${pcRes.score*114*Math.PI/100} ${114*Math.PI}`} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dasharray 1.5s ease"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:32,fontWeight:700,color:ac}}>{pcRes.score}%</span><span style={{fontSize:9,color:ts}}>{he?"התאמה":"Match"}</span></div></div>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,marginBottom:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
