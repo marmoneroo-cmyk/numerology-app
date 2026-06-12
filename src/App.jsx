@@ -255,7 +255,7 @@ function PsychRadar({psych,dk,he}){
   return(<svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{display:"block",margin:"0 auto"}}>
     {[.25,.5,.75,1].map(f=><polygon key={f} points={keys.map((_,i)=>{const a=Math.PI*2/6*i-Math.PI/2;return`${cx+r*f*Math.cos(a)},${cy+r*f*Math.sin(a)}`;}).join(" ")} fill="none" stroke={ac} strokeWidth=".4" opacity={f===1?.2:.1}/>)}
     {pts.map((p,i)=><line key={i} x1={cx} y1={cy} x2={p.ax} y2={p.ay} stroke={ac} strokeWidth=".3" opacity=".15"/>)}
-    <polygon points={poly} fill={ac} opacity=".08" stroke={ac} strokeWidth="1.5" opacity=".5"><animate attributeName="opacity" values=".04;.12;.04" dur="4s" repeatCount="indefinite"/></polygon>
+    <polygon points={poly} fill={ac} fillOpacity=".08" stroke={ac} strokeWidth="1.5" strokeOpacity=".5"><animate attributeName="opacity" values=".7;1;.7" dur="4s" repeatCount="indefinite"/></polygon>
     {pts.map((p,i)=><g key={i}><circle cx={p.x} cy={p.y} r={4} fill={p.col} opacity=".7"><animate attributeName="r" values="3;5;3" dur={`${3+i*.5}s`} repeatCount="indefinite"/></circle></g>)}
     {pts.map((p,i)=><text key={`l${i}`} x={p.lx} y={p.ly} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill={p.col} opacity=".7" fontFamily="sans-serif">{axes[i]}<tspan x={p.lx} dy="13" fontSize="12" fontWeight="700" fill={p.col}>{p.v}/10</tspan></text>)}
   </svg>);
@@ -967,6 +967,399 @@ function CalculatorsWidget({he,dk}){
   </div>);
 }
 
+// ═══════════════════ SHOP / CHECKOUT CONFIG ═══════════════════
+// ┌─────────────────────────────────────────────────────────────┐
+// │  הגדרת מערכת הסליקה — Grow / משולם                          │
+// │  1. עדכן WHATSAPP_PHONE למספר שלך (פורמט: 9725XXXXXXXX)      │
+// │  2. ב-Grow (grow.business) ← "עמודי תשלום" צור עמוד תשלום     │
+// │     לכל מוצר (שם, מחיר, חשבונית מס אוטומטית).                 │
+// │  3. הדבק את הלינק של כל עמוד בשדה link של המוצר למטה.         │
+// │  • כפתור "שלם עכשיו" → ישר לעמוד הסליקה של המוצר.            │
+// │  • "הוסף לעגלה" + "סיום הזמנה" → שולח הזמנה מרוכזת בוואטסאפ   │
+// │     ואז שולחים ללקוח לינק תשלום אחד / בקשת Bit.              │
+// └─────────────────────────────────────────────────────────────┘
+const WHATSAPP_PHONE = "972500000000"; // 👈 המספר שלך: קידומת מדינה (972) + המספר בלי 0 מוביל
+const CONTACT_URL = `https://wa.me/${WHATSAPP_PHONE}`;
+const OWNER_STORE_KEY = "numerology_owner_mode";
+const CART_STORE_KEY = "numerology_cart_v1";
+
+const SHOP = [
+  {
+    cat: { he: "מפות ודוחות דיגיטליים", en: "Digital Maps & Reports" },
+    sub: { he: "נשלח אליך כ-PDF מעוצב תוך 48 שעות", en: "Delivered as a designed PDF within 48h" },
+    items: [
+      { id:"full-map", icon:"🗺️", featured:true, badge:{he:"הכי נמכר",en:"Best seller"}, priceNum:149,
+        name:{he:"מפה נומרולוגית אישית מלאה",en:"Full Personal Numerology Map"},
+        desc:{he:"ניתוח מעמיק של כל המספרים שלך — שביל גורל, נשמה, ביטוי, חובות קארמיים, מחזורי חיים ומפת לו-שו, עם פרשנות אישית כתובה.",en:"In-depth analysis of all your numbers — life path, soul, expression, karmic debts, life cycles and Lo Shu, with written personal interpretation."},
+        price:{he:"₪149",en:"$45"}, link:"" },
+      { id:"year-forecast", icon:"🔮", priceNum:99,
+        name:{he:"תחזית שנתית אישית (12 חודשים)",en:"Personal Year Forecast (12 months)"},
+        desc:{he:"מה צופן לך השנה — חודש-חודש: הזדמנויות, אתגרים ותזמון נכון לצעדים גדולים.",en:"What this year holds — month by month: opportunities, challenges and right timing for big moves."},
+        price:{he:"₪99",en:"$29"}, link:"" },
+      { id:"couple", icon:"💞", priceNum:129,
+        name:{he:"דוח התאמה זוגית",en:"Couple Compatibility Report"},
+        desc:{he:"ניתוח דינמיקה בין שני אנשים — נקודות חוזק, אתגרים וטיפים מעשיים לזוגיות.",en:"Dynamic analysis between two people — strengths, challenges and practical relationship tips."},
+        price:{he:"₪129",en:"$39"}, link:"" },
+      { id:"name", icon:"✒️", priceNum:179,
+        name:{he:"נומרולוגיה לבחירת שם",en:"Name Selection Numerology"},
+        desc:{he:"בחירת/תיקון שם לתינוק, לעסק או למותג — כדי שהאנרגיה של השם תתמוך ביעד שלך.",en:"Choosing/correcting a name for a baby, business or brand — so the name's energy supports your goal."},
+        price:{he:"₪179",en:"$54"}, link:"" },
+    ],
+  },
+  {
+    cat: { he: "שיחות וייעוץ אישי איתי", en: "1-on-1 Calls & Consulting" },
+    sub: { he: "פגישת זום / טלפון — תיאום אחרי הרכישה", en: "Zoom / phone — scheduled after purchase" },
+    items: [
+      { id:"intro-call", icon:"📞", priceNum:149,
+        name:{he:"שיחת אבחון 1:1 (30 דק׳)",en:"Diagnostic Call 1:1 (30 min)"},
+        desc:{he:"שיחה ממוקדת על השאלה הכי בוערת שלך כרגע — תשובה נומרולוגית ברורה וכיוון לפעולה.",en:"A focused call on your most pressing question — a clear numerological answer and direction."},
+        price:{he:"₪149",en:"$45"}, link:"" },
+      { id:"deep-consult", icon:"🌟", featured:true, badge:{he:"מומלץ",en:"Recommended"}, priceNum:349,
+        name:{he:"ייעוץ נומרולוגי מעמיק (75 דק׳)",en:"Deep Numerology Consultation (75 min)"},
+        desc:{he:"צלילה מלאה למפה שלך — מטרת חיים, יחסים, קריירה ותזמון. כולל מפה אישית מלאה והקלטה.",en:"A full dive into your map — life purpose, relationships, career and timing. Includes the full map + recording."},
+        price:{he:"₪349",en:"$99"}, link:"" },
+      { id:"mentoring", icon:"🧭", priceNum:690,
+        name:{he:"ליווי חודשי (4 שיחות)",en:"Monthly Mentoring (4 sessions)"},
+        desc:{he:"ליווי צמוד לאורך חודש — 4 שיחות + זמינות בוואטסאפ לשאלות בין הפגישות.",en:"Close guidance over a month — 4 sessions + WhatsApp availability between meetings."},
+        price:{he:"₪690",en:"$199"}, link:"" },
+    ],
+  },
+  {
+    cat: { he: "מתנות ומנויים", en: "Gifts & Subscriptions" },
+    sub: { he: "", en: "" },
+    items: [
+      { id:"gift", icon:"🎁", priceNum:149,
+        name:{he:"שובר מתנה — מפה אישית",en:"Gift Voucher — Personal Map"},
+        desc:{he:"מתנה מקורית ומרגשת. השובר נשלח אליך/למקבל/ת עם הוראות מימוש.",en:"A meaningful, original gift. The voucher is sent with redemption instructions."},
+        price:{he:"₪149",en:"$45"}, link:"" },
+      { id:"monthly-insight", icon:"📨", priceNum:29, recurring:true,
+        name:{he:"מנוי תובנה חודשית",en:"Monthly Insight Subscription"},
+        desc:{he:"דוח נומרולוגי קצר ומותאם אישית בכל ראש חודש, ישירות למייל. ביטול בכל עת.",en:"A short, personalized numerology report each month, straight to your inbox. Cancel anytime."},
+        price:{he:"₪29 / חודש",en:"$9 / mo"}, link:"" },
+    ],
+  },
+];
+
+// ── checkout + cart helpers ──
+const allProducts = () => SHOP.flatMap((g) => g.items);
+const findProduct = (id) => allProducts().find((p) => p.id === id);
+const productLink = (p) => (p && p.link && p.link.trim() && p.link.trim() !== "#") ? p.link.trim() : CONTACT_URL;
+const goToCheckout = (p) => { AU.init(); AU.p("reveal"); window.open(productLink(p), "_blank", "noopener,noreferrer"); };
+const cartEntries = (cart) => Object.entries(cart || {}).filter(([, q]) => q > 0).map(([id, qty]) => ({ product: findProduct(id), qty })).filter((x) => x.product);
+const cartCount = (cart) => Object.values(cart || {}).reduce((a, q) => a + (q > 0 ? q : 0), 0);
+const cartTotal = (cart) => cartEntries(cart).reduce((a, { product, qty }) => a + (product.priceNum || 0) * qty, 0);
+function waOrderLink(cart, he) {
+  const entries = cartEntries(cart);
+  const lines = entries.map(({ product, qty }) => `• ${product.name[he ? "he" : "en"]} ×${qty} — ${product.price[he ? "he" : "en"]}`);
+  const total = cartTotal(cart);
+  const hasRecurring = entries.some(({ product }) => product.recurring);
+  const head = he ? "היי! אני רוצה להזמין:" : "Hi! I'd like to order:";
+  const tot = he ? `סה"כ: ₪${total}${hasRecurring ? " (+ מנוי חודשי)" : ""}` : `Total: ₪${total}${hasRecurring ? " (+ monthly)" : ""}`;
+  const msg = `${head}\n${lines.join("\n")}\n\n${tot}`;
+  return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`;
+}
+
+// ═══════════════════ LANDING: HERO ═══════════════════
+function Hero({ he, dk, onStart, onShop }) {
+  const ac = dk ? "#d4af37" : "#8B6914";
+  const tm = dk ? "#e8e0d0" : "#2a2520";
+  const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
+  return (
+    <div style={{ textAlign: "center", padding: "30px 0 12px", animation: "fadeInUp .9s ease-out" }}>
+      <div style={{ fontSize: 50, color: ac, textShadow: `0 0 60px ${ac}55`, marginBottom: 14 }}>✦</div>
+      <h1 style={{ fontSize: he ? 40 : 46, fontWeight: he ? 700 : 300, color: ac, lineHeight: 1.15, fontFamily: "'Cormorant Garamond',serif", textShadow: `0 0 60px ${ac}22` }}>
+        {he ? "המספרים שלך מספרים סיפור" : "Your Numbers Tell a Story"}
+      </h1>
+      <p style={{ fontSize: 16, color: ts, fontWeight: 300, marginTop: 12, lineHeight: 1.7, maxWidth: 460, marginInline: "auto" }}>
+        {he ? "קבל קריאה נומרולוגית חינמית תוך דקה — ואז גלה איך מפה אישית מלאה ושיחה אישית איתי יכולות לשנות את הדרך שלך." : "Get a free numerology reading in a minute — then discover how a full personal map and a 1-on-1 call with me can shift your path."}
+      </p>
+      <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 24 }}>
+        <button className="gb" onClick={onStart} style={{ width: "auto", padding: "15px 30px" }}>{he ? "🔮 קריאה חינמית" : "🔮 Free reading"}</button>
+        <button className="ghost" onClick={onShop} style={{ padding: "15px 26px" }}>{he ? "🛒 לחנות ולמחירים" : "🛒 Shop & prices"}</button>
+      </div>
+      <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginTop: 26, fontSize: 12, color: ts }}>
+        <span>✓ {he ? "תוצאה מיידית" : "Instant result"}</span>
+        <span>✓ {he ? "תשלום מאובטח" : "Secure checkout"}</span>
+        <span>✓ {he ? "חשבונית מס" : "Tax invoice"}</span>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════ LANDING: HOW IT WORKS ═══════════════════
+function HowItWorks({ he, dk }) {
+  const ac = dk ? "#d4af37" : "#8B6914";
+  const tm = dk ? "#e8e0d0" : "#2a2520";
+  const ts = dk ? "rgba(232,224,208,.45)" : "rgba(42,37,32,.5)";
+  const steps = he ? [
+    { i: "✍️", t: "מזינים שם ותאריך לידה", d: "תוך דקה, בלי הרשמה" },
+    { i: "🔮", t: "מקבלים קריאה חינמית", d: "המספרים, האישיות והשנה שלך" },
+    { i: "🌟", t: "משדרגים למפה מלאה / שיחה", d: "תובנות עמוקות והכוונה אישית" },
+  ] : [
+    { i: "✍️", t: "Enter name & birth date", d: "In a minute, no signup" },
+    { i: "🔮", t: "Get a free reading", d: "Your numbers, personality & year" },
+    { i: "🌟", t: "Upgrade to a full map / call", d: "Deep insights & personal guidance" },
+  ];
+  return (
+    <SR><div className="gc" style={{ marginBottom: 16 }}>
+      <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 18 }}>{he ? "איך זה עובד" : "How it works"}</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+        {steps.map((s, i) => (
+          <div key={i} style={{ textAlign: "center", padding: "16px 8px", background: dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)", border: `1px solid ${ac}10`, borderRadius: 14 }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>{s.i}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: tm, lineHeight: 1.4 }}>{s.t}</div>
+            <div style={{ fontSize: 11, color: ts, marginTop: 4, lineHeight: 1.4 }}>{s.d}</div>
+          </div>
+        ))}
+      </div>
+    </div></SR>
+  );
+}
+
+// ═══════════════════ LANDING: WHY NUMEROLOGY (explainer + number library) ═══════════════════
+function WhyNumerology({ he, dk }) {
+  const ac = dk ? "#d4af37" : "#8B6914";
+  const tm = dk ? "#e8e0d0" : "#2a2520";
+  const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
+  const [open, setOpen] = useState(null);
+  return (
+    <SR><div className="gc" style={{ marginBottom: 16 }}>
+      <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 8 }}>{he ? "מה זו נומרולוגיה?" : "What is numerology?"}</h2>
+      <p style={{ textAlign: "center", fontSize: 14, lineHeight: 1.9, color: ts, maxWidth: 480, marginInline: "auto", marginBottom: 18 }}>
+        {he ? "נומרולוגיה היא שפה עתיקה שמתרגמת את השם ותאריך הלידה שלך למספרים בעלי משמעות. כל מספר נושא אנרגיה, אופי ומסר — וביחד הם מציירים מפה של מי שאתה, מה הייעוד שלך ומה התזמון הנכון לצעדים הגדולים בחיים." : "Numerology is an ancient language that translates your name and birth date into meaningful numbers. Each number carries energy, character and a message — together they map who you are, your purpose, and the right timing for life's big moves."}
+      </p>
+      <div style={{ fontSize: 11, textAlign: "center", color: `${ac}99`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "לחץ על מספר לגלות את המשמעות" : "Tap a number to reveal its meaning"}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
+          const info = NUM_LIB[n]; const isOpen = open === n;
+          return (
+            <div key={n} onClick={() => { AU.init(); AU.p("click"); setOpen(isOpen ? null : n); }} style={{ cursor: "pointer", padding: "12px 8px", background: isOpen ? `${ac}12` : (dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)"), border: `1px solid ${isOpen ? ac + "55" : ac + "10"}`, borderRadius: 12, textAlign: "center", transition: "all .3s" }}>
+              <div style={{ fontSize: 20 }}>{info.icon}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{n}</div>
+              <div style={{ fontSize: 10, color: tm, fontWeight: 600, lineHeight: 1.3 }}>{info[he ? "he" : "en"].k.split(",")[0]}</div>
+              {isOpen && <div style={{ fontSize: 10.5, color: ts, lineHeight: 1.6, marginTop: 6, textAlign: he ? "right" : "left" }}>{info[he ? "he" : "en"].p}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div></SR>
+  );
+}
+
+// ═══════════════════ LANDING: TESTIMONIALS ═══════════════════
+function Testimonials({ he, dk }) {
+  const ac = dk ? "#d4af37" : "#8B6914";
+  const tm = dk ? "#e8e0d0" : "#2a2520";
+  const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
+  const list = he ? [
+    { n: "מאיה ל׳", t: "המפה האישית פשוט פגעה בול. הרגשתי שמישהו סוף סוף מבין אותי. תודה!" },
+    { n: "דניאל כ׳", t: "השיחה האישית נתנה לי בהירות על החלטה שהתלבטתי בה חודשים. שווה כל שקל." },
+    { n: "נועה ר׳", t: "קניתי מתנה לחברה והיא התרגשה עד דמעות. חוויה מדויקת ומרגשת." },
+  ] : [
+    { n: "Maya L.", t: "The personal map hit the nail on the head. I finally felt understood. Thank you!" },
+    { n: "Daniel C.", t: "The 1-on-1 call gave me clarity on a decision I'd agonized over for months. Worth every shekel." },
+    { n: "Noa R.", t: "I bought it as a gift and she was moved to tears. Precise and touching." },
+  ];
+  return (
+    <SR><div className="gc" style={{ marginBottom: 16 }}>
+      <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 16 }}>{he ? "מה אומרים עליי" : "What people say"}</h2>
+      {list.map((r, i) => (
+        <div key={i} style={{ padding: 14, background: dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)", border: `1px solid ${ac}10`, borderRadius: 14, marginBottom: i === list.length - 1 ? 0 : 10 }}>
+          <div style={{ fontSize: 12, color: ac, marginBottom: 4 }}>★★★★★</div>
+          <p style={{ fontSize: 13.5, lineHeight: 1.8, color: tm, fontStyle: "italic" }}>"{r.t}"</p>
+          <div style={{ fontSize: 12, color: ts, marginTop: 6, fontWeight: 600 }}>— {r.n}</div>
+        </div>
+      ))}
+      <p style={{ fontSize: 10, color: ts, textAlign: "center", marginTop: 12, opacity: .6 }}>{he ? "* החלף בביקורות אמיתיות שלך" : "* Replace with your real reviews"}</p>
+    </div></SR>
+  );
+}
+
+// ═══════════════════ LANDING: FAQ ═══════════════════
+function FAQ({ he, dk }) {
+  const ac = dk ? "#d4af37" : "#8B6914";
+  const tm = dk ? "#e8e0d0" : "#2a2520";
+  const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
+  const [open, setOpen] = useState(null);
+  const qa = he ? [
+    { q: "איך אני מקבל את המוצר?", a: "דוחות ומפות נשלחים כ-PDF מעוצב לאימייל/וואטסאפ תוך 48 שעות. שיחות מתואמות איתך אישית לאחר הרכישה." },
+    { q: "איך מתבצע התשלום?", a: "התשלום מאובטח דרך מערכת הסליקה Grow — כרטיס אשראי, Bit, Apple/Google Pay. מקבלים חשבונית מס כחוק." },
+    { q: "הקריאה החינמית — באמת חינם?", a: "כן, לגמרי. היא נותנת לך טעימה אמיתית מהמספרים שלך, בלי התחייבות ובלי הרשמה." },
+    { q: "אפשר לבטל מנוי?", a: "בהחלט. מנוי התובנה החודשית ניתן לביטול בכל עת, ללא קנסות." },
+    { q: "המידע שלי בטוח?", a: "הפרטים משמשים אך ורק להכנת הקריאה/המפה ולא מועברים לאף גורם שלישי." },
+  ] : [
+    { q: "How do I receive my product?", a: "Reports and maps are sent as a designed PDF to email/WhatsApp within 48h. Calls are scheduled with you personally after purchase." },
+    { q: "How does payment work?", a: "Secure checkout via Grow — credit card, Bit, Apple/Google Pay. You receive a proper tax invoice." },
+    { q: "Is the free reading really free?", a: "Yes, completely. It gives you a real taste of your numbers — no commitment, no signup." },
+    { q: "Can I cancel a subscription?", a: "Absolutely. The monthly insight subscription can be cancelled anytime, no penalties." },
+    { q: "Is my data safe?", a: "Your details are used only to prepare your reading/map and are never shared with third parties." },
+  ];
+  return (
+    <SR><div className="gc" style={{ marginBottom: 16 }}>
+      <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 16 }}>{he ? "שאלות נפוצות" : "FAQ"}</h2>
+      {qa.map((item, i) => {
+        const isOpen = open === i;
+        return (
+          <div key={i} style={{ borderBottom: `1px solid ${ac}10` }}>
+            <div onClick={() => { AU.init(); AU.p("click"); setOpen(isOpen ? null : i); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "14px 4px", cursor: "pointer" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: isOpen ? ac : tm }}>{item.q}</span>
+              <span style={{ fontSize: 18, color: ac, transform: isOpen ? "rotate(45deg)" : "none", transition: "transform .3s" }}>+</span>
+            </div>
+            {isOpen && <p style={{ fontSize: 13, lineHeight: 1.8, color: ts, padding: "0 4px 14px" }}>{item.a}</p>}
+          </div>
+        );
+      })}
+    </div></SR>
+  );
+}
+
+// ═══════════════════ LANDING: FOOTER ═══════════════════
+function LandingFooter({ he, dk, onOwner }) {
+  const ac = dk ? "#d4af37" : "#8B6914";
+  const ts = dk ? "rgba(232,224,208,.4)" : "rgba(42,37,32,.45)";
+  return (
+    <div style={{ textAlign: "center", padding: "30px 0 10px" }}>
+      <div style={{ fontSize: 22, color: ac, opacity: .7 }}>✦</div>
+      <p style={{ fontSize: 13, color: ts, marginTop: 8 }}>{he ? "יש שאלה? דברו איתי בוואטסאפ" : "Questions? Message me on WhatsApp"}</p>
+      <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="ghost" style={{ display: "inline-block", marginTop: 10, textDecoration: "none" }}>{he ? "💬 צ׳אט בוואטסאפ" : "💬 WhatsApp chat"}</a>
+      <div style={{ marginTop: 22, fontSize: 10, color: `${ac}22`, letterSpacing: 3 }}>✦ ✦ ✦</div>
+      {/* כניסת בעל העסק — לחיצה כפולה על הנקודה */}
+      <span onDoubleClick={onOwner} title="owner" style={{ display: "inline-block", marginTop: 14, fontSize: 16, color: `${ac}33`, cursor: "default", userSelect: "none" }}>·</span>
+    </div>
+  );
+}
+
+// ═══════════════════ FLOATING CART BUTTON ═══════════════════
+function FloatingCart({ he, dk, cart, onOpen }) {
+  const ac = dk ? "#d4af37" : "#8B6914";
+  const count = cartCount(cart);
+  if (count === 0) return null;
+  return (
+    <button onClick={onOpen} style={{ position: "fixed", bottom: 20, [he ? "left" : "right"]: 18, zIndex: 200, display: "flex", alignItems: "center", gap: 8, padding: "13px 20px", background: `linear-gradient(135deg,${dk ? "#d4af37" : "#b8942e"},${dk ? "#b8942e" : "#8B6914"})`, color: dk ? "#080812" : "#fff", border: "none", borderRadius: 30, fontFamily: "inherit", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: `0 8px 30px ${ac}55`, animation: "fadeInUp .4s ease-out" }}>
+      🛒 <span>{he ? "עגלה" : "Cart"}</span>
+      <span style={{ background: dk ? "#080812" : "#fff", color: ac, borderRadius: 12, minWidth: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{count}</span>
+      <span style={{ fontSize: 13, opacity: .9 }}>₪{cartTotal(cart)}</span>
+    </button>
+  );
+}
+
+// ═══════════════════ CART DRAWER ═══════════════════
+function CartDrawer({ he, dk, cart, open, onClose, onQty, onRemove, onClear }) {
+  const ac = dk ? "#d4af37" : "#8B6914";
+  const tm = dk ? "#e8e0d0" : "#2a2520";
+  const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
+  const entries = cartEntries(cart);
+  const total = cartTotal(cart);
+  if (!open) return null;
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,.55)", backdropFilter: "blur(4px)", display: "flex", justifyContent: he ? "flex-start" : "flex-end", animation: "fadeInUp .25s ease-out" }}>
+      <div onClick={(e) => e.stopPropagation()} dir={he ? "rtl" : "ltr"} style={{ width: "min(420px,92vw)", height: "100%", overflowY: "auto", background: dk ? "linear-gradient(160deg,#12122a,#0a0a1a)" : "linear-gradient(160deg,#fff,#f0ebe0)", borderInlineStart: `1px solid ${ac}33`, padding: "22px 18px", boxShadow: "0 0 60px rgba(0,0,0,.5)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>🛒 {he ? "העגלה שלי" : "My Cart"}</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: ts, fontSize: 24, cursor: "pointer", lineHeight: 1 }}>×</button>
+        </div>
+
+        {entries.length === 0 ? (
+          <p style={{ textAlign: "center", color: ts, fontSize: 14, padding: "40px 0" }}>{he ? "העגלה ריקה" : "Your cart is empty"}</p>
+        ) : (
+          <>
+            {entries.map(({ product, qty }) => (
+              <div key={product.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 0", borderBottom: `1px solid ${ac}10` }}>
+                <div style={{ fontSize: 24 }}>{product.icon}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: tm }}>{product.name[he ? "he" : "en"]}</div>
+                  <div style={{ fontSize: 12, color: ac, marginTop: 2 }}>{product.price[he ? "he" : "en"]}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                    <button onClick={() => onQty(product.id, -1)} style={qtyBtn(ac, dk)}>−</button>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: tm, minWidth: 18, textAlign: "center" }}>{qty}</span>
+                    <button onClick={() => onQty(product.id, 1)} style={qtyBtn(ac, dk)}>+</button>
+                    <button onClick={() => onRemove(product.id)} style={{ background: "none", border: "none", color: ts, fontSize: 12, cursor: "pointer", marginInlineStart: "auto" }}>{he ? "הסר" : "Remove"}</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", margin: "18px 0 6px" }}>
+              <span style={{ fontSize: 14, color: ts }}>{he ? 'סה"כ לתשלום' : "Total"}</span>
+              <span style={{ fontSize: 24, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>₪{total}</span>
+            </div>
+
+            <a href={waOrderLink(cart, he)} target="_blank" rel="noopener noreferrer" onClick={() => { AU.init(); AU.p("reveal"); }} className="gb" style={{ display: "block", textAlign: "center", textDecoration: "none", marginTop: 12, padding: "15px" }}>
+              {he ? "סיום הזמנה ←" : "Complete order →"}
+            </a>
+            <p style={{ fontSize: 11, color: ts, textAlign: "center", marginTop: 10, lineHeight: 1.7 }}>
+              {he ? "ההזמנה תישלח אליי בוואטסאפ ואחזור אליך עם לינק תשלום מאובטח / בקשת Bit. רוצה לשלם מיד בכרטיס? לחץ \"שלם עכשיו\" על המוצר." : "Your order is sent to me on WhatsApp and I'll reply with a secure payment link / Bit request. Want to pay by card now? Use \"Pay now\" on the product."}
+            </p>
+            <button onClick={onClear} style={{ background: "none", border: "none", color: ts, fontSize: 12, cursor: "pointer", display: "block", margin: "12px auto 0" }}>{he ? "רוקן עגלה" : "Clear cart"}</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+const qtyBtn = (ac, dk) => ({ width: 26, height: 26, borderRadius: 8, border: `1px solid ${ac}44`, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.7)", color: ac, fontSize: 16, cursor: "pointer", lineHeight: 1, fontFamily: "inherit" });
+
+// ═══════════════════ SHOP SECTION (cart-aware) ═══════════════════
+// onAdd present → customer mode (add-to-cart). Absent → owner mode (buy-now).
+function ShopSection({ he, dk, onAdd, cart }) {
+  const ac = dk ? "#d4af37" : "#8B6914";
+  const tm = dk ? "#e8e0d0" : "#2a2520";
+  const ts = dk ? "rgba(232,224,208,.45)" : "rgba(42,37,32,.5)";
+  const customer = typeof onAdd === "function";
+  return (
+    <div style={{ animation: "fadeInUp .5s ease-out" }}>
+      <div style={{ textAlign: "center", marginBottom: 22 }}>
+        <div style={{ fontSize: 30, marginBottom: 6 }}>🛒</div>
+        <h2 style={{ fontSize: he ? 24 : 26, fontWeight: he ? 700 : 400, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "החנות" : "The Shop"}</h2>
+        <p style={{ fontSize: 13, color: ts, marginTop: 4 }}>{he ? "מפות אישיות, שיחות וייעוץ — תשלום מאובטח בכרטיס אשראי / Bit" : "Personal maps, calls & consulting — secure card / Bit checkout"}</p>
+      </div>
+
+      {SHOP.map((group, gi) => (
+        <div key={gi} className="gc" style={{ marginBottom: 16 }}>
+          <div style={{ textAlign: "center", marginBottom: 16 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{group.cat[he ? "he" : "en"]}</h3>
+            {group.sub[he ? "he" : "en"] && <div style={{ fontSize: 11, color: ts, marginTop: 2 }}>{group.sub[he ? "he" : "en"]}</div>}
+          </div>
+
+          {group.items.map((p, pi) => {
+            const qty = customer ? (cart?.[p.id] || 0) : 0;
+            return (
+              <div key={p.id} style={{ padding: 16, background: p.featured ? `${ac}0d` : (dk ? "rgba(18,18,38,.5)" : "rgba(255,255,255,.45)"), border: `1px solid ${p.featured ? ac + "44" : ac + "12"}`, borderRadius: 16, marginBottom: pi === group.items.length - 1 ? 0 : 10, position: "relative", transition: "all .3s" }}>
+                {p.badge && <div style={{ position: "absolute", top: -9, [he ? "right" : "left"]: 14, background: ac, color: dk ? "#080812" : "#fff", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 10, letterSpacing: .5 }}>{p.badge[he ? "he" : "en"]}</div>}
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                  <div style={{ fontSize: 26, flexShrink: 0, marginTop: 2 }}>{p.icon}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: tm }}>{p.name[he ? "he" : "en"]}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif", whiteSpace: "nowrap" }}>{p.price[he ? "he" : "en"]}</div>
+                    </div>
+                    <p style={{ fontSize: 12.5, lineHeight: 1.7, color: ts, margin: "6px 0 12px" }}>{p.desc[he ? "he" : "en"]}</p>
+                    {customer ? (
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <button className="gb" onClick={() => onAdd(p.id)} style={{ width: "auto", padding: "10px 18px", fontSize: 13 }}>
+                          {qty > 0 ? (he ? `✓ בעגלה (${qty}) · עוד +` : `✓ In cart (${qty}) · +`) : (he ? "➕ הוסף לעגלה" : "➕ Add to cart")}
+                        </button>
+                        <button className="ghost" onClick={() => goToCheckout(p)} style={{ padding: "10px 18px", fontSize: 13 }}>{he ? "שלם עכשיו" : "Pay now"}</button>
+                      </div>
+                    ) : (
+                      <button className="gb" onClick={() => goToCheckout(p)} style={{ padding: "11px 22px", fontSize: 14 }}>{he ? "קנה עכשיו ←" : "Buy now →"}</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      <p style={{ textAlign: "center", fontSize: 11, color: ts, marginTop: 4, lineHeight: 1.8 }}>
+        {he ? "🔒 התשלום מתבצע בעמוד מאובטח של Grow (משולם). יש שאלה לפני רכישה? " : "🔒 Payment via a secure Grow checkout page. Questions before buying? "}
+        <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" style={{ color: ac, fontWeight: 600 }}>{he ? "דברו איתי" : "Contact me"}</a>
+      </p>
+    </div>
+  );
+}
+
 // ═══════════════════ MAIN APP ═══════════════════
 export default function App(){
   const[lang,setLang]=useState("he");const[dk,setDk]=useState(true);const[snd,setSnd]=useState(true);const[intro,setIntro]=useState(true);
@@ -974,9 +1367,26 @@ export default function App(){
   const[results,setResults]=useState(null);const[showRes,setShowRes]=useState(false);const[error,setError]=useState("");
   const[chapters,setChapters]=useState([false,false,false,false,false,false]);
   const[streak,setStreak]=useState(0);
+  const[owner,setOwner]=useState(false);const[previewCustomer,setPreviewCustomer]=useState(false);
+  const[cart,setCart]=useState({});const[cartOpen,setCartOpen]=useState(false);
 
   const he=lang==="he";const isRtl=he;const ac=dk?"#d4af37":"#8B6914";const tm=dk?"#e8e0d0":"#2a2520";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
   useEffect(()=>{AU.on=snd;},[snd]);
+
+  // ── owner mode + cart persistence (client-side gating; tools are owner-only) ──
+  useEffect(()=>{try{
+    const isOwner=localStorage.getItem(OWNER_STORE_KEY)==="1"||/owner/i.test(location.hash+location.search);
+    if(isOwner){setOwner(true);localStorage.setItem(OWNER_STORE_KEY,"1");}
+    const saved=localStorage.getItem(CART_STORE_KEY);if(saved)setCart(JSON.parse(saved)||{});
+  }catch(e){}},[]);
+  useEffect(()=>{try{localStorage.setItem(CART_STORE_KEY,JSON.stringify(cart));}catch(e){}},[cart]);
+  const enterOwner=()=>{AU.init();AU.p("reveal");setOwner(true);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"1");}catch(e){}};
+  const exitOwner=()=>{AU.init();AU.p("click");setOwner(false);setPreviewCustomer(false);try{localStorage.removeItem(OWNER_STORE_KEY);}catch(e){}};
+  const addToCart=(id)=>{AU.init();AU.p("card");setCart(c=>({...c,[id]:(c[id]||0)+1}));};
+  const setQty=(id,delta)=>setCart(c=>{const q=(c[id]||0)+delta;const n={...c};if(q<=0)delete n[id];else n[id]=q;return n;});
+  const removeFromCart=(id)=>setCart(c=>{const n={...c};delete n[id];return n;});
+  const clearCart=()=>setCart({});
+  const scrollToId=(id)=>{try{document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"});}catch(e){}};
 
   useEffect(()=>{
     (async()=>{try{const r=await window.storage?.get("streak");if(r){const d=JSON.parse(r.value);const today=new Date().toDateString();if(d.last===today)setStreak(d.count);else if(d.last===new Date(Date.now()-86400000).toDateString())setStreak(d.count+1);else setStreak(1);}}catch(e){}})();
@@ -1011,6 +1421,8 @@ export default function App(){
     {icon:"🧠",title:he?"העולם הפנימי":"Inner World",sub:he?"הפסיכולוגיה שלך":"Your psychology"},
     {icon:"⚡",title:he?"הדרך קדימה":"Path Forward",sub:he?"המלצות וטקסים":"Guidance and rituals"},
   ]:[];
+
+  const showOwnerUI = owner && !previewCustomer; // owner console vs. public customer landing
 
   return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"hidden",transition:"background .7s,color .4s"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Hebrew:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
@@ -1060,19 +1472,30 @@ export default function App(){
 
     <div style={{position:"relative",zIndex:1,maxWidth:580,margin:"0 auto",padding:"62px 16px 70px",minHeight:"100vh"}}>
 
-      {/* Header */}
-      <div style={{textAlign:"center",marginBottom:30,animation:"fadeInUp .9s ease-out"}}>
-        <h1 style={{fontSize:isRtl?42:48,fontWeight:isRtl?700:300,color:ac,letterSpacing:isRtl?0:8,textTransform:isRtl?"none":"uppercase",textShadow:`0 0 60px ${ac}33`,lineHeight:1.2,fontFamily:"'Cormorant Garamond',serif"}}>{he?"נומרולוגיה":"Numerology"}</h1>
-        <p style={{fontSize:isRtl?13:15,color:ts,fontWeight:300,marginTop:5,letterSpacing:isRtl?0:3,fontStyle:isRtl?"normal":"italic"}}>{he?"גלה את סודות המספרים שלך":"Discover the secrets of your numbers"}</p>
-      </div>
+      {/* Header (owner) / Hero (customer) */}
+      {showOwnerUI?(
+        <div style={{textAlign:"center",marginBottom:24,animation:"fadeInUp .9s ease-out"}}>
+          <h1 style={{fontSize:isRtl?42:48,fontWeight:isRtl?700:300,color:ac,letterSpacing:isRtl?0:8,textTransform:isRtl?"none":"uppercase",textShadow:`0 0 60px ${ac}33`,lineHeight:1.2,fontFamily:"'Cormorant Garamond',serif"}}>{he?"נומרולוגיה":"Numerology"}</h1>
+          <p style={{fontSize:12,color:ac,fontWeight:600,marginTop:6,letterSpacing:1}}>👑 {he?"מצב בעל העסק — כל הכלים":"Owner mode — all tools"}</p>
+        </div>
+      ):(
+        <>
+          <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onShop={()=>scrollToId("shop-section")}/>
+          <HowItWorks he={he} dk={dk}/>
+          <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:11,color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · נסה עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
+        </>
+      )}
+      <div id="reading-section" style={{scrollMarginTop:70}}/>
 
       {/* ═══ INPUT TABS ═══ */}
       {!showRes&&(<>
-        <div className="tabs" style={{animation:"fadeInUp .5s ease-out .2s both"}}>
-          {[{k:"reading",i:"🔮",l:he?"קריאה":"Reading"},{k:"tables",i:"📊",l:he?"טבלאות":"Tables"},{k:"match",i:"💫",l:he?"התאמה":"Match"},{k:"daily",i:"✨",l:he?"יומי":"Daily"},{k:"cards",i:"🃏",l:he?"קלפים":"Cards"},{k:"calc",i:"🧮",l:he?"מחשבונים":"Calculators"}].map(tb=>(
+        {showOwnerUI&&<div className="tabs" style={{animation:"fadeInUp .5s ease-out .2s both"}}>
+          {[{k:"reading",i:"🔮",l:he?"קריאה":"Reading"},{k:"shop",i:"🛒",l:he?"חנות":"Shop"},{k:"tables",i:"📊",l:he?"טבלאות":"Tables"},{k:"match",i:"💫",l:he?"התאמה":"Match"},{k:"daily",i:"✨",l:he?"יומי":"Daily"},{k:"cards",i:"🃏",l:he?"קלפים":"Cards"},{k:"calc",i:"🧮",l:he?"מחשבונים":"Calculators"}].map(tb=>(
             <div key={tb.k} className={`ti ${tab===tb.k?"act":""}`} onClick={()=>{setTab(tb.k);AU.init();AU.p("click");}}>{tb.i} {tb.l}</div>
           ))}
-        </div>
+        </div>}
+
+        {showOwnerUI&&tab==="shop"&&<ShopSection he={he} dk={dk}/>}
 
         {tab==="tables"&&<TablesWidget he={he} dk={dk}/>}
 
@@ -1097,7 +1520,7 @@ export default function App(){
           </div>
         )}
 
-        {tab==="reading"&&(
+        {(tab==="reading"||!showOwnerUI)&&(
           <div style={{animation:"fadeInUp .6s ease-out"}}>
             <div className="si"><div className={`sd ${step>=1?"act":""}`}/><div className="sl"/><div className={`sd ${step>=2?"act":""}`}/></div>
             {step===1&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
@@ -1202,14 +1625,60 @@ export default function App(){
           <div style={{textAlign:"center",marginBottom:14}}><div style={{fontSize:24}}>🎯</div><div style={{fontSize:15,fontWeight:600,color:ac,marginTop:4}}>{he?"קריירות מתאימות":"Ideal Careers"}</div><div style={{fontSize:14,color:ts,marginTop:6,lineHeight:1.8}}>{D[results.lp]?.career}</div></div>
         </Chapter>
 
-        {chapters[5]&&(<SR delay={200}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:24,flexWrap:"wrap"}}>
+        {chapters[5]&&(<SR delay={150}>
+          <div className="gc" style={{marginTop:26,textAlign:"center",border:`1px solid ${ac}44`,background:dk?`linear-gradient(135deg,${ac}10,rgba(12,12,28,.6))`:`linear-gradient(135deg,${ac}10,rgba(255,255,255,.7))`}}>
+            <div style={{fontSize:30,marginBottom:8}}>✦</div>
+            <h3 style={{fontSize:isRtl?21:23,fontWeight:isRtl?700:500,color:ac,fontFamily:"'Cormorant Garamond',serif",marginBottom:6}}>{he?"רוצה לרדת לעומק?":"Want to go deeper?"}</h3>
+            <p style={{fontSize:13.5,lineHeight:1.85,color:ts,maxWidth:420,margin:"0 auto 18px"}}>{he?`${name?name+", ":""}הקריאה החינמית היא רק ההתחלה. אני יכול להכין לך מפה נומרולוגית אישית מלאה, או לצלול יחד איתך בשיחה אישית — על מטרת החיים, יחסים, קריירה ותזמון.`:`${name?name+", ":""}this free reading is just the start. I can prepare your full personal numerology map, or dive deep together in a 1-on-1 call — life purpose, relationships, career and timing.`}</p>
+            <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+              <button className="gb" onClick={()=>goToCheckout(findProduct("full-map"))} style={{width:"auto",padding:"13px 22px",fontSize:14}}>🗺️ {he?"הזמן מפה אישית מלאה":"Order full map"}</button>
+              <button className="gb" onClick={()=>goToCheckout(findProduct("deep-consult"))} style={{width:"auto",padding:"13px 22px",fontSize:14}}>🌟 {he?"קבע שיחה 1:1":"Book a 1:1 call"}</button>
+            </div>
+            <div style={{marginTop:12}}>
+              <button className="ghost" onClick={()=>{AU.init();AU.p("click");setShowRes(false);setTab("shop");window.scrollTo({top:0,behavior:"smooth"});}} style={{fontSize:13}}>{he?"לכל המוצרים בחנות ←":"See all products →"}</button>
+            </div>
+          </div>
+        </SR>)}
+        {chapters[5]&&(<SR delay={250}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
           <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D);}} style={{width:"auto",padding:"12px 24px",fontSize:14}}>📤 {he?"שמור דו״ח":"Save Report"}</button>
           <button className="ghost" onClick={goHome}>{he?"קריאה חדשה":"New Reading"}</button>
         </div></SR>)}
       </div>)}
 
-      <div style={{marginTop:40,textAlign:"center",fontSize:10,color:`${ac}15`,letterSpacing:3}}>✦ ✦ ✦</div>
+      {/* ═══ CUSTOMER LANDING SECTIONS ═══ */}
+      {!showOwnerUI&&(<>
+        <div style={{height:10}}/>
+        <WhyNumerology he={he} dk={dk}/>
+        <div id="shop-section" style={{scrollMarginTop:70}}/>
+        <ShopSection he={he} dk={dk} onAdd={addToCart} cart={cart}/>
+        <Testimonials he={he} dk={dk}/>
+        <FAQ he={he} dk={dk}/>
+        <LandingFooter he={he} dk={dk} onOwner={enterOwner}/>
+      </>)}
+
+      {showOwnerUI&&<div style={{marginTop:40,textAlign:"center",fontSize:10,color:`${ac}15`,letterSpacing:3}}>✦ ✦ ✦</div>}
     </div>
+
+    {/* ═══ CART (customer only) ═══ */}
+    {!showOwnerUI&&(<>
+      <FloatingCart he={he} dk={dk} cart={cart} onOpen={()=>{AU.init();AU.p("click");setCartOpen(true);}}/>
+      <CartDrawer he={he} dk={dk} cart={cart} open={cartOpen} onClose={()=>setCartOpen(false)} onQty={setQty} onRemove={removeFromCart} onClear={clearCart}/>
+    </>)}
+
+    {/* ═══ OWNER CONTROLS ═══ */}
+    {owner&&!previewCustomer&&(
+      <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:250,display:"flex",gap:8,alignItems:"center",padding:"8px 12px",background:dk?"rgba(8,8,18,.92)":"rgba(245,240,232,.95)",border:`1px solid ${ac}44`,borderRadius:30,backdropFilter:"blur(12px)",boxShadow:"0 8px 30px rgba(0,0,0,.3)",maxWidth:"94vw"}}>
+        <span style={{fontSize:12,color:ac,fontWeight:700,whiteSpace:"nowrap"}}>👑 {he?"בעל עסק":"Owner"}</span>
+        <button className="tbtn" onClick={()=>{setPreviewCustomer(true);setTab("reading");setShowRes(false);AU.init();AU.p("click");window.scrollTo({top:0,behavior:"smooth"});}}>👁 {he?"תצוגת לקוח":"Customer"}</button>
+        <button className="tbtn" onClick={exitOwner}>🚪 {he?"יציאה":"Exit"}</button>
+      </div>
+    )}
+    {owner&&previewCustomer&&(
+      <div style={{position:"fixed",bottom:78,left:"50%",transform:"translateX(-50%)",zIndex:250,display:"flex",gap:8,alignItems:"center",padding:"8px 14px",background:dk?"rgba(8,8,18,.92)":"rgba(245,240,232,.95)",border:`1px solid ${ac}44`,borderRadius:30,backdropFilter:"blur(12px)",boxShadow:"0 8px 30px rgba(0,0,0,.3)"}}>
+        <span style={{fontSize:12,color:ts,whiteSpace:"nowrap"}}>👁 {he?"תצוגת לקוח":"Customer preview"}</span>
+        <button className="tbtn" onClick={()=>{setPreviewCustomer(false);AU.init();AU.p("click");}}>↩ {he?"חזרה לניהול":"Back to console"}</button>
+      </div>
+    )}
   </div>);
 }
 
