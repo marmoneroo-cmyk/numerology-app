@@ -1277,7 +1277,7 @@ function Hero({ he, dk, onStart, onShop, onUseName }) {
   const num = nm.trim() ? liveNum(nm) : 0;
   const floats = [{ n: 7, x: "8%", y: "18%", s: 64, d: 0 }, { n: 3, x: "84%", y: "24%", s: 52, d: 1.2 }, { n: 9, x: "16%", y: "74%", s: 58, d: 2.1 }, { n: 1, x: "82%", y: "72%", s: 46, d: .6 }, { n: 5, x: "50%", y: "10%", s: 40, d: 1.7 }];
   return (
-    <div style={{ position: "relative", width: "100vw", marginInlineStart: "calc(50% - 50vw)", marginInlineEnd: "calc(50% - 50vw)", minHeight: "92vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "70px 18px 56px" }}>
+    <div style={{ position: "relative", width: "100%", borderRadius: 26, minHeight: "86vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "70px 18px 56px", boxShadow: dk ? "0 30px 80px rgba(0,0,0,.45)" : "0 30px 80px rgba(0,0,0,.12)" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <img src={IMG.hero} alt="" loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: dk ? .6 : .42, transform: "scale(1.05)" }}/>
         <div style={{ position: "absolute", inset: 0, background: dk ? "radial-gradient(ellipse at center,rgba(8,8,20,.25),rgba(8,8,18,.82) 80%)" : "radial-gradient(ellipse at center,rgba(245,240,232,.45),rgba(245,240,232,.92) 80%)" }}/>
@@ -1543,7 +1543,7 @@ const qtyBtn = (ac, dk) => ({ width: 26, height: 26, borderRadius: 8, border: `1
 function CtaBand({ he, dk, onShop }) {
   const ac = dk ? "#c8a96a" : "#937640";
   return (
-    <div style={{ position: "relative", width: "100vw", marginInlineStart: "calc(50% - 50vw)", marginInlineEnd: "calc(50% - 50vw)", minHeight: 320, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", margin: "8px 0 20px", backgroundImage: `url(${IMG.band})`, backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
+    <div style={{ position: "relative", width: "100%", borderRadius: 22, minHeight: 300, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", margin: "8px 0 20px", backgroundImage: `url(${IMG.band})`, backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
       <div style={{ position: "absolute", inset: 0, background: dk ? "linear-gradient(180deg,rgba(8,8,18,.82),rgba(10,10,24,.6),rgba(8,8,18,.88))" : "linear-gradient(180deg,rgba(245,240,232,.88),rgba(245,240,232,.7),rgba(245,240,232,.92))" }}/>
       <SR><div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "44px 22px", maxWidth: 560 }}>
         <div style={{ color: ac, marginBottom: 14, display: "flex", justifyContent: "center" }}><Icon name="sparkle" size={30} stroke={1.2}/></div>
@@ -1689,7 +1689,7 @@ export default function App(){
 
   return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"hidden",transition:"background .7s,color .4s"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Hebrew:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
-*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:${ac}33;border-radius:3px}
+*{box-sizing:border-box;margin:0;padding:0}html,body{overflow-x:hidden;max-width:100%}::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:${ac}33;border-radius:3px}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(35px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
