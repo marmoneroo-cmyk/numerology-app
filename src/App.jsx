@@ -259,20 +259,87 @@ function SR({children,delay=0}){const ref=useRef(null);const[v,setV]=useState(fa
 function AN({value,delay=0}){const[d,setD]=useState("—");const[v,setV]=useState(false);useEffect(()=>{const t1=setTimeout(()=>setV(true),delay);let c=0;const iv=setInterval(()=>{setD(Math.floor(Math.random()*9)+1);c++;if(c>12){clearInterval(iv);setD(value);}},45);const t2=setTimeout(()=>{clearInterval(iv);setD(value);},delay+600);return()=>{clearTimeout(t1);clearTimeout(t2);clearInterval(iv);};},[value,delay]);return <span style={{opacity:v?1:0,transform:v?"scale(1)":"scale(0.4)",transition:"all 0.6s cubic-bezier(0.34,1.56,0.64,1)",display:"inline-block"}}>{d}</span>;}
 
 // ═══════════════════ PARTICLES ═══════════════════
+// Living galaxy: parallax twinkling stars, cursor constellations, shooting stars
 function Particles({dk}){
-  const ref=useRef(null);const mouse=useRef({x:0,y:0});
+  const ref=useRef(null);
+  const mouse=useRef({x:0,y:0,tx:0,ty:0,active:false});
   useEffect(()=>{
     const c=ref.current;if(!c)return;const ctx=c.getContext("2d");let id;
-    const ps=[];const resize=()=>{c.width=window.innerWidth;c.height=window.innerHeight};resize();
-    window.addEventListener("resize",resize);
-    const onMove=(e)=>{mouse.current={x:e.clientX||0,y:e.clientY||0}};
-    window.addEventListener("mousemove",onMove);
-    for(let i=0;i<50;i++)ps.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.8+.2,dx:(Math.random()-.5)*.15,dy:(Math.random()-.5)*.15,o:Math.random()*.3+.05,depth:Math.random()});
-    const cl=dk?"200,169,106":"147,118,64";
-    function draw(){ctx.clearRect(0,0,c.width,c.height);const mx=mouse.current.x,my=mouse.current.y;for(const p of ps){const px=p.x+p.dx+(mx-c.width/2)*p.depth*.008;const py=p.y+p.dy+(my-c.height/2)*p.depth*.008;p.x+=p.dx;p.y+=p.dy;if(p.x<-20)p.x=c.width+20;if(p.x>c.width+20)p.x=-20;if(p.y<-20)p.y=c.height+20;if(p.y>c.height+20)p.y=-20;ctx.beginPath();ctx.arc(px,py,p.r*(0.5+p.depth*0.5),0,Math.PI*2);ctx.fillStyle=`rgba(${cl},${p.o*(0.3+p.depth*0.7)})`;ctx.fill();}for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){const dx=ps[i].x-ps[j].x,dy=ps[i].y-ps[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<120){ctx.beginPath();ctx.moveTo(ps[i].x,ps[i].y);ctx.lineTo(ps[j].x,ps[j].y);ctx.strokeStyle=`rgba(${cl},${.025*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}}id=requestAnimationFrame(draw);}draw();
+    let W=0,H=0,dpr=1;const stars=[];const shooters=[];
+    function build(){stars.length=0;const n=Math.min(230,Math.floor(W*H/8500));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+.3,depth:Math.random(),tw:Math.random()*6.283,tws:.5+Math.random()*1.6,o:.18+Math.random()*.55,dx:(Math.random()-.5)*.05,dy:(Math.random()-.5)*.05});}
+    const resize=()=>{dpr=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;c.width=W*dpr;c.height=H*dpr;c.style.width=W+"px";c.style.height=H+"px";ctx.setTransform(dpr,0,0,dpr,0,0);build();};
+    resize();window.addEventListener("resize",resize);
+    const onMove=e=>{mouse.current.tx=e.clientX||0;mouse.current.ty=e.clientY||0;mouse.current.active=true;};
+    window.addEventListener("mousemove",onMove,{passive:true});
+    const cl=dk?"200,169,106":"147,118,64";let frame=0;
+    function draw(){
+      frame++;const m=mouse.current;m.x+=(m.tx-m.x)*.06;m.y+=(m.ty-m.y)*.06;
+      ctx.clearRect(0,0,W,H);
+      const ox=m.x-W/2,oy=m.y-H/2;
+      for(const s of stars){
+        s.x+=s.dx;s.y+=s.dy;if(s.x<-10)s.x=W+10;if(s.x>W+10)s.x=-10;if(s.y<-10)s.y=H+10;if(s.y>H+10)s.y=-10;
+        s.tw+=.02*s.tws;const tw=.55+.45*Math.sin(s.tw);
+        const px=s.x+ox*s.depth*.025,py=s.y+oy*s.depth*.025;
+        ctx.beginPath();ctx.arc(px,py,s.r*(.6+s.depth*.8),0,6.283);
+        ctx.fillStyle=`rgba(${cl},${s.o*tw*(.4+s.depth*.6)})`;ctx.fill();
+      }
+      if(m.active){
+        const R=140,near=[];
+        for(const s of stars){const px=s.x+ox*s.depth*.025,py=s.y+oy*s.depth*.025;const d=Math.hypot(px-m.x,py-m.y);if(d<R)near.push([px,py,d]);}
+        for(let i=0;i<near.length;i++){
+          const a=near[i];
+          ctx.beginPath();ctx.moveTo(m.x,m.y);ctx.lineTo(a[0],a[1]);ctx.strokeStyle=`rgba(${cl},${.13*(1-a[2]/R)})`;ctx.lineWidth=.6;ctx.stroke();
+          for(let j=i+1;j<near.length;j++){const b=near[j];const dd=Math.hypot(a[0]-b[0],a[1]-b[1]);if(dd<72){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.strokeStyle=`rgba(${cl},${.07*(1-dd/72)})`;ctx.lineWidth=.5;ctx.stroke();}}
+        }
+        const g=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,R);g.addColorStop(0,`rgba(${cl},.05)`);g.addColorStop(1,`rgba(${cl},0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(m.x,m.y,R,0,6.283);ctx.fill();
+      }
+      if(frame%150===0&&shooters.length<2){const lr=Math.random()<.5;shooters.push({x:Math.random()*W,y:Math.random()*H*.45,vx:(lr?1:-1)*(5+Math.random()*3),vy:1.8+Math.random()*1.6,life:1});}
+      for(let i=shooters.length-1;i>=0;i--){const sh=shooters[i];sh.x+=sh.vx;sh.y+=sh.vy;sh.life-=.012;if(sh.life<=0||sh.x<-60||sh.x>W+60||sh.y>H+60){shooters.splice(i,1);continue;}
+        const tx=sh.x-sh.vx*7,ty=sh.y-sh.vy*7;const grd=ctx.createLinearGradient(sh.x,sh.y,tx,ty);grd.addColorStop(0,`rgba(255,248,232,${.85*sh.life})`);grd.addColorStop(1,`rgba(${cl},0)`);ctx.strokeStyle=grd;ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(sh.x,sh.y);ctx.lineTo(tx,ty);ctx.stroke();
+        ctx.beginPath();ctx.arc(sh.x,sh.y,1.7,0,6.283);ctx.fillStyle=`rgba(255,248,232,${sh.life})`;ctx.fill();
+      }
+      id=requestAnimationFrame(draw);
+    }
+    draw();
     return()=>{cancelAnimationFrame(id);window.removeEventListener("resize",resize);window.removeEventListener("mousemove",onMove);};
   },[dk]);
   return <canvas ref={ref} style={{position:"fixed",top:0,left:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:0}}/>;
+}
+
+// Glowing aura that trails the cursor (desktop only)
+function CursorAura({dk}){
+  const ref=useRef(null);
+  useEffect(()=>{
+    if(window.matchMedia&&window.matchMedia("(pointer:coarse)").matches)return;
+    const el=ref.current;if(!el)return;let x=0,y=0,tx=0,ty=0,id;
+    const onMove=e=>{tx=e.clientX;ty=e.clientY;el.style.opacity="1";};
+    const onLeave=()=>{el.style.opacity="0";};
+    window.addEventListener("mousemove",onMove,{passive:true});document.addEventListener("mouseleave",onLeave);
+    const loop=()=>{x+=(tx-x)*.16;y+=(ty-y)*.16;el.style.transform=`translate(${x}px,${y}px)`;id=requestAnimationFrame(loop);};loop();
+    return()=>{cancelAnimationFrame(id);window.removeEventListener("mousemove",onMove);document.removeEventListener("mouseleave",onLeave);};
+  },[]);
+  const ac=dk?"200,169,106":"147,118,64";
+  return <div ref={ref} style={{position:"fixed",top:0,left:0,zIndex:55,pointerEvents:"none",opacity:0,transition:"opacity .5s"}}><div style={{position:"absolute",width:300,height:300,marginLeft:-150,marginTop:-150,borderRadius:"50%",background:`radial-gradient(circle,rgba(${ac},.11),rgba(${ac},0) 64%)`}}/></div>;
+}
+
+// Scroll progress bar
+function ScrollProgress({dk}){
+  const ref=useRef(null);
+  useEffect(()=>{
+    const el=ref.current;if(!el)return;
+    const onScroll=()=>{const h=document.documentElement;const max=h.scrollHeight-h.clientHeight;el.style.transform=`scaleX(${max>0?h.scrollTop/max:0})`;};
+    onScroll();window.addEventListener("scroll",onScroll,{passive:true});window.addEventListener("resize",onScroll);
+    return()=>{window.removeEventListener("scroll",onScroll);window.removeEventListener("resize",onScroll);};
+  },[]);
+  const ac=dk?"#c8a96a":"#937640";
+  return <div style={{position:"fixed",top:0,left:0,right:0,height:2.5,zIndex:400,pointerEvents:"none"}}><div ref={ref} style={{height:"100%",background:`linear-gradient(90deg,${ac},#fff6e0,${ac})`,transformOrigin:"left",transform:"scaleX(0)",boxShadow:`0 0 12px ${ac}`}}/></div>;
+}
+
+// Cinematic per-character reveal
+function RevealChars({text,delay=0}){
+  return <span style={{display:"inline-block"}}>{[...text].map((ch,i)=>(
+    <span key={i} style={{display:"inline-block",whiteSpace:"pre",opacity:0,animation:`charRise .7s cubic-bezier(.16,1,.3,1) ${delay+i*0.045}s forwards`}}>{ch===" "?" ":ch}</span>
+  ))}</span>;
 }
 
 // ═══════════════════ CARD ART ═══════════════════
@@ -1174,8 +1241,8 @@ function Hero({ he, dk, onStart, onShop }) {
       ))}
       <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 580, animation: "fadeInUp 1s ease-out" }}>
         <div className="chip" style={{ marginBottom: 22, letterSpacing: 2 }}>✦ {he ? "נומרולוגיה אישית" : "Personal Numerology"}</div>
-        <h1 className="shimmer-text" style={{ fontSize: "clamp(40px,9vw,74px)", fontWeight: he ? 700 : 400, lineHeight: 1.08, fontFamily: "'Cormorant Garamond',serif", margin: "0 auto" }}>
-          {he ? "המספרים שלך מספרים סיפור" : "Your Numbers Tell a Story"}
+        <h1 style={{ fontSize: "clamp(40px,9vw,74px)", fontWeight: he ? 700 : 400, lineHeight: 1.08, fontFamily: "'Cormorant Garamond',serif", margin: "0 auto", color: ac, textShadow: `0 0 45px ${ac}55` }}>
+          <RevealChars text={he ? "המספרים שלך מספרים סיפור" : "Your Numbers Tell a Story"} delay={.2}/>
         </h1>
         <p style={{ fontSize: "clamp(15px,2.4vw,19px)", color: ts, fontWeight: 300, marginTop: 18, lineHeight: 1.8, maxWidth: 500, marginInline: "auto" }}>
           {he ? "קריאה נומרולוגית חינמית תוך דקה — ואז גלה איך מפה אישית מלאה ושיחה אישית איתי משנות את הדרך שלך." : "A free numerology reading in a minute — then discover how a full personal map and a 1-on-1 call shift your path."}
@@ -1454,7 +1521,9 @@ function ShopSection({ he, dk, onAdd, cart }) {
               const qty = customer ? (cart?.[p.id] || 0) : 0;
               return (
                 <SR key={p.id} delay={pi * 80}>
-                  <div className="pcard" style={p.featured ? { borderColor: `${ac}55`, boxShadow: `0 0 30px ${ac}1a` } : undefined}>
+                  <div className="pcard" style={p.featured ? { borderColor: `${ac}55`, boxShadow: `0 0 30px ${ac}1a`, transformStyle: "preserve-3d" } : { transformStyle: "preserve-3d" }}
+                    onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - .5; const py = (e.clientY - r.top) / r.height - .5; e.currentTarget.style.transition = "transform .1s ease-out"; e.currentTarget.style.transform = `perspective(900px) rotateY(${px * 9}deg) rotateX(${-py * 9}deg) translateY(-8px)`; }}
+                    onMouseLeave={e => { e.currentTarget.style.transition = "transform .5s cubic-bezier(.16,1,.3,1),box-shadow .45s,border-color .45s"; e.currentTarget.style.transform = ""; }}>
                     <div className="pmedia">
                       <img src={IMG[p.id] || IMG.band} alt="" loading="lazy"/>
                       <div style={{ position: "absolute", inset: 0, background: dk ? "linear-gradient(180deg,rgba(8,8,20,.1),rgba(12,12,26,.9))" : "linear-gradient(180deg,rgba(255,255,255,.1),rgba(245,240,232,.9))" }}/>
@@ -1574,6 +1643,7 @@ export default function App(){
 @keyframes rotateSlow{to{transform:rotate(360deg)}}
 @keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.9}}
 @keyframes bob{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(7px);opacity:1}}
+@keyframes charRise{from{opacity:0;transform:translateY(26px) rotateX(50deg)}to{opacity:1;transform:translateY(0) rotateX(0)}}
 .shimmer-text{background:linear-gradient(100deg,${ac},${dk?"#f4e4b8":"#c9a86a"},${ac},${dk?"#fff6e0":"#b8902e"},${ac});background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 6s linear infinite}
 .nebula{position:fixed;border-radius:50%;filter:blur(70px);pointer-events:none;z-index:0;opacity:${dk?.5:.4};mix-blend-mode:${dk?"screen":"multiply"}}
 .shine{position:relative;overflow:hidden}.shine::after{content:'';position:absolute;top:0;left:0;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:translateX(-130%) skewX(-18deg);pointer-events:none}.shine:hover::after{animation:shineSweep .9s ease}
@@ -1607,6 +1677,8 @@ export default function App(){
     <div className="nebula" style={{width:"48vw",height:"48vw",bottom:"-10vh",[isRtl?"left":"right"]:"-10vw",background:`radial-gradient(circle,${dk?"#5b3fa6":"#b98cf0"}55,transparent 70%)`,animation:"drift2 32s ease-in-out infinite"}}/>
     <div className="nebula" style={{width:"40vw",height:"40vw",top:"40vh",left:"30vw",background:`radial-gradient(circle,${dk?"#1f5e8c":"#7fb6e0"}40,transparent 70%)`,animation:"drift 38s ease-in-out infinite reverse"}}/>
     <Particles dk={dk}/>
+    <CursorAura dk={dk}/>
+    <ScrollProgress dk={dk}/>
 
     {/* ═══ TOP BAR with HOME BUTTON ═══ */}
     <div className="tbar">
