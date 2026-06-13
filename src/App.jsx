@@ -1377,7 +1377,7 @@ function WhyNumerology({ he, dk }) {
               <div style={{ color: ac, display: "flex", justifyContent: "center", marginBottom: 2 }}><Icon name={info.icon} size={22} stroke={1.3}/></div>
               <div style={{ fontSize: 22, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{n}</div>
               <div style={{ fontSize: 10, color: tm, fontWeight: 600, lineHeight: 1.3 }}>{info[he ? "he" : "en"].k.split(",")[0]}</div>
-              {isOpen && <div style={{ fontSize: 10.5, color: ts, lineHeight: 1.6, marginTop: 6, textAlign: he ? "right" : "left" }}>{info[he ? "he" : "en"].p}</div>}
+              {isOpen && <div style={{ fontSize: 10.5, color: ts, lineHeight: 1.6, marginTop: 6, textAlign: "center" }}>{info[he ? "he" : "en"].p}</div>}
             </div>
           );
         })}
@@ -1404,7 +1404,7 @@ function Testimonials({ he, dk }) {
     <SR><div className="gc" style={{ marginBottom: 16 }}>
       <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 16 }}>{he ? "מה אומרים עליי" : "What people say"}</h2>
       {list.map((r, i) => (
-        <div key={i} style={{ padding: 14, background: dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)", border: `1px solid ${ac}10`, borderRadius: 14, marginBottom: i === list.length - 1 ? 0 : 10 }}>
+        <div key={i} style={{ padding: 14, background: dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)", border: `1px solid ${ac}10`, borderRadius: 14, marginBottom: i === list.length - 1 ? 0 : 10, textAlign: "center" }}>
           <div style={{ fontSize: 12, color: ac, marginBottom: 4 }}>★★★★★</div>
           <p style={{ fontSize: 13.5, lineHeight: 1.8, color: tm, fontStyle: "italic" }}>"{r.t}"</p>
           <div style={{ fontSize: 12, color: ts, marginTop: 6, fontWeight: 600 }}>— {r.n}</div>
@@ -1441,11 +1441,11 @@ function FAQ({ he, dk }) {
         const isOpen = open === i;
         return (
           <div key={i} style={{ borderBottom: `1px solid ${ac}10` }}>
-            <div onClick={() => { AU.init(); AU.p("click"); setOpen(isOpen ? null : i); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "14px 4px", cursor: "pointer" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: isOpen ? ac : tm }}>{item.q}</span>
-              <span style={{ fontSize: 18, color: ac, transform: isOpen ? "rotate(45deg)" : "none", transition: "transform .3s" }}>+</span>
+            <div onClick={() => { AU.init(); AU.p("click"); setOpen(isOpen ? null : i); }} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, padding: "14px 4px", cursor: "pointer" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: isOpen ? ac : tm, textAlign: "center" }}>{item.q}</span>
+              <span style={{ fontSize: 18, color: ac, transform: isOpen ? "rotate(45deg)" : "none", transition: "transform .3s", flexShrink: 0 }}>+</span>
             </div>
-            {isOpen && <p style={{ fontSize: 13, lineHeight: 1.8, color: ts, padding: "0 4px 14px" }}>{item.a}</p>}
+            {isOpen && <p style={{ fontSize: 13, lineHeight: 1.8, color: ts, padding: "0 4px 14px", textAlign: "center" }}>{item.a}</p>}
           </div>
         );
       })}
@@ -1592,7 +1592,7 @@ function ShopSection({ he, dk, onAdd, cart }) {
                       {p.badge && <div style={{ position: "absolute", top: 14, insetInlineEnd: 12, background: ac, color: dk ? "#080812" : "#fff", fontSize: 10, fontWeight: 700, padding: "4px 11px", borderRadius: 20, letterSpacing: .5, boxShadow: `0 4px 16px ${ac}77` }}>{p.badge[he ? "he" : "en"]}</div>}
                       <div style={{ position: "absolute", bottom: 9, insetInlineStart: 15, fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: "'Cormorant Garamond',serif", textShadow: "0 2px 14px rgba(0,0,0,.7)" }}>{p.price[he ? "he" : "en"]}</div>
                     </div>
-                    <div style={{ padding: "14px 16px 16px" }}>
+                    <div style={{ padding: "14px 16px 16px", textAlign: "center" }}>
                       <div style={{ fontSize: 15, fontWeight: 700, color: tm, marginBottom: 5 }}>{p.name[he ? "he" : "en"]}</div>
                       <p style={{ fontSize: 12.5, lineHeight: 1.7, color: ts, marginBottom: 13, minHeight: customer ? 54 : undefined }}>{p.desc[he ? "he" : "en"]}</p>
                       {customer ? (
@@ -1632,21 +1632,19 @@ export default function App(){
   const[results,setResults]=useState(null);const[showRes,setShowRes]=useState(false);const[error,setError]=useState("");
   const[chapters,setChapters]=useState([false,false,false,false,false,false]);
   const[streak,setStreak]=useState(0);
-  const[owner,setOwner]=useState(false);const[previewCustomer,setPreviewCustomer]=useState(false);
+  const[owner,setOwner]=useState(()=>{try{const h=location.hash+location.search;if(/customer/i.test(h))return false;if(/owner|studio|admin/i.test(h))return true;return localStorage.getItem(OWNER_STORE_KEY)!=="customer";}catch(e){return true;}});const[previewCustomer,setPreviewCustomer]=useState(false);
   const[cart,setCart]=useState({});const[cartOpen,setCartOpen]=useState(false);
 
   const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
   useEffect(()=>{AU.on=snd;},[snd]);
 
-  // ── owner mode + cart persistence (client-side gating; tools are owner-only) ──
+  // ── cart persistence; owner/customer view preference is read in the useState initializer above ──
   useEffect(()=>{try{
-    const isOwner=localStorage.getItem(OWNER_STORE_KEY)==="1"||/owner/i.test(location.hash+location.search);
-    if(isOwner){setOwner(true);localStorage.setItem(OWNER_STORE_KEY,"1");}
     const saved=localStorage.getItem(CART_STORE_KEY);if(saved)setCart(JSON.parse(saved)||{});
   }catch(e){}},[]);
   useEffect(()=>{try{localStorage.setItem(CART_STORE_KEY,JSON.stringify(cart));}catch(e){}},[cart]);
-  const enterOwner=()=>{AU.init();AU.p("reveal");setOwner(true);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"1");}catch(e){}};
-  const exitOwner=()=>{AU.init();AU.p("click");setOwner(false);setPreviewCustomer(false);try{localStorage.removeItem(OWNER_STORE_KEY);}catch(e){}};
+  const enterOwner=()=>{AU.init();AU.p("reveal");setOwner(true);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"owner");}catch(e){}};
+  const exitOwner=()=>{AU.init();AU.p("click");setOwner(false);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"customer");}catch(e){}};
   const addToCart=(id)=>{AU.init();AU.p("card");setCart(c=>({...c,[id]:(c[id]||0)+1}));};
   const setQty=(id,delta)=>setCart(c=>{const q=(c[id]||0)+delta;const n={...c};if(q<=0)delete n[id];else n[id]=q;return n;});
   const removeFromCart=(id)=>setCart(c=>{const n={...c};delete n[id];return n;});
