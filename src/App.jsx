@@ -62,6 +62,9 @@ const ICON_PATHS = {
   layers:"M12 3.5l8.5 4.5L12 12.5 3.5 8z M3.5 12l8.5 4.5 8.5-4.5 M3.5 16l8.5 4.5 8.5-4.5",
   gem:"M5.5 9.5L9 5h6l3.5 4.5L12 19.5z M5.5 9.5h13 M9 5l-1.6 4.5L12 19.5l4.6-10L15 5",
   briefcase:"M4 8h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z M9 8V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2 M3 13h18 M11 13h2",
+  instagram:"M7.5 3.5h9a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4h-9a4 4 0 0 1-4-4v-9a4 4 0 0 1 4-4z M12 8.3a3.7 3.7 0 1 0 0 7.4 3.7 3.7 0 0 0 0-7.4z M17 6.7h.01",
+  whatsapp:"M12 3.2a8.8 8.8 0 0 0-7.5 13.4L3.3 20.7l4.3-1.1A8.8 8.8 0 1 0 12 3.2z M8.8 7.9c.2 0 .5 0 .7.5l.7 1.6c.1.2 0 .4-.1.6l-.5.6c-.1.2-.2.3 0 .6.6 1 1.4 1.7 2.4 2.2.3.1.4 0 .6-.1l.6-.7c.2-.2.3-.2.6-.1l1.5.7c.2.1.3.3.3.5 0 .9-.7 1.6-1.5 1.7-.6 0-1.3 0-3-.8-2.2-1.1-3.7-3.3-4.2-4.8-.2-.7-.2-1.3.1-1.8.2-.4.5-.5.8-.5z",
+  sparkles:"M12 3v18 M3 12h18 M6.5 6.5l11 11 M17.5 6.5l-11 11",
 };
 function Icon({ name, size = 20, stroke = 1.5, style }) {
   const d = ICON_PATHS[name] || ICON_PATHS.sparkle;
@@ -1159,6 +1162,7 @@ function CalculatorsWidget({he,dk}){
 // └─────────────────────────────────────────────────────────────┘
 const WHATSAPP_PHONE = "972500000000"; // >> המספר שלך: קידומת מדינה (972) + המספר בלי 0 מוביל
 const CONTACT_URL = `https://wa.me/${WHATSAPP_PHONE}`;
+const BUSINESS_EMAIL = "shani@example.com"; // 👈 החליפי לאימייל שלך
 const OWNER_STORE_KEY = "numerology_owner_mode";
 const CART_STORE_KEY = "numerology_cart_v1";
 
@@ -1176,10 +1180,21 @@ const IMG = {
   mentoring: U("1444703686981-a3abbc4d4fe3", 800),
   gift: U("1462331940025-496dfbfc7564", 800),
   "monthly-insight": U("1483347756197-71ef80e95f73", 800),
+  bundle: U("1543722530-d2c3201371e7", 800),
   band: U("1444703686981-a3abbc4d4fe3", 1600),
 };
 
 const SHOP = [
+  {
+    cat: { he: "חבילות משתלמות", en: "Value Bundles" },
+    sub: { he: "המסלול המלא במחיר מיוחד", en: "The full path at a special price" },
+    items: [
+      { id:"bundle", icon:"sparkles", featured:true, badge:{he:"חיסכון ₪99",en:"Save ₪99"}, priceNum:449,
+        name:{he:"חבילת המסע המלא — מפה + שיחה מעמיקה",en:"Full Journey — Map + Deep Call"},
+        desc:{he:"מפה נומרולוגית אישית מלאה + ייעוץ מעמיק 75 דק׳ עם שני. הדרך השלמה להבין את עצמך ולקבל כיוון. (₪498 בנפרד)",en:"Full personal map + 75-min deep consultation with Shani. (₪498 separately)"},
+        price:{he:"₪449",en:"$135"}, link:"" },
+    ],
+  },
   {
     cat: { he: "מפות ודוחות דיגיטליים", en: "Digital Maps & Reports" },
     sub: { he: "נשלח אליך כ-PDF מעוצב תוך 48 שעות", en: "Delivered as a designed PDF within 48h" },
@@ -1455,16 +1470,32 @@ function FAQ({ he, dk }) {
 
 // ═══════════════════ LANDING: FOOTER ═══════════════════
 function LandingFooter({ he, dk, onOwner }) {
-  const ac = dk ? "#c8a96a" : "#937640";
-  const ts = dk ? "rgba(232,224,208,.4)" : "rgba(42,37,32,.45)";
+  const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520";
+  const ts = dk ? "rgba(232,224,208,.45)" : "rgba(42,37,32,.5)";
+  const link = { color: ts, textDecoration: "none", fontSize: 12.5, transition: "color .3s" };
   return (
-    <div style={{ textAlign: "center", padding: "30px 0 10px" }}>
-      <div style={{ fontSize: 22, color: ac, opacity: .7 }}>✦</div>
-      <p style={{ fontSize: 13, color: ts, marginTop: 8 }}>{he ? "יש שאלה? דברו איתי בוואטסאפ" : "Questions? Message me on WhatsApp"}</p>
-      <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="ghost" style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 10, textDecoration: "none" }}><Icon name="chat" size={15}/>{he ? "צ׳אט בוואטסאפ" : "WhatsApp chat"}</a>
-      <div style={{ marginTop: 22, fontSize: 10, color: `${ac}22`, letterSpacing: 3 }}>✦ ✦ ✦</div>
-      {/* כניסת בעל העסק — לחיצה כפולה על הנקודה */}
-      <span onDoubleClick={onOwner} title="owner" style={{ display: "inline-block", marginTop: 14, fontSize: 16, color: `${ac}33`, cursor: "default", userSelect: "none" }}>·</span>
+    <div style={{ marginTop: 24, paddingTop: 26, borderTop: `1px solid ${ac}14`, textAlign: "center" }}>
+      <div style={{ fontSize: 24, color: ac, opacity: .8 }}>✦</div>
+      <h3 style={{ fontSize: 20, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif", marginTop: 6 }}>{he ? "שני כהן אזולאי" : "Shani Cohen Azulai"}</h3>
+      <p style={{ fontSize: 12, color: ts, marginTop: 3 }}>{he ? "נומרולוגיה · מסרים · אימון אישי · הפרשת חלה" : "Numerology · Messages · Coaching · Challah"}</p>
+
+      <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginTop: 16 }}>
+        <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" style={{ ...link, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="whatsapp" size={15}/>{he ? "וואטסאפ" : "WhatsApp"}</a>
+        <a href="https://www.instagram.com/shani_cohen_8/" target="_blank" rel="noopener noreferrer" style={{ ...link, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="instagram" size={15}/>{he ? "אינסטגרם" : "Instagram"}</a>
+        <a href={`mailto:${BUSINESS_EMAIL}`} style={{ ...link, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="mail" size={15}/>{he ? "אימייל" : "Email"}</a>
+      </div>
+
+      <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap", marginTop: 14, fontSize: 11.5 }}>
+        <a href="#" style={link}>{he ? "תקנון" : "Terms"}</a>
+        <span style={{ color: `${ac}33` }}>·</span>
+        <a href="#" style={link}>{he ? "מדיניות פרטיות" : "Privacy"}</a>
+        <span style={{ color: `${ac}33` }}>·</span>
+        <a href="#" style={link}>{he ? "מדיניות החזרים" : "Refunds"}</a>
+      </div>
+
+      <p style={{ fontSize: 10.5, color: ts, opacity: .7, marginTop: 16 }}>© {2026} {he ? "שני כהן אזולאי · כל הזכויות שמורות" : "Shani Cohen Azulai · All rights reserved"}</p>
+      <div style={{ marginTop: 12, fontSize: 10, color: `${ac}22`, letterSpacing: 3 }}>✦ ✦ ✦</div>
+      <span onDoubleClick={onOwner} title="owner" style={{ display: "inline-block", marginTop: 10, fontSize: 14, color: `${ac}26`, cursor: "default", userSelect: "none" }}>·</span>
     </div>
   );
 }
@@ -1538,6 +1569,61 @@ function CartDrawer({ he, dk, cart, open, onClose, onQty, onRemove, onClear }) {
   );
 }
 const qtyBtn = (ac, dk) => ({ width: 26, height: 26, borderRadius: 8, border: `1px solid ${ac}44`, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.7)", color: ac, fontSize: 16, cursor: "pointer", lineHeight: 1, fontFamily: "inherit" });
+
+// ═══════════════════ ABOUT — SHANI COHEN AZULAI ═══════════════════
+function AboutShani({ he, dk, onBook }) {
+  const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.6)" : "rgba(42,37,32,.6)";
+  const [noPhoto, setNoPhoto] = useState(false);
+  return (<SR><div className="gc" style={{ marginBottom: 16, textAlign: "center" }}>
+    <div style={{ width: 124, height: 124, margin: "0 auto 14px", borderRadius: "50%", border: `2px solid ${ac}`, padding: 4, boxShadow: `0 0 34px ${ac}40` }}>
+      <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: `radial-gradient(circle at 30% 28%,${ac}3a,${dk ? "#14142e" : "#ece3d4"})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {!noPhoto && <img src="/shani.jpg" alt="שני כהן אזולאי" onError={() => setNoPhoto(true)} style={{ width: "100%", height: "100%", objectFit: "cover" }}/>}
+        {noPhoto && <span style={{ fontSize: 48, color: ac, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>ש</span>}
+      </div>
+    </div>
+    <div className="chip" style={{ marginBottom: 10 }}>✦ {he ? "מי אני" : "About"}</div>
+    <h2 className="shimmer-text" style={{ fontSize: 28, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "שני כהן אזולאי" : "Shani Cohen Azulai"}</h2>
+    <div style={{ fontSize: 12.5, color: ac, marginTop: 5, letterSpacing: .5 }}>{he ? "נומרולוגיה · מסרים · אימון אישי · הפרשת חלה" : "Numerology · Messages · Coaching · Challah"}</div>
+    <p style={{ fontSize: 14, lineHeight: 1.9, color: ts, maxWidth: 460, margin: "14px auto 0" }}>{he ? "נעים להכיר, אני שני. כבר שנים אני מלווה אנשים דרך שפת המספרים — עוזרת להם להבין מי הם, מה הייעוד שלהם, ואיך לקבל החלטות מתוך בהירות וביטחון. סביבי נבנתה קהילה של אלפי עוקבים, ועכשיו גם אתם מוזמנים למסע אישי איתי." : "I'm Shani. For years I've been guiding people through the language of numbers — helping them understand who they are, their purpose, and how to make decisions with clarity and confidence."}</p>
+    <p style={{ fontSize: 10, color: ts, opacity: .55, marginTop: 8 }}>{he ? "* ניתן לערוך את הטקסט ולהוסיף תמונה (קובץ public/shani.jpg)" : "* Editable text; add public/shani.jpg"}</p>
+    <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 18 }}>
+      <a href="https://www.instagram.com/shani_cohen_8/" target="_blank" rel="noopener noreferrer" className="ghost" style={{ display: "inline-flex", alignItems: "center", gap: 7, textDecoration: "none" }}><Icon name="instagram" size={16}/>{he ? "אינסטגרם · 14K" : "Instagram · 14K"}</a>
+      <button className="gb" onClick={onBook} style={{ width: "auto", padding: "13px 24px", fontSize: 14 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="phone" size={15}/>{he ? "לשיחה אישית איתי" : "Book a session"}</span></button>
+    </div>
+  </div></SR>);
+}
+
+// ═══════════════════ TRUST BAR ═══════════════════
+function TrustBar({ he, dk }) {
+  const ac = dk ? "#c8a96a" : "#937640"; const ts = dk ? "rgba(232,224,208,.62)" : "rgba(42,37,32,.6)";
+  const items = he ? [{ i: "lock", t: "תשלום מאובטח" }, { i: "doc", t: "חשבונית מס" }, { i: "share", t: "אספקה תוך 48 שעות" }, { i: "heart", t: "ליווי אישי" }] : [{ i: "lock", t: "Secure payment" }, { i: "doc", t: "Tax invoice" }, { i: "share", t: "48h delivery" }, { i: "heart", t: "Personal care" }];
+  return (<SR><div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 10, marginBottom: 16 }}>
+    {items.map((it, i) => (<div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", borderRadius: 14, border: `1px solid ${ac}14`, background: dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)" }}><span style={{ color: ac, display: "inline-flex" }}><Icon name={it.i} size={20} stroke={1.3}/></span><span style={{ fontSize: 11.5, color: ts, textAlign: "center" }}>{it.t}</span></div>))}
+  </div></SR>);
+}
+
+// ═══════════════════ LEAD CAPTURE ═══════════════════
+function LeadCapture({ he, dk }) {
+  const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.6)" : "rgba(42,37,32,.6)";
+  const [email, setEmail] = useState(""); const [sent, setSent] = useState(false);
+  const submit = () => { if (!email.trim()) return; AU.init(); AU.p("reveal"); const msg = he ? `היי שני! אשמח להצטרף לרשימת התפוצה. המייל שלי: ${email}` : `Hi Shani! I'd like to join your list. My email: ${email}`; window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer"); setSent(true); };
+  return (<SR><div className="gc" style={{ marginBottom: 16, textAlign: "center" }}>
+    <div style={{ color: ac, display: "flex", justifyContent: "center", marginBottom: 8 }}><Icon name="mail" size={26} stroke={1.3}/></div>
+    <h2 style={{ fontSize: 21, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "תחזית חודשית — חינם" : "Free monthly forecast"}</h2>
+    <p style={{ fontSize: 13, color: ts, maxWidth: 380, margin: "6px auto 14px", lineHeight: 1.7 }}>{he ? "השאירו מייל וקבלו ממני מסר נומרולוגי בכל ראש חודש — חינם, וניתן לבטל בכל עת." : "Leave your email for a monthly numerology message — free, cancel anytime."}</p>
+    {sent ? <div style={{ fontSize: 14, color: ac, fontWeight: 600 }}>{he ? "תודה! ההצטרפות נשלחה בוואטסאפ ✦" : "Thank you! Sent via WhatsApp ✦"}</div> :
+      <div style={{ display: "flex", gap: 8, maxWidth: 400, margin: "0 auto" }}>
+        <input value={email} onChange={e => setEmail(e.target.value)} placeholder={he ? "המייל שלך…" : "Your email…"} dir="ltr" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: 14, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
+        <button className="gb" onClick={submit} style={{ width: "auto", padding: "12px 18px", fontSize: 13 }}>{he ? "הצטרפו" : "Join"}</button>
+      </div>}
+    <p style={{ fontSize: 10, color: ts, opacity: .55, marginTop: 10 }}>{he ? "* כרגע נשלח לוואטסאפ; ניתן לחבר לרשימת תפוצה אמיתית" : "* Currently sent to WhatsApp; can connect a real mailing list"}</p>
+  </div></SR>);
+}
+
+// ═══════════════════ FLOATING WHATSAPP ═══════════════════
+function FloatingWhatsApp({ he }) {
+  return (<a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" title={he ? "דברו איתי בוואטסאפ" : "Chat on WhatsApp"} style={{ position: "fixed", bottom: 20, [he ? "right" : "left"]: 18, zIndex: 200, width: 54, height: 54, borderRadius: "50%", background: "linear-gradient(135deg,#25D366,#128C7E)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 26px rgba(37,211,102,.5)", textDecoration: "none" }}><Icon name="whatsapp" size={28} stroke={1.6}/></a>);
+}
 
 // ═══════════════════ CINEMATIC CTA BAND ═══════════════════
 function CtaBand({ he, dk, onShop }) {
@@ -1690,6 +1776,7 @@ export default function App(){
   return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"hidden",transition:"background .7s,color .4s"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Hebrew:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}html,body{overflow-x:hidden;max-width:100%}::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:${ac}33;border-radius:3px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(35px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
@@ -1937,11 +2024,14 @@ export default function App(){
       {/* ═══ CUSTOMER LANDING SECTIONS ═══ */}
       {!showOwnerUI&&(<>
         <div style={{height:10}}/>
+        <AboutShani he={he} dk={dk} onBook={()=>scrollToId("shop-section")}/>
         <WhyNumerology he={he} dk={dk}/>
         <CtaBand he={he} dk={dk} onShop={()=>scrollToId("shop-section")}/>
         <div id="shop-section" style={{scrollMarginTop:70}}/>
         <ShopSection he={he} dk={dk} onAdd={addToCart} cart={cart}/>
+        <TrustBar he={he} dk={dk}/>
         <Testimonials he={he} dk={dk}/>
+        <LeadCapture he={he} dk={dk}/>
         <FAQ he={he} dk={dk}/>
         <LandingFooter he={he} dk={dk} onOwner={enterOwner}/>
       </>)}
@@ -1951,6 +2041,7 @@ export default function App(){
 
     {/* ═══ CART (customer only) ═══ */}
     {!showOwnerUI&&(<>
+      <FloatingWhatsApp he={he}/>
       <FloatingCart he={he} dk={dk} cart={cart} onOpen={()=>{AU.init();AU.p("click");setCartOpen(true);}}/>
       <CartDrawer he={he} dk={dk} cart={cart} open={cartOpen} onClose={()=>setCartOpen(false)} onQty={setQty} onRemove={removeFromCart} onClear={clearCart}/>
     </>)}
