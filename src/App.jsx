@@ -336,6 +336,51 @@ function ScrollProgress({dk}){
 }
 
 // Cinematic per-character reveal
+// Odometer digit (0-9) that rolls when the value changes
+function RollDigit({ value }) {
+  const v = Math.max(0, Math.min(9, value | 0));
+  return (
+    <span style={{ display: "inline-block", height: "1em", lineHeight: "1em", overflow: "hidden", verticalAlign: "-0.06em" }}>
+      <span style={{ display: "block", transition: "transform .7s cubic-bezier(.34,1.56,.64,1)", transform: `translateY(${-v}em)` }}>
+        {Array.from({ length: 10 }, (_, i) => <span key={i} style={{ display: "block", height: "1em", lineHeight: "1em" }}>{i}</span>)}
+      </span>
+    </span>
+  );
+}
+
+// Live numerology of a typed string (Hebrew via LV, else A-Z Pythagorean)
+function liveNum(s) {
+  let sum = 0;
+  for (const ch of s) {
+    if (LV[ch]) sum += LV[ch];
+    else { const u = ch.toUpperCase(); if (u >= "A" && u <= "Z") sum += ((u.charCodeAt(0) - 65) % 9) + 1; }
+  }
+  return sum ? R(sum) : 0;
+}
+
+// Magnetic wrapper — child drifts toward the cursor (desktop only)
+function Magnetic({ children, strength = 22, style }) {
+  const ref = useRef(null);
+  const coarse = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
+  if (coarse) return <span style={{ display: "inline-block", ...style }}>{children}</span>;
+  const onMove = (e) => { const el = ref.current; if (!el) return; const r = el.getBoundingClientRect(); const x = e.clientX - (r.left + r.width / 2); const y = e.clientY - (r.top + r.height / 2); el.style.transform = `translate(${(x / r.width) * strength}px,${(y / r.height) * strength}px)`; };
+  const onLeave = () => { const el = ref.current; if (el) el.style.transform = ""; };
+  return <span ref={ref} onMouseMove={onMove} onMouseLeave={onLeave} style={{ display: "inline-block", transition: "transform .35s cubic-bezier(.16,1,.3,1)", ...style }}>{children}</span>;
+}
+
+// Scroll-driven parallax wrapper
+function Parallax({ children, speed = 0.15, style }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return; let raf = 0;
+    const update = () => { const r = el.getBoundingClientRect(); const off = window.innerHeight / 2 - (r.top + r.height / 2); el.style.transform = `translate3d(0,${off * speed}px,0)`; raf = 0; };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update(); window.addEventListener("scroll", onScroll, { passive: true }); window.addEventListener("resize", onScroll);
+    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); if (raf) cancelAnimationFrame(raf); };
+  }, [speed]);
+  return <div ref={ref} style={{ willChange: "transform", ...style }}>{children}</div>;
+}
+
 function RevealChars({text,delay=0}){
   return <span style={{display:"inline-block"}}>{[...text].map((ch,i)=>(
     <span key={i} style={{display:"inline-block",whiteSpace:"pre",opacity:0,animation:`charRise .7s cubic-bezier(.16,1,.3,1) ${delay+i*0.045}s forwards`}}>{ch===" "?" ":ch}</span>
@@ -1224,40 +1269,56 @@ function NumWheel({ ac, size = 520 }) {
   );
 }
 
-function Hero({ he, dk, onStart, onShop }) {
+function Hero({ he, dk, onStart, onShop, onUseName }) {
   const ac = dk ? "#c8a96a" : "#937640";
   const tm = dk ? "#e8e0d0" : "#2a2520";
   const ts = dk ? "rgba(232,224,208,.62)" : "rgba(42,37,32,.6)";
-  const floats = [{ n: 7, x: "8%", y: "18%", s: 64, d: 0 }, { n: 3, x: "84%", y: "24%", s: 52, d: 1.2 }, { n: 9, x: "16%", y: "72%", s: 58, d: 2.1 }, { n: 1, x: "80%", y: "70%", s: 46, d: .6 }, { n: 5, x: "50%", y: "12%", s: 40, d: 1.7 }];
+  const [nm, setNm] = useState("");
+  const num = nm.trim() ? liveNum(nm) : 0;
+  const floats = [{ n: 7, x: "8%", y: "18%", s: 64, d: 0 }, { n: 3, x: "84%", y: "24%", s: 52, d: 1.2 }, { n: 9, x: "16%", y: "74%", s: 58, d: 2.1 }, { n: 1, x: "82%", y: "72%", s: 46, d: .6 }, { n: 5, x: "50%", y: "10%", s: 40, d: 1.7 }];
   return (
-    <div style={{ position: "relative", width: "100vw", marginInlineStart: "calc(50% - 50vw)", marginInlineEnd: "calc(50% - 50vw)", minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "70px 18px 56px" }}>
+    <div style={{ position: "relative", width: "100vw", marginInlineStart: "calc(50% - 50vw)", marginInlineEnd: "calc(50% - 50vw)", minHeight: "92vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "70px 18px 56px" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <img src={IMG.hero} alt="" loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: dk ? .6 : .42, transform: "scale(1.05)" }}/>
         <div style={{ position: "absolute", inset: 0, background: dk ? "radial-gradient(ellipse at center,rgba(8,8,20,.25),rgba(8,8,18,.82) 80%)" : "radial-gradient(ellipse at center,rgba(245,240,232,.45),rgba(245,240,232,.92) 80%)" }}/>
       </div>
-      <div style={{ position: "absolute", zIndex: 1, width: "min(560px,120vw)", height: "min(560px,120vw)", color: ac, opacity: dk ? .14 : .12, animation: "rotateSlow 120s linear infinite" }}><NumWheel ac={ac} size={560}/></div>
-      {floats.map((f, i) => (
-        <span key={i} style={{ position: "absolute", zIndex: 1, left: f.x, top: f.y, fontSize: f.s, color: ac, opacity: .12, fontFamily: "'Cormorant Garamond',serif", animation: `floatY ${5 + i}s ease-in-out ${f.d}s infinite`, textShadow: `0 0 30px ${ac}55` }}>{f.n}</span>
-      ))}
+      <Parallax speed={0.16} style={{ position: "absolute", inset: 0, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+        <div style={{ width: "min(560px,120vw)", height: "min(560px,120vw)", color: ac, opacity: dk ? .14 : .12, animation: "rotateSlow 120s linear infinite" }}><NumWheel ac={ac} size={560}/></div>
+        {floats.map((f, i) => (
+          <span key={i} style={{ position: "absolute", left: f.x, top: f.y, fontSize: f.s, color: ac, opacity: .13, fontFamily: "'Cormorant Garamond',serif", animation: `floatY ${5 + i}s ease-in-out ${f.d}s infinite`, textShadow: `0 0 30px ${ac}55` }}>{f.n}</span>
+        ))}
+      </Parallax>
       <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 580, animation: "fadeInUp 1s ease-out" }}>
         <div className="chip" style={{ marginBottom: 22, letterSpacing: 2 }}>✦ {he ? "נומרולוגיה אישית" : "Personal Numerology"}</div>
         <h1 style={{ fontSize: "clamp(40px,9vw,74px)", fontWeight: he ? 700 : 400, lineHeight: 1.08, fontFamily: "'Cormorant Garamond',serif", margin: "0 auto", color: ac, textShadow: `0 0 45px ${ac}55` }}>
           <RevealChars text={he ? "המספרים שלך מספרים סיפור" : "Your Numbers Tell a Story"} delay={.2}/>
         </h1>
-        <p style={{ fontSize: "clamp(15px,2.4vw,19px)", color: ts, fontWeight: 300, marginTop: 18, lineHeight: 1.8, maxWidth: 500, marginInline: "auto" }}>
-          {he ? "קריאה נומרולוגית חינמית תוך דקה — ואז גלה איך מפה אישית מלאה ושיחה אישית איתי משנות את הדרך שלך." : "A free numerology reading in a minute — then discover how a full personal map and a 1-on-1 call shift your path."}
+        <p style={{ fontSize: "clamp(14px,2.3vw,18px)", color: ts, fontWeight: 300, marginTop: 16, lineHeight: 1.8, maxWidth: 480, marginInline: "auto" }}>
+          {he ? "התחל עכשיו — הקלד את שמך וצפה במספר שלך מתגלה." : "Start now — type your name and watch your number reveal."}
         </p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 30 }}>
-          <button className="gb" onClick={onStart} style={{ width: "auto", padding: "16px 34px", fontSize: 16 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 9, justifyContent: "center" }}><Icon name="orb" size={17}/>{he ? "קריאה חינמית" : "Free reading"}</span></button>
-          <button className="ghost shine" onClick={onShop} style={{ padding: "16px 28px", fontSize: 15, backdropFilter: "blur(6px)" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="cart" size={16}/>{he ? "לחנות ולמחירים" : "Shop & prices"}</span></button>
+
+        <div style={{ marginTop: 24, marginInline: "auto", maxWidth: 430, padding: "18px 18px 20px", borderRadius: 20, border: `1px solid ${ac}3a`, background: dk ? "rgba(12,12,28,.5)" : "rgba(255,255,255,.6)", backdropFilter: "blur(14px)", boxShadow: `0 18px 55px rgba(0,0,0,${dk ? .42 : .12})` }}>
+          <div style={{ fontSize: 10.5, color: `${ac}cc`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 11 }}>{he ? "מחשבון חי · מספר השם שלך" : "Live · your name number"}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <input value={nm} onChange={(e) => setNm(e.target.value)} placeholder={he ? "הקלד את שמך…" : "Type your name…"} dir={he ? "rtl" : "ltr"} onKeyDown={(e) => { if (e.key === "Enter" && nm.trim()) onUseName(nm); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "13px 15px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none", textAlign: he ? "right" : "left" }}/>
+            <div style={{ width: 72, height: 72, flexShrink: 0, borderRadius: "50%", border: `1.5px solid ${ac}55`, display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(circle at 35% 30%,${ac}26,transparent 70%)`, boxShadow: num ? `0 0 28px ${ac}55` : "none", transition: "box-shadow .5s" }}>
+              <span style={{ fontSize: 38, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{num ? <RollDigit value={num}/> : "—"}</span>
+            </div>
+          </div>
+          {num > 0 && <div style={{ marginTop: 11, fontSize: 13, color: ts, animation: "fadeInUp .4s ease-out" }}>{he ? `${D[num]?.t} · ${D[num]?.s}` : `${D[num]?.te} · ${D[num]?.se}`}</div>}
+          <button className="gb" onClick={() => (nm.trim() ? onUseName(nm) : onStart())} style={{ width: "100%", marginTop: 14, padding: "14px", fontSize: 15 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="orb" size={16}/>{he ? "קבל את הקריאה המלאה" : "Get the full reading"}</span></button>
         </div>
-        <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap", marginTop: 30, fontSize: 12.5, color: ts }}>
+
+        <div style={{ marginTop: 16 }}>
+          <Magnetic><button className="ghost shine" onClick={onShop} style={{ padding: "13px 26px", fontSize: 14, backdropFilter: "blur(6px)" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="cart" size={15}/>{he ? "לחנות ולמחירים" : "Shop & prices"}</span></button></Magnetic>
+        </div>
+        <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginTop: 24, fontSize: 12.5, color: ts }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={13}/>{he ? "תוצאה מיידית" : "Instant result"}</span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="lock" size={13}/>{he ? "תשלום מאובטח" : "Secure checkout"}</span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="doc" size={13}/>{he ? "חשבונית מס" : "Tax invoice"}</span>
         </div>
       </div>
-      <div onClick={onStart} style={{ position: "absolute", bottom: 22, zIndex: 2, color: ac, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "bob 2.2s ease-in-out infinite" }}>
+      <div onClick={onStart} style={{ position: "absolute", bottom: 18, zIndex: 2, color: ac, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "bob 2.2s ease-in-out infinite" }}>
         <span style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", opacity: .7 }}>{he ? "גלול" : "Scroll"}</span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
       </div>
@@ -1706,7 +1767,7 @@ export default function App(){
         </div>
       ):(
         <>
-          <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onShop={()=>scrollToId("shop-section")}/>
+          <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onShop={()=>scrollToId("shop-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}}/>
           <HowItWorks he={he} dk={dk}/>
           <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:11,color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · נסה עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
         </>
