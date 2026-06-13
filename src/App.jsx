@@ -1305,8 +1305,11 @@ function Hero({ he, dk, onStart, onShop, onUseName }) {
       </Parallax>
       <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 580, animation: "fadeInUp 1s ease-out" }}>
         <div className="chip" style={{ marginBottom: 22, letterSpacing: 2 }}>✦ {he ? "נומרולוגיה אישית" : "Personal Numerology"}</div>
-        <h1 style={{ fontSize: "clamp(40px,9vw,74px)", fontWeight: he ? 700 : 400, lineHeight: 1.08, fontFamily: "'Cormorant Garamond',serif", margin: "0 auto", color: ac, textShadow: `0 0 45px ${ac}55` }}>
-          <RevealChars text={he ? "המספרים שלך מספרים סיפור" : "Your Numbers Tell a Story"} delay={.2}/>
+        <h1 style={{ fontSize: "clamp(32px,8vw,72px)", fontWeight: he ? 700 : 400, lineHeight: 1.12, fontFamily: "'Cormorant Garamond',serif", margin: "0 auto", color: ac, textShadow: `0 0 45px ${ac}55`, maxWidth: "100%", overflowWrap: "break-word" }}>
+          {(he ? "המספרים שלך מספרים סיפור" : "Your Numbers Tell a Story").split(" ").flatMap((w, wi, arr) => {
+            const word = <span key={"w" + wi} style={{ display: "inline-block", whiteSpace: "nowrap" }}><RevealChars text={w} delay={.2 + wi * .22}/></span>;
+            return wi < arr.length - 1 ? [word, <span key={"s" + wi}> </span>] : [word];
+          })}
         </h1>
         <p style={{ fontSize: "clamp(14px,2.3vw,18px)", color: ts, fontWeight: 300, marginTop: 16, lineHeight: 1.8, maxWidth: 480, marginInline: "auto" }}>
           {he ? "התחל עכשיו — הקלד את שמך וצפה במספר שלך מתגלה." : "Start now — type your name and watch your number reveal."}
