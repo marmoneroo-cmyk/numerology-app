@@ -1754,6 +1754,7 @@ export default function App(){
         <button className="tbtn" onClick={()=>{setLang(lang==="he"?"en":"he");AU.init();AU.p("click");}}>{he?"EN":"עב"}</button>
         <button className="tbtn" onClick={()=>{setDk(!dk);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{dk?<Icon name="sun" size={14}/>:<Icon name="moon" size={14}/>}</button>
         <button className={`tbtn ${snd?"act":""}`} onClick={()=>{AU.init();setSnd(!snd);AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{snd?<Icon name="soundOn" size={14}/>:<Icon name="soundOff" size={14}/>}</button>
+        <button className={`tbtn ${owner?"act":""}`} title={he?"הסטודיו שלי — כלים (טבלאות, מחשבונים, התאמה)":"My Studio — tools"} onClick={()=>{AU.init();AU.p("click");owner?exitOwner():enterOwner();}} style={{display:"inline-flex",alignItems:"center",gap:4}}><Icon name="crown" size={14}/>{owner&&<span style={{fontSize:10,fontWeight:700}}>{he?"סטודיו":"Studio"}</span>}</button>
       </div>
     </div>
 
@@ -1761,9 +1762,9 @@ export default function App(){
 
       {/* Header (owner) / Hero (customer) */}
       {showOwnerUI?(
-        <div style={{textAlign:"center",marginBottom:24,animation:"fadeInUp .9s ease-out"}}>
-          <h1 style={{fontSize:isRtl?42:48,fontWeight:isRtl?700:300,color:ac,letterSpacing:isRtl?0:8,textTransform:isRtl?"none":"uppercase",textShadow:`0 0 60px ${ac}33`,lineHeight:1.2,fontFamily:"'Cormorant Garamond',serif"}}>{he?"נומרולוגיה":"Numerology"}</h1>
-          <p style={{fontSize:12,color:ac,fontWeight:600,marginTop:6,letterSpacing:1,display:"inline-flex",alignItems:"center",gap:6}}><Icon name="crown" size={14}/>{he?"מצב בעל העסק — כל הכלים":"Owner mode — all tools"}</p>
+        <div style={{textAlign:"center",marginBottom:18,animation:"fadeInUp .6s ease-out"}}>
+          <div style={{display:"inline-flex",alignItems:"center",gap:9,color:ac}}><Icon name="crown" size={20}/><h1 style={{fontSize:isRtl?28:32,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"הסטודיו שלי":"My Studio"}</h1></div>
+          <p style={{fontSize:12.5,color:ts,marginTop:5}}>{he?"כל הכלים שלך — בחר מסך:":"All your tools — choose a screen:"}</p>
         </div>
       ):(
         <>
@@ -1774,13 +1775,16 @@ export default function App(){
       )}
       <div id="reading-section" style={{scrollMarginTop:70}}/>
 
+      {/* ═══ STUDIO NAV (owner — always visible) ═══ */}
+      {showOwnerUI&&<div className="tabs" style={{animation:"fadeInUp .5s ease-out .1s both",marginBottom:18}}>
+        {[{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"}].map(tb=>(
+          <div key={tb.k} className={`ti ${tab===tb.k?"act":""}`} onClick={()=>{setTab(tb.k);AU.init();AU.p("click");if(tb.k!=="reading")setShowRes(false);}}><span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"center"}}><Icon name={tb.i} size={14} stroke={1.4}/>{tb.l}</span></div>
+        ))}
+      </div>}
+
       {/* ═══ INPUT TABS ═══ */}
       {!showRes&&(<>
-        {showOwnerUI&&<div className="tabs" style={{animation:"fadeInUp .5s ease-out .2s both"}}>
-          {[{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"}].map(tb=>(
-            <div key={tb.k} className={`ti ${tab===tb.k?"act":""}`} onClick={()=>{setTab(tb.k);AU.init();AU.p("click");}}><span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"center"}}><Icon name={tb.i} size={14} stroke={1.4}/>{tb.l}</span></div>
-          ))}
-        </div>}
+        {/* Studio nav rendered above (always visible in owner mode) */}
 
         {showOwnerUI&&tab==="shop"&&<ShopSection he={he} dk={dk}/>}
 
