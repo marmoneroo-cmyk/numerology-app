@@ -1050,6 +1050,23 @@ const CONTACT_URL = `https://wa.me/${WHATSAPP_PHONE}`;
 const OWNER_STORE_KEY = "numerology_owner_mode";
 const CART_STORE_KEY = "numerology_cart_v1";
 
+// Photographic backdrops (Unsplash CDN, hotlink-allowed). Swap freely with your own photos.
+const U = (id, w) => `https://images.unsplash.com/photo-${id}?w=${w}&q=68&auto=format&fit=crop`;
+const IMG = {
+  hero: U("1462331940025-496dfbfc7564", 1600),
+  heroAlt: U("1419242902214-272b3f66ee7a", 1600),
+  "full-map": U("1470071459604-3b5ec3a7fe05", 800),
+  "year-forecast": U("1532693322450-2cb5c511067d", 800),
+  couple: U("1483347756197-71ef80e95f73", 800),
+  name: U("1543722530-d2c3201371e7", 800),
+  "intro-call": U("1419242902214-272b3f66ee7a", 800),
+  "deep-consult": U("1502134249126-9f3755a50d78", 800),
+  mentoring: U("1444703686981-a3abbc4d4fe3", 800),
+  gift: U("1462331940025-496dfbfc7564", 800),
+  "monthly-insight": U("1483347756197-71ef80e95f73", 800),
+  band: U("1444703686981-a3abbc4d4fe3", 1600),
+};
+
 const SHOP = [
   {
     cat: { he: "מפות ודוחות דיגיטליים", en: "Digital Maps & Reports" },
@@ -1127,27 +1144,55 @@ function waOrderLink(cart, he) {
 }
 
 // ═══════════════════ LANDING: HERO ═══════════════════
+function NumWheel({ ac, size = 520 }) {
+  const c = size / 2, r1 = size * 0.46, r2 = size * 0.36, r3 = size * 0.25;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">
+      <circle cx={c} cy={c} r={r1} stroke={ac} strokeWidth="1"/>
+      <circle cx={c} cy={c} r={r2} stroke={ac} strokeWidth=".6"/>
+      <circle cx={c} cy={c} r={r3} stroke={ac} strokeWidth=".4"/>
+      {Array.from({ length: 36 }, (_, i) => { const a = (Math.PI * 2 / 36) * i; return <line key={i} x1={c + r2 * Math.cos(a)} y1={c + r2 * Math.sin(a)} x2={c + r1 * Math.cos(a)} y2={c + r1 * Math.sin(a)} stroke={ac} strokeWidth={i % 9 === 0 ? "1.4" : ".4"}/>; })}
+      {Array.from({ length: 9 }, (_, i) => { const a = (Math.PI * 2 / 9) * i - Math.PI / 2; const rr = (r2 + r3) / 2; return <text key={i} x={c + rr * Math.cos(a)} y={c + rr * Math.sin(a) + 7} textAnchor="middle" fontSize={size * 0.045} fill={ac} fontFamily="'Cormorant Garamond',serif">{i + 1}</text>; })}
+    </svg>
+  );
+}
+
 function Hero({ he, dk, onStart, onShop }) {
   const ac = dk ? "#c8a96a" : "#937640";
   const tm = dk ? "#e8e0d0" : "#2a2520";
-  const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
+  const ts = dk ? "rgba(232,224,208,.62)" : "rgba(42,37,32,.6)";
+  const floats = [{ n: 7, x: "8%", y: "18%", s: 64, d: 0 }, { n: 3, x: "84%", y: "24%", s: 52, d: 1.2 }, { n: 9, x: "16%", y: "72%", s: 58, d: 2.1 }, { n: 1, x: "80%", y: "70%", s: 46, d: .6 }, { n: 5, x: "50%", y: "12%", s: 40, d: 1.7 }];
   return (
-    <div style={{ textAlign: "center", padding: "30px 0 12px", animation: "fadeInUp .9s ease-out" }}>
-      <div style={{ fontSize: 50, color: ac, textShadow: `0 0 60px ${ac}55`, marginBottom: 14 }}>✦</div>
-      <h1 style={{ fontSize: he ? 40 : 46, fontWeight: he ? 700 : 300, color: ac, lineHeight: 1.15, fontFamily: "'Cormorant Garamond',serif", textShadow: `0 0 60px ${ac}22` }}>
-        {he ? "המספרים שלך מספרים סיפור" : "Your Numbers Tell a Story"}
-      </h1>
-      <p style={{ fontSize: 16, color: ts, fontWeight: 300, marginTop: 12, lineHeight: 1.7, maxWidth: 460, marginInline: "auto" }}>
-        {he ? "קבל קריאה נומרולוגית חינמית תוך דקה — ואז גלה איך מפה אישית מלאה ושיחה אישית איתי יכולות לשנות את הדרך שלך." : "Get a free numerology reading in a minute — then discover how a full personal map and a 1-on-1 call with me can shift your path."}
-      </p>
-      <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 24 }}>
-        <button className="gb" onClick={onStart} style={{ width: "auto", padding: "15px 30px" }}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="orb" size={16}/>{he ? "קריאה חינמית" : "Free reading"}</span></button>
-        <button className="ghost" onClick={onShop} style={{ padding: "15px 26px" }}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="cart" size={16}/>{he ? "לחנות ולמחירים" : "Shop & prices"}</span></button>
+    <div style={{ position: "relative", width: "100vw", marginInlineStart: "calc(50% - 50vw)", marginInlineEnd: "calc(50% - 50vw)", minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "70px 18px 56px" }}>
+      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+        <img src={IMG.hero} alt="" loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: dk ? .6 : .42, transform: "scale(1.05)" }}/>
+        <div style={{ position: "absolute", inset: 0, background: dk ? "radial-gradient(ellipse at center,rgba(8,8,20,.25),rgba(8,8,18,.82) 80%)" : "radial-gradient(ellipse at center,rgba(245,240,232,.45),rgba(245,240,232,.92) 80%)" }}/>
       </div>
-      <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginTop: 26, fontSize: 12, color: ts }}>
-        <span>✓ {he ? "תוצאה מיידית" : "Instant result"}</span>
-        <span>✓ {he ? "תשלום מאובטח" : "Secure checkout"}</span>
-        <span>✓ {he ? "חשבונית מס" : "Tax invoice"}</span>
+      <div style={{ position: "absolute", zIndex: 1, width: "min(560px,120vw)", height: "min(560px,120vw)", color: ac, opacity: dk ? .14 : .12, animation: "rotateSlow 120s linear infinite" }}><NumWheel ac={ac} size={560}/></div>
+      {floats.map((f, i) => (
+        <span key={i} style={{ position: "absolute", zIndex: 1, left: f.x, top: f.y, fontSize: f.s, color: ac, opacity: .12, fontFamily: "'Cormorant Garamond',serif", animation: `floatY ${5 + i}s ease-in-out ${f.d}s infinite`, textShadow: `0 0 30px ${ac}55` }}>{f.n}</span>
+      ))}
+      <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 580, animation: "fadeInUp 1s ease-out" }}>
+        <div className="chip" style={{ marginBottom: 22, letterSpacing: 2 }}>✦ {he ? "נומרולוגיה אישית" : "Personal Numerology"}</div>
+        <h1 className="shimmer-text" style={{ fontSize: "clamp(40px,9vw,74px)", fontWeight: he ? 700 : 400, lineHeight: 1.08, fontFamily: "'Cormorant Garamond',serif", margin: "0 auto" }}>
+          {he ? "המספרים שלך מספרים סיפור" : "Your Numbers Tell a Story"}
+        </h1>
+        <p style={{ fontSize: "clamp(15px,2.4vw,19px)", color: ts, fontWeight: 300, marginTop: 18, lineHeight: 1.8, maxWidth: 500, marginInline: "auto" }}>
+          {he ? "קריאה נומרולוגית חינמית תוך דקה — ואז גלה איך מפה אישית מלאה ושיחה אישית איתי משנות את הדרך שלך." : "A free numerology reading in a minute — then discover how a full personal map and a 1-on-1 call shift your path."}
+        </p>
+        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 30 }}>
+          <button className="gb" onClick={onStart} style={{ width: "auto", padding: "16px 34px", fontSize: 16 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 9, justifyContent: "center" }}><Icon name="orb" size={17}/>{he ? "קריאה חינמית" : "Free reading"}</span></button>
+          <button className="ghost shine" onClick={onShop} style={{ padding: "16px 28px", fontSize: 15, backdropFilter: "blur(6px)" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="cart" size={16}/>{he ? "לחנות ולמחירים" : "Shop & prices"}</span></button>
+        </div>
+        <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap", marginTop: 30, fontSize: 12.5, color: ts }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={13}/>{he ? "תוצאה מיידית" : "Instant result"}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="lock" size={13}/>{he ? "תשלום מאובטח" : "Secure checkout"}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="doc" size={13}/>{he ? "חשבונית מס" : "Tax invoice"}</span>
+        </div>
+      </div>
+      <div onClick={onStart} style={{ position: "absolute", bottom: 22, zIndex: 2, color: ac, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "bob 2.2s ease-in-out infinite" }}>
+        <span style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", opacity: .7 }}>{he ? "גלול" : "Scroll"}</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
       </div>
     </div>
   );
@@ -1366,6 +1411,22 @@ function CartDrawer({ he, dk, cart, open, onClose, onQty, onRemove, onClear }) {
 }
 const qtyBtn = (ac, dk) => ({ width: 26, height: 26, borderRadius: 8, border: `1px solid ${ac}44`, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.7)", color: ac, fontSize: 16, cursor: "pointer", lineHeight: 1, fontFamily: "inherit" });
 
+// ═══════════════════ CINEMATIC CTA BAND ═══════════════════
+function CtaBand({ he, dk, onShop }) {
+  const ac = dk ? "#c8a96a" : "#937640";
+  return (
+    <div style={{ position: "relative", width: "100vw", marginInlineStart: "calc(50% - 50vw)", marginInlineEnd: "calc(50% - 50vw)", minHeight: 320, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", margin: "8px 0 20px", backgroundImage: `url(${IMG.band})`, backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
+      <div style={{ position: "absolute", inset: 0, background: dk ? "linear-gradient(180deg,rgba(8,8,18,.82),rgba(10,10,24,.6),rgba(8,8,18,.88))" : "linear-gradient(180deg,rgba(245,240,232,.88),rgba(245,240,232,.7),rgba(245,240,232,.92))" }}/>
+      <SR><div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "44px 22px", maxWidth: 560 }}>
+        <div style={{ color: ac, marginBottom: 14, display: "flex", justifyContent: "center" }}><Icon name="sparkle" size={30} stroke={1.2}/></div>
+        <h2 className="shimmer-text" style={{ fontSize: "clamp(26px,5.5vw,42px)", fontWeight: he ? 700 : 400, fontFamily: "'Cormorant Garamond',serif", lineHeight: 1.18 }}>{he ? "המסע שלך אל המספרים מתחיל כאן" : "Your journey into the numbers starts here"}</h2>
+        <p style={{ fontSize: 15, color: dk ? "rgba(232,224,208,.72)" : "rgba(42,37,32,.65)", margin: "14px auto 24px", maxWidth: 440, lineHeight: 1.85 }}>{he ? "מפה אישית, שיחה אחד-על-אחד, או ליווי מתמשך — בחר את הדרך שלך." : "A personal map, a 1-on-1 call, or ongoing guidance — choose your path."}</p>
+        <button className="gb" onClick={onShop} style={{ width: "auto", padding: "15px 34px", fontSize: 16 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 9, justifyContent: "center" }}><Icon name="cart" size={17}/>{he ? "גלה את החבילות" : "Explore the offerings"}</span></button>
+      </div></SR>
+    </div>
+  );
+}
+
 // ═══════════════════ SHOP SECTION (cart-aware) ═══════════════════
 // onAdd present → customer mode (add-to-cart). Absent → owner mode (buy-now).
 function ShopSection({ he, dk, onAdd, cart }) {
@@ -1382,43 +1443,47 @@ function ShopSection({ he, dk, onAdd, cart }) {
       </div>
 
       {SHOP.map((group, gi) => (
-        <div key={gi} className="gc" style={{ marginBottom: 16 }}>
+        <div key={gi} style={{ marginBottom: 28 }}>
           <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{group.cat[he ? "he" : "en"]}</h3>
-            {group.sub[he ? "he" : "en"] && <div style={{ fontSize: 11, color: ts, marginTop: 2 }}>{group.sub[he ? "he" : "en"]}</div>}
+            <h3 className="shimmer-text" style={{ fontSize: 21, fontWeight: 600, fontFamily: "'Cormorant Garamond',serif" }}>{group.cat[he ? "he" : "en"]}</h3>
+            {group.sub[he ? "he" : "en"] && <div style={{ fontSize: 11.5, color: ts, marginTop: 3 }}>{group.sub[he ? "he" : "en"]}</div>}
           </div>
 
-          {group.items.map((p, pi) => {
-            const qty = customer ? (cart?.[p.id] || 0) : 0;
-            return (
-              <div key={p.id} style={{ padding: 16, background: p.featured ? `${ac}0d` : (dk ? "rgba(18,18,38,.5)" : "rgba(255,255,255,.45)"), border: `1px solid ${p.featured ? ac + "44" : ac + "12"}`, borderRadius: 16, marginBottom: pi === group.items.length - 1 ? 0 : 10, position: "relative", transition: "all .3s" }}>
-                {p.badge && <div style={{ position: "absolute", top: -9, [he ? "right" : "left"]: 14, background: ac, color: dk ? "#080812" : "#fff", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 10, letterSpacing: .5 }}>{p.badge[he ? "he" : "en"]}</div>}
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                  <div style={{ color: ac, flexShrink: 0, marginTop: 1 }}><Icon name={p.icon} size={24} stroke={1.4}/></div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: tm }}>{p.name[he ? "he" : "en"]}</div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif", whiteSpace: "nowrap" }}>{p.price[he ? "he" : "en"]}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(238px,1fr))", gap: 14 }}>
+            {group.items.map((p, pi) => {
+              const qty = customer ? (cart?.[p.id] || 0) : 0;
+              return (
+                <SR key={p.id} delay={pi * 80}>
+                  <div className="pcard" style={p.featured ? { borderColor: `${ac}55`, boxShadow: `0 0 30px ${ac}1a` } : undefined}>
+                    <div className="pmedia">
+                      <img src={IMG[p.id] || IMG.band} alt="" loading="lazy"/>
+                      <div style={{ position: "absolute", inset: 0, background: dk ? "linear-gradient(180deg,rgba(8,8,20,.1),rgba(12,12,26,.9))" : "linear-gradient(180deg,rgba(255,255,255,.1),rgba(245,240,232,.9))" }}/>
+                      <div style={{ position: "absolute", top: 12, insetInlineStart: 12, width: 42, height: 42, borderRadius: "50%", background: dk ? "rgba(8,8,18,.45)" : "rgba(255,255,255,.6)", border: `1px solid ${ac}66`, backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", color: ac }}><Icon name={p.icon} size={22} stroke={1.3}/></div>
+                      {p.badge && <div style={{ position: "absolute", top: 14, insetInlineEnd: 12, background: ac, color: dk ? "#080812" : "#fff", fontSize: 10, fontWeight: 700, padding: "4px 11px", borderRadius: 20, letterSpacing: .5, boxShadow: `0 4px 16px ${ac}77` }}>{p.badge[he ? "he" : "en"]}</div>}
+                      <div style={{ position: "absolute", bottom: 9, insetInlineStart: 15, fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: "'Cormorant Garamond',serif", textShadow: "0 2px 14px rgba(0,0,0,.7)" }}>{p.price[he ? "he" : "en"]}</div>
                     </div>
-                    <p style={{ fontSize: 12.5, lineHeight: 1.7, color: ts, margin: "6px 0 12px" }}>{p.desc[he ? "he" : "en"]}</p>
-                    {customer ? (
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <button className="gb" onClick={() => onAdd(p.id)} style={{ width: "auto", padding: "10px 18px", fontSize: 13 }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 7, justifyContent: "center" }}>
-                            <Icon name={qty > 0 ? "check" : "plus"} size={15}/>
-                            {qty > 0 ? (he ? `בעגלה (${qty}) · הוסף עוד` : `In cart (${qty}) · add more`) : (he ? "הוסף לעגלה" : "Add to cart")}
-                          </span>
-                        </button>
-                        <button className="ghost" onClick={() => goToCheckout(p)} style={{ padding: "10px 18px", fontSize: 13 }}>{he ? "שלם עכשיו" : "Pay now"}</button>
-                      </div>
-                    ) : (
-                      <button className="gb" onClick={() => goToCheckout(p)} style={{ padding: "11px 22px", fontSize: 14 }}>{he ? "קנה עכשיו ←" : "Buy now →"}</button>
-                    )}
+                    <div style={{ padding: "14px 16px 16px" }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: tm, marginBottom: 5 }}>{p.name[he ? "he" : "en"]}</div>
+                      <p style={{ fontSize: 12.5, lineHeight: 1.7, color: ts, marginBottom: 13, minHeight: customer ? 54 : undefined }}>{p.desc[he ? "he" : "en"]}</p>
+                      {customer ? (
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button className="gb" onClick={() => onAdd(p.id)} style={{ flex: 1, width: "auto", padding: "11px 12px", fontSize: 13 }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 7, justifyContent: "center" }}>
+                              <Icon name={qty > 0 ? "check" : "plus"} size={15}/>
+                              {qty > 0 ? (he ? `בעגלה · ${qty}` : `In cart · ${qty}`) : (he ? "לעגלה" : "Add")}
+                            </span>
+                          </button>
+                          <button className="ghost" onClick={() => goToCheckout(p)} style={{ padding: "11px 14px", fontSize: 13, whiteSpace: "nowrap" }}>{he ? "שלם" : "Pay"}</button>
+                        </div>
+                      ) : (
+                        <button className="gb" onClick={() => goToCheckout(p)} style={{ width: "100%", padding: "11px", fontSize: 14 }}>{he ? "קנה עכשיו ←" : "Buy now →"}</button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                </SR>
+              );
+            })}
+          </div>
         </div>
       ))}
 
@@ -1501,6 +1566,22 @@ export default function App(){
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 @keyframes glow{0%,100%{box-shadow:0 0 15px ${ac}12}50%{box-shadow:0 0 35px ${ac}28}}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}33%{transform:translate(6vw,4vh) scale(1.15)}66%{transform:translate(-5vw,6vh) scale(.9)}100%{transform:translate(0,0) scale(1)}}
+@keyframes drift2{0%{transform:translate(0,0) scale(1)}50%{transform:translate(-7vw,-5vh) scale(1.2)}100%{transform:translate(0,0) scale(1)}}
+@keyframes shimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+@keyframes shineSweep{0%{transform:translateX(-130%) skewX(-18deg)}60%,100%{transform:translateX(230%) skewX(-18deg)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes rotateSlow{to{transform:rotate(360deg)}}
+@keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.9}}
+@keyframes bob{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(7px);opacity:1}}
+.shimmer-text{background:linear-gradient(100deg,${ac},${dk?"#f4e4b8":"#c9a86a"},${ac},${dk?"#fff6e0":"#b8902e"},${ac});background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 6s linear infinite}
+.nebula{position:fixed;border-radius:50%;filter:blur(70px);pointer-events:none;z-index:0;opacity:${dk?.5:.4};mix-blend-mode:${dk?"screen":"multiply"}}
+.shine{position:relative;overflow:hidden}.shine::after{content:'';position:absolute;top:0;left:0;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:translateX(-130%) skewX(-18deg);pointer-events:none}.shine:hover::after{animation:shineSweep .9s ease}
+.lift{transition:transform .45s cubic-bezier(.16,1,.3,1),box-shadow .45s,border-color .45s}.lift:hover{transform:translateY(-7px)}
+.pcard{position:relative;border-radius:20px;overflow:hidden;border:1px solid ${ac}1f;background:${dk?"linear-gradient(180deg,rgba(20,20,42,.9),rgba(12,12,26,.92))":"linear-gradient(180deg,rgba(255,255,255,.92),rgba(245,240,232,.92))"};transition:transform .45s cubic-bezier(.16,1,.3,1),box-shadow .45s,border-color .45s}.pcard:hover{transform:translateY(-8px);border-color:${ac}66;box-shadow:0 24px 60px rgba(0,0,0,${dk?.5:.18}),0 0 40px ${ac}1f}
+.pmedia{position:relative;height:170px;overflow:hidden}.pmedia img{width:100%;height:100%;object-fit:cover;transition:transform 1.1s cubic-bezier(.16,1,.3,1);transform:scale(1.05)}.pcard:hover .pmedia img{transform:scale(1.16)}
+.gb{position:relative;overflow:hidden}.gb::after{content:'';position:absolute;top:0;left:0;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);transform:translateX(-140%) skewX(-18deg);pointer-events:none}.gb:hover::after{animation:shineSweep 1s ease}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:30px;border:1px solid ${ac}33;background:${ac}0d;font-size:12px;color:${ac};font-weight:600}
 .gc{background:${dk?"linear-gradient(135deg,rgba(18,18,38,.75),rgba(12,12,28,.55))":"linear-gradient(135deg,rgba(255,255,255,.88),rgba(245,240,232,.72))"};backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid ${dk?"rgba(200,169,106,.1)":"rgba(147,118,64,.12)"};border-radius:22px;padding:28px;position:relative;overflow:hidden;transition:background .4s}.gc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,${ac}44,transparent)}
 .gi{width:100%;background:${dk?"rgba(8,8,18,.7)":"rgba(255,255,255,.75)"};border:1px solid ${dk?"rgba(200,169,106,.18)":"rgba(147,118,64,.18)"};border-radius:14px;padding:16px 20px;color:${tm};font-size:17px;font-family:inherit;outline:none;transition:all .4s}.gi::placeholder{color:${ts}}.gi:focus{border-color:${ac}88;box-shadow:0 0 30px ${ac}12}
 .gb{width:100%;padding:17px 30px;background:linear-gradient(135deg,${dk?"#c8a96a":"#b8942e"},${dk?"#b8942e":"#937640"},${dk?"#c8a96a":"#b8942e"});background-size:200% 100%;color:${dk?"#080812":"#fff"};font-family:inherit;font-size:17px;font-weight:600;border:none;border-radius:14px;cursor:pointer;transition:all .4s;letter-spacing:.5px}.gb:hover{background-position:100% 0;box-shadow:0 8px 40px ${ac}44;transform:translateY(-2px)}.gb:active{transform:translateY(0)}.gb:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
@@ -1522,6 +1603,9 @@ export default function App(){
 `}</style>
 
     {intro&&<Intro onDone={()=>setIntro(false)} he={he} dk={dk}/>}
+    <div className="nebula" style={{width:"55vw",height:"55vw",top:"-12vh",[isRtl?"right":"left"]:"-12vw",background:`radial-gradient(circle,${ac}66,transparent 70%)`,animation:"drift 26s ease-in-out infinite"}}/>
+    <div className="nebula" style={{width:"48vw",height:"48vw",bottom:"-10vh",[isRtl?"left":"right"]:"-10vw",background:`radial-gradient(circle,${dk?"#5b3fa6":"#b98cf0"}55,transparent 70%)`,animation:"drift2 32s ease-in-out infinite"}}/>
+    <div className="nebula" style={{width:"40vw",height:"40vw",top:"40vh",left:"30vw",background:`radial-gradient(circle,${dk?"#1f5e8c":"#7fb6e0"}40,transparent 70%)`,animation:"drift 38s ease-in-out infinite reverse"}}/>
     <Particles dk={dk}/>
 
     {/* ═══ TOP BAR with HOME BUTTON ═══ */}
@@ -1719,6 +1803,7 @@ export default function App(){
       {!showOwnerUI&&(<>
         <div style={{height:10}}/>
         <WhyNumerology he={he} dk={dk}/>
+        <CtaBand he={he} dk={dk} onShop={()=>scrollToId("shop-section")}/>
         <div id="shop-section" style={{scrollMarginTop:70}}/>
         <ShopSection he={he} dk={dk} onAdd={addToCart} cart={cart}/>
         <Testimonials he={he} dk={dk}/>
