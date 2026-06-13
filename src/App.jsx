@@ -1160,7 +1160,7 @@ function CalculatorsWidget({he,dk}){
 // │  • "הוסף לעגלה" + "סיום הזמנה" → שולח הזמנה מרוכזת בוואטסאפ   │
 // │     ואז שולחים ללקוח לינק תשלום אחד / בקשת Bit.              │
 // └─────────────────────────────────────────────────────────────┘
-const WHATSAPP_PHONE = "972500000000"; // >> המספר שלך: קידומת מדינה (972) + המספר בלי 0 מוביל
+const WHATSAPP_PHONE = "972547640203"; // שני כהן אזולאי — 054-764-0203
 const CONTACT_URL = `https://wa.me/${WHATSAPP_PHONE}`;
 const BUSINESS_EMAIL = "shani@example.com"; // 👈 החליפי לאימייל שלך
 const OWNER_STORE_KEY = "numerology_owner_mode";
@@ -1577,7 +1577,7 @@ function AboutShani({ he, dk, onBook }) {
   return (<SR><div className="gc" style={{ marginBottom: 16, textAlign: "center" }}>
     <div style={{ width: 124, height: 124, margin: "0 auto 14px", borderRadius: "50%", border: `2px solid ${ac}`, padding: 4, boxShadow: `0 0 34px ${ac}40` }}>
       <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: `radial-gradient(circle at 30% 28%,${ac}3a,${dk ? "#14142e" : "#ece3d4"})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {!noPhoto && <img src="/shani.jpg" alt="שני כהן אזולאי" onError={() => setNoPhoto(true)} style={{ width: "100%", height: "100%", objectFit: "cover" }}/>}
+        {!noPhoto && <img src="/shani.jpg" alt="שני כהן אזולאי" onError={() => setNoPhoto(true)} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 28%" }}/>}
         {noPhoto && <span style={{ fontSize: 48, color: ac, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>ש</span>}
       </div>
     </div>
