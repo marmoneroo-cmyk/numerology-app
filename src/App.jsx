@@ -1421,13 +1421,15 @@ function Testimonials({ he, dk }) {
   return (
     <SR><div className="gc" style={{ marginBottom: 16 }}>
       <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 16 }}>{he ? "מה אומרים עליי" : "What people say"}</h2>
-      {list.map((r, i) => (
-        <div key={i} style={{ padding: 14, background: dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)", border: `1px solid ${ac}10`, borderRadius: 14, marginBottom: i === list.length - 1 ? 0 : 10, textAlign: "center" }}>
-          <div style={{ fontSize: 12, color: ac, marginBottom: 4 }}>★★★★★</div>
-          <p style={{ fontSize: 13.5, lineHeight: 1.8, color: tm, fontStyle: "italic" }}>"{r.t}"</p>
-          <div style={{ fontSize: 12, color: ts, marginTop: 6, fontWeight: 600 }}>— {r.n}</div>
-        </div>
-      ))}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 10 }}>
+        {list.map((r, i) => (
+          <div key={i} style={{ padding: 16, background: dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)", border: `1px solid ${ac}10`, borderRadius: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: ac, marginBottom: 4 }}>★★★★★</div>
+            <p style={{ fontSize: 13.5, lineHeight: 1.8, color: tm, fontStyle: "italic" }}>"{r.t}"</p>
+            <div style={{ fontSize: 12, color: ts, marginTop: 6, fontWeight: 600 }}>— {r.n}</div>
+          </div>
+        ))}
+      </div>
       <p style={{ fontSize: 10, color: ts, textAlign: "center", marginTop: 12, opacity: .6 }}>{he ? "* החלף בביקורות אמיתיות שלך" : "* Replace with your real reviews"}</p>
     </div></SR>
   );
@@ -1846,7 +1848,7 @@ export default function App(){
       </div>
     </div>
 
-    <div style={{position:"relative",zIndex:1,maxWidth:580,margin:"0 auto",padding:"62px 16px 70px",minHeight:"100vh"}}>
+    <div style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?600:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
 
       {/* Header (owner) / Hero (customer) */}
       {showOwnerUI?(
@@ -1900,7 +1902,7 @@ export default function App(){
         )}
 
         {(tab==="reading"||!showOwnerUI)&&(
-          <div style={{animation:"fadeInUp .6s ease-out"}}>
+          <div style={{animation:"fadeInUp .6s ease-out",maxWidth:620,margin:"0 auto"}}>
             <div className="si"><div className={`sd ${step>=1?"act":""}`}/><div className="sl"/><div className={`sd ${step>=2?"act":""}`}/></div>
             {step===1&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
               <div style={{textAlign:"center",marginBottom:24}}>
@@ -1933,7 +1935,7 @@ export default function App(){
       </>)}
 
       {/* ═══ NARRATIVE RESULTS ═══ */}
-      {showRes&&results&&(<div>
+      {showRes&&results&&(<div style={{maxWidth:640,margin:"0 auto"}}>
         <SR><div style={{textAlign:"center",marginBottom:8}}>
           <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:5,marginBottom:6}}>{he?"הקריאה של":"The reading of"}</div>
           <div style={{fontSize:isRtl?26:30,fontWeight:isRtl?700:400,color:ac,fontFamily:"'Cormorant Garamond',serif",letterSpacing:isRtl?0:3}}>{name}</div>
@@ -2027,15 +2029,15 @@ export default function App(){
       {/* ═══ CUSTOMER LANDING SECTIONS ═══ */}
       {!showOwnerUI&&(<>
         <div style={{height:10}}/>
-        <AboutShani he={he} dk={dk} onBook={()=>scrollToId("shop-section")}/>
-        <WhyNumerology he={he} dk={dk}/>
+        <div style={{maxWidth:760,margin:"0 auto"}}><AboutShani he={he} dk={dk} onBook={()=>scrollToId("shop-section")}/></div>
+        <div style={{maxWidth:760,margin:"0 auto"}}><WhyNumerology he={he} dk={dk}/></div>
         <CtaBand he={he} dk={dk} onShop={()=>scrollToId("shop-section")}/>
         <div id="shop-section" style={{scrollMarginTop:70}}/>
         <ShopSection he={he} dk={dk} onAdd={addToCart} cart={cart}/>
         <TrustBar he={he} dk={dk}/>
-        <Testimonials he={he} dk={dk}/>
-        <LeadCapture he={he} dk={dk}/>
-        <FAQ he={he} dk={dk}/>
+        <div style={{maxWidth:920,margin:"0 auto"}}><Testimonials he={he} dk={dk}/></div>
+        <div style={{maxWidth:620,margin:"0 auto"}}><LeadCapture he={he} dk={dk}/></div>
+        <div style={{maxWidth:760,margin:"0 auto"}}><FAQ he={he} dk={dk}/></div>
         <LandingFooter he={he} dk={dk} onOwner={enterOwner}/>
       </>)}
 
