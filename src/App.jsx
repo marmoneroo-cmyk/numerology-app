@@ -1648,11 +1648,58 @@ function CtaBand({ he, dk, onShop }) {
 
 // ═══════════════════ SHOP SECTION (cart-aware) ═══════════════════
 // onAdd present → customer mode (add-to-cart). Absent → owner mode (buy-now).
+// ═══════════════════ PRODUCT DETAIL MODAL ═══════════════════
+function ProductModal({ product, he, dk, onClose, onAdd }) {
+  const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.6)" : "rgba(42,37,32,.6)";
+  const customer = typeof onAdd === "function";
+  const kind = product.recurring ? "sub" : (["intro-call", "deep-consult", "mentoring"].includes(product.id) ? "call" : product.id === "gift" ? "gift" : product.id === "bundle" ? "bundle" : "report");
+  const incl = (he ? {
+    report: ["קובץ PDF מעוצב ואישי", "פרשנות כתובה ומפורטת", "אספקה תוך 48 שעות", "אפשרות לשאלות המשך"],
+    bundle: ["מפה אישית מלאה (PDF)", "שיחת ייעוץ 75 דקות", "הקלטה של השיחה", "חיסכון של ₪99"],
+    call: ["פגישת זום או טלפון", "תיאום גמיש לפי הזמן שלך", "ליווי אישי וחם", "סיכום וכיווני פעולה"],
+    gift: ["שובר מתנה אלגנטי", "נשלח אליך או למקבל/ת", "הוראות מימוש פשוטות", "ללא תאריך תפוגה"],
+    sub: ["מסר חודשי מותאם אישית", "ישירות למייל בכל ראש חודש", "ביטול בכל עת", "ללא התחייבות"],
+  } : {
+    report: ["Designed personal PDF", "Detailed written interpretation", "Delivery within 48h", "Follow-up questions"],
+    bundle: ["Full personal map (PDF)", "75-min consultation", "Call recording", "Save ₪99"],
+    call: ["Zoom or phone session", "Flexible scheduling", "Warm personal guidance", "Summary & next steps"],
+    gift: ["Elegant gift voucher", "Sent to you or recipient", "Simple redemption", "No expiry"],
+    sub: ["Monthly personalized message", "Straight to your inbox", "Cancel anytime", "No commitment"],
+  })[kind];
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 350, background: "rgba(0,0,0,.62)", backdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, animation: "fadeInUp .25s ease-out" }}>
+      <div onClick={e => e.stopPropagation()} dir={he ? "rtl" : "ltr"} style={{ width: "min(520px,96vw)", maxHeight: "90vh", overflowY: "auto", borderRadius: 22, background: dk ? "linear-gradient(180deg,#14142e,#0c0c1c)" : "linear-gradient(180deg,#fff,#f4efe6)", border: `1px solid ${ac}44`, boxShadow: "0 30px 80px rgba(0,0,0,.55)" }}>
+        <div style={{ position: "relative", height: 210 }}>
+          <img src={IMG[product.id] || IMG.band} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
+          <div style={{ position: "absolute", inset: 0, background: dk ? "linear-gradient(180deg,rgba(8,8,20,.15),rgba(12,12,26,.92))" : "linear-gradient(180deg,rgba(255,255,255,.1),rgba(244,239,230,.92))" }}/>
+          <button onClick={onClose} style={{ position: "absolute", top: 12, insetInlineEnd: 12, width: 34, height: 34, borderRadius: "50%", border: `1px solid ${ac}55`, background: dk ? "rgba(8,8,18,.5)" : "rgba(255,255,255,.7)", color: ac, fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
+          <div style={{ position: "absolute", top: 14, insetInlineStart: 14, width: 44, height: 44, borderRadius: "50%", background: dk ? "rgba(8,8,18,.5)" : "rgba(255,255,255,.65)", border: `1px solid ${ac}66`, backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", color: ac }}><Icon name={product.icon} size={24} stroke={1.3}/></div>
+          <div style={{ position: "absolute", bottom: 10, insetInlineStart: 16, fontSize: 30, fontWeight: 700, color: "#fff", fontFamily: "'Cormorant Garamond',serif", textShadow: "0 2px 14px rgba(0,0,0,.7)" }}>{product.price[he ? "he" : "en"]}</div>
+          {product.badge && <div style={{ position: "absolute", bottom: 14, insetInlineEnd: 16, background: ac, color: dk ? "#080812" : "#fff", fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 20 }}>{product.badge[he ? "he" : "en"]}</div>}
+        </div>
+        <div style={{ padding: "20px 22px 24px", textAlign: "center" }}>
+          <h3 style={{ fontSize: 22, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{product.name[he ? "he" : "en"]}</h3>
+          <p style={{ fontSize: 13.5, lineHeight: 1.9, color: ts, margin: "10px auto 16px", maxWidth: 420 }}>{product.desc[he ? "he" : "en"]}</p>
+          <div style={{ textAlign: he ? "right" : "left", maxWidth: 340, margin: "0 auto 18px" }}>
+            <div style={{ fontSize: 12, color: ac, fontWeight: 700, marginBottom: 9, letterSpacing: 1, textAlign: "center" }}>{he ? "מה כלול" : "What's included"}</div>
+            {incl.map((it, i) => (<div key={i} style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 7 }}><span style={{ color: ac, display: "inline-flex", flexShrink: 0 }}><Icon name="check" size={16}/></span><span style={{ fontSize: 13, color: tm }}>{it}</span></div>))}
+          </div>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            {customer && <button className="gb" onClick={() => { onAdd(product.id); onClose(); }} style={{ width: "auto", padding: "13px 24px", fontSize: 14 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="plus" size={15}/>{he ? "הוסף לעגלה" : "Add to cart"}</span></button>}
+            <button className="gb" onClick={() => goToCheckout(product)} style={{ width: "auto", padding: "13px 24px", fontSize: 14 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="lock" size={14}/>{he ? "שלם עכשיו" : "Pay now"}</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ShopSection({ he, dk, onAdd, cart }) {
   const ac = dk ? "#c8a96a" : "#937640";
   const tm = dk ? "#e8e0d0" : "#2a2520";
   const ts = dk ? "rgba(232,224,208,.45)" : "rgba(42,37,32,.5)";
   const customer = typeof onAdd === "function";
+  const [modal, setModal] = useState(null);
   return (
     <div style={{ animation: "fadeInUp .5s ease-out" }}>
       <div style={{ textAlign: "center", marginBottom: 22 }}>
@@ -1676,12 +1723,13 @@ function ShopSection({ he, dk, onAdd, cart }) {
                   <div className="pcard" style={p.featured ? { borderColor: `${ac}55`, boxShadow: `0 0 30px ${ac}1a`, transformStyle: "preserve-3d" } : { transformStyle: "preserve-3d" }}
                     onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - .5; const py = (e.clientY - r.top) / r.height - .5; e.currentTarget.style.transition = "transform .1s ease-out"; e.currentTarget.style.transform = `perspective(900px) rotateY(${px * 9}deg) rotateX(${-py * 9}deg) translateY(-8px)`; }}
                     onMouseLeave={e => { e.currentTarget.style.transition = "transform .5s cubic-bezier(.16,1,.3,1),box-shadow .45s,border-color .45s"; e.currentTarget.style.transform = ""; }}>
-                    <div className="pmedia">
+                    <div className="pmedia" style={{ cursor: "pointer" }} onClick={() => { AU.init(); AU.p("click"); setModal(p); }} title={he ? "פרטים מלאים" : "Full details"}>
                       <img src={IMG[p.id] || IMG.band} alt="" loading="lazy"/>
                       <div style={{ position: "absolute", inset: 0, background: dk ? "linear-gradient(180deg,rgba(8,8,20,.1),rgba(12,12,26,.9))" : "linear-gradient(180deg,rgba(255,255,255,.1),rgba(245,240,232,.9))" }}/>
                       <div style={{ position: "absolute", top: 12, insetInlineStart: 12, width: 42, height: 42, borderRadius: "50%", background: dk ? "rgba(8,8,18,.45)" : "rgba(255,255,255,.6)", border: `1px solid ${ac}66`, backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", color: ac }}><Icon name={p.icon} size={22} stroke={1.3}/></div>
                       {p.badge && <div style={{ position: "absolute", top: 14, insetInlineEnd: 12, background: ac, color: dk ? "#080812" : "#fff", fontSize: 10, fontWeight: 700, padding: "4px 11px", borderRadius: 20, letterSpacing: .5, boxShadow: `0 4px 16px ${ac}77` }}>{p.badge[he ? "he" : "en"]}</div>}
                       <div style={{ position: "absolute", bottom: 9, insetInlineStart: 15, fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: "'Cormorant Garamond',serif", textShadow: "0 2px 14px rgba(0,0,0,.7)" }}>{p.price[he ? "he" : "en"]}</div>
+                      <div style={{ position: "absolute", bottom: 12, insetInlineEnd: 14, fontSize: 11, color: "#fff", opacity: .9, display: "inline-flex", alignItems: "center", gap: 3, textShadow: "0 1px 8px rgba(0,0,0,.7)" }}>{he ? "פרטים" : "Details"}<span>{he ? "‹" : "›"}</span></div>
                     </div>
                     <div style={{ padding: "14px 16px 16px", textAlign: "center" }}>
                       <div style={{ fontSize: 15, fontWeight: 700, color: tm, marginBottom: 5 }}>{p.name[he ? "he" : "en"]}</div>
@@ -1712,6 +1760,7 @@ function ShopSection({ he, dk, onAdd, cart }) {
         <Icon name="lock" size={11} style={{ verticalAlign: "-1px", marginInlineEnd: 4 }}/>{he ? "התשלום מתבצע בעמוד מאובטח של Grow (משולם). יש שאלה לפני רכישה? " : "Payment via a secure Grow checkout page. Questions before buying? "}
         <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" style={{ color: ac, fontWeight: 600 }}>{he ? "דברו איתי" : "Contact me"}</a>
       </p>
+      {modal && <ProductModal product={modal} he={he} dk={dk} onClose={() => setModal(null)} onAdd={onAdd}/>}
     </div>
   );
 }
@@ -2011,6 +2060,12 @@ export default function App(){
             <div style={{fontSize:30,marginBottom:8}}>✦</div>
             <h3 style={{fontSize:isRtl?21:23,fontWeight:isRtl?700:500,color:ac,fontFamily:"'Cormorant Garamond',serif",marginBottom:6}}>{he?"רוצה לרדת לעומק?":"Want to go deeper?"}</h3>
             <p style={{fontSize:13.5,lineHeight:1.85,color:ts,maxWidth:420,margin:"0 auto 18px"}}>{he?`${name?name+", ":""}הקריאה החינמית היא רק ההתחלה. אני יכול להכין לך מפה נומרולוגית אישית מלאה, או לצלול יחד איתך בשיחה אישית — על מטרת החיים, יחסים, קריירה ותזמון.`:`${name?name+", ":""}this free reading is just the start. I can prepare your full personal numerology map, or dive deep together in a 1-on-1 call — life purpose, relationships, career and timing.`}</p>
+            {(()=>{const recId=[2,6].includes(results.lp)?"couple":[3,5].includes(results.lp)?"name":[1,8].includes(results.lp)?"deep-consult":"full-map";const rp=findProduct(recId);return rp?(
+              <div style={{margin:"0 auto 16px",maxWidth:430,padding:"12px 16px",borderRadius:14,border:`1px solid ${ac}44`,background:`${ac}0d`,display:"flex",alignItems:"center",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+                <span style={{color:ac,display:"inline-flex"}}><Icon name="sparkles" size={18}/></span>
+                <span style={{fontSize:12.5,color:tm,lineHeight:1.6}}>{he?`מומלץ עבורך (מספר ${results.lp}): `:`Recommended for you (number ${results.lp}): `}<strong style={{color:ac}}>{he?rp.name.he:rp.name.en}</strong> · {he?rp.price.he:rp.price.en}</span>
+                <button className="gb" onClick={()=>goToCheckout(rp)} style={{width:"auto",padding:"8px 16px",fontSize:12.5}}>{he?"לרכישה ←":"Get it →"}</button>
+              </div>):null;})()}
             <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
               <button className="gb" onClick={()=>goToCheckout(findProduct("full-map"))} style={{width:"auto",padding:"13px 22px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="map" size={16}/>{he?"הזמן מפה אישית מלאה":"Order full map"}</span></button>
               <button className="gb" onClick={()=>goToCheckout(findProduct("deep-consult"))} style={{width:"auto",padding:"13px 22px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="star" size={16}/>{he?"קבע שיחה 1:1":"Book a 1:1 call"}</span></button>
