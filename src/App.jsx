@@ -1284,12 +1284,21 @@ function NumWheel({ ac, size = 520 }) {
   );
 }
 
-function Hero({ he, dk, onStart, onShop, onUseName }) {
+function Hero({ he, dk, onStart, onShop, onUseName, onReveal }) {
   const ac = dk ? "#c8a96a" : "#937640";
   const tm = dk ? "#e8e0d0" : "#2a2520";
   const ts = dk ? "rgba(232,224,208,.62)" : "rgba(42,37,32,.6)";
   const [nm, setNm] = useState("");
+  const [dob, setDob] = useState("");
   const num = nm.trim() ? liveNum(nm) : 0;
+  const dP = dob.split(".");
+  const dValid = dP.length === 3 && +dP[0] > 0 && +dP[0] <= 31 && +dP[1] > 0 && +dP[1] <= 12 && +dP[2] >= 1900;
+  const lp = dValid ? LPm(+dP[0], +dP[1], +dP[2]) : 0;
+  const bothReady = nm.trim() && dValid;
+  const inputSt = { flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none" };
+  const circleSt = (v) => ({ width: 64, height: 64, flexShrink: 0, borderRadius: "50%", border: `1.5px solid ${ac}55`, display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(circle at 35% 30%,${ac}26,transparent 70%)`, boxShadow: v ? `0 0 24px ${ac}55` : "none", transition: "box-shadow .5s" });
+  const numSt = { fontSize: 28, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif", lineHeight: 1 };
+  const lblSt = { fontSize: 8.5, color: ts, textTransform: "uppercase", letterSpacing: 1, marginTop: 3 };
   const floats = [{ n: 7, x: "8%", y: "18%", s: 64, d: 0 }, { n: 3, x: "84%", y: "24%", s: 52, d: 1.2 }, { n: 9, x: "16%", y: "74%", s: 58, d: 2.1 }, { n: 1, x: "82%", y: "72%", s: 46, d: .6 }, { n: 5, x: "50%", y: "10%", s: 40, d: 1.7 }];
   return (
     <div style={{ position: "relative", width: "100%", borderRadius: 26, minHeight: "86vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "70px 18px 56px", boxShadow: dk ? "0 30px 80px rgba(0,0,0,.45)" : "0 30px 80px rgba(0,0,0,.12)" }}>
@@ -1312,19 +1321,25 @@ function Hero({ he, dk, onStart, onShop, onUseName }) {
           })}
         </h1>
         <p style={{ fontSize: "clamp(14px,2.3vw,18px)", color: ts, fontWeight: 300, marginTop: 16, lineHeight: 1.8, maxWidth: 480, marginInline: "auto" }}>
-          {he ? "התחל עכשיו — הקלד את שמך וצפה במספר שלך מתגלה." : "Start now — type your name and watch your number reveal."}
+          {he ? "התחל עכשיו — הקלד שם ותאריך לידה וצפה במספרים שלך מתגלים." : "Start now — enter your name and birth date and watch your numbers reveal."}
         </p>
 
-        <div style={{ marginTop: 24, marginInline: "auto", maxWidth: 430, padding: "18px 18px 20px", borderRadius: 20, border: `1px solid ${ac}3a`, background: dk ? "rgba(12,12,28,.5)" : "rgba(255,255,255,.6)", backdropFilter: "blur(14px)", boxShadow: `0 18px 55px rgba(0,0,0,${dk ? .42 : .12})` }}>
-          <div style={{ fontSize: 10.5, color: `${ac}cc`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 11 }}>{he ? "מחשבון חי · מספר השם שלך" : "Live · your name number"}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <input value={nm} onChange={(e) => setNm(e.target.value)} placeholder={he ? "הקלד את שמך…" : "Type your name…"} dir={he ? "rtl" : "ltr"} onKeyDown={(e) => { if (e.key === "Enter" && nm.trim()) onUseName(nm); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "13px 15px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none", textAlign: he ? "right" : "left" }}/>
-            <div style={{ width: 72, height: 72, flexShrink: 0, borderRadius: "50%", border: `1.5px solid ${ac}55`, display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(circle at 35% 30%,${ac}26,transparent 70%)`, boxShadow: num ? `0 0 28px ${ac}55` : "none", transition: "box-shadow .5s" }}>
-              <span style={{ fontSize: 38, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{num ? <RollDigit value={num}/> : "—"}</span>
-            </div>
+        <div style={{ marginTop: 24, marginInline: "auto", maxWidth: 460, padding: "18px 18px 20px", borderRadius: 20, border: `1px solid ${ac}3a`, background: dk ? "rgba(12,12,28,.5)" : "rgba(255,255,255,.6)", backdropFilter: "blur(14px)", boxShadow: `0 18px 55px rgba(0,0,0,${dk ? .42 : .12})` }}>
+          <div style={{ fontSize: 10.5, color: `${ac}cc`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "מחשבון חי · גלה את המספרים שלך" : "Live · discover your numbers"}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+            <input value={nm} onChange={(e) => setNm(e.target.value)} placeholder={he ? "השם המלא שלך…" : "Your full name…"} dir={he ? "rtl" : "ltr"} style={{ ...inputSt, textAlign: he ? "right" : "left" }}/>
+            <div style={circleSt(num)}><div style={{ textAlign: "center" }}><div style={numSt}>{num ? <RollDigit value={num}/> : "—"}</div><div style={lblSt}>{he ? "שם" : "Name"}</div></div></div>
           </div>
-          {num > 0 && <div style={{ marginTop: 11, fontSize: 13, color: ts, animation: "fadeInUp .4s ease-out" }}>{he ? `${D[num]?.t} · ${D[num]?.s}` : `${D[num]?.te} · ${D[num]?.se}`}</div>}
-          <button className="gb" onClick={() => (nm.trim() ? onUseName(nm) : onStart())} style={{ width: "100%", marginTop: 14, padding: "14px", fontSize: 15 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="orb" size={16}/>{he ? "קבל את הקריאה המלאה" : "Get the full reading"}</span></button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <input value={dob} onChange={(e) => setDob(e.target.value)} placeholder={he ? "תאריך לידה · dd.mm.yyyy" : "Birth date · dd.mm.yyyy"} dir="ltr" onKeyDown={(e) => { if (e.key === "Enter" && bothReady) onReveal(nm, dob); }} style={{ ...inputSt, textAlign: "center", letterSpacing: 2 }}/>
+            <div style={circleSt(lp)}><div style={{ textAlign: "center" }}><div style={numSt}>{lp ? (lp > 9 ? lp : <RollDigit value={lp}/>) : "—"}</div><div style={lblSt}>{he ? "שביל" : "Path"}</div></div></div>
+          </div>
+          {(num > 0 || lp > 0) && <div style={{ marginTop: 11, fontSize: 12.5, color: ts, lineHeight: 1.6, animation: "fadeInUp .4s ease-out" }}>
+            {num > 0 && <span>{he ? `שם: ${D[num]?.t}` : `Name: ${D[num]?.te}`}</span>}
+            {num > 0 && lp > 0 && <span style={{ opacity: .5 }}> · </span>}
+            {lp > 0 && <span>{he ? `שביל: ${(lp <= 9 ? D[lp]?.t : MASTER[lp]?.t) || ""}` : `Path: ${(lp <= 9 ? D[lp]?.te : MASTER[lp]?.te) || ""}`}</span>}
+          </div>}
+          <button className="gb" onClick={() => (bothReady ? onReveal(nm, dob) : (nm.trim() ? onUseName(nm) : onStart()))} style={{ width: "100%", marginTop: 14, padding: "14px", fontSize: 15 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="orb" size={16}/>{bothReady ? (he ? "גלה את הקריאה המלאה שלי" : "Reveal my full reading") : (he ? "קבל את הקריאה המלאה" : "Get the full reading")}</span></button>
         </div>
 
         <div style={{ marginTop: 16 }}>
@@ -1801,13 +1816,15 @@ export default function App(){
 
   const revealChapter=(i)=>{AU.init();AU.p("chapter");const next=[...chapters];next[i]=true;setChapters(next);};
 
-  const doCalc=useCallback(()=>{
-    try{setError("");const parts=dob.split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;
-      AU.init();AU.p("reveal");const r=fullCalc(d,m,y,name,addOne);setResults(r);setShowRes(true);
+  const runReading=useCallback((nm,dobStr,add)=>{
+    try{setError("");const parts=String(dobStr).split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;
+      AU.init();AU.p("reveal");const r=fullCalc(d,m,y,nm,add);setResults(r);setShowRes(true);
       setChapters([false,false,false,false,false,false]);
       setTimeout(()=>{setChapters(c=>{const n=[...c];n[0]=true;return n;});AU.p("chapter");},800);saveStreak();
-    }catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check that all data is entered correctly");}
-  },[name,dob,addOne,he,saveStreak]);
+      return true;
+    }catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check that all data is entered correctly");return false;}
+  },[he,saveStreak]);
+  const doCalc=useCallback(()=>{runReading(name,dob,addOne);},[name,dob,addOne,runReading]);
 
   const goHome=()=>{
     AU.init();AU.p("click");
@@ -1907,7 +1924,7 @@ export default function App(){
         </div>
       ):(
         <>
-          <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onShop={()=>scrollToId("shop-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}}/>
+          <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onShop={()=>scrollToId("shop-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}} onReveal={(n,d)=>{setName(n);setDob(d);setStep(2);const ok=runReading(n,d,addOne);if(ok)setTimeout(()=>scrollToId("reading-section"),90);}}/>
           <HowItWorks he={he} dk={dk}/>
           <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:11,color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · נסה עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
         </>
