@@ -1645,6 +1645,44 @@ function FloatingWhatsApp({ he }) {
   return (<a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" title={he ? "דברו איתי בוואטסאפ" : "Chat on WhatsApp"} style={{ position: "fixed", bottom: 20, [he ? "right" : "left"]: 18, zIndex: 200, width: 54, height: 54, borderRadius: "50%", background: "linear-gradient(135deg,#25D366,#128C7E)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 26px rgba(37,211,102,.5)", textDecoration: "none" }}><Icon name="whatsapp" size={28} stroke={1.6}/></a>);
 }
 
+// ═══════════════════ SAMPLE MAP PREVIEW ═══════════════════
+function SampleMap({ he, dk, onBuy }) {
+  const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.6)" : "rgba(42,37,32,.6)";
+  let demo; try { demo = fullCalc(7, 3, 1988, "אורה לוי", false); } catch (e) { demo = null; }
+  if (!demo) return null;
+  const nums = [
+    { l: he ? "שביל הגורל" : "Life Path", v: demo.lp }, { l: he ? "ערך השם" : "Name", v: demo.nv },
+    { l: he ? "קול הנשמה" : "Soul", v: demo.su }, { l: he ? "מספר הביטוי" : "Expression", v: demo.ex },
+    { l: he ? "שנה אישית" : "Personal Year", v: demo.py },
+  ];
+  return (<SR><div className="gc" style={{ marginBottom: 16 }}>
+    <div style={{ textAlign: "center", marginBottom: 16 }}>
+      <div className="chip" style={{ marginBottom: 10 }}>✦ {he ? "הצצה למפה" : "Sample map"}</div>
+      <h2 className="shimmer-text" style={{ fontSize: 22, fontWeight: 600, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "מה מחכה לך במפה האישית" : "What's inside your personal map"}</h2>
+      <p style={{ fontSize: 12.5, color: ts, marginTop: 4 }}>{he ? "דוגמה אמיתית — כך נראית המפה שתקבל/י" : "A real example of the map you'll receive"}</p>
+    </div>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16, alignItems: "center" }}>
+      <div>
+        {nums.map((it, i) => (
+          <div key={i} className="rrow" style={{ gap: 12 }}>
+            <div className="orb" style={{ width: 46, height: 46, fontSize: 19 }}>{it.v}</div>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 600, color: tm }}>{it.l}</div>{it.v > 0 && it.v <= 9 && <div className="badge">{he ? D[it.v]?.t : D[it.v]?.te}</div>}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ fontSize: 10, color: `${ac}99`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>{he ? "המפה הפסיכולוגית" : "Psychological map"}</div>
+        <div style={{ transform: "scale(.92)" }}><PsychRadar psych={demo.psych} dk={dk} he={he}/></div>
+      </div>
+    </div>
+    <div className="divider"/>
+    <div style={{ textAlign: "center" }}>
+      <p style={{ fontSize: 13, color: ts, lineHeight: 1.8, maxWidth: 480, margin: "0 auto 14px" }}>{he ? "וזו רק ההתחלה — המפה המלאה כוללת גם פרשנות אישית כתובה, מחזורי חיים, חובות קארמיים, מפת לו-שו וטקסים מותאמים." : "And that's just the start — the full map also includes written interpretation, life cycles, karmic debts, Lo Shu grid and tailored rituals."}</p>
+      <button className="gb" onClick={onBuy} style={{ width: "auto", padding: "13px 28px", fontSize: 14 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="map" size={16}/>{he ? "הזמן את המפה שלך" : "Order your map"}</span></button>
+    </div>
+  </div></SR>);
+}
+
 // ═══════════════════ CINEMATIC CTA BAND ═══════════════════
 function CtaBand({ he, dk, onShop }) {
   const ac = dk ? "#c8a96a" : "#937640";
@@ -1848,6 +1886,8 @@ export default function App(){
     <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Hebrew:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}html,body{overflow-x:hidden;max-width:100%}::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:${ac}33;border-radius:3px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+:focus-visible{outline:2px solid ${ac};outline-offset:2px;border-radius:6px}
+button,a,input{-webkit-tap-highlight-color:transparent}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(35px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
@@ -2103,6 +2143,7 @@ export default function App(){
         <div style={{height:10}}/>
         <div style={{maxWidth:760,margin:"0 auto"}}><AboutShani he={he} dk={dk} onBook={()=>scrollToId("shop-section")}/></div>
         <div style={{maxWidth:760,margin:"0 auto"}}><WhyNumerology he={he} dk={dk}/></div>
+        <div style={{maxWidth:920,margin:"0 auto"}}><SampleMap he={he} dk={dk} onBuy={()=>scrollToId("shop-section")}/></div>
         <CtaBand he={he} dk={dk} onShop={()=>scrollToId("shop-section")}/>
         <div id="shop-section" style={{scrollMarginTop:70}}/>
         <ShopSection he={he} dk={dk} onAdd={addToCart} cart={cart}/>
