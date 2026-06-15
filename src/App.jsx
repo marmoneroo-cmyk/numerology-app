@@ -89,9 +89,11 @@ else if(t==="card")[330,392,494].forEach((f,i)=>{const o=this.c.createOscillator
 const LV={"א":1,"ב":2,"ג":3,"ד":4,"ה":5,"ו":6,"ז":7,"ח":8,"ט":9,"י":1,"כ":2,"ך":2,"ל":3,"מ":4,"ם":4,"נ":5,"ן":5,"ס":6,"ע":7,"פ":8,"ף":8,"צ":9,"ץ":9,"ק":1,"ר":2,"ש":3,"ת":4};
 const VOW=new Set(["א","ו","י","ע"]);
 function R(n){if(n===0)return 0;while(n>=10||n<=-10)n=[...String(Math.abs(n))].reduce((a,d)=>a+ +d,0);return n;}
-function NV(s){return R([...s].reduce((a,c)=>a+(LV[c]||0),0));}
-function SU(s){return R([...s].filter(c=>VOW.has(c)).reduce((a,c)=>a+(LV[c]||0),0));}
-function EX(s){return R([...s].filter(c=>!VOW.has(c)&&LV[c]).reduce((a,c)=>a+(LV[c]||0),0));}
+// master-aware reduction: keeps 11/22/33
+function Rm(n){if(n===11||n===22||n===33)return n;let x=Math.abs(n);while(x>=10){x=[...String(x)].reduce((a,d)=>a+ +d,0);if(x===11||x===22||x===33)return x;}return x;}
+function NV(s){return Rm([...s].reduce((a,c)=>a+(LV[c]||0),0));}
+function SU(s){return Rm([...s].filter(c=>VOW.has(c)).reduce((a,c)=>a+(LV[c]||0),0));}
+function EX(s){return Rm([...s].filter(c=>!VOW.has(c)&&LV[c]).reduce((a,c)=>a+(LV[c]||0),0));}
 function LP(d,m,y){return R([...`${String(d).padStart(2,"0")}${String(m).padStart(2,"0")}${y}`].reduce((a,c)=>a+ +c,0));}
 function CA(d,m,y){const n=new Date();let a=n.getFullYear()-y;if(n.getMonth()+1<m||(n.getMonth()+1===m&&n.getDate()<d))a--;return a;}
 function PY(d,m,yr,add){let p=R([...`${String(d).padStart(2,"0")}${String(m).padStart(2,"0")}${yr}`].reduce((a,c)=>a+ +c,0));if(add)p=R(p+1);return p;}
@@ -122,7 +124,7 @@ function loShu(d,m,y){
 }
 
 function fullCalc(d,m,y,nm,add){
-  const nv=NV(nm),lp=LP(d,m,y),age=CA(d,m,y),cy=new Date().getFullYear();
+  const nv=NV(nm),lp=LPm(d,m,y),age=CA(d,m,y),cy=new Date().getFullYear();
   const py=PY(d,m,cy,add),hy=R(lp+age),su=SU(nm),ex=EX(nm),pm=PM(d,m),pd=PD(d,m);
   const rd=R(d),rm=R(m),ry=R(y);
   const pk=[R(rd+rm),R(rd+ry),0,R(rm+ry)];pk[2]=R(pk[0]+pk[1]);
@@ -130,15 +132,16 @@ function fullCalc(d,m,y,nm,add){
   const hp=pk.map((v,i)=>R(v+ch[i])),hc=hp.map(v=>R(v+lp));
   const kd=karmicDebt(d,m,y,nm);const ls=loShu(d,m,y);
   const proj=[];for(let i=-2;i<=10;i++){const yr=cy+i;proj.push({year:yr,py:PY(d,m,yr,add),isCurrent:yr===cy});}
-  const psych={leadership:Math.min(10,((nv===1||nv===8?3:0)+(lp===1||lp===8?3:0)+(su===1?2:0)+(ex===8?2:0))),
-    intuition:Math.min(10,((nv===2||nv===7?3:0)+(lp===2||lp===7?3:0)+(su===7?2:0)+(su===2?2:0))),
-    creativity:Math.min(10,((nv===3||nv===5?3:0)+(lp===3||lp===5?3:0)+(su===3?2:0)+(ex===5?2:0))),
-    stability:Math.min(10,((nv===4||nv===6?3:0)+(lp===4||lp===6?3:0)+(su===6?2:0)+(ex===4?2:0))),
-    ambition:Math.min(10,((nv===8||nv===1?3:0)+(lp===8?3:0)+(py===8||py===1?2:0)+(ex===8?2:0))),
-    wisdom:Math.min(10,((nv===7||nv===9?3:0)+(lp===7||lp===9?3:0)+(su===9?2:0)+(su===7?2:0)))};
-  const pseed=Math.abs(nv*7+lp*13+su*17+ex*19+py*23+d*3+m*5+y);
+  const _nv=R(nv),_lp=R(lp),_su=R(su),_ex=R(ex);
+  const psych={leadership:Math.min(10,((_nv===1||_nv===8?3:0)+(_lp===1||_lp===8?3:0)+(_su===1?2:0)+(_ex===8?2:0))),
+    intuition:Math.min(10,((_nv===2||_nv===7?3:0)+(_lp===2||_lp===7?3:0)+(_su===7?2:0)+(_su===2?2:0))),
+    creativity:Math.min(10,((_nv===3||_nv===5?3:0)+(_lp===3||_lp===5?3:0)+(_su===3?2:0)+(_ex===5?2:0))),
+    stability:Math.min(10,((_nv===4||_nv===6?3:0)+(_lp===4||_lp===6?3:0)+(_su===6?2:0)+(_ex===4?2:0))),
+    ambition:Math.min(10,((_nv===8||_nv===1?3:0)+(_lp===8?3:0)+(py===8||py===1?2:0)+(_ex===8?2:0))),
+    wisdom:Math.min(10,((_nv===7||_nv===9?3:0)+(_lp===7||_lp===9?3:0)+(_su===9?2:0)+(_su===7?2:0)))};
+  const pseed=Math.abs(_nv*7+_lp*13+_su*17+_ex*19+py*23+d*3+m*5+y);
   Object.keys(psych).forEach((k,i)=>{if(psych[k]<2)psych[k]=2+((pseed+i*37)%3);});
-  return{nv,lp,age,py,hy,su,ex,pm,pd,pk,ch,hp,hc,exit:27-lp,kd,ls,proj,psych,d,m,y};
+  return{nv,lp,age,py,hy,su,ex,pm,pd,pk,ch,hp,hc,exit:27-_lp,kd,ls,proj,psych,d,m,y};
 }
 
 // ═══════════════════ DATA LAYER ═══════════════════
@@ -244,7 +247,9 @@ const AFFIRMATIONS=[
 
 // ═══════════════════ SMART RECOMMENDATIONS ═══════════════════
 function getRecommendations(r, lang) {
-  const recs = [];const he = lang === "he";
+  const he = lang === "he";
+  r = { ...r, lp: R(r.lp), nv: R(r.nv), su: R(r.su), ex: R(r.ex) };
+  const recs = [];
   if (r.kd.length > 0 && r.py === 7) recs.push({icon:"orb",t:he?"שנת תיקון עמוק":"Deep repair year",d:he?"השנה הנוכחית מזמינה אותך להתמודד עם חובות קארמיים.":"This year invites you to face karmic debts."});
   if ((r.nv===1||r.nv===8)&&(r.lp===1||r.lp===8)) recs.push({icon:"crown",t:he?"מסלול מנהיגות חזק":"Strong leadership track",d:he?"השילוב שלך מצביע על פוטנציאל מנהיגות יוצא דופן.":"Your combination indicates exceptional leadership potential."});
   if ([3,5].includes(r.py) && [3,5].includes(r.lp)) recs.push({icon:"palette",t:he?"גל יצירתי":"Creative surge",d:he?"האנרגיה היצירתית שלך בשיא.":"Your creative energy peaks."});
@@ -836,7 +841,7 @@ function CalculatorsWidget({he,dk}){
             ))}
           </div>
           <div style={{textAlign:"center",marginTop:14,padding:12,background:`${ac}06`,borderRadius:12}}>
-            <p style={{fontSize:13,lineHeight:1.9,color:ts,fontStyle:"italic"}}>{he?D[results.lp]?.narrative:D[results.lp]?.narrativeE}</p>
+            <p style={{fontSize:13,lineHeight:1.9,color:ts,fontStyle:"italic"}}>{he?D[R(results.lp)]?.narrative:D[R(results.lp)]?.narrativeE}</p>
           </div>
         </div>
       </div>)}
@@ -1334,14 +1339,14 @@ function Hero({ he, dk, onStart, onShop, onUseName, onReveal }) {
           <div style={{ fontSize: 10.5, color: `${ac}cc`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "מחשבון חי · גלה את המספרים שלך" : "Live · discover your numbers"}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
             <input value={nm} onChange={(e) => setNm(e.target.value)} placeholder={he ? "השם המלא שלך…" : "Your full name…"} dir={he ? "rtl" : "ltr"} style={{ ...inputSt, textAlign: he ? "right" : "left" }}/>
-            <div style={circleSt(num)}><div style={{ textAlign: "center" }}><div style={numSt}>{num ? <RollDigit value={num}/> : "—"}</div><div style={lblSt}>{he ? "שם" : "Name"}</div></div></div>
+            <div style={circleSt(num)}><div style={{ textAlign: "center" }}><div style={numSt}>{num ? (num > 9 ? num : <RollDigit value={num}/>) : "—"}</div><div style={lblSt}>{he ? "שם" : "Name"}</div></div></div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <input value={dob} onChange={(e) => setDob(e.target.value)} placeholder={he ? "תאריך לידה · dd.mm.yyyy" : "Birth date · dd.mm.yyyy"} dir="ltr" onKeyDown={(e) => { if (e.key === "Enter" && bothReady) onReveal(nm, dob); }} style={{ ...inputSt, textAlign: "center", letterSpacing: 2 }}/>
             <div style={circleSt(lp)}><div style={{ textAlign: "center" }}><div style={numSt}>{lp ? (lp > 9 ? lp : <RollDigit value={lp}/>) : "—"}</div><div style={lblSt}>{he ? "שביל" : "Path"}</div></div></div>
           </div>
           {(num > 0 || lp > 0) && <div style={{ marginTop: 11, fontSize: 12.5, color: ts, lineHeight: 1.6, animation: "fadeInUp .4s ease-out" }}>
-            {num > 0 && <span>{he ? `שם: ${D[num]?.t}` : `Name: ${D[num]?.te}`}</span>}
+            {num > 0 && <span>{he ? `שם: ${(D[num]||MASTER[num])?.t||""}` : `Name: ${(D[num]||MASTER[num])?.te||""}`}</span>}
             {num > 0 && lp > 0 && <span style={{ opacity: .5 }}> · </span>}
             {lp > 0 && <span>{he ? `שביל: ${(lp <= 9 ? D[lp]?.t : MASTER[lp]?.t) || ""}` : `Path: ${(lp <= 9 ? D[lp]?.te : MASTER[lp]?.te) || ""}`}</span>}
           </div>}
@@ -1672,7 +1677,7 @@ function SampleMap({ he, dk, onBuy }) {
         {nums.map((it, i) => (
           <div key={i} className="rrow" style={{ gap: 12 }}>
             <div className="orb" style={{ width: 46, height: 46, fontSize: 19 }}>{it.v}</div>
-            <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 600, color: tm }}>{it.l}</div>{it.v > 0 && it.v <= 9 && <div className="badge">{he ? D[it.v]?.t : D[it.v]?.te}</div>}</div>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 600, color: tm }}>{it.l}</div>{it.v > 0 && (D[it.v] || MASTER[it.v]) && <div className="badge">{he ? (D[it.v] || MASTER[it.v])?.t : (D[it.v] || MASTER[it.v])?.te}</div>}</div>
           </div>
         ))}
       </div>
@@ -1889,6 +1894,7 @@ export default function App(){
   ]:[];
 
   const showOwnerUI = owner && !previewCustomer; // owner console vs. public customer landing
+  const lpBase = results ? R(results.lp) : 0; // reduced life path for D[] rich content (master carries base energy)
 
   return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"hidden",transition:"background .7s,color .4s"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Hebrew:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
@@ -2061,23 +2067,24 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {/* CHAPTER 1 */}
         <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk}>
-          <div style={{textAlign:"center",marginBottom:20}}><TarotCard number={results.lp||1} dk={dk} flipped={true} size="lg"/></div>
-          <p className="nar-line">{he?D[results.lp]?.narrative:D[results.lp]?.narrativeE}</p>
+          <div style={{textAlign:"center",marginBottom:20}}><TarotCard number={lpBase||1} dk={dk} flipped={true} size="lg"/></div>
+          <p className="nar-line">{he?D[lpBase]?.narrative:D[lpBase]?.narrativeE}</p>
+          {results.lp>9&&MASTER[results.lp]&&<div style={{textAlign:"center",marginTop:-6,marginBottom:8}}><span className="badge" style={{borderColor:`${ac}55`}}>{he?`מספר מאסטר ${results.lp} · ${MASTER[results.lp].t}`:`Master ${results.lp} · ${MASTER[results.lp].te}`}</span><p style={{fontSize:12.5,lineHeight:1.8,color:ts,marginTop:8}}>{he?MASTER[results.lp].he:MASTER[results.lp].en}</p></div>}
           <div className="divider"/>
-          {[{l:he?"ערך השם":"Name Value",v:results.nv},{l:he?"שביל הגורל":"Life Path",v:results.lp},{l:he?"קול הנשמה":"Soul Urge",v:results.su},{l:he?"מספר הביטוי":"Expression",v:results.ex}].map((it,i)=>(
-            <div key={i} className="rrow"><div className="orb"><AN value={it.v} delay={i*200}/></div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:isRtl?600:500,color:tm}}>{it.l}</div>{it.v>0&&it.v<=9&&<div className="badge">{he?D[it.v]?.t:D[it.v]?.te}</div>}</div></div>
-          ))}
+          {[{l:he?"ערך השם":"Name Value",v:results.nv},{l:he?"שביל הגורל":"Life Path",v:results.lp},{l:he?"קול הנשמה":"Soul Urge",v:results.su},{l:he?"מספר הביטוי":"Expression",v:results.ex}].map((it,i)=>{const info=D[it.v]||MASTER[it.v];return(
+            <div key={i} className="rrow"><div className="orb"><AN value={it.v} delay={i*200}/></div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:isRtl?600:500,color:tm}}>{it.l}</div>{it.v>0&&info&&<div className="badge">{he?info.t:info.te}</div>}</div></div>
+          );})}
         </Chapter>
 
         {/* CHAPTER 2 */}
         <Chapter index={2} title={chapterDefs[1]?.title} subtitle={chapterDefs[1]?.sub} icon={chapterDefs[1]?.icon} isActive={nextUnrevealed===1} isRevealed={chapters[1]} onReveal={()=>revealChapter(1)} dk={dk}>
           <p className="nar-line">{he?"שביל הגורל שלך מספר "+results.lp+" חושף את הייעוד העמוק שלך":"Your Life Path "+results.lp+" reveals your deepest purpose"}</p>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,margin:"16px 0"}}>
-            <div style={{padding:"16px",background:dk?"rgba(180,50,50,.06)":"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.12)",borderRadius:14,textAlign:"center"}}><div style={{color:"#d98a8a",marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="moon" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:"#e88",marginBottom:4}}>{he?"צד צל":"Shadow"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}>{he?D[results.lp]?.shadow:D[results.lp]?.shadowE}</div></div>
-            <div style={{padding:"16px",background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,textAlign:"center"}}><div style={{color:ac,marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="seed" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:ac,marginBottom:4}}>{he?"צמיחה":"Growth"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}>{he?D[results.lp]?.growth:D[results.lp]?.growthE}</div></div>
+            <div style={{padding:"16px",background:dk?"rgba(180,50,50,.06)":"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.12)",borderRadius:14,textAlign:"center"}}><div style={{color:"#d98a8a",marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="moon" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:"#e88",marginBottom:4}}>{he?"צד צל":"Shadow"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}>{he?D[lpBase]?.shadow:D[lpBase]?.shadowE}</div></div>
+            <div style={{padding:"16px",background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,textAlign:"center"}}><div style={{color:ac,marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="seed" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:ac,marginBottom:4}}>{he?"צמיחה":"Growth"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}>{he?D[lpBase]?.growth:D[lpBase]?.growthE}</div></div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:14}}>
-            {[{i:"gem",l:he?"אבן":"Stone",v:D[results.lp]?.stone},{i:"orb",l:he?"קריסטל":"Crystal",v:D[results.lp]?.crystal},{i:"palette",l:he?"צבע":"Color",v:D[results.lp]?.color},{i:"calendar",l:he?"יום מזל":"Lucky Day",v:D[results.lp]?.luck}].map((it,i)=>(
+            {[{i:"gem",l:he?"אבן":"Stone",v:D[lpBase]?.stone},{i:"orb",l:he?"קריסטל":"Crystal",v:D[lpBase]?.crystal},{i:"palette",l:he?"צבע":"Color",v:D[lpBase]?.color},{i:"calendar",l:he?"יום מזל":"Lucky Day",v:D[lpBase]?.luck}].map((it,i)=>(
               <div key={i} style={{padding:"12px",background:dk?"rgba(18,18,38,.35)":"rgba(255,255,255,.4)",border:`1px solid ${ac}0a`,borderRadius:11,textAlign:"center"}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:3}}><Icon name={it.i} size={18}/></div><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1,marginTop:2}}>{it.l}</div><div style={{fontSize:12,fontWeight:600,color:ac,marginTop:2}}>{it.v}</div></div>
             ))}
           </div>
@@ -2118,7 +2125,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           <p className="nar-line">{he?"תובנות מותאמות אישית":"Personalized insights"}</p>
           {getRecommendations(results,lang).map((rec,i)=>(<div key={i} className="rec-card"><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name={rec.icon} size={20}/></span><span style={{fontSize:15,fontWeight:600,color:ac}}>{rec.t}</span></div><p style={{fontSize:13,lineHeight:1.8,color:ts}}>{rec.d}</p></div>))}
           <div className="divider"/>
-          <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="target" size={22} stroke={1.3}/></div><div style={{fontSize:15,fontWeight:600,color:ac,marginTop:4}}>{he?"קריירות מתאימות":"Ideal Careers"}</div><div style={{fontSize:14,color:ts,marginTop:6,lineHeight:1.8}}>{D[results.lp]?.career}</div></div>
+          <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="target" size={22} stroke={1.3}/></div><div style={{fontSize:15,fontWeight:600,color:ac,marginTop:4}}>{he?"קריירות מתאימות":"Ideal Careers"}</div><div style={{fontSize:14,color:ts,marginTop:6,lineHeight:1.8}}>{D[lpBase]?.career}</div></div>
         </Chapter>
 
         {chapters[5]&&(<SR delay={150}>
