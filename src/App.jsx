@@ -1171,6 +1171,11 @@ const CONTACT_URL = `https://wa.me/${WHATSAPP_PHONE}`;
 const BUSINESS_EMAIL = "shani@example.com"; // 👈 החליפי לאימייל שלך
 const OWNER_STORE_KEY = "numerology_owner_mode";
 const CART_STORE_KEY = "numerology_cart_v1";
+const LEADS_STORE_KEY = "numerology_leads_v1";
+const LEAD_DONE_KEY = "numerology_lead_done";
+const LEAD_GATE = true; // gate the full reading behind a contact detail (customer view only)
+const loadLeads = () => { try { return JSON.parse(localStorage.getItem(LEADS_STORE_KEY) || "[]") || []; } catch (e) { return []; } };
+const saveLead = (lead) => { try { const a = loadLeads(); a.unshift(lead); localStorage.setItem(LEADS_STORE_KEY, JSON.stringify(a.slice(0, 1000))); } catch (e) {} };
 
 // Photographic backdrops (Unsplash CDN, hotlink-allowed). Swap freely with your own photos.
 const U = (id, w) => `https://images.unsplash.com/photo-${id}?w=${w}&q=68&auto=format&fit=crop`;
@@ -1831,6 +1836,63 @@ function ShopSection({ he, dk, onAdd, cart }) {
   );
 }
 
+// ═══════════════════ LEAD CAPTURE GATE ═══════════════════
+function LeadGate({ he, dk, results, name, onUnlock }) {
+  const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.6)" : "rgba(42,37,32,.6)";
+  const [phone, setPhone] = useState("");
+  const N = 60 + R(results.lp) * 4 + results.nv + results.su + results.ex + (results.kd?.length || 0) * 7 + (results.ls?.miss?.length || 0) * 3;
+  const submit = () => {
+    if (phone.trim().replace(/\D/g, "").length < 6) return;
+    AU.init(); AU.p("reveal");
+    saveLead({ name: name || "", phone: phone.trim(), lp: results.lp, nv: results.nv, su: results.su, py: results.py, kd: (results.kd || []).join(","), date: new Date().toLocaleDateString("he-IL"), ts: Date.now() });
+    try { localStorage.setItem(LEAD_DONE_KEY, "1"); } catch (e) {}
+    const msg = he ? `היי שני! קיבלתי קריאה חינמית. שם: ${name || "-"} · טלפון: ${phone} · שביל גורל: ${results.lp}` : `Hi Shani! Free reading. Name: ${name || "-"} · phone: ${phone} · life path: ${results.lp}`;
+    window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+    onUnlock();
+  };
+  return (<SR><div className="gc" style={{ textAlign: "center", maxWidth: 460, margin: "0 auto" }}>
+    <div style={{ color: ac, display: "flex", justifyContent: "center", marginBottom: 10 }}><Icon name="sparkle" size={30} stroke={1.2}/></div>
+    <h2 className="shimmer-text" style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "הקריאה שלך מוכנה" : "Your reading is ready"}</h2>
+    <p style={{ fontSize: 15, color: tm, marginTop: 8 }}>{he ? "מצאנו " : "We found "}<strong style={{ color: ac, fontSize: 22 }}>{N}</strong>{he ? " נקודות במפה האישית שלך" : " insights in your personal map"}</p>
+    <p style={{ fontSize: 12.5, color: ts, margin: "8px auto 16px", maxWidth: 360, lineHeight: 1.7 }}>{he ? "הזן/י מספר וואטסאפ כדי לחשוף את הקריאה המלאה — חינם, ללא התחייבות." : "Enter your WhatsApp number to unlock the full reading — free, no commitment."}</p>
+    <div style={{ display: "flex", gap: 8, maxWidth: 380, margin: "0 auto" }}>
+      <input value={phone} onChange={e => setPhone(e.target.value)} placeholder={he ? "מספר וואטסאפ…" : "WhatsApp number…"} dir="ltr" inputMode="tel" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "13px 15px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
+      <button className="gb" onClick={submit} style={{ width: "auto", padding: "13px 20px", fontSize: 14 }}>{he ? "חשוף" : "Unlock"}</button>
+    </div>
+    <p style={{ fontSize: 10, color: ts, opacity: .65, marginTop: 10, display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center" }}><Icon name="lock" size={11}/>{he ? "הפרטים נשמרים אצל שני בלבד" : "Your details stay with Shani only"}</p>
+  </div></SR>);
+}
+
+// ═══════════════════ CRM — LEADS (owner) ═══════════════════
+function LeadsWidget({ he, dk }) {
+  const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
+  const [leads, setLeads] = useState(loadLeads());
+  const clearAll = () => { if (window.confirm(he ? "למחוק את כל הלידים?" : "Delete all leads?")) { try { localStorage.removeItem(LEADS_STORE_KEY); } catch (e) {} setLeads([]); } };
+  const exportCsv = () => { const rows = [["שם", "טלפון", "שביל גורל", "ערך שם", "קול נשמה", "שנה אישית", "חוב קארמי", "תאריך"], ...leads.map(l => [l.name, l.phone, l.lp, l.nv, l.su, l.py, l.kd, l.date])]; const csv = "﻿" + rows.map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "leads.csv"; a.click(); };
+  const th = { textAlign: he ? "right" : "left", fontSize: 11, color: ac, fontWeight: 700, padding: "8px 6px", borderBottom: `1px solid ${ac}22`, whiteSpace: "nowrap" };
+  const td = { fontSize: 12.5, color: tm, padding: "9px 6px", borderBottom: `1px solid ${ac}0e`, whiteSpace: "nowrap" };
+  return (<div style={{ animation: "fadeInUp .5s ease-out" }}>
+    <div style={{ textAlign: "center", marginBottom: 14 }}>
+      <div style={{ color: ac, display: "flex", justifyContent: "center", marginBottom: 6 }}><Icon name="users" size={26} stroke={1.3}/></div>
+      <h2 style={{ fontSize: 22, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "לידים" : "Leads"}</h2>
+      <p style={{ fontSize: 12, color: ts, marginTop: 3 }}>{leads.length} {he ? "לידים נשמרו במכשיר זה" : "leads on this device"}</p>
+    </div>
+    <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 14, flexWrap: "wrap" }}>
+      <button className="ghost" onClick={() => setLeads(loadLeads())} style={{ fontSize: 13 }}>{he ? "רענון" : "Refresh"}</button>
+      <button className="ghost" onClick={exportCsv} disabled={!leads.length} style={{ fontSize: 13 }}>{he ? "ייצוא CSV" : "Export CSV"}</button>
+      <button className="ghost" onClick={clearAll} disabled={!leads.length} style={{ fontSize: 13 }}>{he ? "מחיקה" : "Clear"}</button>
+    </div>
+    {leads.length === 0 ? <p style={{ textAlign: "center", color: ts, fontSize: 14, padding: "30px 0", lineHeight: 1.7 }}>{he ? "עדיין אין לידים. כשמבקרים ימלאו טלפון לפני הקריאה — הם יופיעו כאן." : "No leads yet. They appear here once visitors enter a phone before the reading."}</p> :
+      <div className="gc" style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead><tr><th style={th}>{he ? "שם" : "Name"}</th><th style={th}>{he ? "טלפון" : "Phone"}</th><th style={th}>{he ? "שביל" : "LP"}</th><th style={th}>{he ? "שנה" : "PY"}</th><th style={th}>{he ? "חוב" : "Debt"}</th><th style={th}>{he ? "תאריך" : "Date"}</th></tr></thead>
+          <tbody>{leads.map((l, i) => (<tr key={i}><td style={td}>{l.name || "-"}</td><td style={td}><a href={`https://wa.me/${(l.phone || "").replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: ac, textDecoration: "none" }}>{l.phone}</a></td><td style={td}>{l.lp}</td><td style={td}>{l.py}</td><td style={td}>{l.kd || "-"}</td><td style={td}>{l.date}</td></tr>))}</tbody>
+        </table>
+      </div>}
+    <p style={{ fontSize: 10, color: ts, opacity: .6, textAlign: "center", marginTop: 12 }}>{he ? "* נשמר מקומית בדפדפן זה. ל-CRM ענן אמיתי נדרש חיבור שרת." : "* Stored locally in this browser. A real cloud CRM needs a backend."}</p>
+  </div>);
+}
+
 // ═══════════════════ MAIN APP ═══════════════════
 export default function App(){
   const[lang,setLang]=useState("he");const[dk,setDk]=useState(true);const[snd,setSnd]=useState(true);const[intro,setIntro]=useState(true);
@@ -1840,6 +1902,7 @@ export default function App(){
   const[streak,setStreak]=useState(0);
   const[owner,setOwner]=useState(()=>{try{const h=location.hash+location.search;if(/customer/i.test(h))return false;if(/owner|studio|admin/i.test(h))return true;return localStorage.getItem(OWNER_STORE_KEY)!=="customer";}catch(e){return true;}});const[previewCustomer,setPreviewCustomer]=useState(false);
   const[cart,setCart]=useState({});const[cartOpen,setCartOpen]=useState(false);
+  const[leadDone,setLeadDone]=useState(()=>{try{return localStorage.getItem(LEAD_DONE_KEY)==="1";}catch(e){return false;}});
 
   const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
   useEffect(()=>{AU.on=snd;},[snd]);
@@ -1988,7 +2051,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
       {/* ═══ STUDIO NAV (owner — always visible) ═══ */}
       {showOwnerUI&&<div className="tabs" style={{animation:"fadeInUp .5s ease-out .1s both",marginBottom:18}}>
-        {[{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"}].map(tb=>(
+        {[{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"leads",i:"users",l:he?"לידים":"Leads"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"}].map(tb=>(
           <div key={tb.k} className={`ti ${tab===tb.k?"act":""}`} onClick={()=>{setTab(tb.k);AU.init();AU.p("click");if(tb.k!=="reading")setShowRes(false);}}><span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"center"}}><Icon name={tb.i} size={14} stroke={1.4}/>{tb.l}</span></div>
         ))}
       </div>}
@@ -1998,6 +2061,8 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         {/* Studio nav rendered above (always visible in owner mode) */}
 
         {showOwnerUI&&tab==="shop"&&<ShopSection he={he} dk={dk}/>}
+
+        {showOwnerUI&&tab==="leads"&&<LeadsWidget he={he} dk={dk}/>}
 
         {tab==="tables"&&<TablesWidget he={he} dk={dk}/>}
 
@@ -2056,7 +2121,10 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       </>)}
 
       {/* ═══ NARRATIVE RESULTS ═══ */}
-      {showRes&&results&&(<div style={{maxWidth:640,margin:"0 auto"}}>
+      {showRes&&results&&!showOwnerUI&&LEAD_GATE&&!leadDone&&(
+        <LeadGate he={he} dk={dk} results={results} name={name} onUnlock={()=>setLeadDone(true)}/>
+      )}
+      {showRes&&results&&(showOwnerUI||!LEAD_GATE||leadDone)&&(<div style={{maxWidth:640,margin:"0 auto"}}>
         <SR><div style={{textAlign:"center",marginBottom:8}}>
           <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:5,marginBottom:6}}>{he?"הקריאה של":"The reading of"}</div>
           <div style={{fontSize:isRtl?26:30,fontWeight:isRtl?700:400,color:ac,fontFamily:"'Cormorant Garamond',serif",letterSpacing:isRtl?0:3}}>{name}</div>
