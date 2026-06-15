@@ -136,7 +136,8 @@ function fullCalc(d,m,y,nm,add){
     stability:Math.min(10,((nv===4||nv===6?3:0)+(lp===4||lp===6?3:0)+(su===6?2:0)+(ex===4?2:0))),
     ambition:Math.min(10,((nv===8||nv===1?3:0)+(lp===8?3:0)+(py===8||py===1?2:0)+(ex===8?2:0))),
     wisdom:Math.min(10,((nv===7||nv===9?3:0)+(lp===7||lp===9?3:0)+(su===9?2:0)+(su===7?2:0)))};
-  Object.keys(psych).forEach(k=>{if(psych[k]<2)psych[k]=2+Math.round(Math.random()*2)});
+  const pseed=Math.abs(nv*7+lp*13+su*17+ex*19+py*23+d*3+m*5+y);
+  Object.keys(psych).forEach((k,i)=>{if(psych[k]<2)psych[k]=2+((pseed+i*37)%3);});
   return{nv,lp,age,py,hy,su,ex,pm,pd,pk,ch,hp,hc,exit:27-lp,kd,ls,proj,psych,d,m,y};
 }
 
@@ -1181,6 +1182,7 @@ const IMG = {
   gift: U("1462331940025-496dfbfc7564", 800),
   "monthly-insight": U("1483347756197-71ef80e95f73", 800),
   bundle: U("1543722530-d2c3201371e7", 800),
+  vip: U("1419242902214-272b3f66ee7a", 800),
   band: U("1444703686981-a3abbc4d4fe3", 1600),
 };
 
@@ -1193,6 +1195,10 @@ const SHOP = [
         name:{he:"חבילת המסע המלא — מפה + שיחה מעמיקה",en:"Full Journey — Map + Deep Call"},
         desc:{he:"מפה נומרולוגית אישית מלאה + ייעוץ מעמיק 75 דק׳ עם שני. הדרך השלמה להבין את עצמך ולקבל כיוון. (₪498 בנפרד)",en:"Full personal map + 75-min deep consultation with Shani. (₪498 separately)"},
         price:{he:"₪449",en:"$135"}, link:"" },
+      { id:"vip", icon:"crown", featured:true, badge:{he:"פרימיום",en:"Premium"}, priceNum:1290,
+        name:{he:"קריאת עומק מלאה — חבילת VIP",en:"Full Depth Reading — VIP"},
+        desc:{he:"החבילה המקיפה ביותר: מפה אישית מלאה + תחזית שנתית + שיחת עומק 90 דק׳ + דוח PDF מורחב + חודש ליווי אישי בוואטסאפ. הכול במקום אחד.",en:"The most comprehensive package: full personal map + yearly forecast + 90-min deep call + extended PDF + a month of personal WhatsApp guidance."},
+        price:{he:"₪1,290",en:"$390"}, link:"" },
     ],
   },
   {
@@ -1705,16 +1711,18 @@ function CtaBand({ he, dk, onShop }) {
 function ProductModal({ product, he, dk, onClose, onAdd }) {
   const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.6)" : "rgba(42,37,32,.6)";
   const customer = typeof onAdd === "function";
-  const kind = product.recurring ? "sub" : (["intro-call", "deep-consult", "mentoring"].includes(product.id) ? "call" : product.id === "gift" ? "gift" : product.id === "bundle" ? "bundle" : "report");
+  const kind = product.recurring ? "sub" : (["intro-call", "deep-consult", "mentoring"].includes(product.id) ? "call" : product.id === "gift" ? "gift" : product.id === "vip" ? "vip" : product.id === "bundle" ? "bundle" : "report");
   const incl = (he ? {
     report: ["קובץ PDF מעוצב ואישי", "פרשנות כתובה ומפורטת", "אספקה תוך 48 שעות", "אפשרות לשאלות המשך"],
     bundle: ["מפה אישית מלאה (PDF)", "שיחת ייעוץ 75 דקות", "הקלטה של השיחה", "חיסכון של ₪99"],
+    vip: ["מפה אישית מלאה", "תחזית שנתית 12 חודשים", "שיחת עומק 90 דקות + הקלטה", "דוח PDF מורחב", "חודש ליווי אישי בוואטסאפ"],
     call: ["פגישת זום או טלפון", "תיאום גמיש לפי הזמן שלך", "ליווי אישי וחם", "סיכום וכיווני פעולה"],
     gift: ["שובר מתנה אלגנטי", "נשלח אליך או למקבל/ת", "הוראות מימוש פשוטות", "ללא תאריך תפוגה"],
     sub: ["מסר חודשי מותאם אישית", "ישירות למייל בכל ראש חודש", "ביטול בכל עת", "ללא התחייבות"],
   } : {
     report: ["Designed personal PDF", "Detailed written interpretation", "Delivery within 48h", "Follow-up questions"],
     bundle: ["Full personal map (PDF)", "75-min consultation", "Call recording", "Save ₪99"],
+    vip: ["Full personal map", "12-month forecast", "90-min deep call + recording", "Extended PDF report", "A month of WhatsApp guidance"],
     call: ["Zoom or phone session", "Flexible scheduling", "Warm personal guidance", "Summary & next steps"],
     gift: ["Elegant gift voucher", "Sent to you or recipient", "Simple redemption", "No expiry"],
     sub: ["Monthly personalized message", "Straight to your inbox", "Cancel anytime", "No commitment"],
