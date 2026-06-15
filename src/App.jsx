@@ -1950,7 +1950,8 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <button className="tbtn" onClick={()=>{setLang(lang==="he"?"en":"he");AU.init();AU.p("click");}}>{he?"EN":"עב"}</button>
         <button className="tbtn" onClick={()=>{setDk(!dk);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{dk?<Icon name="sun" size={14}/>:<Icon name="moon" size={14}/>}</button>
         <button className={`tbtn ${snd?"act":""}`} onClick={()=>{AU.init();setSnd(!snd);AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{snd?<Icon name="soundOn" size={14}/>:<Icon name="soundOff" size={14}/>}</button>
-        <button className={`tbtn ${owner?"act":""}`} title={he?"הסטודיו שלי — כלים (טבלאות, מחשבונים, התאמה)":"My Studio — tools"} onClick={()=>{AU.init();AU.p("click");owner?exitOwner():enterOwner();}} style={{display:"inline-flex",alignItems:"center",gap:4}}><Icon name="crown" size={14}/>{owner&&<span style={{fontSize:10,fontWeight:700}}>{he?"סטודיו":"Studio"}</span>}</button>
+        {owner&&<button className="tbtn act" title={he?"מעבר בין סטודיו לתצוגת לקוח":"Toggle Studio / Customer"} onClick={()=>{const next=!previewCustomer;setPreviewCustomer(next);if(next){setTab("reading");setShowRes(false);}AU.init();AU.p("click");window.scrollTo({top:0,behavior:"smooth"});}} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={previewCustomer?"crown":"eye"} size={13}/><span style={{fontSize:10.5,fontWeight:700}}>{previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")}</span></button>}
+        <button className={`tbtn ${owner?"":"act"}`} title={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):(he?"כניסת בעל עסק":"Owner login")} onClick={()=>{AU.init();AU.p("click");owner?exitOwner():enterOwner();}} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={owner?"door":"crown"} size={13}/><span style={{fontSize:10.5,fontWeight:700}}>{owner?(he?"יציאה":"Exit"):(he?"סטודיו":"Studio")}</span></button>
       </div>
     </div>
 
@@ -2164,20 +2165,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       <CartDrawer he={he} dk={dk} cart={cart} open={cartOpen} onClose={()=>setCartOpen(false)} onQty={setQty} onRemove={removeFromCart} onClear={clearCart}/>
     </>)}
 
-    {/* ═══ OWNER CONTROLS ═══ */}
-    {owner&&!previewCustomer&&(
-      <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",zIndex:250,display:"flex",gap:8,alignItems:"center",padding:"8px 12px",background:dk?"rgba(8,8,18,.92)":"rgba(245,240,232,.95)",border:`1px solid ${ac}44`,borderRadius:30,backdropFilter:"blur(12px)",boxShadow:"0 8px 30px rgba(0,0,0,.3)",maxWidth:"94vw"}}>
-        <span style={{fontSize:12,color:ac,fontWeight:700,whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:5}}><Icon name="crown" size={14}/>{he?"בעל עסק":"Owner"}</span>
-        <button className="tbtn" onClick={()=>{setPreviewCustomer(true);setTab("reading");setShowRes(false);AU.init();AU.p("click");window.scrollTo({top:0,behavior:"smooth"});}} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name="eye" size={13}/>{he?"תצוגת לקוח":"Customer"}</button>
-        <button className="tbtn" onClick={exitOwner} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name="door" size={13}/>{he?"יציאה":"Exit"}</button>
-      </div>
-    )}
-    {owner&&previewCustomer&&(
-      <div style={{position:"fixed",bottom:78,left:"50%",transform:"translateX(-50%)",zIndex:250,display:"flex",gap:8,alignItems:"center",padding:"8px 14px",background:dk?"rgba(8,8,18,.92)":"rgba(245,240,232,.95)",border:`1px solid ${ac}44`,borderRadius:30,backdropFilter:"blur(12px)",boxShadow:"0 8px 30px rgba(0,0,0,.3)"}}>
-        <span style={{fontSize:12,color:ts,whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:5}}><Icon name="eye" size={13}/>{he?"תצוגת לקוח":"Customer preview"}</span>
-        <button className="tbtn" onClick={()=>{setPreviewCustomer(false);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name="arrowBack" size={13}/>{he?"חזרה לניהול":"Back to console"}</button>
-      </div>
-    )}
+    {/* Owner controls now live in the top bar */}
   </div>);
 }
 
