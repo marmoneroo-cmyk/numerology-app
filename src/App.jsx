@@ -2133,12 +2133,28 @@ button,a,input{-webkit-tap-highlight-color:transparent}
             <div style={{fontSize:30,marginBottom:8}}>✦</div>
             <h3 style={{fontSize:isRtl?21:23,fontWeight:isRtl?700:500,color:ac,fontFamily:"'Cormorant Garamond',serif",marginBottom:6}}>{he?"רוצה לרדת לעומק?":"Want to go deeper?"}</h3>
             <p style={{fontSize:13.5,lineHeight:1.85,color:ts,maxWidth:420,margin:"0 auto 18px"}}>{he?`${name?name+", ":""}הקריאה החינמית היא רק ההתחלה. אני יכול להכין לך מפה נומרולוגית אישית מלאה, או לצלול יחד איתך בשיחה אישית — על מטרת החיים, יחסים, קריירה ותזמון.`:`${name?name+", ":""}this free reading is just the start. I can prepare your full personal numerology map, or dive deep together in a 1-on-1 call — life purpose, relationships, career and timing.`}</p>
-            {(()=>{const recId=[2,6].includes(results.lp)?"couple":[3,5].includes(results.lp)?"name":[1,8].includes(results.lp)?"deep-consult":"full-map";const rp=findProduct(recId);return rp?(
-              <div style={{margin:"0 auto 16px",maxWidth:430,padding:"12px 16px",borderRadius:14,border:`1px solid ${ac}44`,background:`${ac}0d`,display:"flex",alignItems:"center",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                <span style={{color:ac,display:"inline-flex"}}><Icon name="sparkles" size={18}/></span>
-                <span style={{fontSize:12.5,color:tm,lineHeight:1.6}}>{he?`מומלץ עבורך (מספר ${results.lp}): `:`Recommended for you (number ${results.lp}): `}<strong style={{color:ac}}>{he?rp.name.he:rp.name.en}</strong> · {he?rp.price.he:rp.price.en}</span>
-                <button className="gb" onClick={()=>goToCheckout(rp)} style={{width:"auto",padding:"8px 16px",fontSize:12.5}}>{he?"לרכישה ←":"Get it →"}</button>
-              </div>):null;})()}
+            {(()=>{
+              const lpB=R(results.lp),suB=R(results.su);const offers=[];
+              const add=(cond,id,reason)=>{if(cond&&offers.length<3&&!offers.some(o=>o.p.id===id)){const p=findProduct(id);if(p)offers.push({p,reason});}};
+              add(results.kd&&results.kd.length>0,"deep-consult",he?`חוב קארמי ${results.kd&&results.kd[0]} — שיחת עומק תעזור לך לרפא ולהשתחרר`:`Karmic debt — a deep call helps you heal`);
+              add(results.py===8,"year-forecast",he?"שנה אישית 8 — שנת שפע. תחזית שנתית תעזור לתזמן נכון":"Personal year 8 — abundance; a forecast times it right");
+              add(results.py===9,"year-forecast",he?"שנת סיום (9) — תחזית למחזור החדש שמתחיל":"Completion year (9) — forecast for the new cycle");
+              add([2,6].includes(lpB)||[2,6].includes(suB),"couple",he?"עולמך סובב סביב יחסים — דוח התאמה זוגית":"Your world centers on relationships — a couple report");
+              add([3,5].includes(lpB),"name",he?"אנרגיית ביטוי חזקה — נומרולוגיה לבחירת שם":"Strong expression energy — name numerology");
+              add(results.ls&&results.ls.miss&&results.ls.miss.length>=4,"full-map",he?"מספרים חסרים במפה — המפה המלאה תחשוף את התמונה":"Missing numbers — the full map reveals all");
+              add(true,"vip",he?"רוצה את הכול? קריאת עומק VIP מלאה":"Want it all? The full VIP depth reading");
+              return offers.length?(
+                <div style={{margin:"0 auto 18px",maxWidth:470,textAlign:isRtl?"right":"left"}}>
+                  <div style={{fontSize:11,color:`${ac}99`,textTransform:"uppercase",letterSpacing:2,marginBottom:8,textAlign:"center"}}>{he?"מותאם אישית עבורך":"Personalized for you"}</div>
+                  {offers.map((o,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",borderRadius:14,border:`1px solid ${ac}33`,background:`${ac}0a`,marginBottom:8}}>
+                      <span style={{color:ac,display:"inline-flex",flexShrink:0}}><Icon name="sparkles" size={17}/></span>
+                      <span style={{flex:1,fontSize:12.5,color:tm,lineHeight:1.6}}>{o.reason} · <strong style={{color:ac}}>{he?o.p.name.he:o.p.name.en}</strong> · {he?o.p.price.he:o.p.price.en}</span>
+                      <button className="gb" onClick={()=>goToCheckout(o.p)} style={{width:"auto",padding:"8px 14px",fontSize:12,flexShrink:0}}>{he?"לרכישה":"Get"}</button>
+                    </div>
+                  ))}
+                </div>
+              ):null;})()}
             <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
               <button className="gb" onClick={()=>goToCheckout(findProduct("full-map"))} style={{width:"auto",padding:"13px 22px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="map" size={16}/>{he?"הזמן מפה אישית מלאה":"Order full map"}</span></button>
               <button className="gb" onClick={()=>goToCheckout(findProduct("deep-consult"))} style={{width:"auto",padding:"13px 22px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="star" size={16}/>{he?"קבע שיחה 1:1":"Book a 1:1 call"}</span></button>
