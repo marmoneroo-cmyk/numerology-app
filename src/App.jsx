@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { jsPDF } from "jspdf";
 
 /* ╔══════════════════════════════════════════════════════════════╗
    ║  N U M E R O L O G Y   O R A C L E   —   V 7              ║
@@ -524,16 +525,28 @@ function Intro({onDone,he,dk}){
 function exportReport(r,name,he,interp){
   const c=document.createElement("canvas");const w=1080,h=1920;c.width=w;c.height=h;const ctx=c.getContext("2d");
   const grd=ctx.createLinearGradient(0,0,w,h);grd.addColorStop(0,"#080812");grd.addColorStop(.5,"#0f0f28");grd.addColorStop(1,"#080812");ctx.fillStyle=grd;ctx.fillRect(0,0,w,h);
-  for(let i=0;i<100;i++){ctx.beginPath();ctx.arc(Math.random()*w,Math.random()*h,Math.random()*1.5,0,Math.PI*2);ctx.fillStyle=`rgba(200,169,106,${Math.random()*.2})`;ctx.fill();}
-  ctx.strokeStyle="rgba(200,169,106,.12)";ctx.lineWidth=1;ctx.strokeRect(50,50,w-100,h-100);
-  ctx.textAlign="center";ctx.fillStyle="#c8a96a";ctx.font="100 58px serif";ctx.fillText("✦ "+(he?"נומרולוגיה":"NUMEROLOGY")+" ✦",w/2,140);
-  ctx.fillStyle="rgba(232,224,208,.45)";ctx.font="32px serif";ctx.fillText(name,w/2,200);
-  let yp=320;
+  for(let i=0;i<130;i++){ctx.beginPath();ctx.arc(Math.random()*w,Math.random()*h,Math.random()*1.6,0,Math.PI*2);ctx.fillStyle=`rgba(200,169,106,${Math.random()*.22})`;ctx.fill();}
+  ctx.strokeStyle="rgba(200,169,106,.14)";ctx.lineWidth=1.5;ctx.strokeRect(46,46,w-92,h-92);
+  ctx.textAlign="center";
+  ctx.fillStyle="#c8a96a";ctx.font="100 54px serif";ctx.fillText("✦ "+(he?"המפה הנומרולוגית":"NUMEROLOGY MAP")+" ✦",w/2,140);
+  ctx.fillStyle="#e8e0d0";ctx.font="700 42px serif";ctx.fillText(name||"",w/2,212);
+  ctx.fillStyle="rgba(232,224,208,.4)";ctx.font="22px sans-serif";ctx.fillText(new Date().toLocaleDateString(he?"he-IL":"en-US"),w/2,252);
+  // two-column number orbs
   const nums=[{l:he?"שביל הגורל":"Life Path",v:r.lp},{l:he?"ערך השם":"Name Value",v:r.nv},{l:he?"קול הנשמה":"Soul Urge",v:r.su},{l:he?"מספר הביטוי":"Expression",v:r.ex},{l:he?"שנה אישית":"Personal Year",v:r.py},{l:he?"שנה נסתרת":"Hidden Year",v:r.hy}];
-  nums.forEach(it=>{ctx.beginPath();ctx.arc(w/2,yp,36,0,Math.PI*2);ctx.fillStyle="rgba(200,169,106,.06)";ctx.fill();ctx.strokeStyle="rgba(200,169,106,.2)";ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle="#c8a96a";ctx.font="bold 30px serif";ctx.fillText(String(it.v),w/2,yp+10);ctx.fillStyle="rgba(232,224,208,.35)";ctx.font="18px sans-serif";ctx.fillText(it.l,w/2,yp+50);yp+=100;});
-  const li=interp[r.lp];if(li){yp+=30;ctx.fillStyle="#c8a96a";ctx.font="bold 26px serif";ctx.fillText(`— ${he?li.t:li.te} —`,w/2,yp);}
-  ctx.fillStyle="rgba(200,169,106,.15)";ctx.font="16px serif";ctx.fillText("✦  ✦  ✦",w/2,h-80);
-  const link=document.createElement("a");link.download=`oracle-${name}.png`;link.href=c.toDataURL("image/png");link.click();
+  let yp=360;nums.forEach((it,i)=>{const col=i%2,row=Math.floor(i/2);const cx=col===0?w*0.32:w*0.68;const cy=yp+row*150;ctx.beginPath();ctx.arc(cx,cy,40,0,Math.PI*2);ctx.fillStyle="rgba(200,169,106,.06)";ctx.fill();ctx.strokeStyle="rgba(200,169,106,.25)";ctx.lineWidth=2;ctx.stroke();ctx.fillStyle="#c8a96a";ctx.font="bold 34px serif";ctx.fillText(String(it.v),cx,cy+12);ctx.fillStyle="rgba(232,224,208,.4)";ctx.font="19px sans-serif";ctx.fillText(it.l,cx,cy+68);});
+  let y=yp+3*150+10;
+  const lpInfo=r.lp>9?MASTER[r.lp]:interp[r.lp];
+  if(lpInfo){ctx.fillStyle="#c8a96a";ctx.font="bold 34px serif";ctx.fillText(`— ${he?lpInfo.t:lpInfo.te} —`,w/2,y);y+=20;}
+  const wrap=(text,maxw,font)=>{ctx.font=font;const words=String(text||"").split(" ");const lines=[];let ln="";for(const wd of words){const test=ln?ln+" "+wd:wd;if(ctx.measureText(test).width>maxw&&ln){lines.push(ln);ln=wd;}else ln=test;}if(ln)lines.push(ln);return lines;};
+  const base=r.lp>9?[...String(r.lp)].reduce((a,d)=>a+ +d,0):r.lp;
+  const narr=he?(interp[base]?.narrative):(interp[base]?.narrativeE);
+  ctx.fillStyle="rgba(232,224,208,.7)";y+=46;wrap(narr,w-220,"italic 26px serif").slice(0,4).forEach(l=>{ctx.fillText(l,w/2,y);y+=40;});
+  // footer / contact CTA
+  ctx.fillStyle="rgba(200,169,106,.9)";ctx.font="26px serif";ctx.fillText(he?"לקריאה אישית מלאה — שני כהן אזולאי":"For a full personal reading — Shani Cohen Azulai",w/2,h-150);
+  ctx.fillStyle="rgba(232,224,208,.5)";ctx.font="22px sans-serif";ctx.fillText("wa.me/"+WHATSAPP_PHONE,w/2,h-110);
+  ctx.fillStyle="rgba(200,169,106,.22)";ctx.font="18px serif";ctx.fillText("✦  ✦  ✦",w/2,h-66);
+  try{const pdf=new jsPDF({orientation:"portrait",unit:"px",format:[w,h]});pdf.addImage(c.toDataURL("image/jpeg",0.92),"JPEG",0,0,w,h);pdf.save(`numerology-${(name||"map").trim()}.pdf`);}
+  catch(e){const link=document.createElement("a");link.download=`numerology-${name||"map"}.png`;link.href=c.toDataURL("image/png");link.click();}
 }
 
 // ═══════════════════ MASTER NUMBERS ═══════════════════
@@ -2233,7 +2246,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           </div>
         </SR>)}
         {chapters[5]&&(<SR delay={250}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
-          <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D);}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמור דו״ח":"Save Report"}</span></button>
+          <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D);}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמור דו״ח PDF":"Save PDF"}</span></button>
           <button className="ghost" onClick={goHome}>{he?"קריאה חדשה":"New Reading"}</button>
         </div></SR>)}
       </div>)}

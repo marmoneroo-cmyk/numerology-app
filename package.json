@@ -9,6 +9,7 @@
     "start": "serve dist -s -l ${PORT:-3000}"
   },
   "dependencies": {
+    "jspdf": "^4.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "serve": "^14.2.0"
