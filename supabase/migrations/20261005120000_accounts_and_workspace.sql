@@ -19,7 +19,7 @@ grant usage on schema private to authenticated, service_role;
  */
 create function private.clean_text(p_text text, p_max int) returns text
 language sql immutable set search_path = '' as $$
-  select left(trim(regexp_replace(coalesce(p_text, ''), '[\u0001-\u001F\u007F-\u009F​-‏‪-‮⁠-⁩﻿]', '', 'g')), p_max)
+  select left(trim(regexp_replace(coalesce(p_text, ''), '[\u0001-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]', '', 'g')), p_max)
 $$;
 
 -- ───────────────────────── accounts ─────────────────────────
