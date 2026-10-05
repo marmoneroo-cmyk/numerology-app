@@ -6,9 +6,16 @@
  * All the rules live here, none in the backends: validation, ids, timestamps,
  * search, cascading deletes, and what may be edited. A saved reading's
  * snapshot (input, result, engineVersion, computedFor) can never be edited.
+ * Every change runs under the write lock, and every change that touches more
+ * than one record goes through backend.batch, so it happens completely or not
+ * at all and never interleaves with another change.
  */
 import { validateClient, validateReading, validateAttachment, ValidationError } from "./validation.js";
-import { toBytes, bytesToBase64, base64ToBytes } from "./bytes.js";
+import { toBytes } from "./bytes.js";
+import { backupOf } from "./backup.js";
+import { writeLock } from "./lock.js";
+
+export { BACKUP_FORMAT } from "./backup.js";
 
 export class NotFoundError extends Error {
   constructor(kind, id) {
@@ -19,10 +26,10 @@ export class NotFoundError extends Error {
   }
 }
 
-export const BACKUP_FORMAT = "numerology-workspace-backup";
-const BACKUP_VERSION = 1;
 /** The only fields of a saved reading that may change after it is saved. */
 const READING_EDITABLE = ["title", "notes", "followUp"];
+/** What remains of a person in other clients' readings once their own file is deleted. */
+export const WIPED_PERSON = Object.freeze({ name: "", birthDate: null, clientId: null });
 
 const pad2 = (n) => String(n).padStart(2, "0");
 /** Local calendar date as YYYY-MM-DD. */
@@ -30,7 +37,20 @@ export const toYmd = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2
 const newestFirst = (key) => (a, b) => (a[key] < b[key] ? 1 : a[key] > b[key] ? -1 : 0);
 const lower = (s) => String(s || "").toLowerCase();
 const digitsOf = (s) => String(s || "").replace(/\D/g, "");
-const isTimestamp = (s) => typeof s === "string" && !Number.isNaN(Date.parse(s));
+
+/** When the client was last touched: edited, or a reading saved. The list sorts by it. */
+export const lastActive = (c) => (c.lastActivityAt && c.lastActivityAt > c.updatedAt ? c.lastActivityAt : c.updatedAt);
+const byActivity = (a, b) => (lastActive(a) < lastActive(b) ? 1 : lastActive(a) > lastActive(b) ? -1 : 0);
+
+/** RFC 4122 v4 id. crypto.randomUUID needs a secure context; getRandomValues does not. */
+export function randomId() {
+  if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
 
 /** Name, birth name, email or tag contains the query; or the phone holds its digits. */
 function matches(client, query) {
@@ -43,10 +63,13 @@ function matches(client, query) {
 
 /**
  * @param {object} backend memoryBackend() or idbBackend()
- * @param {{now?: () => Date, newId?: () => string}} [opts] injectable clock and ids
+ * @param {{now?: () => Date, newId?: () => string, lock?: (fn: () => Promise<any>) => Promise<any>}} [opts]
+ *   injectable clock, ids and write lock
  */
-export function createStore(backend, { now = () => new Date(), newId = () => crypto.randomUUID() } = {}) {
+export function createStore(backend, { now = () => new Date(), newId = randomId, lock = writeLock } = {}) {
   const stamp = () => now().toISOString();
+  /** `fn` as a change: run while holding the write lock. */
+  const change = (fn) => (...args) => lock(() => fn(...args));
 
   async function getClient(id) {
     const c = await backend.get("clients", id);
@@ -65,35 +88,41 @@ export function createStore(backend, { now = () => new Date(), newId = () => cry
 
   const clients = {
     async list({ search = "", includeArchived = false } = {}) {
-      return (await backend.all("clients"))
-        .filter((c) => (includeArchived || !c.archived) && matches(c, search))
-        .sort(newestFirst("updatedAt"));
+      return (await backend.all("clients")).filter((c) => (includeArchived || !c.archived) && matches(c, search)).sort(byActivity);
     },
     get: getClient,
-    async create(input) {
+    create: change(async (input) => {
       const value = validateClient(input, { today: now() });
       const t = stamp();
-      const client = { id: newId(), ...value, createdAt: t, updatedAt: t };
+      const client = { id: newId(), ...value, createdAt: t, updatedAt: t, lastActivityAt: t };
       await backend.put("clients", client);
       return client;
-    },
-    async update(id, patch) {
+    }),
+    update: change(async (id, patch) => {
       const current = await getClient(id);
       const value = validateClient({ ...current, ...patch }, { today: now() });
       const client = { ...current, ...value, updatedAt: stamp() };
       await backend.put("clients", client);
       return client;
-    },
-    /** Deletes the client with every reading, attachment and file byte of theirs. */
-    async remove(id) {
+    }),
+    /**
+     * Deletes the client with every reading, file and file byte of theirs, and
+     * wipes their name and date from other clients' readings that name them.
+     */
+    remove: change(async (id) => {
       await getClient(id);
-      for (const r of await readingsOf(id)) await backend.delete("readings", r.id);
-      for (const a of await attachmentsOf(id)) {
-        await backend.deleteBlob(a.id);
-        await backend.delete("attachments", a.id);
+      const t = stamp();
+      const ops = [];
+      for (const r of await backend.all("readings")) {
+        if (r.clientId === id) ops.push({ type: "delete", store: "readings", id: r.id });
+        else if (r.input?.other?.clientId === id) {
+          ops.push({ type: "put", store: "readings", value: { ...r, input: { ...r.input, other: { ...WIPED_PERSON } }, updatedAt: t } });
+        }
       }
-      await backend.delete("clients", id);
-    },
+      for (const a of await attachmentsOf(id)) ops.push({ type: "delete", store: "attachments", id: a.id }, { type: "deleteBlob", id: a.id });
+      ops.push({ type: "delete", store: "clients", id });
+      await backend.batch(ops);
+    }),
   };
 
   const readings = {
@@ -102,55 +131,62 @@ export function createStore(backend, { now = () => new Date(), newId = () => cry
       return (await backend.all("readings")).sort(newestFirst("createdAt")).slice(0, limit);
     },
     get: getReading,
-    async create(input) {
+    create: change(async (input) => {
       const value = validateReading(input, { today: now() });
       const client = await getClient(value.clientId);
       const t = stamp();
       const reading = { id: newId(), ...value, createdAt: t, updatedAt: t };
-      await backend.put("readings", reading);
-      await backend.put("clients", { ...client, updatedAt: t }); // the client moves to the top of the list
+      // the client moves to the top of the list; their own edit time is untouched
+      await backend.batch([
+        { type: "put", store: "readings", value: reading },
+        { type: "put", store: "clients", value: { ...client, lastActivityAt: t } },
+      ]);
       return reading;
-    },
-    async update(id, patch) {
+    }),
+    update: change(async (id, patch) => {
       const current = await getReading(id);
       const editable = Object.fromEntries(READING_EDITABLE.filter((k) => k in patch).map((k) => [k, patch[k]]));
       const value = validateReading({ ...current, ...editable }, { today: now() });
       const reading = { ...current, ...value, updatedAt: stamp() };
       await backend.put("readings", reading);
       return reading;
-    },
+    }),
     /** Deletes the reading; files attached to it stay with the client, unlinked. */
-    async remove(id) {
+    remove: change(async (id) => {
       await getReading(id);
-      for (const a of await backend.all("attachments")) {
-        if (a.readingId === id) await backend.put("attachments", { ...a, readingId: null });
-      }
-      await backend.delete("readings", id);
-    },
+      const ops = (await backend.all("attachments"))
+        .filter((a) => a.readingId === id)
+        .map((a) => ({ type: "put", store: "attachments", value: { ...a, readingId: null } }));
+      ops.push({ type: "delete", store: "readings", id });
+      await backend.batch(ops);
+    }),
   };
 
   const attachments = {
     listByClient: attachmentsOf,
-    async add({ clientId, readingId = null, name, type = "", bytes }) {
+    add: change(async ({ clientId, readingId = null, name, type = "", bytes }) => {
       const data = toBytes(bytes);
       const meta = validateAttachment({ clientId, readingId, name, type, size: data.byteLength });
       await getClient(meta.clientId);
-      if (meta.readingId) await getReading(meta.readingId);
+      if (meta.readingId && (await getReading(meta.readingId)).clientId !== meta.clientId) {
+        throw new ValidationError([{ field: "readingId", code: "otherClient" }]);
+      }
       const record = { id: newId(), ...meta, createdAt: stamp() };
-      await backend.putBlob(record.id, { type: meta.type, bytes: new Uint8Array(data) });
-      await backend.put("attachments", record);
+      await backend.batch([
+        { type: "putBlob", id: record.id, blob: { type: meta.type, bytes: new Uint8Array(data) } },
+        { type: "put", store: "attachments", value: record },
+      ]);
       return record;
-    },
+    }),
     async getBlob(id) {
       const blob = await backend.getBlob(id);
       if (!blob) throw new NotFoundError("attachment", id);
       return blob;
     },
-    async remove(id) {
+    remove: change(async (id) => {
       if (!(await backend.get("attachments", id))) throw new NotFoundError("attachment", id);
-      await backend.deleteBlob(id);
-      await backend.delete("attachments", id);
-    },
+      await backend.batch([{ type: "delete", store: "attachments", id }, { type: "deleteBlob", id }]);
+    }),
   };
 
   /** Today's work: follow-ups due by `day`, and birthdays in `day`'s month. */
@@ -172,111 +208,14 @@ export function createStore(backend, { now = () => new Date(), newId = () => cry
     return { clients: activeClients.length, readings: allReadings.length, followUps, birthdays };
   }
 
-  /** Everything, as one JSON-safe object; attachment bytes are inlined as base64. */
-  async function exportAll() {
-    const files = [];
-    for (const a of await backend.all("attachments")) {
-      const blob = await backend.getBlob(a.id);
-      files.push({ ...a, data: blob ? bytesToBase64(blob.bytes) : "" });
-    }
-    return {
-      format: BACKUP_FORMAT,
-      version: BACKUP_VERSION,
-      exportedAt: stamp(),
-      clients: await backend.all("clients"),
-      readings: await backend.all("readings"),
-      attachments: files,
-    };
-  }
-
-  /** Validates the whole backup first; nothing is written unless all of it is valid. */
-  async function parseBackup(backup, mode) {
-    const errors = [];
-    const fail = (field, code) => errors.push({ field, code });
-    const check = (prefix, fn) => {
-      try {
-        return fn();
-      } catch (e) {
-        if (!(e instanceof ValidationError)) throw e;
-        e.errors.forEach((x) => fail(`${prefix}.${x.field}`, x.code));
-        return null;
-      }
-    };
-    const list = (x) => (Array.isArray(x) ? x : null);
-    if (!backup || backup.format !== BACKUP_FORMAT || backup.version !== BACKUP_VERSION) {
-      throw new ValidationError([{ field: "backup", code: "format" }]);
-    }
-    const [inClients, inReadings, inFiles] = [list(backup.clients), list(backup.readings), list(backup.attachments)];
-    if (!inClients || !inReadings || !inFiles) throw new ValidationError([{ field: "backup", code: "format" }]);
-    const stamped = (r, prefix, withUpdated = true) => {
-      const ok = r && typeof r.id === "string" && r.id && isTimestamp(r.createdAt) && (!withUpdated || isTimestamp(r.updatedAt));
-      if (!ok) fail(prefix, "invalid");
-      return ok;
-    };
-
-    const clientIds = new Set(mode === "merge" ? (await backend.all("clients")).map((c) => c.id) : []);
-    const readingIds = new Set(mode === "merge" ? (await backend.all("readings")).map((r) => r.id) : []);
-    const clientsOut = [];
-    inClients.forEach((r, i) => {
-      if (!stamped(r, `clients[${i}]`)) return;
-      const value = check(`clients[${i}]`, () => validateClient(r, { today: now() }));
-      if (value) {
-        clientsOut.push({ id: r.id, ...value, createdAt: r.createdAt, updatedAt: r.updatedAt });
-        clientIds.add(r.id);
-      }
-    });
-    const readingsOut = [];
-    inReadings.forEach((r, i) => {
-      if (!stamped(r, `readings[${i}]`)) return;
-      const value = check(`readings[${i}]`, () => validateReading(r, { today: now() }));
-      if (!value) return;
-      if (!clientIds.has(value.clientId)) return fail(`readings[${i}].clientId`, "unknown");
-      readingsOut.push({ id: r.id, ...value, createdAt: r.createdAt, updatedAt: r.updatedAt });
-      readingIds.add(r.id);
-    });
-    const filesOut = [];
-    inFiles.forEach((r, i) => {
-      if (!stamped(r, `attachments[${i}]`, false)) return;
-      let bytes;
-      try {
-        bytes = base64ToBytes(r.data);
-      } catch {
-        return fail(`attachments[${i}].data`, "invalid");
-      }
-      const meta = check(`attachments[${i}]`, () => validateAttachment({ ...r, size: bytes.byteLength }));
-      if (!meta) return;
-      if (!clientIds.has(meta.clientId)) return fail(`attachments[${i}].clientId`, "unknown");
-      if (meta.readingId && !readingIds.has(meta.readingId)) return fail(`attachments[${i}].readingId`, "unknown");
-      filesOut.push({ record: { id: r.id, ...meta, createdAt: r.createdAt }, bytes });
-    });
-    if (errors.length) throw new ValidationError(errors);
-    return { clientsOut, readingsOut, filesOut };
-  }
-
-  /**
-   * @param {object} backup what exportAll produced (after a JSON round trip)
-   * @param {{mode?: "merge"|"replace"}} [opts] merge keeps whichever copy was updated last
-   * @returns {Promise<{clients: number, readings: number, attachments: number}>} records written
-   */
-  async function importAll(backup, { mode = "merge" } = {}) {
-    if (mode !== "merge" && mode !== "replace") throw new ValidationError([{ field: "mode", code: "invalid" }]);
-    const { clientsOut, readingsOut, filesOut } = await parseBackup(backup, mode);
-    if (mode === "replace") await backend.clear();
-    const counts = { clients: 0, readings: 0, attachments: 0 };
-    const newer = async (name, rec) => {
-      const existing = mode === "merge" ? await backend.get(name, rec.id) : undefined;
-      return !existing || existing.updatedAt < rec.updatedAt;
-    };
-    for (const c of clientsOut) if (await newer("clients", c)) { await backend.put("clients", c); counts.clients++; }
-    for (const r of readingsOut) if (await newer("readings", r)) { await backend.put("readings", r); counts.readings++; }
-    for (const { record, bytes } of filesOut) {
-      if (mode === "merge" && (await backend.get("attachments", record.id))) continue;
-      await backend.putBlob(record.id, { type: record.type, bytes });
-      await backend.put("attachments", record);
-      counts.attachments++;
-    }
-    return counts;
-  }
-
-  return { clients, readings, attachments, summary, exportAll, importAll, persistent: backend.persistent !== false };
+  const backup = backupOf(backend, { now });
+  return {
+    clients,
+    readings,
+    attachments,
+    summary,
+    exportAll: backup.exportAll,
+    importAll: change(backup.importAll),
+    persistent: backend.persistent !== false,
+  };
 }

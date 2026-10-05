@@ -2,8 +2,22 @@ import { describe, it, expect } from "vitest";
 import {
   validateClient, validateReading, validateAttachment, isIsoDate, ValidationError, LIMITS, READING_TYPES,
 } from "../validation.js";
+import { fullCalc, matchReading, parentChildReading, yearCycle, getRecommendations } from "../../engine/index.js";
 
 const TODAY = new Date(2026, 9, 5, 12);
+
+// what the engine really produces, per reading type
+const SHANI = { d: 15, m: 8, y: 1990, name: "שני כהן" };
+const AVIR = { d: 3, m: 11, y: 1987, name: "אביר" };
+const asPerson = (p) => ({ name: p.name, birthDate: `${p.y}-${String(p.m).padStart(2, "0")}-${String(p.d).padStart(2, "0")}`, clientId: null });
+const MAP = fullCalc(15, 8, 1990, SHANI.name, false, TODAY);
+const SNAP = {
+  map: { input: { name: SHANI.name, birthDate: "1990-08-15", add: false }, result: { ...MAP, insights: { he: getRecommendations(MAP, "he"), en: getRecommendations(MAP, "en") } } },
+  match: { input: { person: asPerson(SHANI), other: asPerson(AVIR), matchType: "love" }, result: matchReading(SHANI, AVIR, "love") },
+  parentChild: { input: { person: asPerson(SHANI), other: asPerson(AVIR), role: "parent" }, result: parentChildReading(SHANI, AVIR) },
+  yearCycle: { input: { birthDate: "1990-08-15", add: true }, result: { proj: yearCycle(15, 8, true, TODAY) } },
+};
+const reading = (type, over = {}) => ({ clientId: "c1", type, ...SNAP[type], engineVersion: "1.0.0", computedFor: TODAY.toISOString(), ...over });
 const codes = (fn) => {
   try {
     fn();
@@ -70,28 +84,59 @@ describe("validateClient", () => {
 });
 
 describe("validateReading", () => {
-  const ok = {
-    clientId: "c1", type: "map", input: { name: "שני", birthDate: "1990-08-15", add: false }, result: { lp: 33 },
-    engineVersion: "1.0.0", computedFor: TODAY.toISOString(),
-  };
-
-  it("accepts every known type and fills defaults", () => {
-    for (const type of READING_TYPES) expect(validateReading({ ...ok, type }).type).toBe(type);
-    expect(validateReading(ok)).toEqual({ ...ok, title: "", notes: "", followUp: null });
+  it("keeps exactly what the engine produces, for every type, and fills defaults", () => {
+    for (const type of READING_TYPES) {
+      const v = validateReading(reading(type));
+      expect(v.input).toEqual(SNAP[type].input);
+      expect(v.result).toEqual(SNAP[type].result);
+    }
+    expect(validateReading(reading("map"))).toMatchObject({ title: "", notes: "", followUp: null, engineVersion: "1.0.0" });
   });
 
-  it("rejects unknown types, missing references and non-object payloads", () => {
-    expect(codes(() => validateReading({ ...ok, type: "tarot" }))).toEqual(["type.invalid"]);
-    expect(codes(() => validateReading({ ...ok, clientId: "" }))).toEqual(["clientId.required"]);
-    expect(codes(() => validateReading({ ...ok, input: "x", result: null }))).toEqual(["input.invalid", "result.invalid"]);
-    expect(codes(() => validateReading({ ...ok, engineVersion: "" }))).toEqual(["engineVersion.required"]);
-    expect(codes(() => validateReading({ ...ok, computedFor: "yesterday" }))).toEqual(["computedFor.invalid"]);
+  it("rejects unknown types, missing references and bad metadata", () => {
+    expect(codes(() => validateReading(reading("map", { type: "tarot" })))).toEqual(["type.invalid"]);
+    // names every object inherits are not reading types either
+    for (const type of ["constructor", "__proto__", "toString", "hasOwnProperty"]) {
+      expect(codes(() => validateReading(reading("map", { type })))).toEqual(["type.invalid"]);
+    }
+    expect(codes(() => validateReading(reading("map", { clientId: "" })))).toEqual(["clientId.required"]);
+    expect(codes(() => validateReading(reading("map", { engineVersion: "" })))).toEqual(["engineVersion.required"]);
+    expect(codes(() => validateReading(reading("map", { computedFor: "yesterday" })))).toEqual(["computedFor.invalid"]);
+  });
+
+  it("rejects snapshots that do not have their type's shape", () => {
+    expect(codes(() => validateReading(reading("map", { result: { lp: 33 } })))).toEqual(["result.invalid"]);
+    expect(codes(() => validateReading(reading("yearCycle", { result: {} })))).toEqual(["result.invalid"]);
+    expect(codes(() => validateReading(reading("map", { input: "x", result: null })))).toEqual(["input.invalid", "result.invalid"]);
+    expect(codes(() => validateReading(reading("map", { input: { name: "שני" } })))).toEqual(["input.invalid"]);
+    expect(codes(() => validateReading(reading("match", { input: { ...SNAP.match.input, matchType: "enemies" } })))).toEqual(["input.invalid"]);
+    expect(codes(() => validateReading(reading("parentChild", { input: { ...SNAP.parentChild.input, role: "boss" } })))).toEqual(["input.invalid"]);
+    expect(codes(() => validateReading(reading("match", { result: { ...SNAP.match.result, score: "99" } })))).toEqual(["result.invalid"]);
+    expect(codes(() => validateReading(reading("map", { result: { ...MAP, pk: [1, 2, 3] } })))).toEqual(["result.invalid"]);
+  });
+
+  it("rebuilds snapshots from known fields, dropping anything else", () => {
+    const hostile = JSON.parse(JSON.stringify(reading("yearCycle")));
+    hostile.input = JSON.parse('{"birthDate":"1990-08-15","add":true,"__proto__":{"polluted":1},"extra":"x"}');
+    hostile.result.proj[0].script = "<img onerror=alert(1)>";
+    const v = validateReading(hostile);
+    expect(v.input).toEqual({ birthDate: "1990-08-15", add: true });
+    expect(Object.getPrototypeOf(v.input)).toBe(Object.prototype);
+    expect(v.result.proj[0]).toEqual({ year: SNAP.yearCycle.result.proj[0].year, py: SNAP.yearCycle.result.proj[0].py, isCurrent: false });
+    expect({}.polluted).toBeUndefined();
+  });
+
+  it("accepts a match whose other person was deleted and wiped", () => {
+    const wiped = { name: "", birthDate: null, clientId: null };
+    expect(validateReading(reading("match", { input: { ...SNAP.match.input, other: wiped } })).input.other).toEqual(wiped);
+    // but the client's own side must keep a real date
+    expect(codes(() => validateReading(reading("match", { input: { ...SNAP.match.input, person: wiped } })))).toEqual(["input.invalid"]);
   });
 
   it("follow-up is a real date or nothing", () => {
-    expect(validateReading({ ...ok, followUp: "" }).followUp).toBeNull();
-    expect(validateReading({ ...ok, followUp: "2026-11-01" }).followUp).toBe("2026-11-01");
-    expect(codes(() => validateReading({ ...ok, followUp: "2026-13-01" }))).toEqual(["followUp.invalid"]);
+    expect(validateReading(reading("map", { followUp: "" })).followUp).toBeNull();
+    expect(validateReading(reading("map", { followUp: "2026-11-01" })).followUp).toBe("2026-11-01");
+    expect(codes(() => validateReading(reading("map", { followUp: "2026-13-01" })))).toEqual(["followUp.invalid"]);
   });
 });
 
@@ -101,6 +146,8 @@ describe("validateAttachment", () => {
       clientId: "c1", readingId: null, name: "מפה.pdf", type: "application/pdf", size: 1200,
     });
     expect(validateAttachment({ clientId: "c1", name: "a/b/c.png", type: "", size: 1 }).name).toBe("c.png");
+    expect(validateAttachment({ clientId: "c1", name: "invoice‮gpj.exe", type: "", size: 1 }).name).toBe("invoicegpj.exe");
+    expect(validateAttachment({ clientId: "c1", name: "a​b\u0007.txt", type: "", size: 1 }).name).toBe("ab.txt");
     expect(codes(() => validateAttachment({ clientId: "c1", name: "big.mov", type: "video/quicktime", size: LIMITS.attachmentBytes + 1 }))).toEqual(["size.tooLarge"]);
     expect(codes(() => validateAttachment({ clientId: "c1", name: "  ", type: "text/plain", size: 3 }))).toEqual(["name.required"]);
   });

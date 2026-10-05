@@ -5,10 +5,11 @@
  */
 import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach } from "vitest";
-import { createStore, NotFoundError } from "../store.js";
+import { createStore, NotFoundError, randomId, WIPED_PERSON } from "../store.js";
 import { memoryBackend } from "../memoryBackend.js";
 import { idbBackend } from "../idbBackend.js";
 import { ValidationError, LIMITS } from "../validation.js";
+import { ENGINE_VERSION, fullCalc, matchReading, yearCycle } from "../../engine/index.js";
 
 let dbCounter = 0;
 const BACKENDS = [
@@ -16,22 +17,60 @@ const BACKENDS = [
   ["IndexedDB", async () => idbBackend(`contract-${++dbCounter}`)],
 ];
 
-const bytes = (...xs) => new Uint8Array(xs);
+// real engine snapshots, as the workspace saves them
+const START = Date.UTC(2026, 9, 5, 9, 0, 0);
+const COMPUTED = new Date(START);
+const SHANI = { d: 15, m: 8, y: 1990, name: "שני כהן" };
+const AVIR = { d: 3, m: 11, y: 1987, name: "אביר" };
+const MAP_RESULT = fullCalc(SHANI.d, SHANI.m, SHANI.y, SHANI.name, false, COMPUTED);
+const meta = { engineVersion: ENGINE_VERSION, computedFor: COMPUTED.toISOString() };
 const mapReading = (clientId, over = {}) => ({
-  clientId, type: "map", input: { name: "שני כהן", birthDate: "1990-08-15", add: false },
-  result: { lp: 33, nv: 4, pk: [5, 7, 3, 9] }, engineVersion: "1.0.0", computedFor: "2026-10-05T09:00:00.000Z", ...over,
+  clientId, type: "map", input: { name: SHANI.name, birthDate: "1990-08-15", add: false }, result: MAP_RESULT, ...meta, ...over,
+});
+const yearReading = (clientId) => ({
+  clientId, type: "yearCycle", input: { birthDate: "1990-08-15", add: false }, result: { proj: yearCycle(SHANI.d, SHANI.m, false, COMPUTED) }, ...meta,
+});
+/** A love match saved in `clientId`'s file, with Avir as the other person (a client of their own when otherClientId is given). */
+const loveReading = (clientId, otherClientId = null) => ({
+  clientId, type: "match",
+  input: { person: { name: SHANI.name, birthDate: "1990-08-15" }, other: { name: AVIR.name, birthDate: "1987-11-03", clientId: otherClientId }, matchType: "love" },
+  result: matchReading(SHANI, AVIR, "love"), ...meta,
+});
+
+const bytes = (...xs) => new Uint8Array(xs);
+const json = (x) => JSON.parse(JSON.stringify(x)); // what a round-trip through a file does
+const DAY = 24 * 60 * 60 * 1000;
+
+describe("randomId", () => {
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+  it("makes v4 UUIDs, also where crypto.randomUUID is missing (a page served over plain http)", () => {
+    expect(randomId()).toMatch(UUID);
+    Object.defineProperty(crypto, "randomUUID", { value: undefined, configurable: true });
+    try {
+      const ids = Array.from({ length: 50 }, randomId);
+      ids.forEach((id) => expect(id).toMatch(UUID));
+      expect(new Set(ids).size).toBe(50);
+    } finally {
+      delete crypto.randomUUID;
+    }
+    expect(randomId()).toMatch(UUID);
+  });
 });
 
 describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
   let store, t;
-  const tick = (ms = 60000) => { t += ms; };
-  const makeStore = async () => {
+  const tick = (ms = 60000) => {
+    t += ms;
+  };
+  /** A store over `backend` (a fresh one by default) on the test clock, with readable ids. */
+  const makeStore = async (backend, prefix = "id") => {
     let n = 0;
-    return createStore(await makeBackend(), { now: () => new Date(t), newId: () => `id-${++n}` });
+    return createStore(backend ?? (await makeBackend()), { now: () => new Date(t), newId: () => `${prefix}-${++n}` });
   };
 
   beforeEach(async () => {
-    t = Date.UTC(2026, 9, 5, 9, 0, 0);
+    t = START;
     store = await makeStore();
   });
 
@@ -41,12 +80,12 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
       expect(c).toEqual({
         id: "id-1", fullName: "שני כהן", birthName: "", birthDate: "1990-08-15", phone: "", email: "",
         tags: ["vip", "חלה"], notes: "", consent: false, archived: false,
-        createdAt: "2026-10-05T09:00:00.000Z", updatedAt: "2026-10-05T09:00:00.000Z",
+        createdAt: "2026-10-05T09:00:00.000Z", updatedAt: "2026-10-05T09:00:00.000Z", lastActivityAt: "2026-10-05T09:00:00.000Z",
       });
       expect(await store.clients.get("id-1")).toEqual(c);
     });
 
-    it("lists the most recently updated first, hiding archived ones unless asked", async () => {
+    it("lists the most recently active first, hiding archived ones unless asked", async () => {
       const a = await store.clients.create({ fullName: "אורית" });
       tick();
       const b = await store.clients.create({ fullName: "בתיה" });
@@ -87,6 +126,7 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
     it("throws NotFoundError for an unknown client", async () => {
       await expect(store.clients.get("nope")).rejects.toBeInstanceOf(NotFoundError);
       await expect(store.clients.update("nope", { fullName: "x" })).rejects.toBeInstanceOf(NotFoundError);
+      await expect(store.clients.remove("nope")).rejects.toBeInstanceOf(NotFoundError);
     });
 
     it("hands out copies: mutating a result does not touch the store", async () => {
@@ -105,26 +145,32 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
       client = await store.clients.create({ fullName: "שני כהן", birthDate: "1990-08-15" });
     });
 
-    it("stores the snapshot exactly and lists newest first", async () => {
+    it("stores the engine's snapshot exactly and lists newest first", async () => {
       tick();
       const r1 = await store.readings.create(mapReading(client.id));
       tick();
-      const r2 = await store.readings.create(mapReading(client.id, { type: "yearCycle", result: { proj: [{ year: 2026, py: 6 }] } }));
-      expect(r1).toMatchObject({ clientId: client.id, type: "map", result: { lp: 33, nv: 4, pk: [5, 7, 3, 9] }, engineVersion: "1.0.0", notes: "", followUp: null });
+      const r2 = await store.readings.create(yearReading(client.id));
+      expect(r1).toMatchObject({ clientId: client.id, type: "map", engineVersion: ENGINE_VERSION, notes: "", followUp: null });
+      expect(r1.result).toEqual(MAP_RESULT);
+      expect(r2.result).toEqual(yearReading(client.id).result);
       expect((await store.readings.listByClient(client.id)).map((r) => r.id)).toEqual([r2.id, r1.id]);
       expect(await store.readings.get(r1.id)).toEqual(r1);
     });
 
-    it("needs an existing client", async () => {
+    it("needs an existing client and a snapshot of the right shape", async () => {
       await expect(store.readings.create(mapReading("ghost"))).rejects.toBeInstanceOf(NotFoundError);
+      await expect(store.readings.create(mapReading(client.id, { result: { lp: 33 } }))).rejects.toBeInstanceOf(ValidationError);
+      expect(await store.readings.listByClient(client.id)).toEqual([]);
     });
 
-    it("brings the client to the top of the list when a reading is saved", async () => {
+    it("saving a reading moves the client to the top without changing their edit time", async () => {
       tick();
       const other = await store.clients.create({ fullName: "אחרת" });
       tick();
       await store.readings.create(mapReading(client.id));
-      expect((await store.clients.list()).map((c) => c.id)).toEqual([client.id, other.id]);
+      const list = await store.clients.list();
+      expect(list.map((c) => c.id)).toEqual([client.id, other.id]);
+      expect(list[0]).toMatchObject({ updatedAt: client.updatedAt, lastActivityAt: "2026-10-05T09:02:00.000Z" });
     });
 
     it("lets you edit the title, notes and follow-up but never the snapshot", async () => {
@@ -134,6 +180,7 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
       expect(u).toMatchObject({ notes: "דיברנו על השנה האישית", followUp: "2026-11-01", title: "פגישה ראשונה", type: "map", result: r.result });
       expect(u.updatedAt).not.toBe(r.updatedAt);
       await expect(store.readings.update(r.id, { followUp: "2026-02-30" })).rejects.toBeInstanceOf(ValidationError);
+      expect(await store.readings.update(r.id, { followUp: null })).toMatchObject({ followUp: null, notes: "דיברנו על השנה האישית" });
     });
 
     it("removes a reading and keeps its attachments, unlinked", async () => {
@@ -142,6 +189,7 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
       await store.readings.remove(r.id);
       await expect(store.readings.get(r.id)).rejects.toBeInstanceOf(NotFoundError);
       expect(await store.attachments.listByClient(client.id)).toEqual([{ ...a, readingId: null }]);
+      await expect(store.readings.remove(r.id)).rejects.toBeInstanceOf(NotFoundError);
     });
 
     it("lists recent readings across clients", async () => {
@@ -177,9 +225,13 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
         .rejects.toBeInstanceOf(ValidationError);
     });
 
-    it("needs an existing client and, when given, an existing reading", async () => {
+    it("needs an existing client and, when given, an existing reading of that same client", async () => {
       await expect(store.attachments.add({ clientId: "ghost", name: "a", type: "", bytes: bytes(1) })).rejects.toBeInstanceOf(NotFoundError);
       await expect(store.attachments.add({ clientId: client.id, readingId: "ghost", name: "a", type: "", bytes: bytes(1) })).rejects.toBeInstanceOf(NotFoundError);
+      const other = await store.clients.create({ fullName: "אחרת", birthDate: "1985-01-01" });
+      const theirs = await store.readings.create(mapReading(other.id));
+      await expect(store.attachments.add({ clientId: client.id, readingId: theirs.id, name: "a", type: "", bytes: bytes(1) })).rejects.toBeInstanceOf(ValidationError);
+      expect(await store.attachments.listByClient(client.id)).toEqual([]);
     });
 
     it("removes the file and its bytes", async () => {
@@ -187,22 +239,42 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
       await store.attachments.remove(a.id);
       expect(await store.attachments.listByClient(client.id)).toEqual([]);
       await expect(store.attachments.getBlob(a.id)).rejects.toBeInstanceOf(NotFoundError);
+      await expect(store.attachments.remove(a.id)).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 
-  it("removing a client removes its readings, attachments and bytes, and nobody else's", async () => {
-    const a = await store.clients.create({ fullName: "א", birthDate: "1990-01-01" });
-    const b = await store.clients.create({ fullName: "ב", birthDate: "1991-01-01" });
-    const ra = await store.readings.create(mapReading(a.id));
-    const rb = await store.readings.create(mapReading(b.id));
-    const fa = await store.attachments.add({ clientId: a.id, readingId: ra.id, name: "a", type: "", bytes: bytes(1) });
-    const fb = await store.attachments.add({ clientId: b.id, name: "b", type: "", bytes: bytes(2) });
-    await store.clients.remove(a.id);
-    await expect(store.clients.get(a.id)).rejects.toBeInstanceOf(NotFoundError);
-    await expect(store.readings.get(ra.id)).rejects.toBeInstanceOf(NotFoundError);
-    await expect(store.attachments.getBlob(fa.id)).rejects.toBeInstanceOf(NotFoundError);
-    expect(await store.readings.get(rb.id)).toEqual(rb);
-    expect([...(await store.attachments.getBlob(fb.id)).bytes]).toEqual([2]);
+  describe("removing a client", () => {
+    it("removes its readings, attachments and bytes, and nobody else's", async () => {
+      const a = await store.clients.create({ fullName: "א", birthDate: "1990-01-01" });
+      const b = await store.clients.create({ fullName: "ב", birthDate: "1991-01-01" });
+      const ra = await store.readings.create(mapReading(a.id));
+      const rb = await store.readings.create(mapReading(b.id));
+      const fa = await store.attachments.add({ clientId: a.id, readingId: ra.id, name: "a", type: "", bytes: bytes(1) });
+      const fb = await store.attachments.add({ clientId: b.id, name: "b", type: "", bytes: bytes(2) });
+      await store.clients.remove(a.id);
+      await expect(store.clients.get(a.id)).rejects.toBeInstanceOf(NotFoundError);
+      await expect(store.readings.get(ra.id)).rejects.toBeInstanceOf(NotFoundError);
+      await expect(store.attachments.getBlob(fa.id)).rejects.toBeInstanceOf(NotFoundError);
+      expect(await store.readings.get(rb.id)).toEqual(rb);
+      expect([...(await store.attachments.getBlob(fb.id)).bytes]).toEqual([2]);
+    });
+
+    it("wipes their name and birth date from other clients' readings, keeping the rest", async () => {
+      const avir = await store.clients.create({ fullName: "אביר", birthDate: "1987-11-03" });
+      const shani = await store.clients.create({ fullName: "שני", birthDate: "1990-08-15" });
+      const linked = await store.readings.create(loveReading(shani.id, avir.id));
+      const typed = await store.readings.create(loveReading(shani.id));
+      tick();
+      await store.clients.remove(avir.id);
+      const after = await store.readings.get(linked.id);
+      expect(after.input.other).toEqual(WIPED_PERSON);
+      expect(after.input.person).toEqual(linked.input.person);
+      expect(after.result).toEqual(linked.result);
+      // a typed-in name is not linked to any client, so it stays
+      expect(await store.readings.get(typed.id)).toEqual(typed);
+      // and the wiped reading can still be edited
+      expect(await store.readings.update(linked.id, { notes: "אחרי המחיקה" })).toMatchObject({ notes: "אחרי המחיקה" });
+    });
   });
 
   it("summary: due follow-ups and this month's birthdays", async () => {
@@ -221,21 +293,69 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
     expect(s.birthdays.map((b) => [b.fullName, b.day, b.turning])).toEqual([["תמר", 3, 31], ["דנה", 20, 38]]);
   });
 
+  it("a save in another tab never brings a just-deleted client back", async () => {
+    const shared = await makeBackend();
+    const tab1 = await makeStore(shared, "tab1");
+    const c = await tab1.clients.create({ fullName: "שני", birthDate: "1990-08-15", phone: "052-1234567" });
+    // tab 2 has read the client and is about to save a reading; its write waits until tab 1's deletion is done
+    let deletionDone;
+    const deleted = new Promise((resolve) => {
+      deletionDone = resolve;
+    });
+    const tab2 = await makeStore({
+      ...shared,
+      batch: async (ops) => {
+        await Promise.race([deleted, new Promise((resolve) => setTimeout(resolve, 50))]);
+        return shared.batch(ops);
+      },
+    }, "tab2");
+    const saving = tab2.readings.create(mapReading(c.id)).catch((e) => e);
+    const deleting = tab1.clients.remove(c.id).then(deletionDone);
+    await Promise.all([saving, deleting]);
+    // whichever went first, the client stays deleted and nothing of theirs is left
+    await expect(tab1.clients.get(c.id)).rejects.toBeInstanceOf(NotFoundError);
+    expect(await tab1.readings.listRecent()).toEqual([]);
+  });
+
+  it("every change that touches several records is one all-or-nothing write", async () => {
+    const backend = await makeBackend();
+    const s = await makeStore(backend);
+    const c = await s.clients.create({ fullName: "שני", birthDate: "1990-08-15" });
+    const r = await s.readings.create(mapReading(c.id));
+    const f = await s.attachments.add({ clientId: c.id, readingId: r.id, name: "a.txt", type: "text/plain", bytes: bytes(1) });
+    const elsewhere = await makeStore(undefined, "other");
+    await elsewhere.clients.create({ fullName: "מגיבוי" });
+    const backup = json(await elsewhere.exportAll());
+    const before = await s.exportAll();
+
+    // the same data, but the disk fails on every multi-record write
+    const failing = await makeStore({ ...backend, batch: async () => { throw new Error("disk full"); } }, "new");
+    const attempts = [
+      () => failing.clients.remove(c.id),
+      () => failing.readings.create(mapReading(c.id)),
+      () => failing.readings.remove(r.id),
+      () => failing.attachments.add({ clientId: c.id, name: "b.txt", type: "", bytes: bytes(2) }),
+      () => failing.attachments.remove(f.id),
+      () => failing.importAll(backup),
+    ];
+    for (const attempt of attempts) await expect(attempt()).rejects.toThrow("disk full");
+    expect(await s.exportAll()).toEqual(before);
+  });
+
   describe("backup", () => {
     const seed = async (s) => {
       const c = await s.clients.create({ fullName: "שני כהן", birthDate: "1990-08-15", notes: "לקוחה קבועה" });
       const r = await s.readings.create(mapReading(c.id, { notes: "פגישה ראשונה" }));
-      await s.attachments.add({ clientId: c.id, readingId: r.id, name: "מפה.pdf", type: "application/pdf", bytes: bytes(0, 255, 128, 7) });
-      return { c, r };
+      const a = await s.attachments.add({ clientId: c.id, readingId: r.id, name: "מפה.pdf", type: "application/pdf", bytes: bytes(0, 255, 128, 7) });
+      return { c, r, a };
     };
 
-    it("export then import into an empty store reproduces everything, bytes included", async () => {
+    it("export then restore into an empty store reproduces everything, bytes included", async () => {
       await seed(store);
       const backup = await store.exportAll();
-      expect(backup).toMatchObject({ format: "numerology-workspace-backup", version: 1 });
-      const json = JSON.parse(JSON.stringify(backup)); // what a file round-trip does
+      expect(backup).toMatchObject({ format: "numerology-workspace-backup", version: 1, missingFiles: 0 });
       const fresh = await makeStore();
-      expect(await fresh.importAll(json, { mode: "replace" })).toEqual({ clients: 1, readings: 1, attachments: 1 });
+      expect(await fresh.importAll(json(backup))).toEqual({ clients: 1, readings: 1, attachments: 1 });
       expect(await fresh.clients.list()).toEqual(await store.clients.list());
       const [c] = await fresh.clients.list();
       expect(await fresh.readings.listByClient(c.id)).toEqual(await store.readings.listByClient(c.id));
@@ -243,32 +363,159 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
       expect([...(await fresh.attachments.getBlob(a.id)).bytes]).toEqual([0, 255, 128, 7]);
     });
 
-    it("merge keeps whichever copy was updated last", async () => {
+    it("a client is replaced only by a newer copy of itself", async () => {
       const { c } = await seed(store);
-      const backup = JSON.parse(JSON.stringify(await store.exportAll()));
+      const backup = json(await store.exportAll());
       tick();
       await store.clients.update(c.id, { notes: "עודכן אחרי הגיבוי" });
-      const counts = await store.importAll(backup, { mode: "merge" });
-      expect(counts.clients).toBe(0);
+      expect(await store.importAll(backup)).toEqual({ clients: 0, readings: 0, attachments: 0 });
       expect((await store.clients.get(c.id)).notes).toBe("עודכן אחרי הגיבוי");
-      backup.clients[0].updatedAt = "2030-01-01T00:00:00.000Z";
+      tick();
+      backup.clients[0].updatedAt = new Date(t).toISOString();
       backup.clients[0].notes = "חדש יותר בגיבוי";
-      await store.importAll(backup, { mode: "merge" });
+      expect(await store.importAll(backup)).toEqual({ clients: 1, readings: 0, attachments: 0 });
       expect((await store.clients.get(c.id)).notes).toBe("חדש יותר בגיבוי");
     });
 
-    it("rejects a malformed backup before writing anything", async () => {
-      await seed(store);
-      const good = JSON.parse(JSON.stringify(await store.exportAll()));
+    it("never replaces a saved reading or file, and never moves one to another client", async () => {
+      const { c, r, a } = await seed(store);
+      const other = await store.clients.create({ fullName: "אחרת", birthDate: "1985-01-01" });
+      const backup = json(await store.exportAll());
+      backup.readings[0] = { ...backup.readings[0], notes: "זויף", clientId: other.id };
+      backup.attachments[0] = { ...backup.attachments[0], name: "evil.exe", type: "text/html", clientId: other.id, readingId: null };
+      expect(await store.importAll(backup)).toEqual({ clients: 0, readings: 0, attachments: 0 });
+      expect(await store.readings.get(r.id)).toMatchObject({ clientId: c.id, notes: "פגישה ראשונה" });
+      expect(await store.attachments.listByClient(c.id)).toEqual([a]);
+      expect(await store.attachments.listByClient(other.id)).toEqual([]);
+    });
+
+    it("brings timestamps from the future back to the time of the restore, without letting them win", async () => {
+      const { c } = await seed(store);
+      const backup = json(await store.exportAll());
+      const future = new Date(t + 2 * DAY).toISOString();
+      Object.assign(backup.clients[0], { updatedAt: future, notes: "מהעתיד" });
+      backup.readings[0].createdAt = future;
+      backup.attachments[0].createdAt = future;
+      // into an empty workspace everything comes in, stamped with the time of the restore
+      const fresh = await makeStore();
+      expect(await fresh.importAll(backup)).toEqual({ clients: 1, readings: 1, attachments: 1 });
+      const restoredAt = new Date(t).toISOString();
+      expect(await fresh.clients.get(c.id)).toMatchObject({ notes: "מהעתיד", updatedAt: restoredAt });
+      expect((await fresh.readings.listByClient(c.id))[0].createdAt).toBe(restoredAt);
+      expect((await fresh.attachments.listByClient(c.id))[0].createdAt).toBe(restoredAt);
+      // over an existing copy, a date from the future is no proof of being newer, even once brought back to now
+      tick();
+      expect(await store.importAll(backup)).toEqual({ clients: 0, readings: 0, attachments: 0 });
+      expect((await store.clients.get(c.id)).notes).toBe("לקוחה קבועה");
+    });
+
+    it("refuses a backup whose new file would tie another client to a reading saved here", async () => {
+      const { r } = await seed(store);
+      const other = await store.clients.create({ fullName: "אחרת", birthDate: "1985-01-01" });
+      const backup = json(await store.exportAll());
+      backup.readings = [{ ...backup.readings[0], clientId: other.id }];
+      backup.attachments = [{ ...backup.attachments[0], id: "new-file", clientId: other.id, readingId: r.id }];
       const before = await store.exportAll();
+      await expect(store.importAll(backup)).rejects.toBeInstanceOf(ValidationError);
+      expect(await store.exportAll()).toEqual(before);
+    });
+
+    it("a reading restored from another device moves its client up, as if it was saved here", async () => {
+      const { c } = await seed(store);
+      tick();
+      const other = await store.clients.create({ fullName: "אחרת" });
+      const device2 = await makeStore(undefined, "device2");
+      await device2.importAll(json(await store.exportAll()));
+      tick();
+      await device2.readings.create(mapReading(c.id));
+      expect(await store.importAll(json(await device2.exportAll()))).toEqual({ clients: 0, readings: 1, attachments: 0 });
+      expect((await store.clients.list()).map((x) => x.id)).toEqual([c.id, other.id]);
+      expect((await store.clients.get(c.id)).updatedAt).toBe(c.updatedAt);
+    });
+
+    it("a backup taken while a client is being deleted still restores", async () => {
+      const backend = await makeBackend();
+      const s = await makeStore(backend);
+      const { c } = await seed(s);
+      await s.clients.create({ fullName: "נשארת" });
+      // the deletion lands in the middle of the export: right after it has read a file's bytes
+      let armed = true;
+      const racing = await makeStore({
+        ...backend,
+        getBlob: async (id) => {
+          const blob = await backend.getBlob(id);
+          if (armed) {
+            armed = false;
+            await s.clients.remove(c.id);
+          }
+          return blob;
+        },
+      }, "racing");
+      const backup = json(await racing.exportAll());
+      await expect((await makeStore()).importAll(backup)).resolves.toBeTruthy();
+    });
+
+    it("normalises restored timestamps", async () => {
+      await seed(store);
+      const backup = json(await store.exportAll());
+      backup.clients[0].createdAt = "2026-10-05T12:00:00+03:00";
+      delete backup.clients[0].lastActivityAt;
+      const fresh = await makeStore();
+      await fresh.importAll(backup);
+      const [c] = await fresh.clients.list();
+      expect(c).toMatchObject({ createdAt: "2026-10-05T09:00:00.000Z", lastActivityAt: c.updatedAt });
+    });
+
+    it("has no replace mode", async () => {
+      await seed(store);
+      const backup = json(await store.exportAll());
+      const fresh = await makeStore();
+      await expect(fresh.importAll(backup, { mode: "replace" })).rejects.toBeInstanceOf(ValidationError);
+      expect(await fresh.clients.list({ includeArchived: true })).toEqual([]);
+    });
+
+    it("rejects a malformed or forged backup before writing anything", async () => {
+      const { c } = await seed(store);
+      const good = json(await store.exportAll());
+      const other = { ...good.clients[0], id: "client-2", fullName: "אחרת" };
       const broken = [
         { ...good, format: "something-else" },
+        { ...good, version: 2 },
+        { ...good, clients: "all of them" },
         { ...good, readings: [{ ...good.readings[0], clientId: "ghost" }] },
+        { ...good, readings: [{ ...good.readings[0], result: { lp: 33 } }] },
+        { ...good, readings: [{ ...good.readings[0], type: "constructor" }] },
         { ...good, clients: [{ ...good.clients[0], fullName: "" }] },
+        { ...good, clients: [{ ...good.clients[0], createdAt: "yesterday" }] },
+        { ...good, clients: [{ ...good.clients[0], createdAt: "-000001-01-01T00:00:00.000Z" }] },
         { ...good, attachments: [{ ...good.attachments[0], data: "%%%not base64%%%" }] },
+        // a file of one client linked to a reading of another
+        { ...good, clients: [...good.clients, other], attachments: [{ ...good.attachments[0], clientId: other.id }] },
+        // the same record twice: which copy wins would be anyone's guess
+        { ...good, clients: [good.clients[0], { ...good.clients[0], notes: "עותק ישן" }] },
+        { ...good, readings: [good.readings[0], good.readings[0]] },
+        { ...good, attachments: [good.attachments[0], good.attachments[0]] },
       ];
-      for (const b of broken) await expect(store.importAll(b, { mode: "replace" })).rejects.toBeInstanceOf(ValidationError);
-      expect(await store.exportAll()).toEqual(before);
+      expect(good.attachments[0].readingId).toBe(good.readings[0].id);
+      expect(good.readings[0].clientId).toBe(c.id);
+      for (const b of broken) {
+        const fresh = await makeStore();
+        await expect(fresh.importAll(b)).rejects.toBeInstanceOf(ValidationError);
+        expect(await fresh.clients.list({ includeArchived: true })).toEqual([]);
+        expect(await fresh.readings.listRecent()).toEqual([]);
+      }
+    });
+
+    it("export leaves out a file whose bytes are gone, and counts it", async () => {
+      const backend = await makeBackend();
+      const s = await makeStore(backend);
+      const { a } = await seed(s);
+      await backend.deleteBlob(a.id);
+      const backup = await s.exportAll();
+      expect(backup.attachments).toEqual([]);
+      expect(backup.missingFiles).toBe(1);
+      const fresh = await makeStore();
+      expect(await fresh.importAll(json(backup))).toEqual({ clients: 1, readings: 1, attachments: 0 });
     });
   });
 });
