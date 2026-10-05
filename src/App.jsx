@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { jsPDF } from "jspdf";
+import WorkspaceApp from "./workspace/WorkspaceApp.jsx";
+import { ContentContext } from "./workspace/content.js";
 import {
   R, NV, SU, EX, LP, LPm, CA, loShu, fullCalc, liveNum, getRecommendations,
   yearCycle, masterBase, dailyRitualNumber, compatKey, matchReading, coupleReading, parentChildReading,
@@ -1821,6 +1823,8 @@ export default function App(){
   const[leadDone,setLeadDone]=useState(()=>{try{return localStorage.getItem(LEAD_DONE_KEY)==="1";}catch(e){return false;}});
 
   const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
+  // Shani's interpretation content, shared with the client workspace (src/workspace)
+  const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport}),[]);
   useEffect(()=>{AU.on=snd;},[snd]);
 
   // ── cart persistence; owner/customer view preference is read in the useState initializer above ──
@@ -1967,7 +1971,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
       {/* ═══ STUDIO NAV (owner — always visible) ═══ */}
       {showOwnerUI&&<div className="tabs" style={{animation:"fadeInUp .5s ease-out .1s both",marginBottom:18}}>
-        {[{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"leads",i:"users",l:he?"לידים":"Leads"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"}].map(tb=>(
+        {[{k:"clients",i:"user",l:he?"לקוחות":"Clients"},{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"leads",i:"users",l:he?"לידים":"Leads"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"}].map(tb=>(
           <div key={tb.k} className={`ti ${tab===tb.k?"act":""}`} onClick={()=>{setTab(tb.k);AU.init();AU.p("click");if(tb.k!=="reading")setShowRes(false);}}><span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"center"}}><Icon name={tb.i} size={14} stroke={1.4}/>{tb.l}</span></div>
         ))}
       </div>}
@@ -1975,6 +1979,8 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       {/* ═══ INPUT TABS ═══ */}
       {!showRes&&(<>
         {/* Studio nav rendered above (always visible in owner mode) */}
+
+        {showOwnerUI&&tab==="clients"&&<ContentContext.Provider value={workspaceContent}><WorkspaceApp he={he} dk={dk}/></ContentContext.Provider>}
 
         {showOwnerUI&&tab==="shop"&&<ShopSection he={he} dk={dk}/>}
 
