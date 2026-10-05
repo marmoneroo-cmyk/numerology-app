@@ -20,7 +20,9 @@ const SUPABASE_STAND_IN = `
   create table auth.users (
     id uuid primary key default gen_random_uuid(),
     email text,
-    raw_user_meta_data jsonb not null default '{}'
+    raw_user_meta_data jsonb not null default '{}', -- the user can change this one
+    raw_app_meta_data jsonb not null default '{}',  -- only the server (secret key) can
+    is_anonymous boolean not null default false
   );
   -- one row per signed-in session; Supabase deletes it on sign-out
   create table auth.sessions (
@@ -60,10 +62,14 @@ const SUPABASE_STAND_IN = `
   grant usage on schema public to anon, authenticated, service_role;
 `;
 
-/** A fresh database with every migration applied. */
-export async function createDatabase() {
+/**
+ * A fresh database with every migration applied.
+ * @param {{beforeMigrations?: string}} [opts] SQL to run first, e.g. users that existed before
+ */
+export async function createDatabase({ beforeMigrations } = {}) {
   const db = new PGlite();
   await db.exec(SUPABASE_STAND_IN);
+  if (beforeMigrations) await db.exec(beforeMigrations);
   const files = readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort();
   for (const f of files) await db.exec(readFileSync(new URL(f, MIGRATIONS), "utf8"));
   return db;
@@ -82,22 +88,26 @@ export async function endSession(db, sessionId) {
   await db.query("delete from auth.sessions where id = $1", [sessionId]);
 }
 
-/** Creates a user the way Supabase Auth does (the profile comes from the trigger). */
-export async function createUser(db, { email, fullName = "", phone = "" } = {}) {
+/**
+ * Creates a user the way Supabase Auth does (the profile comes from the trigger).
+ * `provisioned` is what the admin Edge Function marks in the server-only app_metadata.
+ */
+export async function createUser(db, { email, fullName = "", phone = "", provisioned = true } = {}) {
   const { rows } = await db.query(
-    "insert into auth.users (email, raw_user_meta_data) values ($1, $2) returning id",
-    [email ?? `user${++sessionCounter}@example.com`, JSON.stringify({ full_name: fullName, phone })],
+    "insert into auth.users (email, raw_user_meta_data, raw_app_meta_data) values ($1, $2, $3) returning id",
+    [email ?? `user${++sessionCounter}@example.com`, JSON.stringify({ full_name: fullName, phone }), JSON.stringify(provisioned ? { provisioned: true } : {})],
   );
   return rows[0].id;
 }
 
 /**
  * Runs `fn(tx)` as `user` in session `sessionId`, like one PostgREST request.
- * @param {{id: string, sessionId: string} | null} user null = an anonymous request
+ * `user.aal` is the session's assurance level: "aal2" after two-step verification.
+ * @param {{id: string, sessionId: string, aal?: string} | null} user null = an anonymous request
  */
 export function as(db, user, fn) {
   return db.transaction(async (tx) => {
-    const claims = user ? { sub: user.id, role: "authenticated", session_id: user.sessionId } : { role: "anon" };
+    const claims = user ? { sub: user.id, role: "authenticated", session_id: user.sessionId, aal: user.aal ?? "aal1" } : { role: "anon" };
     await tx.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify(claims)]);
     await tx.exec(`set local role ${user ? "authenticated" : "anon"}`);
     return fn(tx);

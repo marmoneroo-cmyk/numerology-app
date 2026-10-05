@@ -11,6 +11,9 @@ let server;
 const once = () => (server ??= (async () => ({ db: await createDatabase(), storage: createFakeStorage() }))());
 let devices = 0;
 
+/** Builds the database (a second or more): call it from beforeAll with a long timeout. */
+export const prepareServer = () => once();
+
 export async function makeServerBackend() {
   const { db, storage } = await once();
   const id = await createUser(db);

@@ -2,7 +2,7 @@
  * The account service over a supabase-js stand-in: which calls it makes, and
  * how it reports what comes back.
  */
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createAccountService, AccountError } from "../service.js";
 import { SessionError } from "../../data/serverBackend.js";
 
@@ -108,5 +108,41 @@ describe("account service", () => {
   it("changes the password through Auth", async () => {
     await make(client).changePassword("a-new-password");
     expect(client.calls[0]).toEqual(["updateUser", { password: "a-new-password" }]);
+  });
+
+  it("tells whoever watches when the server no longer accepts this login", async () => {
+    for (const error of [
+      { code: "42501", message: "session not active" }, // replaced, signed out or suspended
+      { code: "42501", message: "permission denied for function my_devices" }, // the login lapsed: requests go out anonymous
+      { code: "PGRST301", message: "JWT expired" },
+    ]) {
+      const lost = vi.fn();
+      const service = make(fakeClient({ rpcErrors: { my_devices: error } }));
+      service.watch(lost);
+      await expect(service.myDevices()).rejects.toBeInstanceOf(SessionError);
+      expect(lost).toHaveBeenCalledTimes(1);
+    }
+    const lost = vi.fn();
+    const service = make(fakeClient({ rpcErrors: { my_devices: { code: "57014", message: "canceling statement due to statement timeout" } } }));
+    service.watch(lost);
+    await expect(service.myDevices()).rejects.toMatchObject({ code: "57014" });
+    expect(lost).not.toHaveBeenCalled();
+  });
+
+  it("reports whether this login still needs its second step, and runs the two-step calls", async () => {
+    const mfa = {
+      getAuthenticatorAssuranceLevel: vi.fn(async () => ({ data: { currentLevel: "aal1", nextLevel: "aal2" }, error: null })),
+      listFactors: vi.fn(async () => ({ data: { totp: [{ id: "f1", status: "verified" }] }, error: null })),
+      enroll: vi.fn(async () => ({ data: { id: "f2", totp: { qr_code: "data:image/svg+xml;utf-8,<svg/>", secret: "ABC123" } }, error: null })),
+      challengeAndVerify: vi.fn(async () => ({ data: {}, error: null })),
+      unenroll: vi.fn(async () => ({ data: {}, error: null })),
+    };
+    const service = make({ ...fakeClient(), auth: { ...fakeClient().auth, mfa } });
+    expect(await service.mfaState()).toEqual({ level: "aal1", needsCode: true, factorId: "f1" });
+    expect(await service.mfaEnroll()).toEqual({ factorId: "f2", qr: "data:image/svg+xml;utf-8,<svg/>", secret: "ABC123" });
+    await service.mfaVerify("f1", "123456");
+    expect(mfa.challengeAndVerify).toHaveBeenCalledWith({ factorId: "f1", code: "123456" });
+    mfa.challengeAndVerify.mockResolvedValueOnce({ data: null, error: { code: "mfa_verification_failed", message: "Invalid TOTP code entered" } });
+    await expect(service.mfaVerify("f1", "000000")).rejects.toEqual(new AccountError("wrong_code"));
   });
 });

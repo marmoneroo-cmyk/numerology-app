@@ -1837,6 +1837,11 @@ export default function App(){
   const studioReady=account.state==="ready";
   const licensee=studioReady?{fullName:account.profile.fullName||account.profile.email,phone:account.profile.phone}:null;
   const[workspaceKey,setWorkspaceKey]=useState(0);
+  // another account in the Studio (or none) starts clean: nothing of the previous subscriber's client stays on screen
+  const studioUser=account.profile?.id??null;
+  const lastStudioUser=useRef(studioUser);
+  useEffect(()=>{if(lastStudioUser.current===studioUser)return;lastStudioUser.current=studioUser;setStep(1);setTab("reading");setName("");setDob("");setAddOne(false);setResults(null);setShowRes(false);setError("");setChapters([false,false,false,false,false,false]);},[studioUser]);
+  useEffect(()=>{if(tab==="admin"&&account.profile?.role!=="admin")setTab("reading");},[tab,account.profile?.role]);
   const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:(r,n,h,i)=>exportReport(r,n,h,i,licensee)}),[licensee?.fullName,licensee?.phone]);
   useEffect(()=>{AU.on=snd;},[snd]);
 

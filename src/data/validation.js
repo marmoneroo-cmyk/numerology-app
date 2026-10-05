@@ -39,7 +39,8 @@ export function isIsoDate(s, maxYear = new Date().getFullYear() + 1) {
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
 
-const text = (v) => (typeof v === "string" ? v.trim() : v == null ? "" : String(v).trim());
+/** Trimmed text, without NUL characters (the server cannot store them inside a record). */
+const text = (v) => (typeof v === "string" ? v : v == null ? "" : String(v)).replace(/\u0000/g, "").trim();
 const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 const PHONE = /^[+]?[0-9()\- ]{3,}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

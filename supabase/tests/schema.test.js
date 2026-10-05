@@ -22,6 +22,12 @@ async function signedIn(opts = {}) {
   expect(claim.status).toBe("ok");
   return { ...user, deviceId: claim.deviceId };
 }
+/** A signed-in admin whose session passed two-step verification (aal2). */
+async function signedInAdmin(opts = {}) {
+  const admin = await signedIn(opts);
+  await makeAdmin(db, admin.id);
+  return { ...admin, aal: "aal2" };
+}
 /** Another session of the same account, on a device of its own (or the given one). */
 const otherSession = async (user, key = deviceKey(++keyCounter)) => ({ id: user.id, sessionId: await newSession(db, user.id), deviceKey: key });
 const claim = (user) => rpc(db, user, "claim_session", { p_device_key: user.deviceKey, p_label: "Safari · iPhone" });
@@ -37,10 +43,36 @@ const failure = async (promise) => {
 const auditOf = async (userId) => (await db.query("select action, detail from public.audit_log where user_id = $1 order by id", [userId])).rows;
 
 describe("accounts", () => {
-  it("every new user gets an active subscriber profile with the name and phone given", async () => {
+  it("an account opened by the admin function is an active subscriber with the name and phone given", async () => {
     const id = await createUser(db, { email: "dana@example.com", fullName: "דנה לוי", phone: "052-1234567" });
     const { rows } = await db.query("select email, full_name, phone, role, status, plan, device_limit from public.profiles where id = $1", [id]);
     expect(rows[0]).toEqual({ email: "dana@example.com", full_name: "דנה לוי", phone: "052-1234567", role: "subscriber", status: "active", plan: "pro", device_limit: 2 });
+  });
+
+  it("a user created any other way (a sign-up, an anonymous sign-in) starts suspended and cannot use anything", async () => {
+    const id = await createUser(db, { provisioned: false });
+    const user = { id, sessionId: await newSession(db, id), deviceKey: deviceKey(++keyCounter) };
+    expect(await claim(user)).toEqual({ status: "suspended" });
+    expect(await failure(rpc(db, user, "ws_all", { p_store: "clients" }))).toMatch(/session not active/);
+  });
+
+  it("names lose control and direction characters (no hidden right-to-left tricks in the watermark)", async () => {
+    const id = await createUser(db, { fullName: "\u202Eדנה\u200B לוי ", phone: "052\u0007-123" });
+    const { rows } = await db.query("select full_name, phone from public.profiles where id = $1", [id]);
+    expect(rows[0]).toEqual({ full_name: "דנה לוי", phone: "052-123" });
+  });
+
+  it("users created before the migration get a profile too: suspended, unless the admin function made them", async () => {
+    const early = await createDatabase({
+      beforeMigrations: `insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data) values
+        ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'owner@example.com', '{"full_name":"הבעלים"}', '{}'),
+        ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'made@example.com', '{}', '{"provisioned":true}')`,
+    });
+    const { rows } = await early.query("select email, full_name, role, status from public.profiles order by email");
+    expect(rows).toEqual([
+      { email: "made@example.com", full_name: "", role: "subscriber", status: "active" },
+      { email: "owner@example.com", full_name: "הבעלים", role: "subscriber", status: "suspended" },
+    ]);
   });
 
   it("a subscriber reads only their own profile", async () => {
@@ -150,8 +182,7 @@ describe("devices", () => {
   });
 
   it("admins are never locked out by the device rules", async () => {
-    const admin = await signedIn();
-    await makeAdmin(db, admin.id);
+    const admin = await signedInAdmin();
     for (let i = 0; i < 6; i++) expect((await claim(await otherSession(admin))).status).toBe("ok");
   });
 });
@@ -230,8 +261,7 @@ describe("administration", () => {
   });
 
   it("lists accounts with their numbers, and suspending one ends its session", async () => {
-    const admin = await signedIn();
-    await makeAdmin(db, admin.id);
+    const admin = await signedInAdmin();
     expect(await rpc(db, admin, "am_i_admin")).toBe(true);
     const sub = await signedIn({ fullName: "מנויה" });
     await rpc(db, sub, "ws_batch", { p_ops: [put("clients", { id: "c1" }), put("clients", { id: "c2" })] });
@@ -244,22 +274,20 @@ describe("administration", () => {
     expect(await claim(await otherSession(sub))).toEqual({ status: "suspended" });
 
     await rpc(db, admin, "admin_update_account", { p_user: sub.id, p_patch: { status: "active" } });
-    // reactivating does not revive the old session: it has to sign in again
-    expect(await rpc(db, sub, "session_status", {})).toEqual({ status: "replaced" });
+    // suspending signed it out for real; reactivating does not revive it: it has to sign in again
+    expect(await rpc(db, sub, "session_status", {})).toEqual({ status: "signed_out" });
     expect((await claim(await otherSession(sub, sub.deviceKey))).status).toBe("ok");
     expect((await auditOf(sub.id)).some((a) => a.action === "account_updated" && a.detail.status === "suspended")).toBe(true);
   });
 
   it("an admin cannot suspend or demote themselves", async () => {
-    const admin = await signedIn();
-    await makeAdmin(db, admin.id);
+    const admin = await signedInAdmin();
     expect(await failure(rpc(db, admin, "admin_update_account", { p_user: admin.id, p_patch: { status: "suspended" } }))).toMatch(/cannot suspend or demote themselves/);
     expect(await failure(rpc(db, admin, "admin_update_account", { p_user: admin.id, p_patch: { role: "subscriber" } }))).toMatch(/cannot suspend or demote themselves/);
   });
 
   it("revoking a device ends the session on it, and shows in the audit", async () => {
-    const admin = await signedIn();
-    await makeAdmin(db, admin.id);
+    const admin = await signedInAdmin();
     const sub = await signedIn();
     const devices = await rpc(db, admin, "admin_list_devices", { p_user: sub.id });
     expect(devices).toHaveLength(1);
@@ -271,8 +299,7 @@ describe("administration", () => {
   });
 
   it("records what the admin function did, for admins only and known events only", async () => {
-    const admin = await signedIn();
-    await makeAdmin(db, admin.id);
+    const admin = await signedInAdmin();
     const sub = await signedIn();
     expect(await rpc(db, admin, "admin_log", { p_user: sub.id, p_action: "password_set" })).toEqual({ status: "ok" });
     expect((await auditOf(sub.id)).find((a) => a.action === "password_set")).toBeTruthy();
@@ -284,5 +311,77 @@ describe("administration", () => {
     const user = await signedIn();
     expect(await rpc(db, user, "log_event", { p_action: "backup_exported" })).toEqual({ status: "ok" });
     expect(await failure(rpc(db, user, "log_event", { p_action: "anything" }))).toMatch(/unknown event/);
+  });
+});
+
+describe("hardening", () => {
+  it("signed-in users can change nothing in the account tables directly", async () => {
+    const user = await signedIn();
+    const direct = (sql) => failure(as(db, user, (tx) => tx.query(sql)));
+    expect(await direct("update public.profiles set role = 'admin'")).toMatch(/permission denied/);
+    expect(await direct("truncate public.audit_log")).toMatch(/permission denied/);
+    expect(await direct("delete from public.active_sessions")).toMatch(/permission denied/);
+    expect(await direct("insert into public.devices (user_id, device_key) values (gen_random_uuid(), 'x')")).toMatch(/permission denied/);
+  });
+
+  it("admin functions need two-step verification, even for an admin", async () => {
+    const admin = await signedInAdmin();
+    const unverified = { ...admin, aal: "aal1" };
+    expect(await rpc(db, unverified, "am_i_admin")).toBe(false);
+    expect(await failure(rpc(db, unverified, "admin_list_accounts"))).toMatch(/admins only/);
+    expect(Array.isArray(await rpc(db, admin, "admin_list_accounts"))).toBe(true);
+  });
+
+  it("suspending, revoking the device in use, or ending the sessions signs the account out for real", async () => {
+    const admin = await signedInAdmin();
+    const sessionsOf = async (id) => (await db.query("select count(*)::int as n from auth.sessions where user_id = $1", [id])).rows[0].n;
+    const a = await signedIn();
+    await rpc(db, admin, "admin_update_account", { p_user: a.id, p_patch: { status: "suspended" } });
+    expect(await sessionsOf(a.id)).toBe(0);
+    const b = await signedIn();
+    await rpc(db, admin, "admin_revoke_device", { p_device: b.deviceId });
+    expect(await sessionsOf(b.id)).toBe(0);
+    const c = await signedIn();
+    await newSession(db, c.id); // another login of the same account, not claimed yet
+    expect(await rpc(db, admin, "admin_end_sessions", { p_user: c.id })).toEqual({ status: "ok" });
+    expect(await sessionsOf(c.id)).toBe(0);
+    expect(await rpc(db, c, "session_status", {})).toEqual({ status: "signed_out" });
+    expect(await failure(rpc(db, c, "admin_end_sessions", { p_user: a.id }))).toMatch(/admins only/);
+  });
+
+  it("files may only be named <own id>/<plain id>", async () => {
+    const a = await signedIn();
+    const upload = (name) => failure(as(db, a, (tx) => tx.query("insert into storage.objects (bucket_id, name) values ('ws-files', $1)", [name])));
+    expect(await upload(`${a.id}/../other`)).toMatch(/row-level security/);
+    expect(await upload(`${a.id}/sub/dir`)).toMatch(/row-level security/);
+    expect(await upload(`${a.id}/ok-id_1`)).toBe("no error");
+  });
+
+  it("a record id is a plain id", async () => {
+    const a = await signedIn();
+    expect(await failure(rpc(db, a, "ws_batch", { p_ops: [put("clients", { id: "../x" })] }))).toMatch(/check constraint/);
+  });
+
+  it("an account's files have a quota", async () => {
+    const a = await signedIn();
+    const big = (id) => put("attachments", { id, size: 1500 * 1024 * 1024 });
+    await rpc(db, a, "ws_batch", { p_ops: [big("f1")] });
+    expect(await failure(rpc(db, a, "ws_batch", { p_ops: [big("f2")] }))).toMatch(/quota/);
+    expect((await rpc(db, a, "ws_all", { p_store: "attachments" })).map((f) => f.id)).toEqual(["f1"]);
+  });
+
+  it("a client record has room for the longest notes the app allows, in any script", async () => {
+    const a = await signedIn();
+    const longest = { id: "c1", fullName: "ש".repeat(120), birthName: "ש".repeat(120), notes: "✨".repeat(20000), tags: Array.from({ length: 12 }, () => "ת".repeat(30)) };
+    await rpc(db, a, "ws_batch", { p_ops: [put("clients", longest)] });
+    expect((await rpc(db, a, "ws_get", { p_store: "clients", p_id: "c1" })).notes).toHaveLength(20000);
+  });
+
+  it("the app's own log entries are throttled", async () => {
+    const a = await signedIn();
+    const statuses = [];
+    for (let i = 0; i < 205; i++) statuses.push((await rpc(db, a, "log_event", { p_action: "backup_exported" })).status);
+    expect(statuses.filter((s) => s === "ok").length).toBeLessThan(205);
+    expect(statuses.at(-1)).toBe("throttled");
   });
 });

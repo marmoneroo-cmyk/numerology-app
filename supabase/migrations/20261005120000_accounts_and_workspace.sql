@@ -13,6 +13,15 @@
 create schema if not exists private;
 grant usage on schema private to authenticated, service_role;
 
+/**
+ * Text without control or invisible format characters (so a name cannot hide
+ * a right-to-left override in the watermark or on a report), trimmed and cut.
+ */
+create function private.clean_text(p_text text, p_max int) returns text
+language sql immutable set search_path = '' as $$
+  select left(trim(regexp_replace(coalesce(p_text, ''), '[\u0001-\u001F\u007F-\u009F​-‏‪-‮⁠-⁩﻿]', '', 'g')), p_max)
+$$;
+
 -- ───────────────────────── accounts ─────────────────────────
 
 create table public.profiles (
@@ -21,7 +30,7 @@ create table public.profiles (
   full_name text not null default '' check (length(full_name) <= 120),
   phone text not null default '' check (length(phone) <= 25),
   role text not null default 'subscriber' check (role in ('subscriber', 'admin')),
-  status text not null default 'active' check (status in ('active', 'suspended')),
+  status text not null default 'suspended' check (status in ('active', 'suspended')),
   plan text not null default 'pro' check (plan in ('trial', 'basic', 'pro', 'studio', 'founder')),
   device_limit smallint not null default 2 check (device_limit between 1 and 5),
   created_at timestamptz not null default now(),
@@ -30,21 +39,39 @@ create table public.profiles (
 alter table public.profiles enable row level security;
 create policy "profiles: read own" on public.profiles for select to authenticated using (id = (select auth.uid()));
 
+/**
+ * A new account's status: active only when the admin Edge Function made it,
+ * which it marks in app_metadata (only the secret key can write that). A user
+ * made any other way - a sign-up, an anonymous sign-in - starts suspended.
+ */
+create function private.initial_status(p_app_meta jsonb) returns text
+language sql immutable set search_path = '' as $$
+  select case when coalesce(p_app_meta ->> 'provisioned', '') = 'true' then 'active' else 'suspended' end
+$$;
+
 /** Every new auth user gets a profile; name and phone come from the metadata the admin set. */
 create function private.on_auth_user_created() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
-  insert into public.profiles (id, email, full_name, phone)
+  insert into public.profiles (id, email, full_name, phone, status)
   values (
     new.id,
     coalesce(new.email, ''),
-    left(coalesce(new.raw_user_meta_data ->> 'full_name', ''), 120),
-    left(coalesce(new.raw_user_meta_data ->> 'phone', ''), 25)
+    private.clean_text(new.raw_user_meta_data ->> 'full_name', 120),
+    private.clean_text(new.raw_user_meta_data ->> 'phone', 25),
+    private.initial_status(new.raw_app_meta_data)
   );
   return new;
 end $$;
 create trigger on_auth_user_created after insert on auth.users
   for each row execute function private.on_auth_user_created();
+
+-- users created before this migration get their profile too, by the same rule
+insert into public.profiles (id, email, full_name, phone, status)
+  select id, coalesce(email, ''), private.clean_text(raw_user_meta_data ->> 'full_name', 120),
+    private.clean_text(raw_user_meta_data ->> 'phone', 25), private.initial_status(raw_app_meta_data)
+  from auth.users
+  on conflict (id) do nothing;
 
 create table public.devices (
   id uuid primary key default gen_random_uuid(),
@@ -112,17 +139,33 @@ language sql stable security definer set search_path = '' as $$
   )
 $$;
 
+/**
+ * An admin in their active session, verified in two steps (aal2): an admin
+ * can open, suspend and reset any account, so a password alone is not enough.
+ */
 create function private.is_admin() returns boolean
 language sql stable security definer set search_path = '' as $$
-  select private.session_ok() and exists (
-    select 1 from public.profiles where id = auth.uid() and role = 'admin'
-  )
+  select private.session_ok()
+    and coalesce(auth.jwt() ->> 'aal', 'aal1') = 'aal2'
+    and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
 $$;
+
+/**
+ * Signs an account out for real: Supabase's own session rows (and with them
+ * the refresh tokens) and the active session. One session, or all of them.
+ */
+create function private.end_sessions(p_user uuid, p_session uuid default null) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  delete from auth.sessions where user_id = p_user and (p_session is null or id = p_session);
+  delete from public.active_sessions where user_id = p_user and (p_session is null or session_id = p_session);
+end $$;
 
 grant execute on function private.signed_in() to authenticated;
 grant execute on function private.session_ok() to authenticated;
 grant execute on function private.is_admin() to authenticated;
 revoke execute on function private.audit(uuid, text, jsonb) from public;
+revoke execute on function private.end_sessions(uuid, uuid) from public;
 revoke execute on function private.on_auth_user_created() from public;
 
 -- ───────────────────────── sessions and devices ─────────────────────────
@@ -150,7 +193,8 @@ begin
   if p_device_key is null or length(p_device_key) not between 16 and 100 then
     raise exception 'invalid device key' using errcode = '22023';
   end if;
-  select * into v_profile from public.profiles where id = v_uid;
+  -- one claim per account at a time: two sign-ins at once must not both slip under the device limit
+  select * into v_profile from public.profiles where id = v_uid for update;
   if not found then
     raise exception 'no profile for this user' using errcode = '28000';
   end if;
@@ -195,6 +239,8 @@ begin
   -- a sign-in, or a takeover from another session; reopening the app in the same session is not news
   if v_previous is distinct from v_session then
     perform private.audit(v_uid, 'session_claimed', jsonb_build_object('device', v_device.id, 'replaced', v_previous is not null));
+    -- the log keeps a little over a year per account
+    delete from public.audit_log where user_id = v_uid and at < now() - interval '400 days';
   end if;
 
   return jsonb_build_object(
@@ -218,13 +264,7 @@ begin
   if not found then
     return jsonb_build_object('status', 'signed_out');
   end if;
-  select * into v_active from public.active_sessions where user_id = v_profile.id;
-  if not private.signed_in() then
-    -- gone because another session took over (and signed the others out), or because it signed out itself
-    return jsonb_build_object('status', case
-      when found and v_active.session_id::text <> coalesce(auth.jwt() ->> 'session_id', '') then 'replaced'
-      else 'signed_out' end);
-  end if;
+  -- the reasons first: suspending or revoking also signs the session out, and it should learn why
   if v_profile.status <> 'active' then
     return jsonb_build_object('status', 'suspended');
   end if;
@@ -232,6 +272,13 @@ begin
     select 1 from public.devices where user_id = v_profile.id and device_key = p_device_key and status = 'revoked'
   ) then
     return jsonb_build_object('status', 'device_revoked');
+  end if;
+  select * into v_active from public.active_sessions where user_id = v_profile.id;
+  if not private.signed_in() then
+    -- gone because another session took over (and signed the others out), or because it signed out itself
+    return jsonb_build_object('status', case
+      when found and v_active.session_id::text <> coalesce(auth.jwt() ->> 'session_id', '') then 'replaced'
+      else 'signed_out' end);
   end if;
   if v_active.user_id is null or v_active.session_id::text <> coalesce(auth.jwt() ->> 'session_id', '') then
     return jsonb_build_object('status', 'replaced');
@@ -276,7 +323,7 @@ begin
   if not private.session_ok() then
     raise exception 'session not active' using errcode = '42501';
   end if;
-  update public.profiles set full_name = left(trim(coalesce(p_full_name, '')), 120), phone = left(trim(coalesce(p_phone, '')), 25)
+  update public.profiles set full_name = private.clean_text(p_full_name, 120), phone = private.clean_text(p_phone, 25)
     where id = auth.uid();
   return jsonb_build_object('status', 'ok');
 end $$;
@@ -291,6 +338,10 @@ begin
   if not private.session_ok() then
     raise exception 'session not active' using errcode = '42501';
   end if;
+  -- the app reports these itself: a flood of them could only fill the log
+  if (select count(*) from public.audit_log where user_id = auth.uid() and at > now() - interval '1 hour') >= 200 then
+    return jsonb_build_object('status', 'throttled');
+  end if;
   perform private.audit(auth.uid(), p_action);
   return jsonb_build_object('status', 'ok');
 end $$;
@@ -301,21 +352,21 @@ end $$;
 
 create table public.ws_clients (
   owner_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
-  id text not null check (length(id) between 1 and 100),
-  doc jsonb not null check (jsonb_typeof(doc) = 'object' and pg_column_size(doc) <= 65536),
+  id text not null check (id ~ '^[A-Za-z0-9_-]{1,100}$'),
+  doc jsonb not null check (jsonb_typeof(doc) = 'object' and pg_column_size(doc) <= 131072),
   primary key (owner_id, id),
   check (doc ->> 'id' = id)
 );
 create table public.ws_readings (
   owner_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
-  id text not null check (length(id) between 1 and 100),
+  id text not null check (id ~ '^[A-Za-z0-9_-]{1,100}$'),
   doc jsonb not null check (jsonb_typeof(doc) = 'object' and pg_column_size(doc) <= 262144),
   primary key (owner_id, id),
   check (doc ->> 'id' = id)
 );
 create table public.ws_attachments (
   owner_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
-  id text not null check (length(id) between 1 and 100),
+  id text not null check (id ~ '^[A-Za-z0-9_-]{1,100}$'),
   doc jsonb not null check (jsonb_typeof(doc) = 'object' and pg_column_size(doc) <= 8192),
   primary key (owner_id, id),
   check (doc ->> 'id' = id)
@@ -411,7 +462,7 @@ declare
   v_n int := 0;
 begin
   perform private.require_session();
-  if jsonb_typeof(p_ops) <> 'array' or jsonb_array_length(p_ops) > 5000 then
+  if jsonb_typeof(p_ops) <> 'array' or jsonb_array_length(p_ops) > 20000 then
     raise exception 'invalid batch' using errcode = '22023';
   end if;
   for v_op in select * from jsonb_array_elements(p_ops) loop
@@ -444,16 +495,34 @@ begin
     end if;
     v_n := v_n + 1;
   end loop;
+  -- per-account quotas (the rows counted are the caller's own: row level security); over them, nothing is kept
+  if (select count(*) from public.ws_clients) > 20000
+    or (select count(*) from public.ws_readings) > 200000
+    or (select count(*) from public.ws_attachments) > 10000
+    or (select coalesce(sum(case when doc ->> 'size' ~ '^[0-9]{1,15}$' then (doc ->> 'size')::bigint else 0 end), 0)
+        from public.ws_attachments) > 2147483648 then
+    raise exception 'over the account quota' using errcode = '54000';
+  end if;
   return jsonb_build_object('applied', v_n);
 end $$;
 
 -- File bytes: a private bucket, one folder per user, readable only by its owner's active session.
+-- A file is named exactly <user id>/<record id>; nothing else (no sub-folders, no "..").
 insert into storage.buckets (id, name, public, file_size_limit)
   values ('ws-files', 'ws-files', false, 20971520)
-  on conflict (id) do nothing;
+  on conflict (id) do update set public = false, file_size_limit = excluded.file_size_limit;
+
+/** How many files the caller keeps in the bucket (a cap even for uploads made around the app). */
+create function private.file_count() returns bigint
+language sql stable security definer set search_path = '' as $$
+  select count(*) from storage.objects where bucket_id = 'ws-files' and name like auth.uid()::text || '/%'
+$$;
+grant execute on function private.file_count() to authenticated;
+
 create policy "ws-files: own folder, active session" on storage.objects for all to authenticated
-  using (bucket_id = 'ws-files' and (storage.foldername(name))[1] = (select auth.uid())::text and (select private.session_ok()))
-  with check (bucket_id = 'ws-files' and (storage.foldername(name))[1] = (select auth.uid())::text and (select private.session_ok()));
+  using (bucket_id = 'ws-files' and name ~ ('^' || (select auth.uid())::text || '/[A-Za-z0-9_-]{1,100}$') and (select private.session_ok()))
+  with check (bucket_id = 'ws-files' and name ~ ('^' || (select auth.uid())::text || '/[A-Za-z0-9_-]{1,100}$') and (select private.session_ok())
+    and (select private.file_count()) < 10000);
 
 -- ───────────────────────── administration ─────────────────────────
 
@@ -499,8 +568,8 @@ begin
     raise exception 'admins cannot suspend or demote themselves' using errcode = '22023';
   end if;
   update public.profiles set
-    full_name = case when p_patch ? 'fullName' then left(trim(p_patch ->> 'fullName'), 120) else full_name end,
-    phone = case when p_patch ? 'phone' then left(trim(p_patch ->> 'phone'), 25) else phone end,
+    full_name = case when p_patch ? 'fullName' then private.clean_text(p_patch ->> 'fullName', 120) else full_name end,
+    phone = case when p_patch ? 'phone' then private.clean_text(p_patch ->> 'phone', 25) else phone end,
     plan = coalesce(p_patch ->> 'plan', plan),
     device_limit = coalesce((p_patch ->> 'deviceLimit')::smallint, device_limit),
     role = coalesce(p_patch ->> 'role', role),
@@ -508,9 +577,19 @@ begin
   where id = p_user
   returning * into v_after;
   if v_after.status = 'suspended' then
-    delete from public.active_sessions where user_id = p_user;
+    perform private.end_sessions(p_user); -- signed out everywhere, for good
   end if;
   perform private.audit(p_user, 'account_updated', p_patch - 'fullName' - 'phone');
+  return jsonb_build_object('status', 'ok');
+end $$;
+
+/** Signs every session of an account out (the admin function calls this after setting a password). */
+create function public.admin_end_sessions(p_user uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_admin();
+  perform private.end_sessions(p_user);
+  perform private.audit(p_user, 'sessions_ended');
   return jsonb_build_object('status', 'ok');
 end $$;
 
@@ -529,10 +608,12 @@ begin
   );
 end $$;
 
-/** Revokes a device; if it holds the account's active session, that session ends. */
+/** Revokes a device; if it holds the account's active session, that session is signed out for real. */
 create function public.admin_revoke_device(p_device uuid) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare v_user uuid;
+declare
+  v_user uuid;
+  v_session uuid;
 begin
   perform private.require_admin();
   update public.devices set status = 'revoked', revoked_at = now()
@@ -541,7 +622,10 @@ begin
   if v_user is null then
     raise exception 'no such device' using errcode = 'P0002';
   end if;
-  delete from public.active_sessions where user_id = v_user and device_id = p_device;
+  select session_id into v_session from public.active_sessions where user_id = v_user and device_id = p_device;
+  if v_session is not null then
+    perform private.end_sessions(v_user, v_session);
+  end if;
   perform private.audit(v_user, 'device_revoked', jsonb_build_object('device', p_device));
   return jsonb_build_object('status', 'ok');
 end $$;
@@ -583,26 +667,32 @@ language sql stable security definer set search_path = '' as $$
 $$;
 
 -- ───────────────────────── who may call what ─────────────────────────
--- Functions are callable by PUBLIC (which anon belongs to) unless revoked:
--- everything here is for signed-in users only, and the helpers for no one.
+-- Functions are callable by PUBLIC (which anon belongs to) unless revoked, and
+-- Supabase grants new tables to anon and authenticated by default: everything
+-- here is for signed-in users only, as narrowly as it can be, and the helpers
+-- for no one.
 
 revoke execute on function
   public.claim_session(text, text), public.session_status(text), public.my_devices(),
   public.revoke_my_device(uuid), public.update_my_profile(text, text), public.log_event(text),
   public.ws_all(text), public.ws_get(text, text), public.ws_snapshot(), public.ws_batch(jsonb),
   public.admin_list_accounts(), public.admin_update_account(uuid, jsonb), public.admin_list_devices(uuid),
-  public.admin_revoke_device(uuid), public.admin_audit(uuid, int), public.admin_log(uuid, text), public.am_i_admin()
+  public.admin_revoke_device(uuid), public.admin_audit(uuid, int), public.admin_log(uuid, text),
+  public.admin_end_sessions(uuid), public.am_i_admin()
   from public, anon;
 grant execute on function
   public.claim_session(text, text), public.session_status(text), public.my_devices(),
   public.revoke_my_device(uuid), public.update_my_profile(text, text), public.log_event(text),
   public.ws_all(text), public.ws_get(text, text), public.ws_snapshot(), public.ws_batch(jsonb),
   public.admin_list_accounts(), public.admin_update_account(uuid, jsonb), public.admin_list_devices(uuid),
-  public.admin_revoke_device(uuid), public.admin_audit(uuid, int), public.admin_log(uuid, text), public.am_i_admin()
+  public.admin_revoke_device(uuid), public.admin_audit(uuid, int), public.admin_log(uuid, text),
+  public.admin_end_sessions(uuid), public.am_i_admin()
   to authenticated;
 revoke execute on function private.on_ws_client_deleted() from public;
 
-revoke all on public.profiles, public.devices, public.active_sessions, public.audit_log,
-  public.ws_clients, public.ws_readings, public.ws_attachments from anon;
+-- the account tables are read through the functions above; nobody writes them directly
+revoke all on public.profiles, public.devices, public.active_sessions, public.audit_log from anon, authenticated;
 grant select on public.profiles, public.devices to authenticated;
+-- the workspace tables: rows only, and only one's own (row level security)
+revoke all on public.ws_clients, public.ws_readings, public.ws_attachments from anon, authenticated;
 grant select, insert, update, delete on public.ws_clients, public.ws_readings, public.ws_attachments to authenticated;

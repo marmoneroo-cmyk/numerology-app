@@ -5,4 +5,3 @@
  */
 export const SUPABASE_URL = "https://kcgjdxubcdmbrjlftxyv.supabase.co";
 export const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_CVZuX2VQ7BJuAgJx53LwHg_9eIWNide";
-export const ADMIN_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-accounts`;

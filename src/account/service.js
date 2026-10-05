@@ -1,8 +1,8 @@
 /**
  * Everything the app asks of accounts, in one place: signing in and out,
- * claiming this device's session, the session's status, the subscriber's own
- * profile and devices, and the admin functions. Built over a supabase-js
- * client, so tests can hand it a stand-in.
+ * two-step verification, claiming this device's session, the session's
+ * status, the subscriber's own profile and devices, and the admin functions.
+ * Built over a supabase-js client, so tests can hand it a stand-in.
  */
 import { SessionError } from "../data/serverBackend.js";
 
@@ -15,8 +15,18 @@ export class AccountError extends Error {
   }
 }
 
+/**
+ * The server no longer takes this login: the session was replaced, signed
+ * out or suspended - or the login itself lapsed (an expired or dropped token
+ * makes requests anonymous, which every function here refuses).
+ */
+function loginLost(error) {
+  if (error.code === "42501" && /session not active|permission denied/.test(error.message || "")) return true;
+  return /^PGRST30[0-9]$/.test(error.code || "") || /JWT/.test(error.message || "");
+}
+
 function toError(error) {
-  if (error.code === "42501" && /session not active/.test(error.message)) return new SessionError();
+  if (loginLost(error)) return new SessionError();
   const e = new Error(error.message || "request failed");
   e.code = error.code;
   return e;
@@ -26,10 +36,13 @@ function toError(error) {
  * @param {{client: object, deviceKey: string, deviceLabel: string}} deps
  */
 export function createAccountService({ client, deviceKey, deviceLabel }) {
+  const watchers = new Set();
   const rpc = async (fn, args = {}) => {
     const { data, error } = await client.rpc(fn, args);
-    if (error) throw toError(error);
-    return data;
+    if (!error) return data;
+    const e = toError(error);
+    if (e instanceof SessionError) watchers.forEach((w) => w());
+    throw e;
   };
 
   /** The admin Edge Function; its refusals come back as AccountError codes. */
@@ -39,9 +52,15 @@ export function createAccountService({ client, deviceKey, deviceLabel }) {
     const answer = error.context && typeof error.context.json === "function" ? await error.context.json().catch(() => ({})) : {};
     throw new AccountError(answer.error || "unavailable");
   }
+  const mfa = () => client.auth.mfa;
 
   return {
     client,
+    /** `onLost()` runs whenever the server refuses this login; returns a function that stops it. */
+    watch(onLost) {
+      watchers.add(onLost);
+      return () => watchers.delete(onLost);
+    },
     async savedSession() {
       const { data } = await client.auth.getSession();
       return data.session || null;
@@ -50,6 +69,26 @@ export function createAccountService({ client, deviceKey, deviceLabel }) {
       const { error } = await client.auth.signInWithPassword({ email: email.trim(), password });
       if (!error) return { ok: true };
       return { error: error.status === 400 || /invalid login credentials/i.test(error.message || "") ? "invalid_credentials" : "unavailable" };
+    },
+    /** Where this login stands on two-step verification: its level, and whether a code is still needed. */
+    async mfaState() {
+      const [{ data: level }, { data: factors }] = await Promise.all([mfa().getAuthenticatorAssuranceLevel(), mfa().listFactors()]);
+      const verified = (factors?.totp || []).find((f) => f.status === "verified");
+      return { level: level?.currentLevel || "aal1", needsCode: level?.currentLevel === "aal1" && level?.nextLevel === "aal2", factorId: verified?.id || null };
+    },
+    /** Starts adding an authenticator app: its QR code and secret, to confirm with a code. */
+    async mfaEnroll() {
+      const { data, error } = await mfa().enroll({ factorType: "totp", friendlyName: `Studio ${new Date().toISOString().slice(0, 10)}` });
+      if (error) throw new AccountError("unavailable");
+      return { factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret };
+    },
+    async mfaVerify(factorId, code) {
+      const { error } = await mfa().challengeAndVerify({ factorId, code: code.trim() });
+      if (error) throw new AccountError(/invalid|verification/i.test(`${error.code} ${error.message}`) ? "wrong_code" : "unavailable");
+    },
+    async mfaRemove(factorId) {
+      const { error } = await mfa().unenroll({ factorId });
+      if (error) throw new AccountError("unavailable");
     },
     /** Makes this the account's only working session; then every other session is signed out. */
     async claim() {
@@ -65,6 +104,13 @@ export function createAccountService({ client, deviceKey, deviceLabel }) {
     },
     /** Forgets this device's saved login without asking the server anything (a refused or replaced session). */
     forget: () => client.auth.signOut({ scope: "local" }),
+    /** Runs `onSignedOut()` when supabase-js drops the login by itself (a refresh the server refused). */
+    onSignedOut(onSignedOut) {
+      const { data } = client.auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_OUT") onSignedOut();
+      });
+      return () => data.subscription.unsubscribe();
+    },
     async changePassword(password) {
       const { error } = await client.auth.updateUser({ password });
       if (error) throw new AccountError(error.code || "unavailable");

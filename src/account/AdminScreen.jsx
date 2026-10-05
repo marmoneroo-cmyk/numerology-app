@@ -8,12 +8,26 @@ import { useState } from "react";
 import { Card, Field, SectionTitle, ScreenTitle, BackButton, ConfirmAction, Loading, ErrorCard, useLoad, colors, rowButton, btnPrimary, btnGhost } from "../workspace/ui.jsx";
 import { PLAN_KEYS, planLabel, statusLabel, auditLine, dateTime, generatePassword } from "./labels.js";
 import { AccountError } from "./service.js";
+import { countLabel } from "../workspace/format.js";
 
 export default function AdminScreen({ account, he, dk }) {
   const c = colors(dk);
   const [view, setView] = useState({ name: "list" });
   const admin = account.service.admin;
   const props = { admin, he, c, me: account.profile, go: setView };
+  // the database refuses admin work to a session without the second step; say so plainly instead
+  if (account.aal !== "aal2") {
+    return (
+      <Card dir={he ? "rtl" : "ltr"}>
+        <ScreenTitle c={c} size={24} style={{ marginBottom: 8 }}>{he ? "חשבונות" : "Accounts"}</ScreenTitle>
+        <p role="status" style={{ margin: 0, lineHeight: 1.8, fontSize: 14 }}>
+          {he
+            ? "כדי לנהל חשבונות צריך אימות דו-שלבי. מפעילים אותו ב\"החשבון שלי\", ומאז הכניסה היא עם סיסמה וקוד מהטלפון."
+            : "Managing accounts needs two-step verification. Turn it on under \"My account\"; from then on you sign in with a password and a code from your phone."}
+        </p>
+      </Card>
+    );
+  }
   return (
     <div dir={he ? "rtl" : "ltr"} style={{ color: c.tm }}>
       {view.name === "list" && <AccountList {...props} />}
@@ -45,7 +59,7 @@ function AccountList({ admin, he, c, go }) {
                 <span style={{ display: "block", fontSize: 15 }}>{a.fullName || a.email}{a.role === "admin" ? ` · ${he ? "מנהל/ת" : "admin"}` : ""}</span>
                 <span style={{ display: "block", fontSize: 12, color: c.ts, direction: "ltr", textAlign: he ? "right" : "left" }}>{a.email}</span>
                 <span style={{ display: "block", fontSize: 12, color: a.status === "suspended" ? c.danger : c.ts }}>
-                  {[planLabel(a.plan, he), statusLabel(a.status, he), he ? `${a.devices} מכשירים` : `${a.devices} devices`, he ? `${a.clients} לקוחות` : `${a.clients} clients`,
+                  {[planLabel(a.plan, he), statusLabel(a.status, he), countLabel(a.devices, "devices", he), countLabel(a.clients, "clients", he),
                     a.lastSeenAt ? (he ? `נראה ${dateTime(a.lastSeenAt)}` : `seen ${dateTime(a.lastSeenAt)}`) : he ? "עוד לא נכנס" : "never signed in"].join(" · ")}
                 </span>
               </span>
@@ -171,7 +185,7 @@ function AccountDetails({ admin, he, c, me, go, userId }) {
         <p style={{ margin: "6px 0 0", fontSize: 13, color: c.ts }}>
           <span dir="ltr">{a.email}</span>{a.phone ? ` · ${a.phone}` : ""} · {statusLabel(a.status, he)} · {he ? `נפתח ${dateTime(a.createdAt)}` : `opened ${dateTime(a.createdAt)}`}
         </p>
-        <p style={{ margin: "4px 0 0", fontSize: 13, color: c.ts }}>{he ? `${a.clients} לקוחות · ${a.readings} בדיקות` : `${a.clients} clients · ${a.readings} readings`}</p>
+        <p style={{ margin: "4px 0 0", fontSize: 13, color: c.ts }}>{`${countLabel(a.clients, "clients", he)} · ${countLabel(a.readings, "readings", he)}`}</p>
         {message && <p role="alert" style={{ color: c.danger, fontSize: 13 }}>{message}</p>}
       </Card>
       <PlanCard a={a} isMe={isMe} he={he} c={c} onSave={(patch) => act(() => admin.updateAccount(a.id, patch))} />

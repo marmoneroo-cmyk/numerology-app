@@ -32,6 +32,9 @@ function toError(error) {
 
 const isMissing = (error) => String(error.statusCode) === "404" || /not found/i.test(error.message || "");
 
+/** The database answered with a reason (a SQLSTATE code), so the transaction did not happen. */
+const refused = (err) => err instanceof SessionError || /^[0-9A-Z]{5}$/.test(err.code || "");
+
 /**
  * @param {object} client a supabase-js client (rpc and storage), or a stand-in with the same shape
  * @param {string} userId the signed-in user, whose Storage folder holds the files
@@ -79,15 +82,21 @@ export function serverBackend(client, userId) {
     const uploads = ops.filter((op) => op.type === "putBlob");
     const removals = ops.filter((op) => op.type === "deleteBlob").map((op) => op.id);
     const uploaded = [];
+    let sent = false;
     try {
       for (const op of uploads) {
         await putBlob(op.id, op.blob);
         uploaded.push(op.id);
       }
-      if (records.length) await call("ws_batch", { p_ops: records });
+      if (records.length) {
+        sent = true;
+        await call("ws_batch", { p_ops: records });
+      }
     } catch (err) {
-      // undo the uploads; if even that fails, the leftover bytes belong to no record and are never shown
-      await removeBlobs(uploaded).catch(() => {});
+      // Undo the uploads only when nothing was saved for sure: the records were never sent, or the
+      // database refused them. With no answer at all (the network dropped) they may have been saved,
+      // and a leftover file is harmless where a missing one is not.
+      if (!sent || refused(err)) await removeBlobs(uploaded).catch(() => {});
       throw err;
     }
     // the records are gone; bytes that fail to delete here belong to no record and are never shown
@@ -96,7 +105,7 @@ export function serverBackend(client, userId) {
 
   return {
     persistent: true,
-    remote: true,
+
     async all(name) {
       checkStore(name);
       return call("ws_all", { p_store: name });

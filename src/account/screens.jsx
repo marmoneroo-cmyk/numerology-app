@@ -48,11 +48,53 @@ export function SignInScreen({ he, dk, account, onLeave }) {
   );
 }
 
+const CODE_ERRORS = {
+  wrong_code: ["הקוד שגוי. נסו את הקוד הנוכחי באפליקציה.", "Wrong code. Try the current code in the app."],
+  unavailable: ["אין חיבור כרגע. נסו שוב בעוד רגע.", "No connection right now. Try again in a moment."],
+};
+
+/** The second step: the six-digit code from the authenticator app. */
+export function CodeScreen({ he, dk, account }) {
+  const c = colors(dk);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const problem = await account.verifyCode(code);
+    setBusy(false);
+    if (problem) {
+      setError((CODE_ERRORS[problem] || CODE_ERRORS.unavailable)[he ? 0 : 1]);
+      setCode("");
+    }
+  };
+  return (
+    <Card style={narrow}>
+      <ScreenTitle c={c} size={24} style={{ marginBottom: 8 }}>{he ? "אימות דו-שלבי" : "Two-step verification"}</ScreenTitle>
+      <p style={{ margin: "0 0 16px", fontSize: 13, color: c.ts, lineHeight: 1.7 }}>
+        {he ? "הקלידו את הקוד בן 6 הספרות מאפליקציית האימות בטלפון." : "Type the 6-digit code from the authenticator app on your phone."}
+      </p>
+      <form onSubmit={submit} noValidate>
+        <Field label={he ? "קוד מהאפליקציה" : "Code from the app"} error={error} c={c}>
+          {(id) => <input id={id} className="gi" dir="ltr" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />}
+        </Field>
+        <button className="gb" type="submit" style={btnPrimary} disabled={busy || code.length !== 6}>{he ? "אימות" : "Verify"}</button>
+      </form>
+      <button className="ghost" style={{ ...btnGhost, marginTop: 14 }} onClick={account.toSignIn}>{he ? "חזרה למסך הכניסה" : "Back to sign in"}</button>
+    </Card>
+  );
+}
+
+/** "2 מכשירים", but "מכשיר אחד". */
+const devicesText = (n, he) => (he ? (n === 1 ? "מכשיר אחד" : `${n} מכשירים`) : n === 1 ? "1 device" : `${n} devices`);
+
 const BLOCKED = {
   suspended: (he) => (he ? "החשבון מושהה. לפרטים פנו למנהלת המערכת." : "This account is suspended. Please contact the administrator."),
   device_limit: (he, limit) => (he
-    ? `החשבון כבר פעיל ב-${limit} מכשירים, וזה המקסימום שלו. אפשר להסיר מכשיר ישן דרך "החשבון שלי" במכשיר שכבר מחובר, או לפנות למנהלת המערכת.`
-    : `This account is already used on ${limit} devices, its maximum. Remove an old one under "My account" on a device that is signed in, or contact the administrator.`),
+    ? `החשבון כבר פעיל ב${limit === 1 ? "מכשיר אחד" : `-${limit} מכשירים`}, וזה המקסימום שלו. אפשר להסיר מכשיר ישן דרך "החשבון שלי" במכשיר שכבר מחובר, או לפנות למנהלת המערכת.`
+    : `This account is already used on ${devicesText(limit, he)}, its maximum. Remove an old one under "My account" on a device that is signed in, or contact the administrator.`),
   device_changes: (he) => (he
     ? "לחשבון נוספו יותר מדי מכשירים חדשים בחודש האחרון. כדי לפתוח אותו כאן, פנו למנהלת המערכת."
     : "Too many new devices were added to this account in the last month. To open it here, contact the administrator."),
@@ -90,7 +132,11 @@ export function ReplacedScreen({ he, dk, account }) {
 
 export function WaitScreen({ he, dk }) {
   const c = colors(dk);
-  return <Card style={{ ...narrow, textAlign: "center", color: c.ts }}>{he ? "בודקים את החשבון…" : "Checking the account…"}</Card>;
+  return (
+    <Card style={{ ...narrow, textAlign: "center", color: c.ts }}>
+      <span role="status">{he ? "בודקים את החשבון…" : "Checking the account…"}</span>
+    </Card>
+  );
 }
 
 export function ProblemScreen({ he, dk, account }) {
@@ -98,7 +144,10 @@ export function ProblemScreen({ he, dk, account }) {
   return (
     <Card style={{ ...narrow, textAlign: "center" }}>
       <p role="alert" style={{ color: c.danger, marginTop: 0 }}>{he ? "אין חיבור לחשבון כרגע." : "The account cannot be reached right now."}</p>
-      <button className="ghost" style={btnGhost} onClick={account.retry}>{he ? "לנסות שוב" : "Try again"}</button>
+      <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+        <button className="ghost" style={btnGhost} onClick={account.retry}>{he ? "לנסות שוב" : "Try again"}</button>
+        <button className="ghost" style={btnGhost} onClick={account.toSignIn}>{he ? "חזרה למסך הכניסה" : "Back to sign in"}</button>
+      </div>
     </Card>
   );
 }

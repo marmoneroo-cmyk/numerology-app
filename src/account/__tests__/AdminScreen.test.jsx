@@ -28,7 +28,7 @@ function setup(overrides = {}) {
     ]),
     ...overrides,
   };
-  render(<AdminScreen account={{ profile: ME, service: { admin } }} he dk />);
+  render(<AdminScreen account={{ profile: ME, aal: overrides.aal || "aal2", service: { admin } }} he dk />);
   return admin;
 }
 const openAccount = async (name) => fireEvent.click(await screen.findByRole("button", { name: new RegExp(name) }));
@@ -39,6 +39,17 @@ afterEach(() => {
 });
 
 describe("accounts (admin)", () => {
+  it("first asks for two-step verification, without which the database refuses admin work anyway", async () => {
+    const admin = setup({ aal: "aal1" });
+    expect(await screen.findByText(/כדי לנהל חשבונות צריך אימות דו-שלבי/)).toBeTruthy();
+    expect(admin.listAccounts).not.toHaveBeenCalled();
+  });
+
+  it("writes counts in natural Hebrew", async () => {
+    setup();
+    expect((await screen.findByRole("button", { name: /שלומי/ })).textContent).toContain("מכשיר אחד");
+  });
+
   it("lists the accounts with plan, status and numbers, and filters them", async () => {
     setup();
     const dana = await screen.findByRole("button", { name: /דנה לוי/ });

@@ -4,13 +4,15 @@
  * on the server.
  */
 import "fake-indexeddb/auto";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll } from "vitest";
 import { createStore, NotFoundError, randomId, WIPED_PERSON } from "../store.js";
 import { memoryBackend } from "../memoryBackend.js";
 import { idbBackend } from "../idbBackend.js";
 import { ValidationError, LIMITS } from "../validation.js";
 import { ENGINE_VERSION, fullCalc, matchReading, yearCycle } from "../../engine/index.js";
-import { makeServerBackend } from "../../../supabase/tests/serverBackendFixture.js";
+import { makeServerBackend, prepareServer } from "../../../supabase/tests/serverBackendFixture.js";
+
+beforeAll(() => prepareServer(), 30000);
 
 let dbCounter = 0;
 const BACKENDS = [
@@ -435,6 +437,16 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
       expect((await store.clients.get(c.id)).updatedAt).toBe(c.updatedAt);
     });
 
+    it("a restore reads what is already here once, not record by record", async () => {
+      await seed(store);
+      const backup = json(await store.exportAll());
+      const backend = await makeBackend();
+      let gets = 0;
+      const counted = await makeStore({ ...backend, get: async (...args) => { gets++; return backend.get(...args); } }, "counted");
+      expect(await counted.importAll(backup)).toEqual({ clients: 1, readings: 1, attachments: 1 });
+      expect(gets).toBe(0);
+    });
+
     it("a backup taken while a client is being deleted still restores", async () => {
       const backend = await makeBackend();
       const s = await makeStore(backend);
@@ -493,6 +505,8 @@ describe.each(BACKENDS)("store on %s", (_, makeBackend) => {
         { ...good, attachments: [{ ...good.attachments[0], data: "%%%not base64%%%" }] },
         // a file of one client linked to a reading of another
         { ...good, clients: [...good.clients, other], attachments: [{ ...good.attachments[0], clientId: other.id }] },
+        // ids become file names on the server: plain ids only
+        { ...good, clients: [{ ...good.clients[0], id: "../evil" }], readings: [], attachments: [] },
         // the same record twice: which copy wins would be anyone's guess
         { ...good, clients: [good.clients[0], { ...good.clients[0], notes: "עותק ישן" }] },
         { ...good, readings: [good.readings[0], good.readings[0]] },

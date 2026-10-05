@@ -15,7 +15,8 @@ export const BACKUP_FORMAT = "numerology-workspace-backup";
 const BACKUP_VERSION = 1;
 /** How far ahead of this device's clock a timestamp may be (clock drift) before it counts as from the future. */
 const FUTURE_TOLERANCE_MS = 24 * 60 * 60 * 1000;
-const MAX_ID_LENGTH = 100;
+/** A record id: it also names the file on the server, so plain characters only. */
+const PLAIN_ID = /^[A-Za-z0-9_-]{1,100}$/;
 
 const later = (a, b) => (a && a > b ? a : b);
 
@@ -40,9 +41,8 @@ export function backupOf(backend, { now }) {
     };
   }
 
-  /** The write that merges `client` into this store's copy, or null when there is nothing to write. */
-  async function mergeClient(client, fromFuture) {
-    const existing = await backend.get("clients", client.id);
+  /** The write that merges `client` into this store's copy (`existing`), or null when there is nothing to write. */
+  function mergeClient(client, fromFuture, existing) {
     if (!existing) return { value: client, restored: true };
     const lastActivityAt = later(existing.lastActivityAt, client.lastActivityAt);
     if (!fromFuture && client.updatedAt > existing.updatedAt) return { value: { ...client, lastActivityAt }, restored: true };
@@ -55,21 +55,22 @@ export function backupOf(backend, { now }) {
   async function importAll(backup, { mode = "merge" } = {}) {
     if (mode !== "merge") throw new ValidationError([{ field: "mode", code: "invalid" }]);
     const parsed = await parseBackup(backup, backend, now());
+    const { here } = parsed;
     const ops = [];
     const counts = { clients: 0, readings: 0, attachments: 0 };
     for (const { client, fromFuture } of parsed.clients) {
-      const write = await mergeClient(client, fromFuture);
+      const write = mergeClient(client, fromFuture, here.clients.get(client.id));
       if (!write) continue;
       ops.push({ type: "put", store: "clients", value: write.value });
       if (write.restored) counts.clients++;
     }
     for (const reading of parsed.readings) {
-      if (await backend.get("readings", reading.id)) continue;
+      if (here.readings.has(reading.id)) continue;
       ops.push({ type: "put", store: "readings", value: reading });
       counts.readings++;
     }
     for (const { record, bytes } of parsed.files) {
-      if (await backend.get("attachments", record.id)) continue;
+      if (here.attachments.has(record.id)) continue;
       ops.push({ type: "putBlob", id: record.id, blob: { type: record.type, bytes } }, { type: "put", store: "attachments", value: record });
       counts.attachments++;
     }
@@ -86,18 +87,25 @@ async function parseBackup(backup, backend, today) {
   if (!backup || backup.format !== BACKUP_FORMAT || backup.version !== BACKUP_VERSION || !isList(backup.clients) || !isList(backup.readings) || !isList(backup.attachments)) {
     throw new ValidationError([{ field: "backup", code: "format" }]);
   }
+  // what is here already, read once (a server store would otherwise ask record by record)
+  const [hereClients, hereReadings, hereAttachments] = await Promise.all([backend.all("clients"), backend.all("readings"), backend.all("attachments")]);
+  const here = {
+    clients: new Map(hereClients.map((c) => [c.id, c])),
+    readings: new Set(hereReadings.map((r) => r.id)),
+    attachments: new Set(hereAttachments.map((a) => a.id)),
+  };
   const ctx = {
     ...problems(),
     today,
     nowMs: today.getTime(),
-    clientIds: new Set((await backend.all("clients")).map((c) => c.id)),
-    readingOwner: new Map((await backend.all("readings")).map((r) => [r.id, r.clientId])),
+    clientIds: new Set(here.clients.keys()),
+    readingOwner: new Map(hereReadings.map((r) => [r.id, r.clientId])),
   };
   const clients = parseClients(backup.clients, ctx);
   const readings = parseReadings(backup.readings, ctx);
   const files = parseFiles(backup.attachments, ctx);
   if (ctx.errors.length) throw new ValidationError(ctx.errors);
-  return { clients, readings, files };
+  return { clients, readings, files, here };
 }
 
 /** Collects every problem, so one restore attempt reports them all. */
@@ -137,7 +145,7 @@ function normaliseStamp(s, nowMs) {
 function identity(r, prefix, ctx, seen, hasUpdatedAt = true) {
   const created = r && normaliseStamp(r.createdAt, ctx.nowMs);
   const updated = hasUpdatedAt ? r && normaliseStamp(r.updatedAt, ctx.nowMs) : created;
-  if (!r || typeof r.id !== "string" || !r.id || r.id.length > MAX_ID_LENGTH || !created || !updated) return ctx.fail(prefix, "invalid");
+  if (!r || typeof r.id !== "string" || !PLAIN_ID.test(r.id) || !created || !updated) return ctx.fail(prefix, "invalid");
   if (seen.has(r.id)) return ctx.fail(`${prefix}.id`, "duplicate");
   seen.add(r.id);
   return { id: r.id, createdAt: created.iso, updatedAt: updated.iso, fromFuture: created.future || updated.future };

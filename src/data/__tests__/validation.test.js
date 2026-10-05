@@ -68,6 +68,10 @@ describe("validateClient", () => {
     expect(codes(() => validateClient({ ...ok, tags: ["x".repeat(LIMITS.tag + 1)] }, { today: TODAY }))).toEqual(["tags.tooLong"]);
   });
 
+  it("drops null characters, which the server cannot store inside a record", () => {
+    expect(validateClient({ fullName: "שני\u0000", notes: "a\u0000b" }, { today: TODAY })).toMatchObject({ fullName: "שני", notes: "ab" });
+  });
+
   it("limits notes, coerces flags and drops unknown fields", () => {
     const v = validateClient({ ...ok, notes: "  הערה  ", consent: "yes", archived: true, password: "x", id: "evil" }, { today: TODAY });
     expect(v).toEqual({
@@ -146,8 +150,8 @@ describe("validateAttachment", () => {
       clientId: "c1", readingId: null, name: "מפה.pdf", type: "application/pdf", size: 1200,
     });
     expect(validateAttachment({ clientId: "c1", name: "a/b/c.png", type: "", size: 1 }).name).toBe("c.png");
-    expect(validateAttachment({ clientId: "c1", name: "invoice‮gpj.exe", type: "", size: 1 }).name).toBe("invoicegpj.exe");
-    expect(validateAttachment({ clientId: "c1", name: "a​b\u0007.txt", type: "", size: 1 }).name).toBe("ab.txt");
+    expect(validateAttachment({ clientId: "c1", name: "invoice\u202Egpj.exe", type: "", size: 1 }).name).toBe("invoicegpj.exe");
+    expect(validateAttachment({ clientId: "c1", name: "a\u200Bb\u0007.txt", type: "", size: 1 }).name).toBe("ab.txt");
     expect(codes(() => validateAttachment({ clientId: "c1", name: "big.mov", type: "video/quicktime", size: LIMITS.attachmentBytes + 1 }))).toEqual(["size.tooLarge"]);
     expect(codes(() => validateAttachment({ clientId: "c1", name: "  ", type: "text/plain", size: 3 }))).toEqual(["name.required"]);
   });

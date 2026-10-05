@@ -16,11 +16,21 @@ beforeAll(async () => {
 }, 30000);
 
 let devices = 0;
-async function signedIn() {
+/** @param {{loseAnswers?: boolean}} [opts] loseAnswers: ws_batch runs, but its answer never arrives (the network dropped) */
+async function signedIn({ loseAnswers = false } = {}) {
   const id = await createUser(db);
   const user = { id, sessionId: await newSession(db, id) };
   await rpc(db, user, "claim_session", { p_device_key: `server-test-device-${String(++devices).padStart(6, "0")}`, p_label: "tests" });
-  return { user, backend: serverBackend(fakeClient(db, user, storage), id) };
+  const client = fakeClient(db, user, storage);
+  if (loseAnswers) {
+    const send = client.rpc;
+    client.rpc = async (fn, args) => {
+      const answer = await send(fn, args);
+      // what supabase-js reports when fetch fails: an error with no SQLSTATE code
+      return fn === "ws_batch" ? { data: null, error: { message: "TypeError: Failed to fetch", code: "" } } : answer;
+    };
+  }
+  return { user, backend: serverBackend(client, id) };
 }
 const bytes = (...xs) => new Uint8Array(xs);
 const stored = (userId, id) => storage.has(`ws-files/${userId}/${id}`);
@@ -28,7 +38,7 @@ const stored = (userId, id) => storage.has(`ws-files/${userId}/${id}`);
 describe("serverBackend", () => {
   it("removes the bytes it uploaded when the database refuses the records", async () => {
     const { user, backend } = await signedIn();
-    const tooBig = { id: "c1", notes: "x".repeat(70000) }; // over the 64 KB a client record may take
+    const tooBig = { id: "c1", notes: "x".repeat(140000) }; // over the 128 KB a client record may take
     await expect(backend.batch([
       { type: "putBlob", id: "f1", blob: { type: "text/plain", bytes: bytes(1, 2) } },
       { type: "put", store: "attachments", value: { id: "f1", clientId: "c1" } },
@@ -36,6 +46,17 @@ describe("serverBackend", () => {
     ])).rejects.toThrow(/check constraint/);
     expect(stored(user.id, "f1")).toBe(false);
     expect(await backend.all("attachments")).toEqual([]);
+  });
+
+  it("keeps the bytes when the answer is lost and the records may well have been saved", async () => {
+    const { user, backend } = await signedIn({ loseAnswers: true });
+    await expect(backend.batch([
+      { type: "putBlob", id: "f1", blob: { type: "text/plain", bytes: bytes(1, 2) } },
+      { type: "put", store: "attachments", value: { id: "f1" } },
+    ])).rejects.toThrow(/Failed to fetch/);
+    // the database did save the record, so its bytes must still be there
+    expect(await backend.all("attachments")).toEqual([{ id: "f1" }]);
+    expect(stored(user.id, "f1")).toBe(true);
   });
 
   it("deletes a file's bytes only once its record is gone", async () => {
@@ -48,7 +69,7 @@ describe("serverBackend", () => {
     await expect(backend.batch([
       { type: "delete", store: "attachments", id: "f1" },
       { type: "deleteBlob", id: "f1" },
-      { type: "put", store: "clients", value: { id: "bad", notes: "x".repeat(70000) } },
+      { type: "put", store: "clients", value: { id: "bad", notes: "x".repeat(140000) } },
     ])).rejects.toThrow();
     expect(stored(user.id, "f1")).toBe(true);
     await backend.batch([{ type: "delete", store: "attachments", id: "f1" }, { type: "deleteBlob", id: "f1" }]);

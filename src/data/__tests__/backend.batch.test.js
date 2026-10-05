@@ -1,8 +1,10 @@
 import "fake-indexeddb/auto";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import { memoryBackend } from "../memoryBackend.js";
 import { idbBackend } from "../idbBackend.js";
-import { makeServerBackend } from "../../../supabase/tests/serverBackendFixture.js";
+import { makeServerBackend, prepareServer } from "../../../supabase/tests/serverBackendFixture.js";
+
+beforeAll(() => prepareServer(), 30000);
 
 let n = 0;
 describe.each([

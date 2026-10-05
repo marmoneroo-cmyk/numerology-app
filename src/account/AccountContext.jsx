@@ -1,23 +1,25 @@
 /**
  * The account in front of the Studio. AccountProvider loads the account
- * machinery only while the Studio is open (the public site never loads it)
- * and runs the session's life: checking a saved login, signing in, claiming
- * this device's session, watching that it is still the account's active one,
- * and signing out. AccountGate shows the Studio only when the account is
- * ready, and otherwise the screen that says why not.
+ * machinery only once the Studio opens (the public site never loads it) and
+ * runs the session's life: checking a saved login, signing in, the second
+ * step of two-step verification, claiming this device's session, watching
+ * that it is still the account's active one, and signing out. AccountGate
+ * shows the Studio only when the account is ready, and otherwise the screen
+ * that says why not.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { SignInScreen, BlockedScreen, ReplacedScreen, WaitScreen, ProblemScreen } from "./screens.jsx";
+import { SessionError } from "../data/serverBackend.js";
+import { SignInScreen, CodeScreen, BlockedScreen, ReplacedScreen, WaitScreen, ProblemScreen } from "./screens.jsx";
 
 const AccountContext = createContext(null);
 
-/** {state, profile, service, signIn, signOut, check, updateProfile, toSignIn} */
+/** {state, profile, aal, service, activate, signIn, verifyCode, signOut, check, refreshAal, updateProfile, toSignIn, retry} */
 export const useAccount = () => useContext(AccountContext);
 
 /** How often a ready session asks whether it is still the account's active one. */
 const WATCH_MS = 60000;
 
-/** The account service over the real Supabase client, created once per page. */
+/** The account service over the real Supabase client, created once per page (again after a failed load). */
 let shared;
 function loadAccountService() {
   shared ??= (async () => {
@@ -32,7 +34,10 @@ function loadAccountService() {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
     });
     return createAccountService({ client, deviceKey: device.deviceKey(), deviceLabel: device.deviceLabel() });
-  })();
+  })().catch((e) => {
+    shared = null; // offline, or a chunk missing after a deploy: the next try loads again
+    throw e;
+  });
   return shared;
 }
 
@@ -42,60 +47,86 @@ function loadAccountService() {
  *   the Studio first opens. `loadService` is injectable for tests.
  */
 export function AccountProvider({ active, loadService = loadAccountService, children }) {
-  // idle | checking | signed_out | claiming | ready | blocked | replaced | problem
+  // idle | checking | signed_out | code | claiming | ready | blocked | replaced | problem
   const [state, setState] = useState({ name: "idle" });
   const [activated, setActivated] = useState(false);
   const isActive = active ?? activated;
   const serviceRef = useRef(null);
-  const service = async () => (serviceRef.current ??= await loadService());
+
+  /**
+   * Acts on the server's word about this session. Anything but "ok" closes the
+   * Studio, saying why. Returns false when there was nothing to act on (ok, or
+   * no answer at all: offline, so it keeps working and asks again later).
+   */
+  const settle = useCallback(async (svc) => {
+    let answer;
+    try {
+      answer = (await svc.status()).status;
+    } catch (e) {
+      if (!(e instanceof SessionError)) return false;
+      answer = "signed_out"; // the server does not even take the login any more
+    }
+    if (answer === "ok") return false;
+    await svc.forget().catch(() => {});
+    if (answer === "replaced") setState({ name: "replaced" });
+    else if (answer === "signed_out") setState({ name: "signed_out" });
+    else setState({ name: "blocked", reason: answer });
+    return true;
+  }, []);
+
+  const check = useCallback(() => (serviceRef.current ? settle(serviceRef.current) : Promise.resolve(false)), [settle]);
+
+  const service = async () => {
+    if (serviceRef.current) return serviceRef.current;
+    const svc = await loadService();
+    if (!serviceRef.current) {
+      serviceRef.current = svc;
+      svc.watch?.(() => check()); // the workspace or a screen was refused: ask why at once
+      svc.onSignedOut?.(() => setState((s) => (s.name === "ready" ? { name: "signed_out" } : s)));
+    }
+    return serviceRef.current;
+  };
 
   const claim = useCallback(async (svc) => {
     setState({ name: "claiming" });
     try {
       const result = await svc.claim();
       if (result.status === "ok") {
-        setState({ name: "ready", profile: result.profile, deviceId: result.deviceId });
+        const { level } = await svc.mfaState().catch(() => ({ level: "aal1" }));
+        setState({ name: "ready", profile: result.profile, deviceId: result.deviceId, aal: level });
         return;
       }
       await svc.forget(); // this device's login can do nothing now
       setState({ name: "blocked", reason: result.status, limit: result.limit });
-    } catch {
+    } catch (e) {
+      // a saved login the server already ended (signed in elsewhere, or lapsed): ask why, then start over
+      if ((e instanceof SessionError || e.code === "28000") && (await settle(svc))) return;
       setState({ name: "problem", retry: "claim" });
     }
-  }, []);
+  }, [settle]);
+
+  /** After the password: the code from the authenticator app when the account has one; then the claim. */
+  const proceed = useCallback(async (svc) => {
+    const mfa = await svc.mfaState().catch(() => ({ needsCode: false }));
+    if (mfa.needsCode) setState({ name: "code", factorId: mfa.factorId });
+    else await claim(svc);
+  }, [claim]);
 
   const start = useCallback(async () => {
     setState({ name: "checking" });
     try {
       const svc = await service();
-      if (await svc.savedSession()) await claim(svc);
+      if (await svc.savedSession()) await proceed(svc);
       else setState({ name: "signed_out" });
     } catch {
       setState({ name: "problem", retry: "start" });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [claim]);
+  }, [proceed]);
 
   useEffect(() => {
     if (isActive) start();
   }, [isActive, start]);
-
-  /** Asks whether this session still works; acts on the answer. Offline, it keeps working and asks again later. */
-  const check = useCallback(async () => {
-    const svc = serviceRef.current;
-    if (!svc) return;
-    let answer;
-    try {
-      answer = (await svc.status()).status;
-    } catch {
-      return;
-    }
-    if (answer === "ok") return;
-    await svc.forget().catch(() => {});
-    if (answer === "replaced") setState({ name: "replaced" });
-    else if (answer === "signed_out") setState({ name: "signed_out" });
-    else setState({ name: "blocked", reason: answer });
-  }, []);
 
   useEffect(() => {
     if (state.name !== "ready") return undefined;
@@ -117,6 +148,7 @@ export function AccountProvider({ active, loadService = loadAccountService, chil
     reason: state.reason,
     limit: state.limit,
     profile: state.profile || null,
+    aal: state.aal || "aal1",
     service: serviceRef.current,
     /** Starts the account machinery (the Studio opened). Calling it again does nothing. */
     activate: () => setActivated(true),
@@ -125,6 +157,17 @@ export function AccountProvider({ active, loadService = loadAccountService, chil
       const svc = await service();
       const result = await svc.signIn(email, password);
       if (result.error) return result.error;
+      await proceed(svc);
+      return null;
+    },
+    /** The authenticator code (second step). @returns {Promise<string|null>} an error code, or null */
+    async verifyCode(code) {
+      const svc = serviceRef.current;
+      try {
+        await svc.mfaVerify(state.factorId, code);
+      } catch (e) {
+        return e.code || "unavailable";
+      }
       await claim(svc);
       return null;
     },
@@ -133,12 +176,20 @@ export function AccountProvider({ active, loadService = loadAccountService, chil
       setState({ name: "signed_out" });
     },
     check,
+    /** After setting up two-step verification here, this session is verified too. */
+    async refreshAal() {
+      const { level } = await serviceRef.current.mfaState();
+      setState((s) => (s.name === "ready" ? { ...s, aal: level } : s));
+    },
     retry: () => (state.retry === "claim" && serviceRef.current ? claim(serviceRef.current) : start()),
-    toSignIn: () => setState({ name: "signed_out" }),
+    async toSignIn() {
+      await serviceRef.current?.forget().catch(() => {});
+      setState({ name: "signed_out" });
+    },
     /** The profile after the subscriber edited their name or phone. */
     updateProfile: (patch) => setState((s) => (s.name === "ready" ? { ...s, profile: { ...s.profile, ...patch } } : s)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [state, claim, start, check]);
+  }), [state, claim, start, check, proceed]);
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;
 }
@@ -152,6 +203,8 @@ export function AccountGate({ he, dk, onLeave, children }) {
       return children;
     case "signed_out":
       return <SignInScreen {...props} />;
+    case "code":
+      return <CodeScreen {...props} />;
     case "blocked":
       return <BlockedScreen {...props} />;
     case "replaced":

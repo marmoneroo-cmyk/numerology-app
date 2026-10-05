@@ -85,6 +85,7 @@ const COUNTS = {
   readings: [["בדיקה אחת", "בדיקות"], ["1 reading", "readings"]],
   savedReadings: [["בדיקה שמורה אחת", "בדיקות שמורות"], ["1 saved reading", "saved readings"]],
   files: [["קובץ אחד", "קבצים"], ["1 file", "files"]],
+  devices: [["מכשיר אחד", "מכשירים"], ["1 device", "devices"]],
   errors: [["שגיאה אחת", "שגיאות"], ["1 error", "errors"]],
 };
 

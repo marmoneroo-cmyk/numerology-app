@@ -5,3 +5,6 @@ dist
 
 .vercel
 coverage
+.env.*
+supabase/.temp
+supabase/.branches

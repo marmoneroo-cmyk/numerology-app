@@ -7,18 +7,32 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup, act } from "@testing-library/react";
 import { AccountProvider, AccountGate, useAccount } from "../AccountContext.jsx";
+import { AccountError } from "../service.js";
+import { SessionError } from "../../data/serverBackend.js";
 
 const PROFILE = { id: "u1", email: "dana@example.com", fullName: "דנה לוי", phone: "052-1234567", role: "subscriber", plan: "pro", deviceLimit: 2 };
 
-function fakeService({ saved = null, signIn = { ok: true }, claim = { status: "ok", profile: PROFILE, deviceId: "d1" }, status = { status: "ok" } } = {}) {
-  return {
+function fakeService({ saved = null, signIn = { ok: true }, claim = { status: "ok", profile: PROFILE, deviceId: "d1" }, status = { status: "ok" }, mfa = { level: "aal1", needsCode: false, factorId: null } } = {}) {
+  const service = {
     savedSession: vi.fn(async () => saved),
     signIn: vi.fn(async () => signIn),
-    claim: vi.fn(async () => claim),
+    claim: vi.fn(async () => (typeof claim === "function" ? claim() : claim)),
     status: vi.fn(async () => (typeof status === "function" ? status() : status)),
     signOut: vi.fn(async () => {}),
     forget: vi.fn(async () => {}),
+    mfaState: vi.fn(async () => (typeof mfa === "function" ? mfa() : mfa)),
+    mfaVerify: vi.fn(async () => {}),
+    // what the provider hooks into: the store's and screens' refusals, and supabase-js dropping the login
+    watch: vi.fn((fn) => {
+      service.lost = fn;
+      return () => {};
+    }),
+    onSignedOut: vi.fn((fn) => {
+      service.droppedLogin = fn;
+      return () => {};
+    }),
   };
+  return service;
 }
 
 function Studio() {
@@ -167,6 +181,74 @@ describe("account gate", () => {
     const { onLeave } = setup(fakeService());
     fireEvent.click(await screen.findByRole("button", { name: "חזרה לאתר" }));
     expect(onLeave).toHaveBeenCalled();
+  });
+
+  it("a saved login the server already ended (signed in elsewhere) says so instead of looping on retry", async () => {
+    const service = fakeService({ saved: { access_token: "jwt" }, claim: () => { throw Object.assign(new Error("not signed in"), { code: "28000" }); }, status: { status: "replaced" } });
+    setup(service);
+    expect(await screen.findByRole("heading", { name: "החשבון נפתח במכשיר אחר" })).toBeTruthy();
+    expect(service.forget).toHaveBeenCalled();
+  });
+
+  it("closes the Studio when the login lapsed while the device slept (the server no longer takes it)", async () => {
+    let answer = { status: "ok" };
+    const service = fakeService({ saved: { access_token: "jwt" }, status: () => {
+      if (answer === "lapsed") throw new SessionError();
+      return answer;
+    } });
+    setup(service);
+    await screen.findByText("הסטודיו של דנה לוי");
+    answer = "lapsed";
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(await screen.findByLabelText("סיסמה")).toBeTruthy();
+  });
+
+  it("closes the Studio when supabase-js drops the login by itself", async () => {
+    const service = fakeService({ saved: { access_token: "jwt" } });
+    setup(service);
+    await screen.findByText("הסטודיו של דנה לוי");
+    await act(async () => service.droppedLogin());
+    expect(await screen.findByLabelText("סיסמה")).toBeTruthy();
+  });
+
+  it("checks at once when the workspace or a screen is refused, instead of waiting a minute", async () => {
+    let answer = { status: "ok" };
+    const service = fakeService({ saved: { access_token: "jwt" }, status: () => answer });
+    setup(service);
+    await screen.findByText("הסטודיו של דנה לוי");
+    answer = { status: "replaced" };
+    await act(async () => service.lost());
+    expect(await screen.findByRole("heading", { name: "החשבון נפתח במכשיר אחר" })).toBeTruthy();
+  });
+
+  it("asks for the authenticator code after the password when two-step verification is on", async () => {
+    let level = { level: "aal1", needsCode: true, factorId: "f1" };
+    const service = fakeService({ mfa: () => level });
+    service.mfaVerify.mockImplementationOnce(async () => { throw new AccountError("wrong_code"); });
+    service.mfaVerify.mockImplementation(async () => {
+      level = { level: "aal2", needsCode: false, factorId: "f1" };
+    });
+    setup(service);
+    await signInWith("dana@example.com", "secret-pass");
+    const code = await screen.findByLabelText("קוד מהאפליקציה");
+    expect(service.claim).not.toHaveBeenCalled();
+    fireEvent.change(code, { target: { value: "000000" } });
+    fireEvent.click(screen.getByRole("button", { name: "אימות" }));
+    expect(await screen.findByText("הקוד שגוי. נסו את הקוד הנוכחי באפליקציה.")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("קוד מהאפליקציה"), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "אימות" }));
+    expect(await screen.findByText("הסטודיו של דנה לוי")).toBeTruthy();
+    expect(service.mfaVerify).toHaveBeenLastCalledWith("f1", "123456");
+  });
+
+  it("offers a way back to sign-in when the account service keeps failing", async () => {
+    const service = fakeService({ saved: { access_token: "jwt" }, claim: () => { throw new Error("Failed to fetch"); } });
+    setup(service);
+    fireEvent.click(await screen.findByRole("button", { name: "חזרה למסך הכניסה" }));
+    expect(await screen.findByLabelText("סיסמה")).toBeTruthy();
+    expect(service.forget).toHaveBeenCalled();
   });
 
   it("offers a retry when the account service cannot be reached", async () => {
