@@ -8,6 +8,10 @@
 
 **Tech Stack:** React 18 + Vite 5 (existing), Vitest 3 (new, dev only), plain ES modules with JSDoc.
 
+**Status (2026-10-05): done and in production** (commits a27e36f, 5c8b3db, 3fcec9c).
+- **Added after the code review:** the calculations that still lived in event handlers moved too: `compat.js` and `yearCycle` / `dailyRitualNumber` / `masterBase`. The oracle for them is `legacy-handlers.js`.
+- **Tests:** they now run the engine under a decoy clock. 57 tests pass locally and in the Vercel build.
+
 **Spec:** the approved SaaS spec, section "תוכנית עבודה", step "שבוע 1 — מנוע חישוב נפרד ובדוק" (artifact `https://claude.ai/artifact/JrScUQXNxsW8bxjRx8Ggxn`).
 
 ---
