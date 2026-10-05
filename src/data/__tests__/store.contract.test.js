@@ -10,11 +10,13 @@ import { memoryBackend } from "../memoryBackend.js";
 import { idbBackend } from "../idbBackend.js";
 import { ValidationError, LIMITS } from "../validation.js";
 import { ENGINE_VERSION, fullCalc, matchReading, yearCycle } from "../../engine/index.js";
+import { makeServerBackend } from "../../../supabase/tests/serverBackendFixture.js";
 
 let dbCounter = 0;
 const BACKENDS = [
   ["memory", async () => memoryBackend()],
   ["IndexedDB", async () => idbBackend(`contract-${++dbCounter}`)],
+  ["the server (Supabase migrations on PGlite)", makeServerBackend],
 ];
 
 // real engine snapshots, as the workspace saves them

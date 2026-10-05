@@ -2,11 +2,13 @@ import "fake-indexeddb/auto";
 import { describe, it, expect } from "vitest";
 import { memoryBackend } from "../memoryBackend.js";
 import { idbBackend } from "../idbBackend.js";
+import { makeServerBackend } from "../../../supabase/tests/serverBackendFixture.js";
 
 let n = 0;
 describe.each([
   ["memory", async () => memoryBackend()],
   ["IndexedDB", async () => idbBackend(`batch-${++n}`)],
+  ["the server", makeServerBackend],
 ])("backend.batch on %s", (_, make) => {
   it("applies puts, deletes and blobs together", async () => {
     const b = await make();
