@@ -20,7 +20,11 @@ export {
   CH,
   karmicDebt,
   loShu,
+  yearCycle,
+  masterBase,
+  dailyRitualNumber,
   fullCalc,
   liveNum,
 } from "./core.js";
 export { getRecommendations } from "./recommendations.js";
+export { compatKey, matchReading, coupleReading, parentChildReading } from "./compat.js";

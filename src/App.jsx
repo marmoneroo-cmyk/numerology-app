@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { jsPDF } from "jspdf";
-import { R, NV, SU, EX, LP, LPm, CA, PY, loShu, fullCalc, liveNum, getRecommendations } from "./engine";
+import {
+  R, NV, SU, EX, LP, LPm, CA, loShu, fullCalc, liveNum, getRecommendations,
+  yearCycle, masterBase, dailyRitualNumber, compatKey, matchReading, coupleReading, parentChildReading,
+} from "./engine";
 
 /* ╔══════════════════════════════════════════════════════════════╗
    ║  N U M E R O L O G Y   O R A C L E   —   V 7              ║
@@ -456,7 +459,7 @@ function exportReport(r,name,he,interp){
   const lpInfo=r.lp>9?MASTER[r.lp]:interp[r.lp];
   if(lpInfo){ctx.fillStyle="#c8a96a";ctx.font="bold 34px serif";ctx.fillText(`— ${he?lpInfo.t:lpInfo.te} —`,w/2,y);y+=20;}
   const wrap=(text,maxw,font)=>{ctx.font=font;const words=String(text||"").split(" ");const lines=[];let ln="";for(const wd of words){const test=ln?ln+" "+wd:wd;if(ctx.measureText(test).width>maxw&&ln){lines.push(ln);ln=wd;}else ln=test;}if(ln)lines.push(ln);return lines;};
-  const base=r.lp>9?[...String(r.lp)].reduce((a,d)=>a+ +d,0):r.lp;
+  const base=masterBase(r.lp);
   const narr=he?(interp[base]?.narrative):(interp[base]?.narrativeE);
   ctx.fillStyle="rgba(232,224,208,.7)";y+=46;wrap(narr,w-220,"italic 26px serif").slice(0,4).forEach(l=>{ctx.fillText(l,w/2,y);y+=40;});
   // footer / contact CTA
@@ -650,23 +653,8 @@ function CalculatorsWidget({he,dk}){
     setError("");const d1=parseDob(m1dob),d2=parseDob(m2dob);
     if(!d1||!d2||!m1name.trim()||!m2name.trim()){setError(he?"מלא את כל השדות":"Fill all fields");return;}
     AU.init();AU.p("reveal");
-    const lp1=LP(d1.d,d1.m,d1.y),lp2=LP(d2.d,d2.m,d2.y);
-    const nv1=NV(m1name),nv2=NV(m2name),su1=SU(m1name),su2=SU(m2name),ex1=EX(m1name),ex2=EX(m2name);
-    const lpm1=LPm(d1.d,d1.m,d1.y),lpm2=LPm(d2.d,d2.m,d2.y);
-    let score=50;
-    if(lp1===lp2)score+=20;else if(Math.abs(lp1-lp2)<=2)score+=15;else if(Math.abs(lp1-lp2)>=5)score-=5;
-    if(su1===su2)score+=15;else if(Math.abs(su1-su2)<=1)score+=8;
-    if(nv1===nv2)score+=10;
-    const compPairs=[[1,2],[3,4],[5,6],[7,8],[1,9]];
-    if(compPairs.some(p=>(p[0]===lp1&&p[1]===lp2)||(p[1]===lp1&&p[0]===lp2)))score+=12;
-    if(type==="twin"&&lp1===lp2)score+=10;
-    if(type==="twin"&&lpm1===lpm2&&[11,22,33].includes(lpm1))score+=8;
-    if(type==="biz"){score-=5;if([4,8].includes(lp1)&&[4,8].includes(lp2))score+=15;if([1,8].includes(lp1)&&[1,8].includes(lp2))score+=10;}
-    score=Math.max(20,Math.min(99,score));
-    const k1=`${Math.min(lp1,lp2)}-${Math.max(lp1,lp2)}`;
-    const compat=LP_COMPAT[k1]||null;
-    setMatchRes({lp1,lp2,nv1,nv2,su1,su2,ex1,ex2,lpm1,lpm2,score,compat,type,
-      harmony:Math.min(10,Math.round(score/10)),tension:Math.min(10,Math.round((100-score)/12)),growth:Math.min(10,Math.round(Math.abs(lp1-lp2)+Math.abs(su1-su2)/2+2))});
+    const res=matchReading({...d1,name:m1name},{...d2,name:m2name},type);
+    setMatchRes({...res,compat:LP_COMPAT[compatKey(res.lp1,res.lp2)]||null});
   };
 
   const resetCalc=()=>{setCalc(null);setResults(null);setMatchRes(null);setError("");setAnimIn(false);};
@@ -883,7 +871,7 @@ function CalculatorsWidget({he,dk}){
             <span style={{fontSize:10,color:ts}}>{he?"הוסף 1":"Add 1"}</span>
           </div>
         </div>
-        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const cy=new Date().getFullYear();const proj=[];for(let i=-2;i<=10;i++){const yr=cy+i;proj.push({year:yr,py:PY(d.d,d.m,yr,addOne),isCurrent:yr===cy});}setResults({proj});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
+        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");setResults({proj:yearCycle(d.d,d.m,addOne)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
       </div>
       {results&&animIn&&results.proj&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc" style={{padding:0,overflow:"hidden"}}>
         <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
@@ -2002,7 +1990,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           <div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
             <AffirmWidget he={he} dk={dk}/>
             <div className="divider"/>
-            <RitualWidget number={((new Date().getDate()%9)||9)} he={he} dk={dk}/>
+            <RitualWidget number={dailyRitualNumber()} he={he} dk={dk}/>
           </div>
         )}
 
@@ -2293,24 +2281,8 @@ function CompatWidget({he,dk}){
     if(!d1||!d2||!c1name.trim()||!c2name.trim()){setError(he?"אנא מלא את כל השדות":"Please fill all fields");return;}
     AU.init();AU.p("reveal");setAnim(true);setCoupleRes(null);
     setTimeout(()=>{
-      const lp1=LP(d1.d,d1.m,d1.y),lp2=LP(d2.d,d2.m,d2.y);
-      const nv1=NV(c1name),nv2=NV(c2name);
-      const su1=SU(c1name),su2=SU(c2name);
-      const ex1=EX(c1name),ex2=EX(c2name);
-      const compat=getCompat(lp1,lp2);
-      // Score calculation
-      let score=50;
-      if(lp1===lp2)score+=20;else if(Math.abs(lp1-lp2)<=2)score+=15;else if(Math.abs(lp1-lp2)>=5)score-=5;
-      if(su1===su2)score+=15;else if(Math.abs(su1-su2)<=1)score+=8;
-      if(nv1===nv2)score+=10;else if(Math.abs(nv1-nv2)<=2)score+=5;
-      // Complementary pairs
-      const compPairs=[[1,2],[3,4],[5,6],[7,8],[1,9]];
-      if(compPairs.some(p=>(p[0]===lp1&&p[1]===lp2)||(p[1]===lp1&&p[0]===lp2)))score+=12;
-      score=Math.max(20,Math.min(99,score));
-      const harmony=Math.min(10,Math.round(score/10));
-      const tension=Math.min(10,Math.round((100-score)/12));
-      const growth=Math.min(10,Math.round(Math.abs(lp1-lp2)+Math.abs(su1-su2)/2+2));
-      setCoupleRes({lp1,lp2,nv1,nv2,su1,su2,ex1,ex2,score,harmony,tension,growth,compat});
+      const res=coupleReading({...d1,name:c1name},{...d2,name:c2name});
+      setCoupleRes({...res,compat:getCompat(res.lp1,res.lp2)});
       setAnim(false);AU.p("chapter");
     },1200);
   };
@@ -2335,17 +2307,8 @@ function CompatWidget({he,dk}){
     if(!dp||!dc||!parentName.trim()||!childName.trim()){setError(he?"אנא מלא את כל השדות":"Please fill all fields");return;}
     AU.init();AU.p("reveal");setAnim(true);setPcRes(null);
     setTimeout(()=>{
-      const lpP=LP(dp.d,dp.m,dp.y),lpC=LP(dc.d,dc.m,dc.y);
-      const nvP=NV(parentName),nvC=NV(childName);
-      const suP=SU(parentName),suC=SU(childName);
-      const compat=getCompat(lpP,lpC);
-      let score=55;
-      if(lpP===lpC)score+=18;else if(Math.abs(lpP-lpC)<=2)score+=12;
-      if(suP===suC)score+=10;
-      const teachPairs={1:4,2:8,3:7,4:5,5:6,6:1,7:3,8:9,9:2};
-      if(teachPairs[lpP]===lpC||teachPairs[lpC]===lpP)score+=10;
-      score=Math.max(25,Math.min(99,score));
-      setPcRes({lpP,lpC,nvP,nvC,suP,suC,score,compat});
+      const res=parentChildReading({...dp,name:parentName},{...dc,name:childName});
+      setPcRes({...res,compat:getCompat(res.lpP,res.lpC)});
       setAnim(false);AU.p("chapter");
     },1200);
   };

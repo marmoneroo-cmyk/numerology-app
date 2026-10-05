@@ -82,13 +82,27 @@ numerology-app/
 ├── index.html          ← HTML entry point
 ├── package.json        ← Dependencies & scripts
 ├── vite.config.js      ← Vite build config
-├── .gitignore
+├── vercel.json         ← Vercel build (runs the tests first) + SPA rewrite
+├── docs/superpowers/plans/  ← implementation plans
 └── src/
     ├── main.jsx        ← React mount point
-    └── App.jsx         ← The full Numerology Oracle app
+    ├── App.jsx         ← The UI and the interpretation content
+    └── engine/         ← Every numerology calculation, as pure functions
+        ├── core.js             ← reductions, name and date numbers, Lo Shu, fullCalc
+        ├── compat.js           ← match, couple and parent-child readings
+        ├── recommendations.js  ← smart recommendation rules
+        ├── index.js            ← the engine's public surface
+        └── __tests__/          ← oracle copies of the shipped code + tests
 ```
+
+## Tests
+```
+npm test
+```
+The engine is checked against a verbatim copy of the code it replaced (`src/engine/__tests__/legacy*.js`) over every date 1900-2030, thousands of names and pairs, and several frozen clocks, plus hand-worked examples. Vercel runs the tests before every build, so a change that alters a result does not deploy.
 
 ## Tech Stack
 - **Vite** — Fast build tool
 - **React 18** — UI framework
-- **serve** — Static file server for production
+- **Vitest** — tests for the calculation engine
+- **Vercel** — hosting, deploys on push to `main`

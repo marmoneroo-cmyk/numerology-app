@@ -13,14 +13,14 @@
 /** Bump whenever any result can change, so a saved reading knows which rules made it. */
 export const ENGINE_VERSION = "1.0.0";
 
-/** Hebrew letter values, final forms included. Any other character counts 0. */
-export const LV = {
+/** Hebrew letter values, final forms included. Any other character counts 0. Frozen: shared by every reading. */
+export const LV = Object.freeze({
   "א": 1, "ב": 2, "ג": 3, "ד": 4, "ה": 5, "ו": 6, "ז": 7, "ח": 8, "ט": 9,
   "י": 1, "כ": 2, "ך": 2, "ל": 3, "מ": 4, "ם": 4, "נ": 5, "ן": 5, "ס": 6,
   "ע": 7, "פ": 8, "ף": 8, "צ": 9, "ץ": 9, "ק": 1, "ר": 2, "ש": 3, "ת": 4,
-};
+});
 
-/** The letters that make the soul number. */
+/** The letters that make the soul number. Treat as read-only. */
 export const VOW = new Set(["א", "ו", "י", "ע"]);
 
 const isMaster = (n) => n === 11 || n === 22 || n === 33;
@@ -78,6 +78,17 @@ export function PY(d, m, yr, add) {
   return add ? R(p + 1) : p;
 }
 
+/** Personal years from two years before `now`'s year to ten after it. */
+export function yearCycle(d, m, add, now = new Date()) {
+  const cy = now.getFullYear();
+  const proj = [];
+  for (let i = -2; i <= 10; i++) {
+    const yr = cy + i;
+    proj.push({ year: yr, py: PY(d, m, yr, add), isCurrent: yr === cy });
+  }
+  return proj;
+}
+
 /** Personal month: birth day and month plus the calendar month of `now`. */
 export const PM = (d, m, now = new Date()) => R(sumChars(`${pad2(d)}${pad2(m)}${now.getMonth() + 1}`));
 
@@ -87,6 +98,12 @@ export const PD = (d, m, now = new Date()) =>
 
 /** Challenge between two numbers: their reduced difference, 0 when equal. */
 export const CH = (a, b) => (a === b ? 0 : R(Math.abs(a - b)));
+
+/** The meaning a master number borrows: 11 -> 2, 22 -> 4, 33 -> 6. Single digits stay. */
+export const masterBase = (n) => (n > 9 ? sumChars(String(n)) : n);
+
+/** The number of the day for the daily ritual: day of the month mod 9, 9 instead of 0. */
+export const dailyRitualNumber = (now = new Date()) => now.getDate() % 9 || 9;
 
 const KARMIC = [13, 14, 16, 19];
 
@@ -136,7 +153,14 @@ function psychMap({ nv, lp, su, ex, py, d, m, y }) {
  * @param {number} y birth year
  * @param {string} nm full name (Hebrew letters carry the values)
  * @param {boolean} add the "+1" personal-year toggle
- * @param {Date} [now] the date the reading is made for
+ * @param {Date} [now] the date the reading is made for (must be a Date)
+ * @returns {{nv:number, lp:number, age:number, py:number, hy:number, su:number, ex:number, pm:number, pd:number,
+ *   pk:number[], ch:number[], hp:number[], hc:number[], exit:number, kd:number[],
+ *   ls:{g:Object<number,number>, miss:number[], planes:string[]},
+ *   proj:{year:number, py:number, isCurrent:boolean}[], psych:Object<string,number>, d:number, m:number, y:number}}
+ *   name, life path (masters kept), age, personal/hidden year, soul, consonants, personal month/day,
+ *   pinnacles, challenges, hidden pinnacles/challenges, age the first pinnacle ends, karmic debts,
+ *   Lo Shu, the personal-year cycle, the psychological map, and the birth date echoed back
  */
 export function fullCalc(d, m, y, nm, add, now = new Date()) {
   const nv = NV(nm), lp = LPm(d, m, y), age = CA(d, m, y, now), cy = now.getFullYear();
@@ -153,18 +177,18 @@ export function fullCalc(d, m, y, nm, add, now = new Date()) {
 
   const kd = karmicDebt(d, m, y, nm);
   const ls = loShu(d, m, y);
-  const proj = [];
-  for (let i = -2; i <= 10; i++) {
-    const yr = cy + i;
-    proj.push({ year: yr, py: PY(d, m, yr, add), isCurrent: yr === cy });
-  }
+  const proj = yearCycle(d, m, add, now);
 
   const reduced = { nv: R(nv), lp: R(lp), su: R(su), ex: R(ex) };
   const psych = psychMap({ ...reduced, py, d, m, y });
   return { nv, lp, age, py, hy, su, ex, pm, pd, pk, ch, hp, hc, exit: 27 - reduced.lp, kd, ls, proj, psych, d, m, y };
 }
 
-/** The live calculator: Hebrew by letter value, Latin A-Z Pythagorean, anything else ignored. */
+/**
+ * The live calculator: Hebrew by letter value, Latin by position ((code - 65) % 9 + 1).
+ * A character counts as Latin when its upper case falls between "A" and "Z" as a string,
+ * so "ß" (upper case "SS") counts as S. Digits, spaces and everything else count 0.
+ */
 export function liveNum(s) {
   let sum = 0;
   for (const ch of s) {
