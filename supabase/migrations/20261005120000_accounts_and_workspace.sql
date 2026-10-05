@@ -215,8 +215,15 @@ declare
   v_active public.active_sessions;
 begin
   select * into v_profile from public.profiles where id = auth.uid();
-  if not found or not private.signed_in() then
+  if not found then
     return jsonb_build_object('status', 'signed_out');
+  end if;
+  select * into v_active from public.active_sessions where user_id = v_profile.id;
+  if not private.signed_in() then
+    -- gone because another session took over (and signed the others out), or because it signed out itself
+    return jsonb_build_object('status', case
+      when found and v_active.session_id::text <> coalesce(auth.jwt() ->> 'session_id', '') then 'replaced'
+      else 'signed_out' end);
   end if;
   if v_profile.status <> 'active' then
     return jsonb_build_object('status', 'suspended');
@@ -226,8 +233,7 @@ begin
   ) then
     return jsonb_build_object('status', 'device_revoked');
   end if;
-  select * into v_active from public.active_sessions where user_id = v_profile.id;
-  if not found or v_active.session_id::text <> coalesce(auth.jwt() ->> 'session_id', '') then
+  if v_active.user_id is null or v_active.session_id::text <> coalesce(auth.jwt() ->> 'session_id', '') then
     return jsonb_build_object('status', 'replaced');
   end if;
   return jsonb_build_object('status', 'ok');
@@ -558,6 +564,18 @@ begin
   );
 end $$;
 
+/** Records what the admin Edge Function did for an account (it acts with the secret key, so it reports here). */
+create function public.admin_log(p_user uuid, p_action text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform private.require_admin();
+  if p_action not in ('account_created', 'password_set') then
+    raise exception 'unknown event' using errcode = '22023';
+  end if;
+  perform private.audit(p_user, p_action);
+  return jsonb_build_object('status', 'ok');
+end $$;
+
 /** Whether the caller is an admin in their active session (the admin Edge Function asks this). */
 create function public.am_i_admin() returns boolean
 language sql stable security definer set search_path = '' as $$
@@ -573,14 +591,14 @@ revoke execute on function
   public.revoke_my_device(uuid), public.update_my_profile(text, text), public.log_event(text),
   public.ws_all(text), public.ws_get(text, text), public.ws_snapshot(), public.ws_batch(jsonb),
   public.admin_list_accounts(), public.admin_update_account(uuid, jsonb), public.admin_list_devices(uuid),
-  public.admin_revoke_device(uuid), public.admin_audit(uuid, int), public.am_i_admin()
+  public.admin_revoke_device(uuid), public.admin_audit(uuid, int), public.admin_log(uuid, text), public.am_i_admin()
   from public, anon;
 grant execute on function
   public.claim_session(text, text), public.session_status(text), public.my_devices(),
   public.revoke_my_device(uuid), public.update_my_profile(text, text), public.log_event(text),
   public.ws_all(text), public.ws_get(text, text), public.ws_snapshot(), public.ws_batch(jsonb),
   public.admin_list_accounts(), public.admin_update_account(uuid, jsonb), public.admin_list_devices(uuid),
-  public.admin_revoke_device(uuid), public.admin_audit(uuid, int), public.am_i_admin()
+  public.admin_revoke_device(uuid), public.admin_audit(uuid, int), public.admin_log(uuid, text), public.am_i_admin()
   to authenticated;
 revoke execute on function private.on_ws_client_deleted() from public;
 

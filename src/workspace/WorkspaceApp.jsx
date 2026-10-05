@@ -19,9 +19,10 @@ const fileInputCss = (ac) =>
 
 /**
  * @param {{he?: boolean, dk?: boolean, store?: object, now?: () => Date}} props
- *   `store` and `now` are injectable for tests; by default the device store and the real clock.
+ *   `store` and `now` are injectable (by default the device store and the real clock);
+ *   `onEvent(action)` hears of backups and restores, for the account's log.
  */
-export default function WorkspaceApp({ he = true, dk = true, store: injected = null, now = () => new Date() }) {
+export default function WorkspaceApp({ he = true, dk = true, store: injected = null, now = () => new Date(), onEvent = () => {} }) {
   const [store, setStore] = useState(injected);
   const [failed, setFailed] = useState(false);
   // every move counts, so the screen (and its error boundary) starts fresh even when it is the same screen again
@@ -51,7 +52,7 @@ export default function WorkspaceApp({ he = true, dk = true, store: injected = n
   if (!store) return <Card style={{ textAlign: "center", color: c.ts }}>{he ? "טוען…" : "Loading…"}</Card>;
 
   const { view } = nav;
-  const props = { store, go, he, c, now };
+  const props = { store, go, he, c, now, onEvent };
   const crashed = (
     <ErrorCard
       he={he}

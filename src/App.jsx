@@ -2,6 +2,11 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { jsPDF } from "jspdf";
 import WorkspaceApp from "./workspace/WorkspaceApp.jsx";
 import { ContentContext } from "./workspace/content.js";
+import { useAccount, AccountGate } from "./account/AccountContext.jsx";
+import AccountScreen from "./account/AccountScreen.jsx";
+import AdminScreen from "./account/AdminScreen.jsx";
+import LocalDataOffer from "./account/LocalDataOffer.jsx";
+import { accountStore } from "./account/workspaceStore.js";
 import {
   R, NV, SU, EX, LP, LPm, CA, loShu, fullCalc, liveNum, getRecommendations,
   yearCycle, masterBase, dailyRitualNumber, compatKey, matchReading, coupleReading, parentChildReading,
@@ -445,7 +450,8 @@ function Intro({onDone,he,dk}){
 }
 
 // ═══════════════════ EXPORT ═══════════════════
-function exportReport(r,name,he,interp){
+/** The map as a PDF. `licensee` ({fullName, phone}) is the subscriber whose Studio made it: their name signs the report. */
+function exportReport(r,name,he,interp,licensee){
   const c=document.createElement("canvas");const w=1080,h=1920;c.width=w;c.height=h;const ctx=c.getContext("2d");
   const grd=ctx.createLinearGradient(0,0,w,h);grd.addColorStop(0,"#080812");grd.addColorStop(.5,"#0f0f28");grd.addColorStop(1,"#080812");ctx.fillStyle=grd;ctx.fillRect(0,0,w,h);
   for(let i=0;i<130;i++){ctx.beginPath();ctx.arc(Math.random()*w,Math.random()*h,Math.random()*1.6,0,Math.PI*2);ctx.fillStyle=`rgba(200,169,106,${Math.random()*.22})`;ctx.fill();}
@@ -465,8 +471,10 @@ function exportReport(r,name,he,interp){
   const narr=he?(interp[base]?.narrative):(interp[base]?.narrativeE);
   ctx.fillStyle="rgba(232,224,208,.7)";y+=46;wrap(narr,w-220,"italic 26px serif").slice(0,4).forEach(l=>{ctx.fillText(l,w/2,y);y+=40;});
   // footer / contact CTA
-  ctx.fillStyle="rgba(200,169,106,.9)";ctx.font="26px serif";ctx.fillText(he?"לקריאה אישית מלאה — שני כהן אזולאי":"For a full personal reading — Shani Cohen Azulai",w/2,h-150);
-  ctx.fillStyle="rgba(232,224,208,.5)";ctx.font="22px sans-serif";ctx.fillText("wa.me/"+WHATSAPP_PHONE,w/2,h-110);
+  const signer=licensee?licensee.fullName:(he?"שני כהן אזולאי":"Shani Cohen Azulai");
+  ctx.fillStyle="rgba(200,169,106,.9)";ctx.font="26px serif";ctx.fillText(he?`לקריאה אישית מלאה — ${signer}`:`For a full personal reading — ${signer}`,w/2,h-150);
+  ctx.fillStyle="rgba(232,224,208,.5)";ctx.font="22px sans-serif";ctx.fillText(licensee?(licensee.phone||""):"wa.me/"+WHATSAPP_PHONE,w/2,h-110);
+  if(licensee){ctx.fillStyle="rgba(232,224,208,.3)";ctx.font="17px sans-serif";ctx.fillText((he?"מורשה ל: ":"Licensed to: ")+licensee.fullName+(licensee.phone?` · ${licensee.phone}`:""),w/2,h-26);}
   ctx.fillStyle="rgba(200,169,106,.22)";ctx.font="18px serif";ctx.fillText("✦  ✦  ✦",w/2,h-66);
   try{const pdf=new jsPDF({orientation:"portrait",unit:"px",format:[w,h]});pdf.addImage(c.toDataURL("image/jpeg",0.92),"JPEG",0,0,w,h);pdf.save(`numerology-${(name||"map").trim()}.pdf`);}
   catch(e){const link=document.createElement("a");link.download=`numerology-${name||"map"}.png`;link.href=c.toDataURL("image/png");link.click();}
@@ -1824,7 +1832,12 @@ export default function App(){
 
   const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
   // Shani's interpretation content, shared with the client workspace (src/workspace)
-  const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport}),[]);
+  // the subscriber's account: the Studio opens only for a signed-in, active session
+  const account=useAccount();
+  const studioReady=account.state==="ready";
+  const licensee=studioReady?{fullName:account.profile.fullName||account.profile.email,phone:account.profile.phone}:null;
+  const[workspaceKey,setWorkspaceKey]=useState(0);
+  const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:(r,n,h,i)=>exportReport(r,n,h,i,licensee)}),[licensee?.fullName,licensee?.phone]);
   useEffect(()=>{AU.on=snd;},[snd]);
 
   // ── cart persistence; owner/customer view preference is read in the useState initializer above ──
@@ -1877,6 +1890,8 @@ export default function App(){
   ]:[];
 
   const showOwnerUI = owner && !previewCustomer; // owner console vs. public customer landing
+  useEffect(()=>{if(showOwnerUI)account.activate();},[showOwnerUI]); // the account machinery loads only for the Studio
+  const workspaceStore=showOwnerUI&&studioReady?accountStore(account):null;
   const lpBase = results ? R(results.lp) : 0; // reduced life path for D[] rich content (master carries base energy)
 
   return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"hidden",transition:"background .7s,color .4s"}}>
@@ -1953,12 +1968,14 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     </div>
 
     <div style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?600:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
+      {showOwnerUI&&!studioReady?<AccountGate he={he} dk={dk} onLeave={exitOwner}/>:(<>
 
       {/* Header (owner) / Hero (customer) */}
       {showOwnerUI?(
         <div style={{textAlign:"center",marginBottom:18,animation:"fadeInUp .6s ease-out"}}>
           <div style={{display:"inline-flex",alignItems:"center",gap:9,color:ac}}><Icon name="crown" size={20}/><h1 style={{fontSize:isRtl?28:32,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"הסטודיו שלי":"My Studio"}</h1></div>
           <p style={{fontSize:12.5,color:ts,marginTop:5}}>{he?"כל הכלים שלך — בחר מסך:":"All your tools — choose a screen:"}</p>
+          {licensee&&<p style={{fontSize:11,color:ts,marginTop:3}}>{he?`מחובר/ת: ${licensee.fullName}`:`Signed in: ${licensee.fullName}`}</p>}
         </div>
       ):(
         <>
@@ -1971,7 +1988,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
       {/* ═══ STUDIO NAV (owner — always visible) ═══ */}
       {showOwnerUI&&<div className="tabs" style={{animation:"fadeInUp .5s ease-out .1s both",marginBottom:18}}>
-        {[{k:"clients",i:"user",l:he?"לקוחות":"Clients"},{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"leads",i:"users",l:he?"לידים":"Leads"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"}].map(tb=>(
+        {[{k:"clients",i:"user",l:he?"לקוחות":"Clients"},{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"leads",i:"users",l:he?"לידים":"Leads"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"},{k:"account",i:"user",l:he?"החשבון שלי":"My account"},...(account.profile?.role==="admin"?[{k:"admin",i:"users",l:he?"חשבונות":"Accounts"}]:[])].map(tb=>(
           <div key={tb.k} className={`ti ${tab===tb.k?"act":""}`} onClick={()=>{setTab(tb.k);AU.init();AU.p("click");if(tb.k!=="reading")setShowRes(false);}}><span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"center"}}><Icon name={tb.i} size={14} stroke={1.4}/>{tb.l}</span></div>
         ))}
       </div>}
@@ -1980,11 +1997,18 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       {!showRes&&(<>
         {/* Studio nav rendered above (always visible in owner mode) */}
 
-        {showOwnerUI&&tab==="clients"&&<ContentContext.Provider value={workspaceContent}><WorkspaceApp he={he} dk={dk}/></ContentContext.Provider>}
+        {showOwnerUI&&tab==="clients"&&workspaceStore&&<ContentContext.Provider value={workspaceContent}>
+          <LocalDataOffer store={workspaceStore} userId={account.profile.id} he={he} dk={dk} logEvent={account.service.logEvent} onUploaded={()=>setWorkspaceKey(k=>k+1)}/>
+          <WorkspaceApp key={workspaceKey} he={he} dk={dk} store={workspaceStore} onEvent={(action)=>{account.service.logEvent(action).catch(()=>{});}}/>
+        </ContentContext.Provider>}
 
         {showOwnerUI&&tab==="shop"&&<ShopSection he={he} dk={dk}/>}
 
         {showOwnerUI&&tab==="leads"&&<LeadsWidget he={he} dk={dk}/>}
+
+        {showOwnerUI&&tab==="account"&&<AccountScreen account={account} he={he} dk={dk}/>}
+
+        {showOwnerUI&&tab==="admin"&&account.profile?.role==="admin"&&<AdminScreen account={account} he={he} dk={dk}/>}
 
         {tab==="tables"&&<TablesWidget he={he} dk={dk}/>}
 
@@ -2155,7 +2179,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           </div>
         </SR>)}
         {chapters[5]&&(<SR delay={250}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
-          <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D);}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמור דו״ח PDF":"Save PDF"}</span></button>
+          <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמור דו״ח PDF":"Save PDF"}</span></button>
           <button className="ghost" onClick={goHome}>{he?"קריאה חדשה":"New Reading"}</button>
         </div></SR>)}
       </div>)}
@@ -2177,7 +2201,11 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       </>)}
 
       {showOwnerUI&&<div style={{marginTop:40,textAlign:"center",fontSize:10,color:`${ac}15`,letterSpacing:3}}>✦ ✦ ✦</div>}
+      </>)}
     </div>
+
+    {/* whose licence this Studio is: shown on every screen, like on the reports */}
+    {showOwnerUI&&studioReady&&<div aria-hidden="true" style={{position:"fixed",bottom:8,insetInlineStart:10,zIndex:90,fontSize:10,color:`${ac}99`,pointerEvents:"none",letterSpacing:.3}}>{he?"מורשה ל: ":"Licensed to: "}{licensee.fullName}{licensee.phone?` · ${licensee.phone}`:""}</div>}
 
     {/* ═══ CART (customer only) ═══ */}
     {!showOwnerUI&&(<>

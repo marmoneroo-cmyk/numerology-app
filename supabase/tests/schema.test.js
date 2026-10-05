@@ -89,6 +89,15 @@ describe("one active session per account", () => {
     expect(await failure(claim(user))).toMatch(/not signed in/);
   });
 
+  it("a session removed by a sign-in elsewhere learns it was replaced, not signed out", async () => {
+    const first = await signedIn();
+    const second = await otherSession(first);
+    await claim(second);
+    await endSession(db, first.sessionId); // the new session signs the others out
+    expect(await rpc(db, first, "session_status", { p_device_key: first.deviceKey })).toEqual({ status: "replaced" });
+    expect(await rpc(db, second, "session_status", { p_device_key: second.deviceKey })).toEqual({ status: "ok" });
+  });
+
   it("reopening the app in the same session is not logged again", async () => {
     const user = await signedIn();
     await claim(user);
@@ -259,6 +268,16 @@ describe("administration", () => {
     expect(await rpc(db, sub, "session_status", { p_device_key: sub.deviceKey })).toEqual({ status: "device_revoked" });
     const audit = await rpc(db, admin, "admin_audit", { p_user: sub.id });
     expect(audit.map((a) => a.action)).toContain("device_revoked");
+  });
+
+  it("records what the admin function did, for admins only and known events only", async () => {
+    const admin = await signedIn();
+    await makeAdmin(db, admin.id);
+    const sub = await signedIn();
+    expect(await rpc(db, admin, "admin_log", { p_user: sub.id, p_action: "password_set" })).toEqual({ status: "ok" });
+    expect((await auditOf(sub.id)).find((a) => a.action === "password_set")).toBeTruthy();
+    expect(await failure(rpc(db, admin, "admin_log", { p_user: sub.id, p_action: "anything" }))).toMatch(/unknown event/);
+    expect(await failure(rpc(db, sub, "admin_log", { p_user: sub.id, p_action: "password_set" }))).toMatch(/admins only/);
   });
 
   it("logs only the events the app may report", async () => {

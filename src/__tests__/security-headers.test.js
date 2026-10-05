@@ -5,6 +5,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
+import { SUPABASE_URL } from "../account/config.js";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const vercel = JSON.parse(read("../../vercel.json"));
@@ -28,11 +29,11 @@ describe("security headers", () => {
     expect(csp["frame-ancestors"]).toEqual(["'none'"]);
   });
 
-  it("allow exactly the outside sources the page uses: Google Fonts and Unsplash images", () => {
+  it("allow exactly the outside sources the page uses: Google Fonts, Unsplash images and the accounts project", () => {
     expect(csp["style-src"]).toEqual(["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"]);
     expect(csp["font-src"]).toEqual(["'self'", "https://fonts.gstatic.com"]);
     expect(csp["img-src"]).toEqual(["'self'", "data:", "blob:", "https://images.unsplash.com"]);
-    expect(csp["connect-src"]).toEqual(["'self'"]);
+    expect(csp["connect-src"]).toEqual(["'self'", SUPABASE_URL]);
   });
 
   it("forbid sniffing, framing and needless device access", () => {

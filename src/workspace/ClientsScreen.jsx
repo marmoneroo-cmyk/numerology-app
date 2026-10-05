@@ -41,7 +41,7 @@ function restoreError(err, he) {
   return he ? `הגיבוי פגום ולכן לא שוחזר ממנו דבר (${n}).` : `The backup is damaged, so nothing was restored from it (${n}).`;
 }
 
-export default function ClientsScreen({ store, go, he, c, now }) {
+export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {} }) {
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState(null);
   const [followMsg, setFollowMsg] = useState(null);
@@ -63,6 +63,7 @@ export default function ClientsScreen({ store, go, he, c, now }) {
     try {
       const data = await store.exportAll();
       saveJson(`numerology-backup-${toYmd(now())}.json`, data);
+      onEvent("backup_exported");
       rememberBackup(now());
       setMsg({
         ok: true,
@@ -89,6 +90,7 @@ export default function ClientsScreen({ store, go, he, c, now }) {
     }
     try {
       const counts = await store.importAll(backupData);
+      onEvent("backup_restored");
       const parts = [countLabel(counts.clients, "clients", he), countLabel(counts.readings, "readings", he), countLabel(counts.attachments, "files", he)];
       setMsg({ ok: true, text: he ? `שוחזרו: ${parts.join(", ")}` : `Restored: ${parts.join(", ")}` });
       list.reload();

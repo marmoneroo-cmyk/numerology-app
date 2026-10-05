@@ -367,6 +367,21 @@ describe("workspace", () => {
     expect(await screen.findByRole("button", { name: /שני כהן אזולאי/ })).toBeTruthy();
   });
 
+  it("reports backups and restores, for the account's log", async () => {
+    captureDownloads();
+    const onEvent = vi.fn();
+    let n = 0;
+    const store = createStore(memoryBackend(), { now: () => NOW, newId: () => `id-${++n}` });
+    await store.clients.create(SHANI);
+    render(<ContentContext.Provider value={CONTENT}><WorkspaceApp he dk store={store} now={() => NOW} onEvent={onEvent} /></ContentContext.Provider>);
+    await screen.findByRole("button", { name: /שני כהן אזולאי/ });
+    click("גיבוי");
+    await waitFor(() => expect(onEvent).toHaveBeenCalledWith("backup_exported"));
+    const backup = JSON.stringify(await store.exportAll());
+    fireEvent.change(screen.getByLabelText("שחזור מגיבוי"), { target: { files: [new File([backup], "b.json", { type: "application/json" })] } });
+    await waitFor(() => expect(onEvent).toHaveBeenCalledWith("backup_restored"));
+  });
+
   it("says when a backup had to leave out files whose contents are gone", async () => {
     const downloads = captureDownloads();
     await setup(async (s, backend) => {
