@@ -1,12 +1,13 @@
 /**
  * Run a reading for a client and save it to their file: a full map, a match
  * with another person, parent and child, or the personal-year cycle. The
- * engine computes; the store saves the input, the result snapshot, the engine
- * version and the date it was computed for.
+ * engine computes; the store saves the input, the result snapshot (a map
+ * with its insights in both languages), the engine version and the date it
+ * was computed for.
  */
 import { useState } from "react";
-import { ENGINE_VERSION, fullCalc, yearCycle, matchReading, parentChildReading } from "../engine/index.js";
-import { Card, Field, Loading, ErrorCard, BackButton, useLoad, btnPrimary, display } from "./ui.jsx";
+import { ENGINE_VERSION, fullCalc, yearCycle, matchReading, parentChildReading, getRecommendations } from "../engine/index.js";
+import { Card, Field, Loading, ErrorCard, ScreenTitle, BackButton, useLoad, btnPrimary } from "./ui.jsx";
 import { parseDmy, formatDmy, personOf, readingTypeLabel, matchTypeLabel } from "./format.js";
 
 const TYPES = ["map", "match", "parentChild", "yearCycle"];
@@ -55,7 +56,8 @@ export default function NewReading({ store, go, he, c, now, clientId }) {
     let result;
     if (type === "map") {
       input = { name, birthDate: client.birthDate, add };
-      result = fullCalc(me.d, me.m, me.y, name, add, t);
+      const calc = fullCalc(me.d, me.m, me.y, name, add, t);
+      result = { ...calc, insights: { he: getRecommendations(calc, "he"), en: getRecommendations(calc, "en") } };
     } else if (type === "yearCycle") {
       input = { birthDate: client.birthDate, add };
       result = { proj: yearCycle(me.d, me.m, add, t) };
@@ -88,9 +90,9 @@ export default function NewReading({ store, go, he, c, now, clientId }) {
     <div>
       <BackButton onClick={() => go({ name: "client", clientId })}>{he ? "חזרה לתיק" : "Back to the file"}</BackButton>
       <Card>
-        <h2 style={{ margin: "0 0 14px", fontFamily: display, color: c.ac, fontSize: 24, fontWeight: 600 }}>
+        <ScreenTitle c={c} size={24} style={{ marginBottom: 14 }}>
           {he ? `בדיקה חדשה ל${client.fullName}` : `New reading for ${client.fullName}`}
-        </h2>
+        </ScreenTitle>
 
         <div className="tabs" role="tablist" style={{ marginBottom: 16, flexWrap: "wrap" }}>
           {TYPES.map((k) => (

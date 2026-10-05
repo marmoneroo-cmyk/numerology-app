@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseDmy, formatDmy, formatStamp, personOf, summarizeReading, formatBytes, errorText, countLabel } from "../format.js";
+import { parseDmy, formatDmy, formatStamp, personOf, personName, summarizeReading, formatBytes, errorText, countLabel } from "../format.js";
 
 describe("workspace format helpers", () => {
   it("parses day.month.year in its common spellings and rejects impossible dates", () => {
@@ -24,10 +24,33 @@ describe("workspace format helpers", () => {
     expect(summarizeReading({ type: "yearCycle", input: {}, result: { proj: [{ year: 2024 }, { year: 2036 }] } }, true)).toBe("שנים אישיות 2024–2036");
   });
 
+  it("names a person whose client file was deleted", () => {
+    const wiped = { name: "", birthDate: null, clientId: null };
+    expect([personName({ name: "דנה" }, true), personName(wiped, true), personName(wiped, false)]).toEqual(["דנה", "(נמחק)", "(deleted)"]);
+    expect(summarizeReading({ type: "match", input: { matchType: "love", other: wiped }, result: { score: 45 } }, true)).toBe("45% התאמה זוגית עם (נמחק)");
+    expect(summarizeReading({ type: "parentChild", input: { other: wiped }, result: { score: 55 } }, false)).toBe("55% connection with (deleted)");
+  });
+
+  it("never throws on a damaged reading, and says the summary is unavailable", () => {
+    const damaged = [
+      null,
+      { type: "map", result: null },
+      { type: "map", input: {}, result: { lp: 33 } },
+      { type: "match", input: null, result: { score: 1 } },
+      { type: "match", input: { other: { name: "דנה" } }, result: { score: "99" } },
+      { type: "yearCycle", input: {}, result: { proj: "x" } },
+      { type: "yearCycle", input: {}, result: { proj: [] } },
+      { type: "tarot", input: {}, result: {} },
+    ];
+    damaged.forEach((r) => expect(summarizeReading(r, true)).toBe("לא ניתן להציג את הסיכום"));
+    expect(summarizeReading({ type: "map" }, false)).toBe("Summary unavailable");
+  });
+
   it("counts in natural Hebrew and English", () => {
     expect([countLabel(1, "clients", true), countLabel(3, "clients", true), countLabel(0, "files", true), countLabel(1, "savedReadings", true)])
       .toEqual(["לקוח אחד", "3 לקוחות", "0 קבצים", "בדיקה שמורה אחת"]);
     expect([countLabel(1, "readings", false), countLabel(2, "readings", false)]).toEqual(["1 reading", "2 readings"]);
+    expect([countLabel(1, "errors", true), countLabel(4, "errors", true), countLabel(2, "errors", false)]).toEqual(["שגיאה אחת", "4 שגיאות", "2 errors"]);
   });
 
   it("formats sizes and error messages", () => {

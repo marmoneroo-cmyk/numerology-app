@@ -2,12 +2,12 @@
  * A saved reading, rendered from its stored snapshot (never recomputed), with
  * the session summary, a follow-up date, the PDF report and deletion.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { compatKey, getRecommendations } from "../engine/index.js";
 import { ValidationError } from "../data/validation.js";
 import { useContent, numberTitle } from "./content.js";
-import { Card, Field, Num, Loading, ErrorCard, SectionTitle, BackButton, useLoad, tilesGrid, btnPrimary, btnGhost, display } from "./ui.jsx";
-import { parseDmy, formatDmy, formatStamp, readingTypeLabel, matchTypeLabel, errorText } from "./format.js";
+import { Card, Field, Num, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, tilesGrid, btnPrimary, btnGhost, display } from "./ui.jsx";
+import { parseDmy, formatDmy, formatStamp, readingTypeLabel, matchTypeLabel, personName, errorText } from "./format.js";
 
 const CYCLE_NAMES = { he: ["חיפוש", "מציאה", "יתד", "שיא"], en: ["Search", "Discovery", "Anchor", "Peak"] };
 
@@ -21,8 +21,10 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [followUp, setFollowUp] = useState("");
+  const [followUpError, setFollowUpError] = useState(null);
   const [status, setStatus] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  /** The summary as last saved, to tell whether leaving needs a save first. */
+  const saved = useRef("");
 
   useEffect(() => {
     if (!data.data) return;
@@ -30,38 +32,56 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
     setTitle(r.title);
     setNotes(r.notes);
     setFollowUp(formatDmy(r.followUp));
+    saved.current = JSON.stringify([r.title, r.notes, formatDmy(r.followUp)]);
   }, [data.data]);
 
   if (data.loading) return <Loading he={he} c={c} />;
   if (data.error) return <ErrorCard he={he} c={c} onBack={() => go({ name: "list" })} />;
   const { reading, client } = data.data;
   const toFile = () => go({ name: "client", clientId: client.id });
+  const current = () => JSON.stringify([title, notes, followUp]);
+  const edited = (setter) => (e) => {
+    setter(e.target.value);
+    setStatus(null);
+  };
 
+  /** Saves the summary; false (with the reason shown) when it could not be saved. */
   const saveNotes = async () => {
     const text = followUp.trim();
     const iso = text ? parseDmy(text, now().getFullYear() + 10) : null;
-    if (text && !iso) {
-      setStatus({ ok: false, text: errorText("followUp", "invalid", he) });
-      return;
-    }
+    setFollowUpError(text && !iso ? errorText("followUp", "invalid", he) : null);
+    if (text && !iso) return false;
     try {
       await store.readings.update(reading.id, { title, notes, followUp: iso });
+      saved.current = current();
       setStatus({ ok: true, text: he ? "נשמר" : "Saved" });
+      return true;
     } catch (e) {
       setStatus({ ok: false, text: e instanceof ValidationError ? errorText(e.errors[0].field, e.errors[0].code, he) : he ? "השמירה נכשלה" : "Saving failed" });
+      return false;
     }
   };
 
-  const remove = async () => {
-    await store.readings.remove(reading.id);
+  /** Back to the file, saving a changed summary on the way; stays when it cannot be saved. */
+  const back = async () => {
+    if (current() !== saved.current && !(await saveNotes())) return;
     toFile();
+  };
+
+  const remove = async () => {
+    try {
+      await store.readings.remove(reading.id);
+      toFile();
+    } catch {
+      setStatus({ ok: false, text: he ? "המחיקה נכשלה. נסו שוב." : "Deleting failed. Try again." });
+    }
   };
 
   return (
     <div>
-      <BackButton onClick={toFile}>{he ? "חזרה לתיק" : "Back to the file"}</BackButton>
+      <BackButton onClick={back}>{he ? "חזרה לתיק" : "Back to the file"}</BackButton>
       <Card>
-        <h2 style={{ margin: 0, fontFamily: display, color: c.ac, fontSize: 26, fontWeight: 600 }}>{readingTypeLabel(reading.type, he)}</h2>
+        <ScreenTitle c={c}>{readingTypeLabel(reading.type, he)}</ScreenTitle>
         <div style={{ fontSize: 13, color: c.ts, marginTop: 4 }}>
           {client.fullName} · {he ? `חושב ל-${formatStamp(reading.computedFor)}` : `computed for ${formatStamp(reading.computedFor)}`}
         </div>
@@ -76,13 +96,13 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
       <Card>
         <SectionTitle c={c}>{he ? "סיכום ומעקב" : "Summary and follow-up"}</SectionTitle>
         <Field label={he ? "כותרת" : "Title"} c={c}>
-          {(id) => <input id={id} className="gi" value={title} onChange={(e) => { setTitle(e.target.value); setStatus(null); }} placeholder={he ? "למשל: פגישה ראשונה" : "e.g. first session"} />}
+          {(id) => <input id={id} className="gi" value={title} onChange={edited(setTitle)} placeholder={he ? "למשל: פגישה ראשונה" : "e.g. first session"} />}
         </Field>
         <Field label={he ? "סיכום הפגישה" : "Session summary"} c={c}>
-          {(id) => <textarea id={id} className="gi" rows={5} value={notes} onChange={(e) => { setNotes(e.target.value); setStatus(null); }} style={{ resize: "vertical", fontFamily: "inherit" }} />}
+          {(id) => <textarea id={id} className="gi" rows={5} value={notes} onChange={edited(setNotes)} style={{ resize: "vertical", fontFamily: "inherit" }} />}
         </Field>
-        <Field label={he ? "תאריך מעקב" : "Follow-up date"} hint={he ? "יופיע במסך הבית ביום הזה" : "Shows on the home screen on that day"} c={c}>
-          {(id) => <input id={id} className="gi" dir="ltr" placeholder="dd.mm.yyyy" inputMode="numeric" value={followUp} onChange={(e) => { setFollowUp(e.target.value); setStatus(null); }} />}
+        <Field label={he ? "תאריך מעקב" : "Follow-up date"} hint={he ? "יופיע במסך הבית ביום הזה" : "Shows on the home screen on that day"} error={followUpError} c={c}>
+          {(id) => <input id={id} className="gi" dir="ltr" placeholder="dd.mm.yyyy" inputMode="numeric" value={followUp} onChange={edited(setFollowUp)} />}
         </Field>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <button className="gb" style={btnPrimary} onClick={saveNotes}>{he ? "שמירת סיכום" : "Save summary"}</button>
@@ -97,15 +117,14 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
               {he ? "הורדת דוח PDF" : "Download PDF report"}
             </button>
           )}
-          {!confirmDelete ? (
-            <button className="ghost" style={{ ...btnGhost, color: c.danger }} onClick={() => setConfirmDelete(true)}>{he ? "מחיקת הבדיקה" : "Delete reading"}</button>
-          ) : (
-            <>
-              <span style={{ fontSize: 13, color: c.danger }}>{he ? "למחוק את הבדיקה? הקבצים שלה יישארו בתיק." : "Delete this reading? Its files stay in the file."}</span>
-              <button className="ghost" style={{ ...btnGhost, color: c.danger, borderColor: c.danger }} onClick={remove}>{he ? "כן, למחוק" : "Yes, delete"}</button>
-              <button className="ghost" style={btnGhost} onClick={() => setConfirmDelete(false)}>{he ? "השארה" : "Keep"}</button>
-            </>
-          )}
+          <ConfirmAction
+            c={c}
+            label={he ? "מחיקת הבדיקה" : "Delete reading"}
+            question={he ? "למחוק את הבדיקה? הקבצים שלה יישארו בתיק." : "Delete this reading? Its files stay in the file."}
+            confirmLabel={he ? "כן, למחוק" : "Yes, delete"}
+            keepLabel={he ? "השארה" : "Keep"}
+            onConfirm={remove}
+          />
         </div>
       </Card>
     </div>
@@ -126,7 +145,8 @@ function MapResult({ reading, he, c, content }) {
     ["pd", he ? "יום אישי" : "Personal day", r.pd],
     ["hy", he ? "שנה נסתרת" : "Hidden year", r.hy],
   ];
-  const recs = getRecommendations(r, lang);
+  // the insights saved with the reading; a reading saved before they were kept gets today's
+  const recs = r.insights ? r.insights[lang] : getRecommendations(r, lang);
   return (
     <>
       <Card>
@@ -168,8 +188,8 @@ function MapResult({ reading, he, c, content }) {
           {r.kd.length > 0 && (
             <div style={{ marginBottom: r.ls.miss.length ? 14 : 0 }}>
               <SectionTitle c={c}>{he ? "חובות קארמתיים" : "Karmic debts"}</SectionTitle>
-              {r.kd.map((k) => (
-                <p key={k} style={{ margin: "0 0 6px", fontSize: 14, lineHeight: 1.6 }}>
+              {r.kd.map((k, i) => (
+                <p key={i} style={{ margin: "0 0 6px", fontSize: 14, lineHeight: 1.6 }}>
                   <strong style={{ color: c.ac }}>{k}</strong> · {content.KARMA[k]?.[lang] || ""}
                 </p>
               ))}
@@ -190,8 +210,8 @@ function MapResult({ reading, he, c, content }) {
       {recs.length > 0 && (
         <Card>
           <SectionTitle c={c}>{he ? "תובנות מרכזיות" : "Key insights"}</SectionTitle>
-          {recs.map((x) => (
-            <div key={x.t} style={{ marginBottom: 10 }}>
+          {recs.map((x, i) => (
+            <div key={i} style={{ marginBottom: 10 }}>
               <div style={{ fontSize: 14, color: c.ac }}>{x.t}</div>
               <div style={{ fontSize: 13, color: c.tm, lineHeight: 1.6 }}>{x.d}</div>
             </div>
@@ -214,8 +234,8 @@ function CycleTable({ proj, he, c, content }) {
   return (
     <Card style={{ padding: "16px 14px" }}>
       <SectionTitle c={c}>{he ? "מחזור השנים האישיות" : "Personal year cycle"}</SectionTitle>
-      {proj.map((p) => (
-        <div key={p.year} className="rrow" style={{ display: "flex", gap: 12, alignItems: "center", fontWeight: p.isCurrent ? 600 : 400 }}>
+      {proj.map((p, i) => (
+        <div key={i} className="rrow" style={{ display: "flex", gap: 12, alignItems: "center", fontWeight: p.isCurrent ? 600 : 400 }}>
           <span style={{ width: 52, color: p.isCurrent ? c.ac : c.ts, fontVariantNumeric: "tabular-nums" }}>{p.year}</span>
           <span className="badge">{p.py}</span>
           <span style={{ fontSize: 13, color: c.tm, flex: 1 }}>{content.YEAR_ENERGY[p.py]?.[lang] || numberTitle(content, p.py, he)}</span>
@@ -251,6 +271,7 @@ function CompatText({ entry, he, c }) {
   );
 }
 
+/** Two people side by side. Keyed by position: two people can share a name. */
 function PeopleTable({ rows, names, c }) {
   return (
     <div style={{ overflowX: "auto" }}>
@@ -258,12 +279,12 @@ function PeopleTable({ rows, names, c }) {
         <thead>
           <tr style={{ color: c.ac }}>
             <th style={{ padding: "6px", textAlign: "start", borderBottom: `1px solid ${c.line}` }} />
-            {names.map((n) => <th key={n} style={{ padding: "6px", borderBottom: `1px solid ${c.line}`, fontWeight: 600 }}>{n}</th>)}
+            {names.map((n, i) => <th key={i} style={{ padding: "6px", borderBottom: `1px solid ${c.line}`, fontWeight: 600 }}>{n}</th>)}
           </tr>
         </thead>
         <tbody>
-          {rows.map(([label, a, b]) => (
-            <tr key={label}>
+          {rows.map(([label, a, b], i) => (
+            <tr key={i}>
               <td style={{ padding: "6px", borderBottom: `1px solid ${c.line}`, color: c.ts }}>{label}</td>
               <td style={{ padding: "6px", textAlign: "center", borderBottom: `1px solid ${c.line}` }}>{a}</td>
               <td style={{ padding: "6px", textAlign: "center", borderBottom: `1px solid ${c.line}` }}>{b}</td>
@@ -288,7 +309,7 @@ function MatchResult({ reading, he, c, content }) {
       </div>
       <PeopleTable
         c={c}
-        names={[person.name, other.name]}
+        names={[personName(person, he), personName(other, he)]}
         rows={[
           [he ? "שביל הגורל" : "Life path", r.lp1, r.lp2],
           [he ? "ערך השם" : "Name number", r.nv1, r.nv2],
@@ -304,8 +325,8 @@ function MatchResult({ reading, he, c, content }) {
 function ParentChildResult({ reading, he, c, content }) {
   const r = reading.result;
   const { person, other, role } = reading.input;
-  const parentName = role === "parent" ? person.name : other.name;
-  const childName = role === "parent" ? other.name : person.name;
+  const parentName = personName(role === "parent" ? person : other, he);
+  const childName = personName(role === "parent" ? other : person, he);
   return (
     <Card>
       <Score score={r.score} he={he} c={c} label={he ? "חיבור הורה-ילד" : "Parent-child connection"} />

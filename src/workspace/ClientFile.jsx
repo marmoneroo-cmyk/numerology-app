@@ -1,15 +1,17 @@
 /** A client's file: details, core numbers, the readings history and attached files. */
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { LPm, NV, SU, CA, PY } from "../engine/index.js";
-import { ValidationError } from "../data/validation.js";
+import { ValidationError, LIMITS } from "../data/validation.js";
 import { useContent, numberTitle } from "./content.js";
-import { Card, Num, Loading, ErrorCard, SectionTitle, BackButton, useLoad, rowButton, tilesGrid, btnPrimary, btnGhost, display } from "./ui.jsx";
-import { formatDmy, formatStamp, formatBytes, personOf, readingTypeLabel, summarizeReading, readFileBytes, errorText } from "./format.js";
+import { Card, Num, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, rowButton, tilesGrid, btnPrimary, btnGhost } from "./ui.jsx";
+import { formatDmy, formatStamp, formatBytes, personOf, readingTypeLabel, summarizeReading, errorText } from "./format.js";
+import { readFileBytes, saveFile } from "./files.js";
 
 export default function ClientFile({ store, go, he, c, now, clientId }) {
   const content = useContent();
   const fileId = useId();
-  const [fileMsg, setFileMsg] = useState(null);
+  const fileInput = useRef(null);
+  const [fileMsgs, setFileMsgs] = useState([]);
   const data = useLoad(async () => {
     const client = await store.clients.get(clientId);
     const [readings, files] = await Promise.all([store.readings.listByClient(clientId), store.attachments.listByClient(clientId)]);
@@ -33,33 +35,44 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
   const upload = async (e) => {
     const chosen = [...(e.target.files || [])];
     e.target.value = "";
-    setFileMsg(null);
+    const problems = [];
     for (const file of chosen) {
+      // checked before reading, so a huge file is never loaded into memory
+      if (file.size > LIMITS.attachmentBytes) {
+        problems.push(`${file.name}: ${errorText("size", "tooLarge", he)}`);
+        continue;
+      }
       try {
         const bytes = await readFileBytes(file);
         await store.attachments.add({ clientId, name: file.name, type: file.type, bytes });
       } catch (err) {
         const reason = err instanceof ValidationError ? errorText(err.errors[0].field, err.errors[0].code, he) : he ? "ההעלאה נכשלה" : "Upload failed";
-        setFileMsg(`${file.name}: ${reason}`);
+        problems.push(`${file.name}: ${reason}`);
       }
     }
+    setFileMsgs(problems);
     data.reload();
   };
 
   const open = async (file) => {
-    const blob = await store.attachments.getBlob(file.id);
-    const url = URL.createObjectURL(new Blob([blob.bytes], { type: blob.type || "application/octet-stream" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = file.name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setFileMsgs([]);
+    try {
+      const blob = await store.attachments.getBlob(file.id);
+      saveFile(file.name, blob.bytes);
+    } catch {
+      setFileMsgs([he ? `לא ניתן לפתוח את ${file.name}.` : `Cannot open ${file.name}.`]);
+    }
   };
 
   const removeFile = async (file) => {
-    await store.attachments.remove(file.id);
+    setFileMsgs([]);
+    try {
+      await store.attachments.remove(file.id);
+      // its row is gone: the focus goes to the files' own control rather than nowhere
+      fileInput.current?.focus();
+    } catch {
+      setFileMsgs([he ? `המחיקה של ${file.name} נכשלה. נסו שוב.` : `Deleting ${file.name} failed. Try again.`]);
+    }
     data.reload();
   };
 
@@ -70,7 +83,7 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
       <Card>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div style={{ minWidth: 0 }}>
-            <h2 style={{ margin: 0, fontFamily: display, color: c.ac, fontSize: 30, fontWeight: 600 }}>{client.fullName}</h2>
+            <ScreenTitle c={c} size={30}>{client.fullName}</ScreenTitle>
             {client.birthName && <div style={{ fontSize: 13, color: c.ts }}>{he ? `שם לידה: ${client.birthName}` : `Birth name: ${client.birthName}`}</div>}
             <div style={{ fontSize: 13, color: c.ts, marginTop: 4 }}>
               {p ? `${formatDmy(client.birthDate)} · ${he ? `גיל ${nums.age}` : `age ${nums.age}`}` : he ? "עוד אין תאריך לידה" : "No birth date yet"}
@@ -131,21 +144,34 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
       <Card style={{ padding: "16px 14px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 8 }}>
           <SectionTitle c={c}>{he ? `קבצים (${files.length})` : `Files (${files.length})`}</SectionTitle>
-          <label htmlFor={fileId} className="ghost" style={{ ...btnGhost, display: "inline-block" }}>{he ? "הוספת קובץ" : "Add a file"}</label>
-          <input id={fileId} type="file" multiple onChange={upload} style={{ display: "none" }} />
+          <span>
+            <input id={fileId} ref={fileInput} className="ws-file" type="file" multiple onChange={upload} />
+            <label htmlFor={fileId} className="ghost" style={{ ...btnGhost, display: "inline-block" }}>{he ? "הוספת קובץ" : "Add a file"}</label>
+          </span>
         </div>
-        {fileMsg && <p role="alert" style={{ color: c.danger, fontSize: 13, margin: "0 0 8px" }}>{fileMsg}</p>}
+        {fileMsgs.length > 0 && (
+          <div role="alert" style={{ color: c.danger, fontSize: 13, margin: "0 0 8px" }}>
+            {fileMsgs.map((m, i) => <p key={i} style={{ margin: "0 0 4px" }}>{m}</p>)}
+          </div>
+        )}
         {files.length === 0 && <p style={{ margin: 0, fontSize: 13, color: c.ts }}>{he ? "אפשר לצרף מפות, תמונות, הקלטות ומסמכים, עד 20MB לקובץ." : "Attach maps, photos, recordings or documents, up to 20 MB each."}</p>}
         {files.map((f) => (
-          <div key={f.id} className="rrow" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div key={f.id} className="rrow" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <span style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>
               <span style={{ fontSize: 14 }}>{f.name}</span>
               <span style={{ display: "block", fontSize: 11, color: c.ts }}>{formatBytes(f.size)} · {formatStamp(f.createdAt)}</span>
             </span>
-            <button className="ghost" style={btnGhost} onClick={() => open(f)}>{he ? "פתיחה" : "Open"}</button>
-            <button className="ghost" style={{ ...btnGhost, color: c.danger }} aria-label={he ? `מחיקת ${f.name}` : `Delete ${f.name}`} onClick={() => removeFile(f)}>
-              {he ? "מחיקה" : "Delete"}
-            </button>
+            <button className="ghost" style={btnGhost} aria-label={he ? `פתיחת ${f.name}` : `Open ${f.name}`} onClick={() => open(f)}>{he ? "פתיחה" : "Open"}</button>
+            <ConfirmAction
+              c={c}
+              label={he ? "מחיקה" : "Delete"}
+              ariaLabel={he ? `מחיקת ${f.name}` : `Delete ${f.name}`}
+              question={he ? "למחוק את הקובץ?" : "Delete this file?"}
+              confirmLabel={he ? "כן, למחוק" : "Yes, delete"}
+              confirmAriaLabel={he ? `כן, למחוק את ${f.name}` : `Yes, delete ${f.name}`}
+              keepLabel={he ? "השארה" : "Keep"}
+              onConfirm={() => removeFile(f)}
+            />
           </div>
         ))}
       </Card>

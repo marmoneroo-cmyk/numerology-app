@@ -1,12 +1,15 @@
 /** Home of the workspace: search, today's follow-ups and birthdays, the client list, backup. */
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { LPm } from "../engine/index.js";
-import { toYmd } from "../data/store.js";
-import { Card, Loading, ErrorCard, SectionTitle, useLoad, rowButton, btnPrimary, btnGhost, display } from "./ui.jsx";
+import { toYmd, lastActive } from "../data/store.js";
+import { ValidationError } from "../data/validation.js";
+import { Card, Loading, ErrorCard, SectionTitle, ScreenTitle, useLoad, rowButton, btnPrimary, btnGhost } from "./ui.jsx";
 import { formatDmy, formatStamp, personOf, readingTypeLabel, countLabel } from "./format.js";
+import { readFileText, saveJson } from "./files.js";
 
 const LAST_BACKUP_KEY = "numerology_workspace_last_backup";
 const BACKUP_REMINDER_DAYS = 14;
+const DAY_MS = 86400000;
 
 function lastBackup() {
   try {
@@ -23,41 +26,51 @@ function rememberBackup(date) {
   }
 }
 
-function downloadJson(filename, data) {
-  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+/** A note for files a backup had to leave out because their contents are gone from the device. */
+function missingNote(n, he) {
+  if (!n) return "";
+  if (he) return n === 1 ? " קובץ אחד לא נכלל בגיבוי כי התוכן שלו חסר במכשיר." : ` ${n} קבצים לא נכללו בגיבוי כי התוכן שלהם חסר במכשיר.`;
+  return n === 1 ? " 1 file was left out because its contents are missing on this device." : ` ${n} files were left out because their contents are missing on this device.`;
 }
 
-function readFileText(file) {
-  if (typeof file.text === "function") return file.text();
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
-    r.readAsText(file);
-  });
+/** Why a restore did not happen. A restore is all-or-nothing, so in every case nothing changed. */
+function restoreError(err, he) {
+  if (!(err instanceof ValidationError)) return he ? "השחזור נכשל ושום דבר לא השתנה. נסו שוב." : "Restoring failed and nothing changed. Try again.";
+  if (err.errors.some((x) => x.field === "backup")) return he ? "הקובץ הזה אינו גיבוי של מרחב העבודה." : "This file is not a workspace backup.";
+  const n = countLabel(err.errors.length, "errors", he);
+  return he ? `הגיבוי פגום ולכן לא שוחזר ממנו דבר (${n}).` : `The backup is damaged, so nothing was restored from it (${n}).`;
 }
 
 export default function ClientsScreen({ store, go, he, c, now }) {
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState(null);
+  const [followMsg, setFollowMsg] = useState(null);
   const restoreId = useId();
+  const followUpsRef = useRef(null);
+  const searchRef = useRef(null);
+  const refocusAfterDone = useRef(false);
   const list = useLoad(() => store.clients.list({ search }), [store, search]);
   const sum = useLoad(() => store.summary(now()), [store]);
+
+  // a follow-up marked done leaves the list: the focus moves to the next one, or else to the search
+  useEffect(() => {
+    if (!refocusAfterDone.current) return;
+    refocusAfterDone.current = false;
+    (followUpsRef.current?.querySelector("button[data-done]") || searchRef.current)?.focus();
+  }, [sum.data]);
 
   const backup = async () => {
     try {
       const data = await store.exportAll();
-      downloadJson(`numerology-backup-${toYmd(now())}.json`, data);
+      saveJson(`numerology-backup-${toYmd(now())}.json`, data);
       rememberBackup(now());
-      setMsg({ ok: true, text: he ? "הגיבוי נשמר לקובץ. כדאי לשמור אותו גם בענן או במייל." : "Backup saved to a file. Keep a copy in the cloud or your email." });
+      setMsg({
+        ok: true,
+        text:
+          (he
+            ? "הגיבוי נשמר לקובץ. שמרו אותו במקום מוגן: יש בו את כל פרטי הלקוחות."
+            : "Backup saved to a file. Keep it somewhere safe: it holds all your clients' details.") + missingNote(data.missingFiles, he),
+      });
     } catch {
       setMsg({ ok: false, text: he ? "הגיבוי נכשל. נסו שוב." : "Backup failed. Try again." });
     }
@@ -67,21 +80,39 @@ export default function ClientsScreen({ store, go, he, c, now }) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    let backupData;
     try {
-      const counts = await store.importAll(JSON.parse(await readFileText(file)), { mode: "merge" });
+      backupData = JSON.parse(await readFileText(file));
+    } catch {
+      setMsg({ ok: false, text: he ? "לא ניתן לקרוא את הקובץ. בחרו את קובץ הגיבוי ששמרתם." : "Cannot read the file. Pick the backup file you saved." });
+      return;
+    }
+    try {
+      const counts = await store.importAll(backupData);
       const parts = [countLabel(counts.clients, "clients", he), countLabel(counts.readings, "readings", he), countLabel(counts.attachments, "files", he)];
       setMsg({ ok: true, text: he ? `שוחזרו: ${parts.join(", ")}` : `Restored: ${parts.join(", ")}` });
       list.reload();
       sum.reload();
+    } catch (err) {
+      setMsg({ ok: false, text: restoreError(err, he) });
+    }
+  };
+
+  const markDone = async (f) => {
+    setFollowMsg(null);
+    try {
+      await store.readings.update(f.readingId, { followUp: null });
+      refocusAfterDone.current = true;
+      sum.reload();
     } catch {
-      setMsg({ ok: false, text: he ? "הקובץ הזה אינו גיבוי תקין של מרחב העבודה." : "This file is not a valid workspace backup." });
+      setFollowMsg(he ? "העדכון נכשל. נסו שוב." : "Updating failed. Try again.");
     }
   };
 
   const clients = list.data || [];
   const summary = sum.data;
   const backedUp = lastBackup();
-  const daysSinceBackup = backedUp ? Math.floor((now() - new Date(backedUp)) / 86400000) : null;
+  const daysSinceBackup = backedUp ? Math.floor((now() - new Date(backedUp)) / DAY_MS) : null;
   const remind = summary?.clients > 0 && (daysSinceBackup === null || daysSinceBackup >= BACKUP_REMINDER_DAYS);
 
   return (
@@ -89,7 +120,7 @@ export default function ClientsScreen({ store, go, he, c, now }) {
       <Card>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
           <div>
-            <h2 style={{ margin: 0, fontFamily: display, color: c.ac, fontSize: 28, fontWeight: 600 }}>{he ? "הלקוחות שלי" : "My clients"}</h2>
+            <ScreenTitle c={c} size={28}>{he ? "הלקוחות שלי" : "My clients"}</ScreenTitle>
             {summary && (
               <div style={{ fontSize: 12, color: c.ts }}>
                 {`${countLabel(summary.clients, "clients", he)} · ${countLabel(summary.readings, "savedReadings", he)}`}
@@ -99,9 +130,11 @@ export default function ClientsScreen({ store, go, he, c, now }) {
           <button className="gb" style={btnPrimary} onClick={() => go({ name: "clientForm" })}>{he ? "לקוח חדש" : "New client"}</button>
         </div>
         <input
+          ref={searchRef}
           className="gi"
           type="search"
           style={{ marginTop: 14 }}
+          aria-label={he ? "חיפוש לקוחות" : "Search clients"}
           placeholder={he ? "חיפוש לפי שם, טלפון או תגית" : "Search by name, phone or tag"}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -111,13 +144,28 @@ export default function ClientsScreen({ store, go, he, c, now }) {
       {summary && (summary.followUps.length > 0 || summary.birthdays.length > 0) && (
         <Card>
           {summary.followUps.length > 0 && (
-            <div data-testid="follow-ups" style={{ marginBottom: summary.birthdays.length ? 14 : 0 }}>
+            <div ref={followUpsRef} data-testid="follow-ups" style={{ marginBottom: summary.birthdays.length ? 14 : 0 }}>
               <SectionTitle c={c}>{he ? "מעקבים להיום" : "Follow-ups due"}</SectionTitle>
+              {followMsg && <p role="alert" style={{ color: c.danger, fontSize: 13, margin: "0 0 8px" }}>{followMsg}</p>}
               {summary.followUps.map((f) => (
-                <button key={f.readingId} className="rrow" style={rowButton(c)} onClick={() => go({ name: "reading", readingId: f.readingId })}>
-                  <span style={{ flex: 1 }}>{f.clientName}</span>
-                  <span style={{ fontSize: 12, color: c.ts }}>{readingTypeLabel(f.type, he)} · {formatDmy(f.followUp)}</span>
-                </button>
+                <div key={f.readingId} className="rrow" style={{ padding: "8px 8px", gap: 10 }}>
+                  <button
+                    style={{ ...rowButton(c), borderBottom: 0, width: "auto", flex: 1, minWidth: 0, display: "flex", gap: 12, alignItems: "center", padding: "6px 0" }}
+                    onClick={() => go({ name: "reading", readingId: f.readingId })}
+                  >
+                    <span style={{ flex: 1 }}>{f.clientName}</span>
+                    <span style={{ fontSize: 12, color: c.ts }}>{readingTypeLabel(f.type, he)} · {formatDmy(f.followUp)}</span>
+                  </button>
+                  <button
+                    data-done
+                    className="ghost"
+                    style={btnGhost}
+                    aria-label={he ? `סימון המעקב של ${f.clientName} כבוצע` : `Mark ${f.clientName}'s follow-up as done`}
+                    onClick={() => markDone(f)}
+                  >
+                    {he ? "בוצע" : "Done"}
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -155,7 +203,8 @@ export default function ClientsScreen({ store, go, he, c, now }) {
       ) : (
         <Card style={{ padding: "8px 14px" }}>
           {clients.map((cl) => {
-            const lp = cl.birthDate ? (() => { const p = personOf(cl.fullName, cl.birthDate); return LPm(p.d, p.m, p.y); })() : null;
+            const p = cl.birthDate ? personOf(cl.fullName, cl.birthDate) : null;
+            const lp = p ? LPm(p.d, p.m, p.y) : null;
             return (
               <button key={cl.id} className="rrow" style={rowButton(c)} onClick={() => go({ name: "client", clientId: cl.id })}>
                 <span style={{ flex: 1, minWidth: 0 }}>
@@ -166,7 +215,7 @@ export default function ClientsScreen({ store, go, he, c, now }) {
                   </span>
                 </span>
                 {lp !== null && <span className="badge" title={he ? "שביל הגורל" : "Life path"}>{lp}</span>}
-                <span style={{ fontSize: 11, color: c.ts, whiteSpace: "nowrap" }}>{formatStamp(cl.updatedAt)}</span>
+                <span style={{ fontSize: 11, color: c.ts, whiteSpace: "nowrap" }}>{formatStamp(lastActive(cl))}</span>
               </button>
             );
           })}
@@ -176,8 +225,8 @@ export default function ClientsScreen({ store, go, he, c, now }) {
       <Card style={{ padding: 16 }}>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <button className="ghost" style={btnGhost} onClick={backup}>{he ? "גיבוי" : "Back up"}</button>
+          <input id={restoreId} className="ws-file" type="file" accept="application/json,.json" onChange={restore} />
           <label htmlFor={restoreId} className="ghost" style={{ ...btnGhost, display: "inline-block" }}>{he ? "שחזור מגיבוי" : "Restore from backup"}</label>
-          <input id={restoreId} type="file" accept="application/json,.json" onChange={restore} style={{ display: "none" }} />
           <span style={{ fontSize: 12, color: remind ? c.warn : c.ts }}>
             {daysSinceBackup === null
               ? he ? "עוד לא נעשה גיבוי במכשיר הזה." : "No backup on this device yet."

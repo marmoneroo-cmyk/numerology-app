@@ -1,7 +1,7 @@
 /** Create or edit a client file; deleting asks for confirmation first. */
 import { useEffect, useState } from "react";
 import { ValidationError, validateClient } from "../data/validation.js";
-import { Card, Field, Loading, ErrorCard, BackButton, useLoad, btnPrimary, btnGhost, display } from "./ui.jsx";
+import { Card, Field, Loading, ErrorCard, ScreenTitle, BackButton, ConfirmAction, useLoad, btnPrimary, btnGhost } from "./ui.jsx";
 import { parseDmy, formatDmy, errorText } from "./format.js";
 
 const EMPTY = { fullName: "", birthName: "", birthDate: "", phone: "", email: "", tags: "", notes: "", consent: false };
@@ -12,7 +12,6 @@ export default function ClientForm({ store, go, he, c, now, clientId }) {
   const [form, setForm] = useState(null);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (existing.loading || existing.error) return;
@@ -79,9 +78,9 @@ export default function ClientForm({ store, go, he, c, now, clientId }) {
     <div>
       <BackButton onClick={back}>{editing ? (he ? "חזרה לתיק" : "Back to the file") : he ? "חזרה ללקוחות" : "Back to clients"}</BackButton>
       <Card>
-        <h2 style={{ margin: "0 0 16px", fontFamily: display, color: c.ac, fontSize: 24, fontWeight: 600 }}>
+        <ScreenTitle c={c} size={24} style={{ marginBottom: 16 }}>
           {editing ? (he ? "עריכת פרטי לקוח" : "Edit client") : he ? "לקוח חדש" : "New client"}
-        </h2>
+        </ScreenTitle>
         {text("fullName", he ? "שם מלא" : "Full name")}
         {text("birthName", he ? "שם לידה, אם שונה" : "Birth name, if different", { hint: he ? "אפשר לבחור בכל בדיקה לפי איזה שם לחשב" : "Each reading can use either name" })}
         {text("birthDate", he ? "תאריך לידה" : "Date of birth", { dir: "ltr", placeholder: "dd.mm.yyyy", inputMode: "numeric", hint: he ? "אפשר להשאיר ריק ולהשלים אחר כך" : "Can be added later" })}
@@ -104,25 +103,20 @@ export default function ClientForm({ store, go, he, c, now, clientId }) {
 
       {editing && (
         <Card style={{ borderColor: c.danger }}>
-          {!confirmDelete ? (
-            <button className="ghost" style={{ ...btnGhost, color: c.danger, borderColor: c.danger }} onClick={() => setConfirmDelete(true)}>
-              {he ? "מחיקת הלקוח" : "Delete client"}
-            </button>
-          ) : (
-            <div>
-              <p style={{ marginTop: 0, color: c.danger, fontSize: 14 }}>
-                {he
-                  ? `למחוק את ${form.fullName} עם כל הבדיקות והקבצים? אי אפשר לבטל את זה.`
-                  : `Delete ${form.fullName} with every reading and file? This cannot be undone.`}
-              </p>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button className="ghost" style={{ ...btnGhost, color: c.danger, borderColor: c.danger }} onClick={remove} disabled={busy}>
-                  {he ? "כן, למחוק הכל" : "Yes, delete everything"}
-                </button>
-                <button className="ghost" style={btnGhost} onClick={() => setConfirmDelete(false)} disabled={busy}>{he ? "השארה" : "Keep"}</button>
-              </div>
-            </div>
-          )}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <ConfirmAction
+              c={c}
+              stacked
+              label={he ? "מחיקת הלקוח" : "Delete client"}
+              question={he
+                ? `למחוק את ${form.fullName} עם כל הבדיקות והקבצים? אי אפשר לבטל את זה.`
+                : `Delete ${form.fullName} with every reading and file? This cannot be undone.`}
+              confirmLabel={he ? "כן, למחוק הכל" : "Yes, delete everything"}
+              keepLabel={he ? "השארה" : "Keep"}
+              onConfirm={remove}
+              busy={busy}
+            />
+          </div>
         </Card>
       )}
     </div>

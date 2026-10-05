@@ -43,17 +43,41 @@ export function matchTypeLabel(type, he) {
   return he ? l[0] : l[1];
 }
 
-/** One line for a reading in a history list. */
+/** A person in a saved reading; a deleted client's details were wiped, so they show as "(נמחק)". */
+export const personName = (p, he) => (p && p.name ? p.name : he ? "(נמחק)" : "(deleted)");
+
+const isNum = (v) => typeof v === "number" && Number.isFinite(v);
+
+/** One line for a reading in a history list. Never throws, even for a damaged reading. */
 export function summarizeReading(reading, he) {
-  const { type, result: r, input } = reading;
-  if (type === "map") return he ? `שביל הגורל ${r.lp} · ערך השם ${r.nv} · שנה אישית ${r.py}` : `Life path ${r.lp} · name ${r.nv} · personal year ${r.py}`;
-  if (type === "match") return he ? `${r.score}% התאמה ${matchTypeLabel(input.matchType, he)} עם ${input.other.name}` : `${r.score}% ${matchTypeLabel(input.matchType, he)} match with ${input.other.name}`;
-  if (type === "parentChild") return he ? `${r.score}% חיבור עם ${input.other.name}` : `${r.score}% connection with ${input.other.name}`;
-  if (type === "yearCycle") {
-    const first = r.proj[0]?.year, last = r.proj[r.proj.length - 1]?.year;
-    return he ? `שנים אישיות ${first}–${last}` : `Personal years ${first}–${last}`;
+  try {
+    const line = summaryLine(reading, he);
+    if (line) return line;
+  } catch {
+    /* damaged reading: say so below */
   }
-  return "";
+  return he ? "לא ניתן להציג את הסיכום" : "Summary unavailable";
+}
+
+function summaryLine({ type, result: r, input }, he) {
+  if (type === "map" && [r.lp, r.nv, r.py].every(isNum)) {
+    return he ? `שביל הגורל ${r.lp} · ערך השם ${r.nv} · שנה אישית ${r.py}` : `Life path ${r.lp} · name ${r.nv} · personal year ${r.py}`;
+  }
+  if (type === "match" && isNum(r.score)) {
+    const kind = matchTypeLabel(input.matchType, he);
+    const other = personName(input.other, he);
+    return he ? `${r.score}% התאמה ${kind} עם ${other}` : `${r.score}% ${kind} match with ${other}`;
+  }
+  if (type === "parentChild" && isNum(r.score)) {
+    const other = personName(input.other, he);
+    return he ? `${r.score}% חיבור עם ${other}` : `${r.score}% connection with ${other}`;
+  }
+  if (type === "yearCycle" && Array.isArray(r.proj) && r.proj.length > 0) {
+    const first = r.proj[0].year;
+    const last = r.proj[r.proj.length - 1].year;
+    if (isNum(first) && isNum(last)) return he ? `שנים אישיות ${first}–${last}` : `Personal years ${first}–${last}`;
+  }
+  return null;
 }
 
 const COUNTS = {
@@ -61,6 +85,7 @@ const COUNTS = {
   readings: [["בדיקה אחת", "בדיקות"], ["1 reading", "readings"]],
   savedReadings: [["בדיקה שמורה אחת", "בדיקות שמורות"], ["1 saved reading", "saved readings"]],
   files: [["קובץ אחד", "קבצים"], ["1 file", "files"]],
+  errors: [["שגיאה אחת", "שגיאות"], ["1 error", "errors"]],
 };
 
 /** A count in natural language: "לקוח אחד", "3 לקוחות". */
@@ -94,15 +119,4 @@ export function errorText(field, code, he) {
   };
   const m = msgs[`${field}.${code}`];
   return m ? (he ? m[0] : m[1]) : he ? "ערך לא תקין" : "Invalid value";
-}
-
-/** Reads a File/Blob's bytes, with a FileReader fallback for older browsers. */
-export function readFileBytes(file) {
-  if (typeof file.arrayBuffer === "function") return file.arrayBuffer();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsArrayBuffer(file);
-  });
 }

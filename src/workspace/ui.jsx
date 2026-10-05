@@ -1,5 +1,5 @@
 /** Small shared pieces for the workspace screens. Styling follows App.jsx's global classes. */
-import { useCallback, useEffect, useId, useState } from "react";
+import { Component, cloneElement, createContext, useCallback, useContext, useEffect, useId, useRef, useState } from "react";
 
 /** Theme colours, the same pair App.jsx uses (dark: champagne gold on night blue). */
 export function colors(dk) {
@@ -19,16 +19,21 @@ export const btnPrimary = { width: "auto", padding: "11px 20px", fontSize: 14 };
 export const btnGhost = { padding: "9px 16px", fontSize: 13, borderRadius: 12, cursor: "pointer" };
 export const display = "'Cormorant Garamond',serif";
 
-/** Runs `load` when `deps` change; `reload()` runs it again. */
+/**
+ * Runs `load` when `deps` change; `reload()` runs it again. Only the latest
+ * run's answer is kept, so a slow earlier search can never overwrite a newer one.
+ */
 export function useLoad(load, deps) {
   const [state, setState] = useState({ loading: true, data: null, error: null });
+  const latest = useRef(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const run = useCallback(async () => {
+    const call = ++latest.current;
     try {
       const data = await load();
-      setState({ loading: false, data, error: null });
+      if (call === latest.current) setState({ loading: false, data, error: null });
     } catch (error) {
-      setState({ loading: false, data: null, error });
+      if (call === latest.current) setState({ loading: false, data: null, error });
     }
   }, deps);
   useEffect(() => {
@@ -45,25 +50,102 @@ export function Loading({ he, c }) {
   return <Card style={{ textAlign: "center", color: c.ts }}>{he ? "טוען…" : "Loading…"}</Card>;
 }
 
-export function ErrorCard({ he, c, onBack }) {
+export function ErrorCard({ he, c, onBack, text, backLabel }) {
   return (
     <Card style={{ textAlign: "center" }}>
-      <p role="alert" style={{ color: c.danger, marginTop: 0 }}>{he ? "משהו השתבש בטעינה." : "Something went wrong while loading."}</p>
-      {onBack && <button className="ghost" style={btnGhost} onClick={onBack}>{he ? "חזרה" : "Back"}</button>}
+      <p role="alert" style={{ color: c.danger, marginTop: 0 }}>{text || (he ? "משהו השתבש בטעינה." : "Something went wrong while loading.")}</p>
+      {onBack && <button className="ghost" style={btnGhost} onClick={onBack}>{backLabel || (he ? "חזרה" : "Back")}</button>}
     </Card>
   );
 }
 
-/** Label + control + hint/error. `children(id)` renders the control with that id. */
+/** Shows `fallback` instead of a screen that failed to render. Give it a new `key` to try again. */
+export class ScreenBoundary extends Component {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
+  }
+}
+
+/**
+ * Label + control + hint/error. `children(id)` renders the control with that
+ * id; the control is marked invalid and described by the error (or the hint).
+ */
 export function Field({ label, error, hint, children, c }) {
   const id = useId();
+  const noteId = `${id}-note`;
+  const note = error || hint;
+  const control = cloneElement(children(id), { "aria-invalid": error ? true : undefined, "aria-describedby": note ? noteId : undefined });
   return (
     <div style={{ marginBottom: 14 }}>
       <label htmlFor={id} style={{ display: "block", marginBottom: 6, fontSize: 12, color: c.ac, fontWeight: 500 }}>{label}</label>
-      {children(id)}
-      {hint && !error && <div style={{ fontSize: 11, color: c.ts, marginTop: 4 }}>{hint}</div>}
-      {error && <div role="alert" style={{ fontSize: 12, color: c.danger, marginTop: 5 }}>{error}</div>}
+      {control}
+      {error ? (
+        <div id={noteId} role="alert" style={{ fontSize: 12, color: c.danger, marginTop: 5 }}>{error}</div>
+      ) : (
+        hint && <div id={noteId} style={{ fontSize: 11, color: c.ts, marginTop: 4 }}>{hint}</div>
+      )}
     </div>
+  );
+}
+
+/**
+ * A destructive action in two steps: the button, then a question with
+ * "confirm" and "keep". The focus moves to "keep" when the question appears,
+ * and back to the button when kept, so keyboard and screen-reader users are
+ * never dropped. `stacked` puts a long question on a line of its own.
+ */
+export function ConfirmAction({ c, label, ariaLabel, question, confirmLabel, confirmAriaLabel, keepLabel, onConfirm, busy = false, stacked = false }) {
+  const [asking, setAsking] = useState(false);
+  const askRef = useRef(null);
+  const keepRef = useRef(null);
+  const wasAsking = useRef(false);
+  useEffect(() => {
+    if (asking) keepRef.current?.focus();
+    else if (wasAsking.current) askRef.current?.focus();
+    wasAsking.current = asking;
+  }, [asking]);
+
+  const danger = { ...btnGhost, color: c.danger };
+  if (!asking) {
+    return (
+      <button ref={askRef} className="ghost" style={danger} aria-label={ariaLabel} onClick={() => setAsking(true)} disabled={busy}>
+        {label}
+      </button>
+    );
+  }
+  return (
+    <>
+      <span style={{ fontSize: 13, color: c.danger, lineHeight: 1.6, ...(stacked ? { flexBasis: "100%" } : null) }}>{question}</span>
+      <button className="ghost" style={{ ...danger, borderColor: c.danger }} aria-label={confirmAriaLabel} onClick={onConfirm} disabled={busy}>
+        {confirmLabel}
+      </button>
+      <button ref={keepRef} className="ghost" style={btnGhost} onClick={() => setAsking(false)} disabled={busy}>
+        {keepLabel}
+      </button>
+    </>
+  );
+}
+
+/** True once the person has moved between screens; the new screen's title then takes the focus. */
+export const FocusTitleContext = createContext(false);
+
+/** A screen's title. After a move between screens it takes the focus, so screen readers announce the new screen. */
+export function ScreenTitle({ children, c, size = 26, style }) {
+  const ref = useRef(null);
+  const focus = useContext(FocusTitleContext);
+  useEffect(() => {
+    if (focus) ref.current?.focus({ preventScroll: true });
+  }, [focus]);
+  return (
+    <h2 ref={ref} tabIndex={-1} style={{ margin: 0, fontFamily: display, color: c.ac, fontSize: size, fontWeight: 600, ...style }}>
+      {children}
+    </h2>
   );
 }
 
