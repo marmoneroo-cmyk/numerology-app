@@ -138,4 +138,11 @@ Errors are `ValidationError` (with `errors: [{field, code}]`) and `NotFoundError
     - A connection closed by an upgrade in another tab now asks for a reload.
   - Focus is kept when a delete turns into its confirmation and when a follow-up row leaves (`ConfirmAction`).
   - 23 planted bugs, each caught.
-- [ ] **12. Ship:** push the branch, check the Vercel preview (headers live), fast-forward `main`, check production.
+- [x] **12. Ship (2026-10-05, `d10348f`):** the branch was pushed and Vercel's preview build (tests included) passed.
+  - Preview deployments sit behind Vercel's login, so the live checks ran on production after a fast-forward of `main`:
+    - the headers are present;
+    - the public page loads all 13 images and its fonts;
+    - in the workspace: a client, a map with insights, the PDF, an octet-stream attachment and the delete, through Web Locks;
+    - no CSP violations or console errors;
+    - the test data was removed.
+  - Production dependencies audit clean. The dev-server advisories (Vite 5 / Vitest 3) need major upgrades, a separate task.
