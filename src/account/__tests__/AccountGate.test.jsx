@@ -22,6 +22,9 @@ function fakeService({ saved = null, signIn = { ok: true }, claim = { status: "o
     forget: vi.fn(async () => {}),
     mfaState: vi.fn(async () => (typeof mfa === "function" ? mfa() : mfa)),
     mfaVerify: vi.fn(async () => {}),
+    requestPasswordReset: vi.fn(async () => {}),
+    verifyResetCode: vi.fn(async () => {}),
+    changePassword: vi.fn(async () => {}),
     // what the provider hooks into: the store's and screens' refusals, and supabase-js dropping the login
     watch: vi.fn((fn) => {
       service.lost = fn;
@@ -258,5 +261,117 @@ describe("account gate", () => {
     fireEvent.click(await screen.findByRole("button", { name: "לנסות שוב" }));
     expect(await screen.findByText("הסטודיו של דנה לוי")).toBeTruthy();
     await waitFor(() => expect(service.claim).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe("a forgotten password", () => {
+  const typeNewPassword = async (first, second = first) => {
+    fireEvent.change(await screen.findByLabelText("סיסמה חדשה"), { target: { value: first } });
+    fireEvent.change(screen.getByLabelText("הסיסמה החדשה שוב"), { target: { value: second } });
+    fireEvent.click(screen.getByRole("button", { name: "שמירה וכניסה" }));
+  };
+
+  it("goes from the address to the emailed code to a new password, then into the Studio", async () => {
+    const service = fakeService();
+    setup(service);
+    fireEvent.change(await screen.findByLabelText("אימייל"), { target: { value: "Dana@Example.com " } });
+    fireEvent.click(screen.getByRole("button", { name: "שכחתי סיסמה" }));
+    // what was typed on the sign-in screen comes along
+    expect((await screen.findByLabelText("אימייל")).value).toBe("Dana@Example.com");
+    fireEvent.click(screen.getByRole("button", { name: "שליחת קוד" }));
+    expect(await screen.findByText("dana@example.com")).toBeTruthy();
+    expect(service.requestPasswordReset).toHaveBeenCalledWith("Dana@Example.com");
+    const code = screen.getByLabelText("הקוד מהאימייל");
+    fireEvent.change(code, { target: { value: "12 34-5a6" } });
+    expect(code.value).toBe("123456");
+    fireEvent.click(screen.getByRole("button", { name: "המשך" }));
+    await typeNewPassword("a-new-password");
+    expect(await screen.findByText("הסטודיו של דנה לוי")).toBeTruthy();
+    expect(service.verifyResetCode).toHaveBeenCalledWith("dana@example.com", "123456");
+    expect(service.changePassword).toHaveBeenCalledWith("a-new-password");
+    expect(service.claim).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks for the authenticator code before the new password when the account has two-step verification", async () => {
+    let verified = false;
+    const service = fakeService({ mfa: () => (verified ? { level: "aal2", needsCode: false, factorId: "f1" } : { level: "aal1", needsCode: true, factorId: "f1" }) });
+    service.mfaVerify.mockImplementation(async () => {
+      verified = true;
+    });
+    setup(service);
+    fireEvent.click(await screen.findByRole("button", { name: "שכחתי סיסמה" }));
+    fireEvent.change(screen.getByLabelText("אימייל"), { target: { value: "dana@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "שליחת קוד" }));
+    fireEvent.change(await screen.findByLabelText("הקוד מהאימייל"), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "המשך" }));
+    fireEvent.change(await screen.findByLabelText("קוד מהאפליקציה"), { target: { value: "654321" } });
+    expect(service.changePassword).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "אימות" }));
+    await typeNewPassword("a-new-password");
+    expect(await screen.findByText("הסטודיו של דנה לוי")).toBeTruthy();
+    expect(service.mfaVerify).toHaveBeenCalledWith("f1", "654321");
+    expect(service.changePassword).toHaveBeenCalledWith("a-new-password");
+  });
+
+  it("refuses an invalid address, and says when too many codes were asked for", async () => {
+    const service = fakeService();
+    service.requestPasswordReset.mockRejectedValueOnce(new AccountError("rate_limited"));
+    setup(service);
+    fireEvent.click(await screen.findByRole("button", { name: "שכחתי סיסמה" }));
+    fireEvent.change(screen.getByLabelText("אימייל"), { target: { value: "dana@example" } });
+    fireEvent.click(screen.getByRole("button", { name: "שליחת קוד" }));
+    expect(await screen.findByText("כתובת אימייל לא תקינה.")).toBeTruthy();
+    expect(service.requestPasswordReset).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("אימייל"), { target: { value: "dana@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "שליחת קוד" }));
+    expect(await screen.findByText("נשלחו יותר מדי בקשות בזמן קצר. נסו שוב בעוד כמה דקות.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "חזרה למסך הכניסה" }));
+    expect(await screen.findByRole("button", { name: "כניסה" })).toBeTruthy();
+  });
+
+  it("says when the emailed code is wrong, and sends a new one", async () => {
+    const service = fakeService();
+    service.verifyResetCode.mockRejectedValueOnce(new AccountError("wrong_code"));
+    setup(service);
+    fireEvent.click(await screen.findByRole("button", { name: "שכחתי סיסמה" }));
+    fireEvent.change(screen.getByLabelText("אימייל"), { target: { value: "dana@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "שליחת קוד" }));
+    fireEvent.change(await screen.findByLabelText("הקוד מהאימייל"), { target: { value: "111111" } });
+    fireEvent.click(screen.getByRole("button", { name: "המשך" }));
+    expect(await screen.findByText("הקוד שגוי או שפג תוקפו. אפשר לבקש קוד חדש.")).toBeTruthy();
+    expect(screen.getByLabelText("הקוד מהאימייל").value).toBe("");
+    fireEvent.click(screen.getByRole("button", { name: "שליחת קוד חדש" }));
+    expect(await screen.findByText("נשלח קוד חדש")).toBeTruthy();
+    expect(service.requestPasswordReset).toHaveBeenCalledTimes(2);
+    service.requestPasswordReset.mockRejectedValueOnce(new Error("Failed to fetch"));
+    fireEvent.click(screen.getByRole("button", { name: "שליחת קוד חדש" }));
+    expect(await screen.findByText("אין חיבור כרגע. נסו שוב בעוד רגע.")).toBeTruthy();
+  });
+
+  it("checks the new password: long enough, typed the same twice, not the current one", async () => {
+    const service = fakeService();
+    service.changePassword.mockRejectedValueOnce(new AccountError("same_password"));
+    setup(service);
+    fireEvent.click(await screen.findByRole("button", { name: "שכחתי סיסמה" }));
+    fireEvent.change(screen.getByLabelText("אימייל"), { target: { value: "dana@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "שליחת קוד" }));
+    fireEvent.change(await screen.findByLabelText("הקוד מהאימייל"), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "המשך" }));
+    await typeNewPassword("short");
+    expect(await screen.findByText("לפחות 10 תווים.")).toBeTruthy();
+    await typeNewPassword("x".repeat(73));
+    expect(await screen.findByText("עד 72 תווים.")).toBeTruthy();
+    await typeNewPassword("a-new-password", "a-new-passw0rd");
+    expect(await screen.findByText("הסיסמאות לא זהות.")).toBeTruthy();
+    expect(service.changePassword).not.toHaveBeenCalled();
+    await typeNewPassword("the-old-password");
+    expect(await screen.findByText("זו הסיסמה הנוכחית. בחרו סיסמה אחרת.")).toBeTruthy();
+    service.changePassword.mockRejectedValueOnce(new AccountError("weak_password"));
+    await typeNewPassword("aaaaaaaaaa");
+    expect(await screen.findByText("הסיסמה חלשה מדי. נסו סיסמה ארוכה יותר.")).toBeTruthy();
+    // cancelling signs the code's login out on this device
+    fireEvent.click(screen.getByRole("button", { name: "ביטול" }));
+    expect(await screen.findByRole("button", { name: "כניסה" })).toBeTruthy();
+    expect(service.forget).toHaveBeenCalled();
   });
 });

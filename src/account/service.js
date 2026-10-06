@@ -76,15 +76,42 @@ export function createAccountService({ client, deviceKey, deviceLabel }) {
       const verified = (factors?.totp || []).find((f) => f.status === "verified");
       return { level: level?.currentLevel || "aal1", needsCode: level?.currentLevel === "aal1" && level?.nextLevel === "aal2", factorId: verified?.id || null };
     },
-    /** Starts adding an authenticator app: its QR code and secret, to confirm with a code. */
+    /**
+     * Starts adding an authenticator app: its QR code, link and key, to confirm
+     * with a code. A setup left unconfirmed is removed first (Supabase keeps
+     * them, and they count against the account's factors).
+     */
     async mfaEnroll() {
-      const { data, error } = await mfa().enroll({ factorType: "totp", friendlyName: `Studio ${new Date().toISOString().slice(0, 10)}` });
+      const { data: factors } = await mfa().listFactors();
+      const unconfirmed = (factors?.all || []).filter((f) => f.factor_type === "totp" && f.status === "unverified");
+      // best effort: every setup gets a name of its own, so a leftover cannot block the new one
+      await Promise.all(unconfirmed.map((f) => mfa().unenroll({ factorId: f.id }).catch(() => null)));
+      const friendlyName = `Studio ${new Date().toISOString().slice(0, 19).replace("T", " ")}`;
+      const { data, error } = await mfa().enroll({ factorType: "totp", friendlyName });
       if (error) throw new AccountError("unavailable");
-      return { factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret };
+      return { factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret, uri: data.totp.uri };
     },
     async mfaVerify(factorId, code) {
       const { error } = await mfa().challengeAndVerify({ factorId, code: code.trim() });
-      if (error) throw new AccountError(/invalid|verification/i.test(`${error.code} ${error.message}`) ? "wrong_code" : "unavailable");
+      if (!error) return;
+      // a setup removed meanwhile (one started on another device clears it)
+      if (error.code === "mfa_factor_not_found") throw new AccountError("setup_expired");
+      throw new AccountError(/invalid|verification/i.test(`${error.code} ${error.message}`) ? "wrong_code" : "unavailable");
+    },
+    /**
+     * Emails a code for choosing a new password (Supabase's "Reset password"
+     * email). The answer is the same whether or not the address has an account.
+     */
+    async requestPasswordReset(email) {
+      const { error } = await client.auth.resetPasswordForEmail(email.trim().toLowerCase());
+      if (error) throw new AccountError(error.status === 429 ? "rate_limited" : "unavailable");
+    },
+    /** Signs in with the emailed code; the new password comes next, with changePassword. */
+    async verifyResetCode(email, code) {
+      const { error } = await client.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: "recovery" });
+      if (!error) return;
+      if (error.status === 429) throw new AccountError("rate_limited");
+      throw new AccountError(/expired|invalid/i.test(`${error.code} ${error.message}`) ? "wrong_code" : "unavailable");
     },
     async mfaRemove(factorId) {
       const { error } = await mfa().unenroll({ factorId });

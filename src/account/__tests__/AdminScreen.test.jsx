@@ -80,12 +80,66 @@ describe("accounts (admin)", () => {
     expect(navigator.clipboard.writeText.mock.calls[0][0]).toContain(password);
   });
 
-  it("says when an address already has an account", async () => {
-    setup({ createAccount: vi.fn(async () => { throw new AccountError("email_taken"); }) });
+  it("says when the server finds the address already has an account", async () => {
+    const admin = setup({ createAccount: vi.fn(async () => { throw new AccountError("email_taken"); }) });
     fireEvent.click(await screen.findByRole("button", { name: "חשבון חדש" }));
-    fireEvent.change(screen.getByLabelText("אימייל"), { target: { value: "dana@example.com" } });
+    fireEvent.change(screen.getByLabelText("אימייל"), { target: { value: "new@example.com" } });
+    fireEvent.change(screen.getByLabelText("שם מלא"), { target: { value: "נועה" } });
     fireEvent.click(screen.getByRole("button", { name: "פתיחת החשבון" }));
     expect(await screen.findByText("לכתובת הזאת כבר יש חשבון.")).toBeTruthy();
+    expect(admin.createAccount).toHaveBeenCalledTimes(1);
+  });
+
+  it("checks the details before opening: the address, one already in the list, the name, the phone and the password", async () => {
+    const admin = setup();
+    fireEvent.click(await screen.findByRole("button", { name: "חשבון חדש" }));
+    const email = screen.getByLabelText("אימייל");
+    const INVALID = "כתובת אימייל לא תקינה, למשל name@example.com";
+    // nothing is flagged while typing; a field is checked once it is left
+    fireEvent.change(email, { target: { value: "noa@example" } });
+    expect(screen.queryByText(INVALID)).toBeNull();
+    fireEvent.blur(email);
+    expect(await screen.findByText(INVALID)).toBeTruthy();
+    expect(email.getAttribute("aria-invalid")).toBe("true");
+    for (const bad of ["noa example.com", "noa@@example.com", ".noa@example.com", "noa..levi@example.com", "noa@example.c", "noa@-example.com", "noa@example.com."]) {
+      fireEvent.change(email, { target: { value: bad } });
+      expect(screen.getByText(INVALID)).toBeTruthy();
+    }
+    // an address already in the list, whatever its case: no round trip needed
+    fireEvent.change(email, { target: { value: "Dana@Example.com" } });
+    expect(screen.getByText("לכתובת הזאת כבר יש חשבון.")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("טלפון (לא חובה)"), { target: { value: "052-12ab" } });
+    fireEvent.change(screen.getByLabelText("סיסמה ראשונה"), { target: { value: "short" } });
+    fireEvent.click(screen.getByRole("button", { name: "פתיחת החשבון" }));
+    // every problem shows, the first field gets the focus, and nothing is sent
+    expect(await screen.findByText("צריך שם מלא: הוא מופיע בסימן המים ועל הדוחות.")).toBeTruthy();
+    expect(screen.getByText("מספר טלפון לא תקין: 9 עד 15 ספרות (אפשר גם + - ורווחים).")).toBeTruthy();
+    expect(screen.getByText("לפחות 10 תווים.")).toBeTruthy();
+    expect(document.activeElement).toBe(email);
+    expect(admin.createAccount).not.toHaveBeenCalled();
+    // corrected, it opens, with the address trimmed and in lower case
+    fireEvent.change(email, { target: { value: " Noa.Levi+studio@Example.co.il " } });
+    fireEvent.change(screen.getByLabelText("שם מלא"), { target: { value: " נועה לוי " } });
+    fireEvent.change(screen.getByLabelText("טלפון (לא חובה)"), { target: { value: "+972 52-123-4567" } });
+    fireEvent.change(screen.getByLabelText("סיסמה ראשונה"), { target: { value: "a-long-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "פתיחת החשבון" }));
+    expect(await screen.findByText("החשבון נפתח")).toBeTruthy();
+    expect(admin.createAccount).toHaveBeenCalledWith({ email: "noa.levi+studio@example.co.il", fullName: "נועה לוי", phone: "+972 52-123-4567", plan: "pro", password: "a-long-password" });
+  });
+
+  it("focuses the first field with a problem, and still opens when the account list could not load", async () => {
+    const admin = setup({ listAccounts: vi.fn(async () => { throw new Error("offline"); }) });
+    fireEvent.click(await screen.findByRole("button", { name: "חשבון חדש" }));
+    fireEvent.change(screen.getByLabelText("אימייל"), { target: { value: "noa@example.com" } });
+    fireEvent.change(screen.getByLabelText("סיסמה ראשונה"), { target: { value: "x".repeat(73) } });
+    fireEvent.click(screen.getByRole("button", { name: "פתיחת החשבון" }));
+    expect(await screen.findByText("עד 72 תווים.")).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByLabelText("שם מלא"));
+    fireEvent.change(screen.getByLabelText("שם מלא"), { target: { value: "נועה" } });
+    fireEvent.change(screen.getByLabelText("סיסמה ראשונה"), { target: { value: "a-long-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "פתיחת החשבון" }));
+    expect(await screen.findByText("החשבון נפתח")).toBeTruthy();
+    expect(admin.createAccount).toHaveBeenCalledTimes(1);
   });
 
   it("changes an account's plan and device limit", async () => {

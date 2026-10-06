@@ -9,7 +9,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { SessionError } from "../data/serverBackend.js";
-import { SignInScreen, CodeScreen, BlockedScreen, ReplacedScreen, WaitScreen, ProblemScreen } from "./screens.jsx";
+import { SignInScreen, CodeScreen, BlockedScreen, ReplacedScreen, WaitScreen, ProblemScreen, ForgotScreen, ResetScreen, NewPasswordScreen } from "./screens.jsx";
 
 const AccountContext = createContext(null);
 
@@ -47,7 +47,8 @@ function loadAccountService() {
  *   the Studio first opens. `loadService` is injectable for tests.
  */
 export function AccountProvider({ active, loadService = loadAccountService, children }) {
-  // idle | checking | signed_out | code | claiming | ready | blocked | replaced | problem
+  // idle | checking | signed_out | code | claiming | ready | blocked | replaced | problem,
+  // and for a forgotten password: forgot (the email) | reset (the emailed code) | new_password
   const [state, setState] = useState({ name: "idle" });
   const [activated, setActivated] = useState(false);
   const isActive = active ?? activated;
@@ -147,6 +148,8 @@ export function AccountProvider({ active, loadService = loadAccountService, chil
     state: state.name,
     reason: state.reason,
     limit: state.limit,
+    /** The address a forgotten-password code goes to. */
+    email: state.email || "",
     profile: state.profile || null,
     aal: state.aal || "aal1",
     service: serviceRef.current,
@@ -165,6 +168,43 @@ export function AccountProvider({ active, loadService = loadAccountService, chil
       const svc = serviceRef.current;
       try {
         await svc.mfaVerify(state.factorId, code);
+      } catch (e) {
+        return e.code || "unavailable";
+      }
+      // a forgotten password: the authenticator code comes before the new password, not instead of it
+      if (state.next === "new_password") setState({ name: "new_password" });
+      else await claim(svc);
+      return null;
+    },
+    /** "Forgot password", from the sign-in screen (with what was typed there). */
+    toForgot: (email = "") => setState({ name: "forgot", email: email.trim() }),
+    /** Emails a code for a new password. @returns {Promise<string|null>} an error code, or null */
+    async requestReset(email) {
+      try {
+        await (await service()).requestPasswordReset(email);
+      } catch (e) {
+        return e.code || "unavailable";
+      }
+      setState({ name: "reset", email: email.trim().toLowerCase() });
+      return null;
+    },
+    /** The emailed code; then the authenticator code if the account has one, then the new password. */
+    async verifyResetCode(code) {
+      const svc = serviceRef.current;
+      try {
+        await svc.verifyResetCode(state.email, code);
+      } catch (e) {
+        return e.code || "unavailable";
+      }
+      const mfa = await svc.mfaState().catch(() => ({ needsCode: false }));
+      setState(mfa.needsCode ? { name: "code", factorId: mfa.factorId, next: "new_password" } : { name: "new_password" });
+      return null;
+    },
+    /** Sets the new password, then opens the Studio. @returns {Promise<string|null>} an error code, or null */
+    async setNewPassword(password) {
+      const svc = serviceRef.current;
+      try {
+        await svc.changePassword(password);
       } catch (e) {
         return e.code || "unavailable";
       }
@@ -211,6 +251,12 @@ export function AccountGate({ he, dk, onLeave, children }) {
       return <ReplacedScreen {...props} />;
     case "problem":
       return <ProblemScreen {...props} />;
+    case "forgot":
+      return <ForgotScreen {...props} />;
+    case "reset":
+      return <ResetScreen {...props} />;
+    case "new_password":
+      return <NewPasswordScreen {...props} />;
     default:
       return <WaitScreen {...props} />;
   }

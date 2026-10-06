@@ -1,8 +1,10 @@
 /** "My account": name and phone, a new password, two-step verification, and the account's devices. */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, Field, SectionTitle, ScreenTitle, ConfirmAction, Loading, ErrorCard, useLoad, colors, btnPrimary, btnGhost } from "../workspace/ui.jsx";
 import { countLabel } from "../workspace/format.js";
 import { planLabel, dateTime, MIN_PASSWORD } from "./labels.js";
+import { QrCode, qrMatrix } from "./qr.jsx";
+import PasswordInput from "./PasswordInput.jsx";
 
 export default function AccountScreen({ account, he, dk }) {
   const c = colors(dk);
@@ -81,10 +83,10 @@ function Password({ account, he, c }) {
       <SectionTitle c={c}>{he ? "סיסמה" : "Password"}</SectionTitle>
       <form onSubmit={change} noValidate>
         <Field label={he ? "סיסמה חדשה" : "New password"} error={error} c={c}>
-          {(id) => <input id={id} className="gi" type="password" dir="ltr" autoComplete="new-password" value={first} onChange={(e) => setFirst(e.target.value)} />}
+          {(id) => <PasswordInput id={id} he={he} c={c} autoComplete="new-password" value={first} onChange={(e) => setFirst(e.target.value)} />}
         </Field>
         <Field label={he ? "הסיסמה החדשה שוב" : "The new password again"} c={c}>
-          {(id) => <input id={id} className="gi" type="password" dir="ltr" autoComplete="new-password" value={second} onChange={(e) => setSecond(e.target.value)} />}
+          {(id) => <PasswordInput id={id} he={he} c={c} autoComplete="new-password" value={second} onChange={(e) => setSecond(e.target.value)} />}
         </Field>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <button className="gb" type="submit" style={btnPrimary}>{he ? "החלפת סיסמה" : "Change password"}</button>
@@ -102,15 +104,34 @@ function TwoStep({ account, he, c }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState(null);
   const [done, setDone] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const focusNext = useRef(null);
   if (state.loading) return <Loading he={he} c={c} />;
   const active = done || Boolean(state.data?.factorId);
+  const qrLabel = he ? "קוד QR לאפליקציית האימות" : "QR code for the authenticator app";
+  /** Moves the focus to an element once it appears, when it is the one the user needs next. */
+  const focusIf = (target) => (el) => {
+    if (el && focusNext.current === target) {
+      focusNext.current = null;
+      el.focus();
+    }
+  };
 
   const begin = async () => {
+    // one setup at a time: a second start would remove the first one's key while it is on screen
+    if (starting) return;
+    setStarting(true);
     setError(null);
     try {
-      setSetup(await account.service.mfaEnroll());
+      const enrolled = await account.service.mfaEnroll();
+      // a sparse code drawn here scans far more easily; the server's dense image is the fallback
+      const matrix = enrolled.uri ? await qrMatrix(enrolled.uri).catch(() => null) : null;
+      focusNext.current = "setup";
+      setSetup({ ...enrolled, matrix });
     } catch {
       setError(he ? "אי אפשר להתחיל כרגע. נסו שוב." : "Cannot start right now. Try again.");
+    } finally {
+      setStarting(false);
     }
   };
   const confirm = async (e) => {
@@ -122,9 +143,22 @@ function TwoStep({ account, he, c }) {
       setSetup(null);
       await account.refreshAal();
     } catch (err) {
-      setError(err.code === "wrong_code" ? (he ? "הקוד שגוי. נסו את הקוד הנוכחי באפליקציה." : "Wrong code. Try the current one.") : he ? "האישור נכשל. נסו שוב." : "Confirming failed. Try again.");
       setCode("");
+      if (err.code === "setup_expired") {
+        // removed by a setup started elsewhere: this key will never work, so back to the start
+        focusNext.current = "start";
+        setSetup(null);
+        setError(he ? "ההגדרה הזאת כבר לא בתוקף, אולי כי התחילה הגדרה במכשיר אחר. מתחילים מחדש." : "This setup is no longer valid, perhaps because one was started on another device. Start again.");
+        return;
+      }
+      setError(err.code === "wrong_code" ? (he ? "הקוד שגוי. נסו את הקוד הנוכחי באפליקציה." : "Wrong code. Try the current one.") : he ? "האישור נכשל. נסו שוב." : "Confirming failed. Try again.");
     }
+  };
+  const cancel = () => {
+    focusNext.current = "start";
+    setSetup(null);
+    setCode("");
+    setError(null);
   };
 
   return (
@@ -140,22 +174,71 @@ function TwoStep({ account, he, c }) {
               : "Sign in with your password and a code from an authenticator app on your phone. Required for admins."}
           </p>
           {error && <p role="alert" style={{ color: c.danger, fontSize: 13 }}>{error}</p>}
-          <button className="ghost" style={btnGhost} onClick={begin}>{he ? "הפעלת אימות דו-שלבי" : "Turn on two-step verification"}</button>
+          <button ref={focusIf("start")} className="ghost" style={btnGhost} onClick={begin} disabled={starting}>{he ? "הפעלת אימות דו-שלבי" : "Turn on two-step verification"}</button>
         </>
       ) : (
         <form onSubmit={confirm} noValidate>
-          <p style={{ margin: "0 0 10px", fontSize: 13, lineHeight: 1.7 }}>
-            {he ? "סרקו את הקוד באפליקציית האימות, או הקלידו בה את המפתח, ואז הזינו את הקוד שהיא מציגה." : "Scan this with your authenticator app, or type the key into it, then enter the code it shows."}
+          <p ref={focusIf("setup")} tabIndex={-1} style={{ margin: "0 0 10px", fontSize: 13, lineHeight: 1.7, outline: "none" }}>
+            {he
+              ? "באפליקציית האימות בטלפון מוסיפים חשבון וסורקים את הקוד. מעכשיו האפליקציה מציגה קוד בן 6 ספרות שמתחלף כל 30 שניות: מקלידים אותו כאן."
+              : "In the authenticator app on your phone, add an account and scan this code. The app then shows a 6-digit code that changes every 30 seconds: type it here."}
           </p>
-          <img src={setup.qr} alt={he ? "קוד QR לאפליקציית האימות" : "QR code for the authenticator app"} width={180} height={180} style={{ background: "#fff", borderRadius: 8, padding: 6 }} />
-          <p dir="ltr" style={{ fontFamily: "monospace", fontSize: 13, wordBreak: "break-all", textAlign: he ? "right" : "left" }}>{setup.secret}</p>
+          {setup.matrix ? (
+            <QrCode matrix={setup.matrix} label={qrLabel} />
+          ) : (
+            <img src={setup.qr} alt={qrLabel} width={243} height={243} style={{ background: "#fff", borderRadius: 8, padding: 12 }} />
+          )}
+          {setup.uri?.startsWith("otpauth://") && (
+            <p style={{ margin: "10px 0 0", fontSize: 13 }}>
+              <a href={setup.uri} style={{ color: c.ac }}>{he ? "בטלפון? פתיחה ישירה באפליקציית האימות" : "On your phone? Open it in the authenticator app"}</a>
+            </p>
+          )}
+          <ManualKey secret={setup.secret} he={he} c={c} />
           <Field label={he ? "קוד מהאפליקציה" : "Code from the app"} error={error} c={c}>
             {(id) => <input id={id} className="gi" dir="ltr" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />}
           </Field>
-          <button className="gb" type="submit" style={btnPrimary} disabled={code.length !== 6}>{he ? "אישור" : "Confirm"}</button>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <button className="gb" type="submit" style={btnPrimary} disabled={code.length !== 6}>{he ? "אישור" : "Confirm"}</button>
+            <button className="ghost" type="button" style={btnGhost} onClick={cancel}>{he ? "ביטול" : "Cancel"}</button>
+          </div>
         </form>
       )}
     </Card>
+  );
+}
+
+/** "JBSWY3DP…" as "JBSW Y3DP …": easier to type, and the apps ignore the spaces. */
+const groupKey = (key) => key.match(/.{1,4}/g)?.join(" ") ?? key;
+
+/** The key to type into the authenticator app when the QR code will not scan. */
+function ManualKey({ secret, he, c }) {
+  const [copied, setCopied] = useState(null);
+  const copy = async () => {
+    setCopied(null); // cleared first, so copying again is announced again
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
+  return (
+    <div style={{ margin: "14px 0", fontSize: 13, lineHeight: 1.7 }}>
+      <p style={{ margin: "0 0 4px", fontWeight: 600 }}>{he ? "לא מצליחים לסרוק? מקלידים את המפתח:" : "Cannot scan? Type the key instead:"}</p>
+      <ul style={{ margin: "0 0 8px", paddingInlineStart: 18, color: c.ts }}>
+        <li>{he ? "ב-Google Authenticator: לוחצים על + ואז “הזנת מפתח הגדרה” (Enter a setup key)." : "Google Authenticator: tap + then “Enter a setup key”."}</li>
+        <li>{he ? "ב-Microsoft Authenticator: לוחצים על + ואז “חשבון אחר” (Other account) ואז “הזן קוד באופן ידני” (Enter code manually)." : "Microsoft Authenticator: tap + then “Other account” then “Enter code manually”."}</li>
+        <li>{he ? "שם החשבון: סטודיו. המפתח: זה שכאן למטה." : "Account name: Studio. Key: the one below."}</li>
+      </ul>
+      <p dir="ltr" style={{ margin: "0 0 8px", fontFamily: "monospace", fontSize: 17, letterSpacing: 1, wordBreak: "break-word", textAlign: he ? "right" : "left" }}>{groupKey(secret)}</p>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <button className="ghost" type="button" style={btnGhost} onClick={copy}>{he ? "העתקת המפתח" : "Copy the key"}</button>
+        {/* always in the page, so screen readers announce what appears in it */}
+        <span role="status" style={{ fontSize: 13, color: copied ? c.ok : c.danger }}>
+          {copied === null ? "" : copied ? (he ? "המפתח הועתק" : "Key copied") : he ? "ההעתקה לא הצליחה. אפשר לסמן את המפתח ולהעתיק." : "Copying failed. Select the key and copy it."}
+        </span>
+      </div>
+    </div>
   );
 }
 

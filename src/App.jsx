@@ -4,6 +4,7 @@ import WorkspaceApp from "./workspace/WorkspaceApp.jsx";
 import { ContentContext } from "./workspace/content.js";
 import { useAccount, AccountGate } from "./account/AccountContext.jsx";
 import AccountScreen from "./account/AccountScreen.jsx";
+import StudioNav from "./StudioNav.jsx";
 import AdminScreen from "./account/AdminScreen.jsx";
 import LocalDataOffer from "./account/LocalDataOffer.jsx";
 import { accountStore } from "./account/workspaceStore.js";
@@ -1901,7 +1902,7 @@ export default function App(){
 
   return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"hidden",transition:"background .7s,color .4s"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Hebrew:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
-*{box-sizing:border-box;margin:0;padding:0}html,body{overflow-x:hidden;max-width:100%}::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:${ac}33;border-radius:3px}
+*{box-sizing:border-box;margin:0;padding:0}html,body{overflow-x:hidden;max-width:100%}@supports (overflow-x:clip){html,body{overflow-x:clip}}::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:${ac}33;border-radius:3px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 :focus-visible{outline:2px solid ${ac};outline-offset:2px;border-radius:6px}
 button,a,input{-webkit-tap-highlight-color:transparent}
@@ -1936,6 +1937,10 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 .home-btn{padding:6px 14px;background:${dk?"rgba(200,169,106,.08)":"rgba(147,118,64,.06)"};border:1px solid ${ac}33;border-radius:8px;color:${ac};font-size:12px;font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit;display:flex;align-items:center;gap:5px}.home-btn:hover{background:${ac}1a;border-color:${ac}66;transform:scale(1.02)}
 .tabs{display:flex;gap:2px;padding:2px;background:${dk?"rgba(18,18,38,.4)":"rgba(0,0,0,.03)"};border-radius:12px;margin-bottom:22px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .ti{flex:1;text-align:center;padding:10px 6px;border-radius:10px;font-size:12px;font-weight:${isRtl?600:500};cursor:pointer;transition:all .3s;color:${ts};border:1px solid transparent;white-space:nowrap}.ti.act{background:${dk?"rgba(200,169,106,.08)":"rgba(147,118,64,.06)"};color:${ac};border-color:${ac}28}
+.snav{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:3px;padding:3px;background:${dk?"rgba(12,12,28,.9)":"rgba(245,240,232,.94)"};border:1px solid ${ac}14;border-radius:14px;margin-bottom:18px;animation:fadeInUp .5s ease-out .1s both}
+.snav-b{font-family:inherit;background:transparent;line-height:1.25}.snav-b:focus-visible{outline:2px solid ${ac};outline-offset:1px}
+@media (max-width:520px){.snav{grid-template-columns:repeat(3,1fr)}.snav-b{padding:9px 4px;font-size:11.5px}}
+@media (min-width:700px){.snav{position:sticky;top:58px;z-index:60;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
 .rrow{display:flex;align-items:center;gap:16px;padding:14px 8px;border-bottom:1px solid ${ac}06;transition:background .3s;border-radius:10px}.rrow:hover{background:${ac}04}.rrow:last-child{border-bottom:none}
 .badge{display:inline-block;padding:4px 11px;background:${ac}0a;border:1px solid ${ac}15;border-radius:16px;font-size:11px;color:${ac}bb;margin-top:2px}
 .divider{height:1px;background:linear-gradient(90deg,transparent,${ac}33,transparent);margin:20px 0}
@@ -1992,11 +1997,9 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       <div id="reading-section" style={{scrollMarginTop:70}}/>
 
       {/* ═══ STUDIO NAV (owner — always visible) ═══ */}
-      {showOwnerUI&&<div className="tabs" style={{animation:"fadeInUp .5s ease-out .1s both",marginBottom:18}}>
-        {[{k:"clients",i:"user",l:he?"לקוחות":"Clients"},{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"leads",i:"users",l:he?"לידים":"Leads"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"},{k:"account",i:"user",l:he?"החשבון שלי":"My account"},...(account.profile?.role==="admin"?[{k:"admin",i:"users",l:he?"חשבונות":"Accounts"}]:[])].map(tb=>(
-          <div key={tb.k} className={`ti ${tab===tb.k?"act":""}`} onClick={()=>{setTab(tb.k);AU.init();AU.p("click");if(tb.k!=="reading")setShowRes(false);}}><span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"center"}}><Icon name={tb.i} size={14} stroke={1.4}/>{tb.l}</span></div>
-        ))}
-      </div>}
+      {showOwnerUI&&<StudioNav label={he?"כלי הסטודיו":"Studio tools"} active={tab}
+        tabs={[{k:"clients",i:"user",l:he?"לקוחות":"Clients"},{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"leads",i:"users",l:he?"לידים":"Leads"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"},{k:"account",i:"user",l:he?"החשבון שלי":"My account"},...(account.profile?.role==="admin"?[{k:"admin",i:"users",l:he?"חשבונות":"Accounts"}]:[])].map(tb=>({...tb,icon:<Icon name={tb.i} size={14} stroke={1.4}/>}))}
+        onSelect={(k)=>{setTab(k);AU.init();AU.p("click");if(k!=="reading")setShowRes(false);}}/>}
 
       {/* ═══ INPUT TABS ═══ */}
       {!showRes&&(<>

@@ -145,4 +145,94 @@ describe("account service", () => {
     mfa.challengeAndVerify.mockResolvedValueOnce({ data: null, error: { code: "mfa_verification_failed", message: "Invalid TOTP code entered" } });
     await expect(service.mfaVerify("f1", "000000")).rejects.toEqual(new AccountError("wrong_code"));
   });
+
+  it("starts two-step setup after clearing one left unconfirmed, under a name of its own, and returns the app link", async () => {
+    const uri = "otpauth://totp/studio:dana%40example.com?secret=ABC123";
+    const mfa = {
+      listFactors: vi.fn(async () => ({
+        data: {
+          all: [
+            { id: "stale", factor_type: "totp", status: "unverified" },
+            { id: "kept", factor_type: "totp", status: "verified" },
+            { id: "sms", factor_type: "phone", status: "unverified" },
+          ],
+          totp: [{ id: "kept", factor_type: "totp", status: "verified" }],
+        },
+        error: null,
+      })),
+      unenroll: vi.fn(async () => ({ data: {}, error: null })),
+      enroll: vi.fn(async () => ({ data: { id: "f2", totp: { qr_code: "data:image/svg+xml;utf-8,<svg/>", secret: "ABC123", uri } }, error: null })),
+    };
+    const service = make({ ...fakeClient(), auth: { ...fakeClient().auth, mfa } });
+    expect(await service.mfaEnroll()).toEqual({ factorId: "f2", qr: "data:image/svg+xml;utf-8,<svg/>", secret: "ABC123", uri });
+    expect(mfa.unenroll.mock.calls).toEqual([[{ factorId: "stale" }]]);
+    expect(mfa.enroll.mock.invocationCallOrder[0]).toBeGreaterThan(mfa.unenroll.mock.invocationCallOrder[0]);
+    expect(mfa.enroll.mock.calls[0][0]).toEqual({
+      factorType: "totp",
+      friendlyName: expect.stringMatching(/^Studio [0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/),
+    });
+  });
+
+  it("waits for a leftover setup to be cleared before starting the new one", async () => {
+    let clear;
+    const cleared = new Promise((resolve) => {
+      clear = resolve;
+    });
+    const mfa = {
+      listFactors: vi.fn(async () => ({ data: { all: [{ id: "stale", factor_type: "totp", status: "unverified" }], totp: [] }, error: null })),
+      unenroll: vi.fn(() => cleared),
+      enroll: vi.fn(async () => ({ data: { id: "f4", totp: { qr_code: "q", secret: "S", uri: "u" } }, error: null })),
+    };
+    const service = make({ ...fakeClient(), auth: { ...fakeClient().auth, mfa } });
+    const started = service.mfaEnroll();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mfa.unenroll).toHaveBeenCalledWith({ factorId: "stale" });
+    expect(mfa.enroll).not.toHaveBeenCalled();
+    clear({ data: {}, error: null });
+    expect(await started).toMatchObject({ factorId: "f4" });
+  });
+
+  it("tells a setup removed elsewhere from a wrong code", async () => {
+    const mfa = { challengeAndVerify: vi.fn(async () => ({ data: null, error: { code: "mfa_factor_not_found", status: 404, message: "Factor not found" } })) };
+    const service = make({ ...fakeClient(), auth: { ...fakeClient().auth, mfa } });
+    await expect(service.mfaVerify("gone", "123456")).rejects.toEqual(new AccountError("setup_expired"));
+    mfa.challengeAndVerify.mockResolvedValueOnce({ data: null, error: { code: "unexpected_failure", status: 500, message: "boom" } });
+    await expect(service.mfaVerify("f1", "123456")).rejects.toEqual(new AccountError("unavailable"));
+  });
+
+  it("emails a code for a forgotten password, to the address as typed but trimmed and in lower case", async () => {
+    const resetPasswordForEmail = vi.fn(async () => ({ data: {}, error: null }));
+    const service = make({ ...fakeClient(), auth: { ...fakeClient().auth, resetPasswordForEmail } });
+    await service.requestPasswordReset("  Dana@Example.com ");
+    expect(resetPasswordForEmail).toHaveBeenCalledWith("dana@example.com");
+    resetPasswordForEmail.mockResolvedValueOnce({ data: null, error: { status: 429, code: "over_email_send_rate_limit", message: "email rate limit exceeded" } });
+    await expect(service.requestPasswordReset("dana@example.com")).rejects.toEqual(new AccountError("rate_limited"));
+    resetPasswordForEmail.mockResolvedValueOnce({ data: null, error: { status: 500, message: "Error sending recovery email" } });
+    await expect(service.requestPasswordReset("dana@example.com")).rejects.toEqual(new AccountError("unavailable"));
+  });
+
+  it("signs in with the emailed code, and tells a wrong or expired code from an outage", async () => {
+    const verifyOtp = vi.fn(async () => ({ data: {}, error: null }));
+    const service = make({ ...fakeClient(), auth: { ...fakeClient().auth, verifyOtp } });
+    await service.verifyResetCode(" Dana@Example.com", " 123456 ");
+    expect(verifyOtp).toHaveBeenCalledWith({ email: "dana@example.com", token: "123456", type: "recovery" });
+    verifyOtp.mockResolvedValueOnce({ data: null, error: { status: 403, code: "otp_expired", message: "Token has expired or is invalid" } });
+    await expect(service.verifyResetCode("dana@example.com", "000000")).rejects.toEqual(new AccountError("wrong_code"));
+    verifyOtp.mockResolvedValueOnce({ data: null, error: { status: 429, code: "over_request_rate_limit", message: "too many" } });
+    await expect(service.verifyResetCode("dana@example.com", "000000")).rejects.toEqual(new AccountError("rate_limited"));
+    verifyOtp.mockResolvedValueOnce({ data: null, error: { status: 0, message: "Failed to fetch" } });
+    await expect(service.verifyResetCode("dana@example.com", "000000")).rejects.toEqual(new AccountError("unavailable"));
+  });
+
+  it("still starts two-step setup when clearing a leftover fails, and reports a refused start", async () => {
+    const mfa = {
+      listFactors: vi.fn(async () => ({ data: { all: [{ id: "stale", factor_type: "totp", status: "unverified" }], totp: [] }, error: null })),
+      unenroll: vi.fn(async () => { throw new Error("offline"); }),
+      enroll: vi.fn(async () => ({ data: { id: "f3", totp: { qr_code: "q", secret: "S", uri: "u" } }, error: null })),
+    };
+    const service = make({ ...fakeClient(), auth: { ...fakeClient().auth, mfa } });
+    expect(await service.mfaEnroll()).toMatchObject({ factorId: "f3" });
+    mfa.enroll.mockResolvedValueOnce({ data: null, error: { code: "mfa_factor_name_conflict", message: "name taken" } });
+    await expect(service.mfaEnroll()).rejects.toEqual(new AccountError("unavailable"));
+  });
 });

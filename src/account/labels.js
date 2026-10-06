@@ -60,3 +60,34 @@ export function generatePassword(length = 14) {
 }
 
 export const MIN_PASSWORD = 10;
+export const MAX_PASSWORD = 72;
+
+const EMAIL = /^[A-Za-z0-9_%+'-]+([.][A-Za-z0-9_%+'-]+)*@[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?([.][A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*[.][A-Za-z]{2,}$/;
+
+/**
+ * An email address as people really have them: letters, digits and . _ % + ' -
+ * before the @ (no dot at either end, no two dots in a row), a domain of
+ * dotted labels, a top level of 2 letters or more, at most 254 characters.
+ * Stricter than the server's own check, so a typo is caught before sending.
+ */
+export const isEmail = (value) => value.length <= 254 && EMAIL.test(value);
+
+/** A phone number as typed: digits with + - ( ) and spaces, 9 to 15 digits. */
+export const isPhone = (value) => /^[0-9+()-][0-9+() -]*$/.test(value) && value.replace(/[^0-9]/g, "").length >= 9 && value.replace(/[^0-9]/g, "").length <= 15;
+
+/**
+ * What is wrong with a new account's details, as {field: code}; empty when it
+ * can be opened. `taken` lists the emails that already have an account.
+ */
+export function accountProblems({ email, fullName, phone, password }, taken = []) {
+  const problems = {};
+  const address = email.trim().toLowerCase();
+  if (!address) problems.email = "required";
+  else if (!isEmail(address)) problems.email = "invalid";
+  else if (taken.some((t) => t.toLowerCase() === address)) problems.email = "taken";
+  if (fullName.trim().length < 2) problems.fullName = "required";
+  if (phone.trim() && !isPhone(phone.trim())) problems.phone = "invalid";
+  if (password.length < MIN_PASSWORD) problems.password = "short";
+  else if (password.length > MAX_PASSWORD) problems.password = "long";
+  return problems;
+}

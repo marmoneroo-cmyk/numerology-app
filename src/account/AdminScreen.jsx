@@ -4,9 +4,9 @@
  * status, a new password, its devices and its log. The database decides who
  * may do this (admins in their active session); this screen only asks.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, Field, SectionTitle, ScreenTitle, BackButton, ConfirmAction, Loading, ErrorCard, useLoad, colors, rowButton, btnPrimary, btnGhost } from "../workspace/ui.jsx";
-import { PLAN_KEYS, planLabel, statusLabel, auditLine, dateTime, generatePassword } from "./labels.js";
+import { PLAN_KEYS, planLabel, statusLabel, auditLine, dateTime, generatePassword, accountProblems, MIN_PASSWORD, MAX_PASSWORD } from "./labels.js";
 import { AccountError } from "./service.js";
 import { countLabel } from "../workspace/format.js";
 
@@ -103,18 +103,50 @@ function Handover({ email, password, he, c }) {
   );
 }
 
+const FIELD_ERRORS = {
+  email: {
+    required: ["צריך כתובת אימייל.", "An email address is needed."],
+    invalid: ["כתובת אימייל לא תקינה, למשל name@example.com", "Not a valid email address, e.g. name@example.com"],
+    taken: ["לכתובת הזאת כבר יש חשבון.", "This address already has an account."],
+  },
+  fullName: { required: ["צריך שם מלא: הוא מופיע בסימן המים ועל הדוחות.", "A full name is needed: it appears in the watermark and on reports."] },
+  phone: { invalid: ["מספר טלפון לא תקין: 9 עד 15 ספרות (אפשר גם + - ורווחים).", "Not a valid phone number: 9 to 15 digits (+ - and spaces are fine)."] },
+  password: {
+    short: [`לפחות ${MIN_PASSWORD} תווים.`, `At least ${MIN_PASSWORD} characters.`],
+    long: [`עד ${MAX_PASSWORD} תווים.`, `At most ${MAX_PASSWORD} characters.`],
+  },
+};
+const FIELD_ORDER = ["email", "fullName", "phone", "password"];
+
 function CreateAccount({ admin, he, c, go }) {
+  const accounts = useLoad(() => admin.listAccounts(), [admin]);
   const [form, setForm] = useState({ email: "", fullName: "", phone: "", plan: "pro", password: generatePassword() });
+  const [touched, setTouched] = useState({});
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState(null);
+  const inputs = useRef({});
+  // the account list is the quick duplicate check; the server is the final one (email_taken)
+  const problems = accountProblems(form, (accounts.data || []).map((a) => a.email));
+  const fieldError = (key) => (touched[key] && problems[key] ? FIELD_ERRORS[key][problems[key]][he ? 0 : 1] : null);
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
+  const touch = (key) => () => setTouched((t) => ({ ...t, [key]: true }));
+  const keep = (key) => (el) => {
+    inputs.current[key] = el;
+  };
   const submit = async () => {
+    const first = FIELD_ORDER.find((key) => problems[key]);
+    if (first) {
+      setTouched(Object.fromEntries(FIELD_ORDER.map((key) => [key, true])));
+      inputs.current[first]?.focus();
+      return;
+    }
+    const email = form.email.trim().toLowerCase();
     setBusy(true);
     setError(null);
     try {
-      await admin.createAccount({ email: form.email.trim(), fullName: form.fullName.trim(), phone: form.phone.trim(), plan: form.plan, password: form.password });
-      setCreated({ email: form.email.trim(), password: form.password });
+      await admin.createAccount({ email, fullName: form.fullName.trim(), phone: form.phone.trim(), plan: form.plan, password: form.password });
+      setCreated({ email, password: form.password });
     } catch (e) {
       setError(errorText(e, he));
     } finally {
@@ -135,14 +167,20 @@ function CreateAccount({ admin, he, c, go }) {
       <BackButton onClick={() => go({ name: "list" })}>{he ? "חזרה לחשבונות" : "Back to accounts"}</BackButton>
       <Card>
         <ScreenTitle c={c} size={24} style={{ marginBottom: 14 }}>{he ? "חשבון חדש" : "New account"}</ScreenTitle>
-        <Field label={he ? "אימייל" : "Email"} c={c}>{(id) => <input id={id} className="gi" type="email" dir="ltr" autoComplete="off" value={form.email} onChange={set("email")} />}</Field>
-        <Field label={he ? "שם מלא" : "Full name"} c={c}>{(id) => <input id={id} className="gi" maxLength={120} value={form.fullName} onChange={set("fullName")} />}</Field>
-        <Field label={he ? "טלפון" : "Phone"} c={c}>{(id) => <input id={id} className="gi" dir="ltr" inputMode="tel" maxLength={25} value={form.phone} onChange={set("phone")} />}</Field>
+        <Field label={he ? "אימייל" : "Email"} error={fieldError("email")} c={c}>
+          {(id) => <input id={id} ref={keep("email")} className="gi" type="email" dir="ltr" autoComplete="off" maxLength={254} value={form.email} onChange={set("email")} onBlur={touch("email")} />}
+        </Field>
+        <Field label={he ? "שם מלא" : "Full name"} error={fieldError("fullName")} c={c}>
+          {(id) => <input id={id} ref={keep("fullName")} className="gi" maxLength={120} value={form.fullName} onChange={set("fullName")} onBlur={touch("fullName")} />}
+        </Field>
+        <Field label={he ? "טלפון (לא חובה)" : "Phone (optional)"} error={fieldError("phone")} c={c}>
+          {(id) => <input id={id} ref={keep("phone")} className="gi" type="tel" dir="ltr" inputMode="tel" maxLength={25} value={form.phone} onChange={set("phone")} onBlur={touch("phone")} />}
+        </Field>
         <Field label={he ? "מסלול" : "Plan"} c={c}>
           {(id) => <select id={id} className="gi" value={form.plan} onChange={set("plan")}>{PLAN_KEYS.map((p) => <option key={p} value={p}>{planLabel(p, he)}</option>)}</select>}
         </Field>
-        <Field label={he ? "סיסמה ראשונה" : "First password"} hint={he ? "המנוי/ה יוכלו להחליף אותה ב\"החשבון שלי\"" : "They can change it under \"My account\""} c={c}>
-          {(id) => <input id={id} className="gi" dir="ltr" autoComplete="off" value={form.password} onChange={set("password")} />}
+        <Field label={he ? "סיסמה ראשונה" : "First password"} error={fieldError("password")} hint={he ? "המנוי/ה יוכלו להחליף אותה ב\"החשבון שלי\"" : "They can change it under \"My account\""} c={c}>
+          {(id) => <input id={id} ref={keep("password")} className="gi" dir="ltr" autoComplete="off" value={form.password} onChange={set("password")} onBlur={touch("password")} />}
         </Field>
         <button className="ghost" style={{ ...btnGhost, marginBottom: 14 }} onClick={() => setForm({ ...form, password: generatePassword() })}>{he ? "סיסמה אחרת" : "Another password"}</button>
         {error && <p role="alert" style={{ color: c.danger, fontSize: 13 }}>{error}</p>}
