@@ -13,6 +13,7 @@ import { useLayout } from "../studio/useMediaQuery.js";
 import { AccountProvider } from "../account/AccountContext.jsx";
 import App from "../App.jsx";
 import { labService } from "./labAccount.js";
+import MeetingSection from "./sections/MeetingSection.jsx";
 
 /** The whole Studio, signed in as the sample admin with sample clients (see labAccount.js). */
 function StudioPreview() {
@@ -57,6 +58,7 @@ function Basics() {
 /** Each later task adds its own section here: [key, label, Component]. "studio" fills the whole page. */
 export const SECTIONS = [
   ["basics", "בסיס", Basics],
+  ["meeting", "מצב פגישה", MeetingSection],
   ["studio", "הסטודיו המלא", StudioPreview],
 ];
 

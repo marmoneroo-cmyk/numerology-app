@@ -1,0 +1,173 @@
+/*
+ * Meeting mode (MeetingMode.jsx): one reading in large type over the whole
+ * window. It scrolls inside itself when the reading is taller than the window.
+ * Rules on the close button sit under .st-meet so they win over .fx in any
+ * load order.
+ */
+.st-meet {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding:
+    calc(68px + env(safe-area-inset-top, 0px))
+    max(16px, env(safe-area-inset-right, 0px))
+    calc(36px + env(safe-area-inset-bottom, 0px))
+    max(16px, env(safe-area-inset-left, 0px));
+  /* two properties, so the plain colour stays where color-mix() is not understood
+     (a later shorthand with var() would replace it and fail to transparent) */
+  background-color: var(--st-void);
+  background-image: radial-gradient(ellipse at 50% 28%, color-mix(in srgb, var(--st-gold) 14%, var(--st-void)), var(--st-void) 72%);
+  color: var(--st-ink);
+  font-family: var(--st-body);
+  line-height: 1.5;
+  text-align: center;
+}
+.st-meet,
+.st-meet * {
+  box-sizing: border-box;
+}
+
+/* the one control, at the top inline-end corner; it stays in reach while the reading scrolls */
+.st-meet .st-meet-close {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  inset-inline-end: calc(14px + max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)));
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 999px;
+  background-color: var(--st-panel);
+  color: var(--st-ink);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.st-meet .st-meet-close:focus-visible {
+  outline: 2px solid var(--st-gold);
+  outline-offset: 3px;
+}
+@media (hover: hover) {
+  .st-meet .st-meet-close:hover {
+    border-color: var(--st-gold);
+    color: var(--st-gold-text);
+  }
+}
+.st-meet-key {
+  color: var(--st-ink-soft);
+  font-size: 0.86em;
+}
+
+/* the reading, centred; when it is taller than the window it starts at the top instead */
+.st-meet-body {
+  width: 100%;
+  max-width: 980px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.st-meet-eyebrow {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--st-gold-text);
+}
+.st-meet-name {
+  margin: 10px 0 0;
+  font-family: var(--st-body);
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 300;
+  line-height: 1.15;
+  color: var(--st-ink);
+  overflow-wrap: anywhere;
+}
+/* lining figures: Cormorant's default old-style 3, 4, 5, 7 and 9 drop below the
+   baseline and would run into the label under line-height .85; the bottom
+   margin leaves room for the slash of an "11/2" style value */
+.st-meet-num {
+  display: block;
+  margin: clamp(16px, 3.5vh, 36px) 0 0.08em;
+  font-family: var(--st-display);
+  font-size: clamp(130px, 26vw, 290px);
+  font-weight: 400;
+  font-variant-numeric: lining-nums;
+  line-height: 0.85;
+  white-space: nowrap;
+  color: var(--st-gold);
+  text-shadow: 0 0 48px color-mix(in srgb, var(--st-gold-hi) 38%, transparent);
+}
+.st-meet-label {
+  margin: clamp(8px, 1.6vh, 14px) 0 0;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--st-ink-soft);
+}
+
+/* the other numbers, as bordered tiles */
+.st-meet-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: clamp(22px, 4.5vh, 44px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.st-meet-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 96px;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 16px;
+  background: var(--st-gold-wash);
+}
+.st-meet-chip-num {
+  font-family: var(--st-display);
+  font-size: 38px;
+  font-variant-numeric: lining-nums;
+  line-height: 1;
+  color: var(--st-gold);
+}
+.st-meet-chip-label {
+  font-size: 13px;
+  color: var(--st-ink-soft);
+}
+
+.st-meet-text {
+  max-width: 56ch;
+  margin: clamp(22px, 4.5vh, 40px) auto 0;
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--st-ink);
+  text-wrap: pretty;
+}
+
+/* entrance: the window fades in and the main number comes into focus. MeetingMode
+   leaves out .st-meet-enter under reduced motion, and studio.css cuts it short too */
+.st-meet-enter {
+  animation: st-meet-fade 0.35s ease-out backwards;
+}
+.st-meet-enter .st-meet-num {
+  animation: st-meet-num-in 1s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@keyframes st-meet-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes st-meet-num-in {
+  from { opacity: 0; transform: scale(0.7); filter: blur(16px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
