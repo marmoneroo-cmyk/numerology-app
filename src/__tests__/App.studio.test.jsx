@@ -53,6 +53,9 @@ function studio() {
   );
 }
 const tool = (name) => fireEvent.click(within(screen.getByRole("navigation", { name: "כלי הסטודיו" })).getByRole("button", { name }));
+/** The first screen waits for the sign-in and the clients to load: generous, for a slow build machine. */
+const SIGNED_IN = { timeout: 5000 };
+const signedIn = () => screen.findByText("לקוחות אחרונים", {}, SIGNED_IN);
 const setField = (input, value) => fireEvent.change(input, { target: { value } });
 
 /** A full reading from the reading tool: name, then birth date. */
@@ -67,8 +70,7 @@ async function readingFor(name, date) {
 describe("the Studio", () => {
   it("opens on 'היום', and a recent client opens beside the list, but only once", async () => {
     studio();
-    const recent = await screen.findByRole("region", { name: "לקוחות אחרונים" }).catch(() => null);
-    const panel = recent || (await screen.findByText("לקוחות אחרונים")).closest("section");
+    const panel = (await signedIn()).closest("section");
     fireEvent.click(await within(panel).findByRole("button", { name: /יוסי לוי/ }));
     const open = await screen.findByRole("region", { name: "הלקוח הפתוח" });
     expect(await within(open).findByRole("heading", { name: "יוסי לוי" })).toBeTruthy();
@@ -81,7 +83,7 @@ describe("the Studio", () => {
 
   it("finds a client with Ctrl+K, by phone, and opens their file", async () => {
     studio();
-    await screen.findByText("לקוחות אחרונים");
+    await signedIn();
     act(() => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", code: "KeyK", ctrlKey: true, bubbles: true, cancelable: true }));
     });
@@ -97,7 +99,7 @@ describe("the Studio", () => {
 
   it("shows the last reading in meeting mode, under the name it was made for, and none after 'קריאה חדשה'", async () => {
     studio();
-    await screen.findByText("לקוחות אחרונים");
+    await signedIn();
     await readingFor("רחל כהן", "08.03.1985");
     expect(await screen.findByText("רחל כהן", { selector: "h2, h1, div" })).toBeTruthy();
     tool("היום");
