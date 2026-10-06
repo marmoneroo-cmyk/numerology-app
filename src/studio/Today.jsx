@@ -89,7 +89,7 @@ function DayBand({ he, today, day, onNewReading }) {
   return (
     <section className="st-today-band">
       <div className="st-today-day">
-        <small>{he ? "יום אוניברסלי" : "Universal day"}</small>
+        <small>{he ? "המספר של היום" : "Today’s number"}</small>
         <span className="st-today-num">{day.number}</span>
       </div>
       <div>

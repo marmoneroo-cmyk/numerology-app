@@ -6,16 +6,20 @@ import { useAccount, AccountGate } from "./account/AccountContext.jsx";
 import AccountScreen from "./account/AccountScreen.jsx";
 import StudioNav from "./StudioNav.jsx";
 import { attachRipple } from "./studio/motion.js";
-
-/** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
-const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
+import Today from "./studio/Today.jsx";
+import MeetingMode from "./studio/MeetingMode.jsx";
+import { useToast } from "./studio/Toasts.jsx";
+import { personOf } from "./workspace/format.js";
 import AdminScreen from "./account/AdminScreen.jsx";
 import LocalDataOffer from "./account/LocalDataOffer.jsx";
 import { accountStore } from "./account/workspaceStore.js";
 import {
-  R, NV, SU, EX, LP, LPm, CA, loShu, fullCalc, liveNum, getRecommendations,
+  R, NV, SU, EX, LP, LPm, CA, PY, loShu, fullCalc, liveNum, getRecommendations,
   yearCycle, masterBase, dailyRitualNumber, compatKey, matchReading, coupleReading, parentChildReading,
 } from "./engine";
+
+/** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
+const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
 
 /* ╔══════════════════════════════════════════════════════════════╗
    ║  N U M E R O L O G Y   O R A C L E   —   V 7              ║
@@ -1827,7 +1831,7 @@ function LeadsWidget({ he, dk }) {
 // ═══════════════════ MAIN APP ═══════════════════
 export default function App(){
   const[lang,setLang]=useState("he");const[dk,setDk]=useState(true);const[snd,setSnd]=useState(true);const[intro,setIntro]=useState(true);
-  const[step,setStep]=useState(1);const[tab,setTab]=useState("reading");const[name,setName]=useState("");const[dob,setDob]=useState("");const[addOne,setAddOne]=useState(false);
+  const[step,setStep]=useState(1);const[tab,setTab]=useState("today");const[name,setName]=useState("");const[dob,setDob]=useState("");const[addOne,setAddOne]=useState(false);
   const[results,setResults]=useState(null);const[showRes,setShowRes]=useState(false);const[error,setError]=useState("");
   const[chapters,setChapters]=useState([false,false,false,false,false,false]);
   const[streak,setStreak]=useState(0);
@@ -1840,13 +1844,17 @@ export default function App(){
   // the subscriber's account: the Studio opens only for a signed-in, active session
   const account=useAccount();
   const studioReady=account.state==="ready";
+  const toast=useToast();
+  // "היום" and quick search open a client in the workspace; meeting mode shows a reading in large type
+  const[openRequest,setOpenRequest]=useState(null);
+  const[meeting,setMeeting]=useState(null);
   const licensee=studioReady?{fullName:account.profile.fullName||account.profile.email,phone:account.profile.phone}:null;
   const[workspaceKey,setWorkspaceKey]=useState(0);
   // another account in the Studio (or none) starts clean: nothing of the previous subscriber's client stays on screen
   const studioUser=account.profile?.id??null;
   const lastStudioUser=useRef(studioUser);
-  useEffect(()=>{if(lastStudioUser.current===studioUser)return;lastStudioUser.current=studioUser;setStep(1);setTab("reading");setName("");setDob("");setAddOne(false);setResults(null);setShowRes(false);setError("");setChapters([false,false,false,false,false,false]);},[studioUser]);
-  useEffect(()=>{if(tab==="admin"&&account.profile?.role!=="admin")setTab("reading");},[tab,account.profile?.role]);
+  useEffect(()=>{if(lastStudioUser.current===studioUser)return;lastStudioUser.current=studioUser;setStep(1);setTab("today");setName("");setDob("");setAddOne(false);setResults(null);setShowRes(false);setError("");setChapters([false,false,false,false,false,false]);},[studioUser]);
+  useEffect(()=>{if(tab==="admin"&&account.profile?.role!=="admin")setTab("today");},[tab,account.profile?.role]);
   const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:(r,n,h,i)=>exportReport(r,n,h,i,licensee)}),[licensee?.fullName,licensee?.phone]);
   useEffect(()=>{AU.on=snd;},[snd]);
 
@@ -1906,6 +1914,18 @@ export default function App(){
   useEffect(()=>(showOwnerUI?attachRipple(document,RIPPLE_TARGETS):undefined),[showOwnerUI]);
   const workspaceStore=showOwnerUI&&studioReady?accountStore(account):null;
   const lpBase = results ? R(results.lp) : 0; // reduced life path for D[] rich content (master carries base energy)
+  /** A reading in large type for the client: the life path, three more numbers and its meaning. */
+  const meetingFor=(r,who)=>{const info=D[R(r.lp)]||D[1];return{person:who,main:{value:r.lp,label:he?"שביל הגורל":"Life Path"},
+    numbers:[{value:r.ex,label:he?"מספר הביטוי":"Expression"},{value:r.su,label:he?"קול הנשמה":"Soul Urge"},{value:r.py,label:he?"שנה אישית":"Personal Year"}],
+    text:he?info.narrative:info.narrativeE};};
+  const openMeeting=()=>{
+    if(results&&name){setMeeting(meetingFor(results,name));return;}
+    setTab("reading");setShowRes(false);
+    toast(he?"פותחים קריאה, ואז ׳מצב פגישה׳ מציג אותה בגדול.":"Open a reading, and meeting mode shows it in large type.");
+  };
+  /** Opens a view of the workspace (a client, the new-client form) from another screen. */
+  const openClient=(view)=>{setTab("clients");setOpenRequest({view,nonce:Date.now()});};
+  const dayNum=dailyRitualNumber(); // the owner's daily number, the same one "יומי" uses
 
   return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"hidden",transition:"background .7s,color .4s"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Hebrew:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
@@ -2006,16 +2026,26 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
       {/* ═══ STUDIO NAV (owner — always visible) ═══ */}
       {showOwnerUI&&<StudioNav label={he?"כלי הסטודיו":"Studio tools"} active={tab}
-        tabs={[{k:"clients",i:"user",l:he?"לקוחות":"Clients"},{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"leads",i:"users",l:he?"לידים":"Leads"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"},{k:"account",i:"user",l:he?"החשבון שלי":"My account"},...(account.profile?.role==="admin"?[{k:"admin",i:"users",l:he?"חשבונות":"Accounts"}]:[])].map(tb=>({...tb,icon:<Icon name={tb.i} size={14} stroke={1.4}/>}))}
+        tabs={[{k:"today",i:"sparkles",l:he?"היום":"Today"},{k:"clients",i:"user",l:he?"לקוחות":"Clients"},{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"leads",i:"users",l:he?"לידים":"Leads"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"},{k:"account",i:"user",l:he?"החשבון שלי":"My account"},...(account.profile?.role==="admin"?[{k:"admin",i:"users",l:he?"חשבונות":"Accounts"}]:[])].map(tb=>({...tb,icon:<Icon name={tb.i} size={14} stroke={1.4}/>}))}
         onSelect={(k)=>{setTab(k);AU.init();AU.p("click");if(k!=="reading")setShowRes(false);}}/>}
 
       {/* ═══ INPUT TABS ═══ */}
       {!showRes&&(<>
         {/* Studio nav rendered above (always visible in owner mode) */}
 
+        {showOwnerUI&&tab==="today"&&workspaceStore&&<Today he={he} store={workspaceStore} now={()=>new Date()}
+          day={{number:dayNum,title:he?D[dayNum].t:D[dayNum].te,text:he?D[dayNum].s:D[dayNum].se}}
+          lifePath={(iso)=>{const p=personOf("",iso);return LPm(p.d,p.m,p.y);}}
+          personalYear={(iso,at)=>{const p=personOf("",iso);return PY(p.d,p.m,at.getFullYear());}}
+          deck={null}
+          onOpenClient={(id)=>openClient({name:"client",clientId:id})}
+          onNewReading={()=>{setTab("reading");setShowRes(false);setStep(1);}}
+          onNewClient={()=>openClient({name:"clientForm"})}
+          onMeeting={openMeeting}/>}
+
         {showOwnerUI&&tab==="clients"&&workspaceStore&&<ContentContext.Provider value={workspaceContent}>
           <LocalDataOffer store={workspaceStore} userId={account.profile.id} he={he} dk={dk} logEvent={account.service.logEvent} onUploaded={()=>setWorkspaceKey(k=>k+1)}/>
-          <WorkspaceApp key={workspaceKey} he={he} dk={dk} store={workspaceStore} onEvent={(action)=>{account.service.logEvent(action).catch(()=>{});}}/>
+          <WorkspaceApp key={workspaceKey} he={he} dk={dk} store={workspaceStore} openRequest={openRequest} onEvent={(action)=>{account.service.logEvent(action).catch(()=>{});}}/>
         </ContentContext.Provider>}
 
         {showOwnerUI&&tab==="shop"&&<div className="st-tool-wide"><ShopSection he={he} dk={dk}/></div>}
@@ -2196,6 +2226,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </SR>)}
         {chapters[5]&&(<SR delay={250}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
           <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמור דו״ח PDF":"Save PDF"}</span></button>
+          {showOwnerUI&&<button className="ghost" onClick={()=>setMeeting(meetingFor(results,name))} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="eye" size={15}/>{he?"מצב פגישה":"Meeting mode"}</span></button>}
           <button className="ghost" onClick={goHome}>{he?"קריאה חדשה":"New Reading"}</button>
         </div></SR>)}
       </div>)}
@@ -2222,6 +2253,9 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
     {/* whose licence this Studio is: shown on every screen, like on the reports */}
     {showOwnerUI&&studioReady&&<div aria-hidden="true" style={{position:"fixed",bottom:8,insetInlineStart:10,zIndex:90,fontSize:10,color:`${ac}99`,pointerEvents:"none",letterSpacing:.3}}>{he?"מורשה ל: ":"Licensed to: "}{licensee.fullName}{licensee.phone?` · ${licensee.phone}`:""}</div>}
+
+    {/* meeting mode: one reading in large type, for showing a client */}
+    {showOwnerUI&&studioReady&&<MeetingMode open={!!meeting} onClose={()=>setMeeting(null)} he={he} {...(meeting||{})}/>}
 
     {/* ═══ CART (customer only) ═══ */}
     {!showOwnerUI&&(<>

@@ -69,7 +69,7 @@ describe("Today", () => {
   it("shows today's number, the date and the day's meaning, and starts a new reading", async () => {
     const h = renderToday(await storeWith([]));
     expect(screen.getByText("8").className).toContain("st-today-num");
-    expect(screen.getByText("יום אוניברסלי")).toBeTruthy();
+    expect(screen.getByText("המספר של היום")).toBeTruthy();
     expect(screen.getByText(NOW.toLocaleDateString("he-IL", DATE_FORMAT))).toBeTruthy();
     expect(document.querySelector(".st-today-meaning").textContent).toBe("עוצמה. הישגים, שפע וסמכות.");
     fireEvent.click(screen.getByRole("button", { name: "קריאה חדשה" }));
@@ -206,7 +206,7 @@ describe("Today", () => {
 
   it("speaks English", async () => {
     const h = renderToday(await storeWith(ALL), { he: false });
-    expect(screen.getByText("Universal day")).toBeTruthy();
+    expect(screen.getByText("Today’s number")).toBeTruthy();
     expect(screen.getByText(NOW.toLocaleDateString("en-GB", DATE_FORMAT))).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "New reading" }));
     expect(h.onNewReading).toHaveBeenCalledTimes(1);
