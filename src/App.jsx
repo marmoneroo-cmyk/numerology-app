@@ -8,6 +8,7 @@ import StudioNav from "./StudioNav.jsx";
 import { attachRipple } from "./studio/motion.js";
 import Today from "./studio/Today.jsx";
 import MeetingMode from "./studio/MeetingMode.jsx";
+import CommandPalette, { useCommandShortcut } from "./studio/CommandPalette.jsx";
 import { useToast } from "./studio/Toasts.jsx";
 import { personOf } from "./workspace/format.js";
 import AdminScreen from "./account/AdminScreen.jsx";
@@ -20,6 +21,23 @@ import {
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
+
+/** The Studio's tools in toolbar order. Quick search lists them too, findable by their name in either language. */
+const STUDIO_TOOLS = [
+  { k: "today", i: "sparkles", he: "היום", en: "Today" },
+  { k: "clients", i: "user", he: "לקוחות", en: "Clients" },
+  { k: "reading", i: "orb", he: "קריאה", en: "Reading" },
+  { k: "leads", i: "users", he: "לידים", en: "Leads" },
+  { k: "shop", i: "cart", he: "חנות", en: "Shop" },
+  { k: "tables", i: "chart", he: "טבלאות", en: "Tables" },
+  { k: "match", i: "heart", he: "התאמה", en: "Match" },
+  { k: "daily", i: "sun", he: "יומי", en: "Daily" },
+  { k: "cards", i: "cards", he: "קלפים", en: "Cards" },
+  { k: "calc", i: "calculator", he: "מחשבונים", en: "Calculators" },
+  { k: "account", i: "user", he: "החשבון שלי", en: "My account" },
+];
+/** Only an admin sees it. */
+const ADMIN_TOOL = { k: "admin", i: "users", he: "חשבונות", en: "Accounts" };
 
 /* ╔══════════════════════════════════════════════════════════════╗
    ║  N U M E R O L O G Y   O R A C L E   —   V 7              ║
@@ -86,6 +104,7 @@ const ICON_PATHS = {
   instagram:"M7.5 3.5h9a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4h-9a4 4 0 0 1-4-4v-9a4 4 0 0 1 4-4z M12 8.3a3.7 3.7 0 1 0 0 7.4 3.7 3.7 0 0 0 0-7.4z M17 6.7h.01",
   whatsapp:"M12 3.2a8.8 8.8 0 0 0-7.5 13.4L3.3 20.7l4.3-1.1A8.8 8.8 0 1 0 12 3.2z M8.8 7.9c.2 0 .5 0 .7.5l.7 1.6c.1.2 0 .4-.1.6l-.5.6c-.1.2-.2.3 0 .6.6 1 1.4 1.7 2.4 2.2.3.1.4 0 .6-.1l.6-.7c.2-.2.3-.2.6-.1l1.5.7c.2.1.3.3.3.5 0 .9-.7 1.6-1.5 1.7-.6 0-1.3 0-3-.8-2.2-1.1-3.7-3.3-4.2-4.8-.2-.7-.2-1.3.1-1.8.2-.4.5-.5.8-.5z",
   sparkles:"M12 3v18 M3 12h18 M6.5 6.5l11 11 M17.5 6.5l-11 11",
+  search:"M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13z M15.4 15.4l5.1 5.1",
 };
 function Icon({ name, size = 20, stroke = 1.5, style }) {
   const d = ICON_PATHS[name] || ICON_PATHS.sparkle;
@@ -1802,8 +1821,9 @@ function LeadGate({ he, dk, results, name, onUnlock }) {
 function LeadsWidget({ he, dk }) {
   const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
   const [leads, setLeads] = useState(loadLeads());
-  const clearAll = () => { if (window.confirm(he ? "למחוק את כל הלידים?" : "Delete all leads?")) { try { localStorage.removeItem(LEADS_STORE_KEY); } catch (e) {} setLeads([]); } };
-  const exportCsv = () => { const rows = [["שם", "טלפון", "שביל גורל", "ערך שם", "קול נשמה", "שנה אישית", "חוב קארמי", "תאריך"], ...leads.map(l => [l.name, l.phone, l.lp, l.nv, l.su, l.py, l.kd, l.date])]; const csv = "﻿" + rows.map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "leads.csv"; a.click(); };
+  const toast = useToast();
+  const clearAll =() => { if (window.confirm(he ? "למחוק את כל הלידים?" : "Delete all leads?")) { try { localStorage.removeItem(LEADS_STORE_KEY); } catch (e) {} setLeads([]); } };
+  const exportCsv = () => { const rows = [["שם", "טלפון", "שביל גורל", "ערך שם", "קול נשמה", "שנה אישית", "חוב קארמי", "תאריך"], ...leads.map(l => [l.name, l.phone, l.lp, l.nv, l.su, l.py, l.kd, l.date])]; const csv = "﻿" + rows.map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "leads.csv"; a.click(); toast(he ? "קובץ הלידים נשמר בתיקיית ההורדות." : "The leads file is in your downloads."); };
   const th = { textAlign: he ? "right" : "left", fontSize: 11, color: ac, fontWeight: 700, padding: "8px 6px", borderBottom: `1px solid ${ac}22`, whiteSpace: "nowrap" };
   const td = { fontSize: 12.5, color: tm, padding: "9px 6px", borderBottom: `1px solid ${ac}0e`, whiteSpace: "nowrap" };
   return (<div style={{ animation: "fadeInUp .5s ease-out" }}>
@@ -1848,6 +1868,8 @@ export default function App(){
   // "היום" and quick search open a client in the workspace; meeting mode shows a reading in large type
   const[openRequest,setOpenRequest]=useState(null);
   const[meeting,setMeeting]=useState(null);
+  const[paletteOpen,setPaletteOpen]=useState(false);
+  const[paletteClients,setPaletteClients]=useState([]);
   const licensee=studioReady?{fullName:account.profile.fullName||account.profile.email,phone:account.profile.phone}:null;
   const[workspaceKey,setWorkspaceKey]=useState(0);
   // another account in the Studio (or none) starts clean: nothing of the previous subscriber's client stays on screen
@@ -1926,6 +1948,31 @@ export default function App(){
   /** Opens a view of the workspace (a client, the new-client form) from another screen. */
   const openClient=(view)=>{setTab("clients");setOpenRequest({view,nonce:Date.now()});};
   const dayNum=dailyRitualNumber(); // the owner's daily number, the same one "יומי" uses
+  const studioTools=account.profile?.role==="admin"?[...STUDIO_TOOLS,ADMIN_TOOL]:STUDIO_TOOLS;
+  const selectTool=(k)=>{setTab(k);AU.init();AU.p("click");if(k!=="reading")setShowRes(false);};
+  const newReading=()=>{setTab("reading");setShowRes(false);setStep(1);};
+  // quick search (Ctrl+K): in the signed-in Studio only, and not over meeting mode
+  const canSearch=showOwnerUI&&studioReady&&!meeting;
+  const openPalette=useCallback(()=>setPaletteOpen(true),[]);
+  useCommandShortcut(openPalette,canSearch);
+  useEffect(()=>{if(!canSearch)setPaletteOpen(false);},[canSearch]);
+  // the clients it finds are read each time it opens, so a client added a moment ago is there
+  useEffect(()=>{
+    if(!paletteOpen||!workspaceStore)return undefined;
+    let live=true;
+    workspaceStore.clients.list().then(list=>{if(live)setPaletteClients(list);},()=>{if(live)setPaletteClients([]);});
+    return()=>{live=false;};
+  },[paletteOpen,workspaceStore]);
+  const paletteItems=[
+    ...studioTools.map(tb=>({id:`tool-${tb.k}`,label:he?tb.he:tb.en,hint:he?"כלי":"Tool",keywords:[tb.he,tb.en],run:()=>selectTool(tb.k)})),
+    {id:"new-reading",label:he?"קריאה חדשה":"New reading",hint:he?"פעולה":"Action",keywords:["קריאה","reading"],run:newReading},
+    {id:"new-client",label:he?"לקוח חדש":"New client",hint:he?"פעולה":"Action",keywords:["לקוח","client"],run:()=>openClient({name:"clientForm"})},
+    ...(results&&name?[{id:"meeting",label:he?"מצב פגישה":"Meeting mode",hint:name,keywords:["פגישה","meeting"],run:openMeeting}]:[]),
+    ...paletteClients.map(c=>{const p=c.birthDate?personOf("",c.birthDate):null;return{id:`client-${c.id}`,label:c.fullName,
+      hint:p?`${he?"לקוח · מסלול":"Client · life path"} ${LPm(p.d,p.m,p.y)}`:(he?"לקוח":"Client"),
+      keywords:[c.phone,String(c.phone||"").replace(/\D/g,""),c.email,...(c.tags||[])].filter(Boolean),
+      run:()=>openClient({name:"client",clientId:c.id})};}),
+  ];
 
   return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"hidden",transition:"background .7s,color .4s"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Hebrew:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
@@ -1988,7 +2035,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     <ScrollProgress dk={dk}/>
 
     {/* ═══ TOP BAR with HOME BUTTON ═══ */}
-    <div className="tbar">
+    <div className={showOwnerUI?"tbar st-tbar":"tbar"}>
       <div style={{display:"flex",gap:4,alignItems:"center"}}>
         <button className="home-btn" onClick={goHome}>
           <span style={{fontSize:14}}>✦</span>
@@ -1997,11 +2044,12 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       </div>
       <div style={{display:"flex",gap:4,alignItems:"center"}}>
         {streak>1&&<span style={{fontSize:10,color:ac,opacity:.6,display:"inline-flex",alignItems:"center",gap:3}}><Icon name="flame" size={12}/>{streak}</span>}
+        {showOwnerUI&&studioReady&&<button className="tbtn st-search-btn" title={he?"חיפוש מהיר (Ctrl+K)":"Quick search (Ctrl+K)"} aria-label={he?"חיפוש מהיר":"Quick search"} aria-keyshortcuts="Control+K Meta+K" onClick={()=>{AU.init();AU.p("click");openPalette();}}><Icon name="search" size={14}/><span className="st-search-text">{he?"חיפוש":"Search"}<kbd dir="ltr" aria-hidden="true">Ctrl K</kbd></span></button>}
         <button className="tbtn" onClick={()=>{setLang(lang==="he"?"en":"he");AU.init();AU.p("click");}}>{he?"EN":"עב"}</button>
-        <button className="tbtn" onClick={()=>{setDk(!dk);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{dk?<Icon name="sun" size={14}/>:<Icon name="moon" size={14}/>}</button>
-        <button className={`tbtn ${snd?"act":""}`} onClick={()=>{AU.init();setSnd(!snd);AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{snd?<Icon name="soundOn" size={14}/>:<Icon name="soundOff" size={14}/>}</button>
-        {owner&&<button className="tbtn act" title={he?"מעבר בין סטודיו לתצוגת לקוח":"Toggle Studio / Customer"} onClick={()=>{const next=!previewCustomer;setPreviewCustomer(next);if(next){setTab("reading");setShowRes(false);}AU.init();AU.p("click");window.scrollTo({top:0,behavior:"smooth"});}} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={previewCustomer?"crown":"eye"} size={13}/><span style={{fontSize:10.5,fontWeight:700}}>{previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")}</span></button>}
-        <button className={`tbtn ${owner?"":"act"}`} title={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):(he?"כניסת בעל עסק":"Owner login")} onClick={()=>{AU.init();AU.p("click");owner?exitOwner():enterOwner();}} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={owner?"door":"crown"} size={13}/><span style={{fontSize:10.5,fontWeight:700}}>{owner?(he?"יציאה":"Exit"):(he?"סטודיו":"Studio")}</span></button>
+        <button className="tbtn" aria-label={dk?(he?"מצב בהיר":"Light mode"):(he?"מצב כהה":"Dark mode")} onClick={()=>{setDk(!dk);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{dk?<Icon name="sun" size={14}/>:<Icon name="moon" size={14}/>}</button>
+        <button className={`tbtn ${snd?"act":""}`} aria-label={he?"צלילים":"Sounds"} aria-pressed={snd} onClick={()=>{AU.init();setSnd(!snd);AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{snd?<Icon name="soundOn" size={14}/>:<Icon name="soundOff" size={14}/>}</button>
+        {owner&&<button className="tbtn act" title={he?"מעבר בין סטודיו לתצוגת לקוח":"Toggle Studio / Customer"} onClick={()=>{const next=!previewCustomer;setPreviewCustomer(next);if(next){setTab("reading");setShowRes(false);}AU.init();AU.p("click");window.scrollTo({top:0,behavior:"smooth"});}} aria-label={previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={previewCustomer?"crown":"eye"} size={13}/><span className="tbtn-text" style={{fontSize:10.5,fontWeight:700}}>{previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")}</span></button>}
+        <button className={`tbtn ${owner?"":"act"}`} title={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):(he?"כניסת בעל עסק":"Owner login")} onClick={()=>{AU.init();AU.p("click");owner?exitOwner():enterOwner();}} aria-label={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):undefined} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={owner?"door":"crown"} size={13}/><span className="tbtn-text" style={{fontSize:10.5,fontWeight:700}}>{owner?(he?"יציאה":"Exit"):(he?"סטודיו":"Studio")}</span></button>
       </div>
     </div>
 
@@ -2012,7 +2060,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       {showOwnerUI?(
         <div style={{textAlign:"center",marginBottom:18,animation:"fadeInUp .6s ease-out"}}>
           <div style={{display:"inline-flex",alignItems:"center",gap:9,color:ac}}><Icon name="crown" size={20}/><h1 style={{fontSize:isRtl?28:32,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"הסטודיו שלי":"My Studio"}</h1></div>
-          <p style={{fontSize:12.5,color:ts,marginTop:5}}>{he?"כל הכלים שלך — בחר מסך:":"All your tools — choose a screen:"}</p>
+          <p style={{fontSize:12.5,color:ts,marginTop:5}}>{he?"כל הכלים שלך — בחרו מסך:":"All your tools — choose a screen:"}</p>
           {licensee&&<p style={{fontSize:11,color:ts,marginTop:3}}>{he?`מחובר/ת: ${licensee.fullName}`:`Signed in: ${licensee.fullName}`}</p>}
         </div>
       ):(
@@ -2026,8 +2074,8 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
       {/* ═══ STUDIO NAV (owner — always visible) ═══ */}
       {showOwnerUI&&<StudioNav label={he?"כלי הסטודיו":"Studio tools"} active={tab}
-        tabs={[{k:"today",i:"sparkles",l:he?"היום":"Today"},{k:"clients",i:"user",l:he?"לקוחות":"Clients"},{k:"reading",i:"orb",l:he?"קריאה":"Reading"},{k:"leads",i:"users",l:he?"לידים":"Leads"},{k:"shop",i:"cart",l:he?"חנות":"Shop"},{k:"tables",i:"chart",l:he?"טבלאות":"Tables"},{k:"match",i:"heart",l:he?"התאמה":"Match"},{k:"daily",i:"sun",l:he?"יומי":"Daily"},{k:"cards",i:"cards",l:he?"קלפים":"Cards"},{k:"calc",i:"calculator",l:he?"מחשבונים":"Calculators"},{k:"account",i:"user",l:he?"החשבון שלי":"My account"},...(account.profile?.role==="admin"?[{k:"admin",i:"users",l:he?"חשבונות":"Accounts"}]:[])].map(tb=>({...tb,icon:<Icon name={tb.i} size={14} stroke={1.4}/>}))}
-        onSelect={(k)=>{setTab(k);AU.init();AU.p("click");if(k!=="reading")setShowRes(false);}}/>}
+        tabs={studioTools.map(tb=>({k:tb.k,l:he?tb.he:tb.en,icon:<Icon name={tb.i} size={14} stroke={1.4}/>}))}
+        onSelect={selectTool}/>}
 
       {/* ═══ INPUT TABS ═══ */}
       {!showRes&&(<>
@@ -2039,9 +2087,10 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           personalYear={(iso,at)=>{const p=personOf("",iso);return PY(p.d,p.m,at.getFullYear());}}
           deck={null}
           onOpenClient={(id)=>openClient({name:"client",clientId:id})}
-          onNewReading={()=>{setTab("reading");setShowRes(false);setStep(1);}}
+          onNewReading={newReading}
           onNewClient={()=>openClient({name:"clientForm"})}
-          onMeeting={openMeeting}/>}
+          onMeeting={openMeeting}
+          onSearch={openPalette}/>}
 
         {showOwnerUI&&tab==="clients"&&workspaceStore&&<ContentContext.Provider value={workspaceContent}>
           <LocalDataOffer store={workspaceStore} userId={account.profile.id} he={he} dk={dk} logEvent={account.service.logEvent} onUploaded={()=>setWorkspaceKey(k=>k+1)}/>
@@ -2225,7 +2274,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           </div>
         </SR>)}
         {chapters[5]&&(<SR delay={250}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
-          <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמור דו״ח PDF":"Save PDF"}</span></button>
+          <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);if(showOwnerUI)toast(he?"הדו״ח נשמר בתיקיית ההורדות.":"The report is in your downloads.");}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמור דו״ח PDF":"Save PDF"}</span></button>
           {showOwnerUI&&<button className="ghost" onClick={()=>setMeeting(meetingFor(results,name))} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="eye" size={15}/>{he?"מצב פגישה":"Meeting mode"}</span></button>}
           <button className="ghost" onClick={goHome}>{he?"קריאה חדשה":"New Reading"}</button>
         </div></SR>)}
@@ -2256,6 +2305,9 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
     {/* meeting mode: one reading in large type, for showing a client */}
     {showOwnerUI&&studioReady&&<MeetingMode open={!!meeting} onClose={()=>setMeeting(null)} he={he} {...(meeting||{})}/>}
+
+    {/* quick search: tools, clients and actions, from the top bar or Ctrl+K */}
+    <CommandPalette open={paletteOpen&&canSearch} onClose={()=>setPaletteOpen(false)} he={he} items={paletteItems}/>
 
     {/* ═══ CART (customer only) ═══ */}
     {!showOwnerUI&&(<>

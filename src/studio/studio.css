@@ -78,6 +78,38 @@
   to { transform: translate(-50%, -50%) scale(1); opacity: 0; }
 }
 
+/* the top bar's quick search: the icon on a phone, then the word and the shortcut from 700px */
+.st-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.st-search-text {
+  display: none;
+}
+@media (min-width: 700px) {
+  .st-search-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+/* a phone's top bar in the Studio: the customer-view and exit buttons keep their icons and drop their words */
+@media (max-width: 519.98px) {
+  .st-tbar .tbtn-text {
+    display: none;
+  }
+}
+.st-search-text kbd {
+  font: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 5px;
+  color: var(--st-ink-soft);
+}
+
 /* text for screen readers only */
 .st-sr {
   position: absolute;
