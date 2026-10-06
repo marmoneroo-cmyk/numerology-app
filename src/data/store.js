@@ -40,7 +40,7 @@ const digitsOf = (s) => String(s || "").replace(/\D/g, "");
 
 /** When the client was last touched: edited, or a reading saved. The list sorts by it. */
 export const lastActive = (c) => (c.lastActivityAt && c.lastActivityAt > c.updatedAt ? c.lastActivityAt : c.updatedAt);
-const byActivity = (a, b) => (lastActive(a) < lastActive(b) ? 1 : lastActive(a) > lastActive(b) ? -1 : 0);
+export const byActivity = (a, b) => (lastActive(a) < lastActive(b) ? 1 : lastActive(a) > lastActive(b) ? -1 : 0);
 
 /** RFC 4122 v4 id. crypto.randomUUID needs a secure context; getRandomValues does not. */
 export function randomId() {
