@@ -117,6 +117,12 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
               {he ? "הורדת דוח PDF" : "Download PDF report"}
             </button>
           )}
+          {/* the Studio shows the map in large type for the client; the saved snapshot, as on this screen */}
+          {reading.type === "map" && content.openMeeting && (
+            <button className="ghost" style={btnGhost} onClick={() => content.openMeeting(reading.result, reading.input.name || client.fullName)}>
+              {he ? "מצב פגישה" : "Meeting mode"}
+            </button>
+          )}
           <ConfirmAction
             c={c}
             label={he ? "מחיקת הבדיקה" : "Delete reading"}

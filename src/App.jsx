@@ -1886,7 +1886,9 @@ export default function App(){
   const lastStudioUser=useRef(studioUser);
   useEffect(()=>{if(lastStudioUser.current===studioUser)return;lastStudioUser.current=studioUser;setStep(1);setTab("today");setName("");setDob("");setAddOne(false);setResults(null);setShowRes(false);setError("");setChapters([false,false,false,false,false,false]);},[studioUser]);
   useEffect(()=>{if(tab==="admin"&&account.profile?.role!=="admin")setTab("today");},[tab,account.profile?.role]);
-  const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:(r,n,h,i)=>exportReport(r,n,h,i,licensee)}),[licensee?.fullName,licensee?.phone]);
+  // a saved map opens in meeting mode too (meetingFor is defined below; it runs only on a press)
+  const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:(r,n,h,i)=>exportReport(r,n,h,i,licensee),
+    openMeeting:(r,n)=>setMeeting(meetingFor(r,n))}),[licensee?.fullName,licensee?.phone,he]);
   useEffect(()=>{AU.on=snd;},[snd]);
 
   // ── cart persistence; owner/customer view preference is read in the useState initializer above ──

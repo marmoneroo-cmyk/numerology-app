@@ -26,14 +26,14 @@ const CONTENT = {
 };
 
 /** Renders the workspace over a fresh in-memory store; `seed(store, backend)` fills it first. */
-async function setup(seed, { he = true } = {}) {
+async function setup(seed, { he = true, content = CONTENT } = {}) {
   let n = 0;
   let t = NOW.getTime();
   const backend = memoryBackend();
   const store = createStore(backend, { now: () => new Date((t += 1000)), newId: () => `id-${++n}` });
   if (seed) await seed(store, backend);
   render(
-    <ContentContext.Provider value={CONTENT}>
+    <ContentContext.Provider value={content}>
       <WorkspaceApp he={he} dk store={store} now={() => NOW} />
     </ContentContext.Provider>,
   );
@@ -157,6 +157,36 @@ describe("workspace", () => {
     await openClient("שני כהן אזולאי");
     await tap(/שביל הגורל 33/);
     expect(await screen.findByText("תובנה שנשמרה")).toBeTruthy();
+  });
+
+  it("shows a saved map in meeting mode, from its stored snapshot, when the Studio offers it", async () => {
+    const openMeeting = vi.fn();
+    await setup(
+      async (s) => {
+        const c = await s.clients.create(SHANI);
+        const calc = fullCalc(15, 8, 1990, SHANI.fullName, false, NOW);
+        await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: false }, result: { ...calc, insights: { he: [], en: [] } }, engineVersion: "1.0.0", computedFor: NOW.toISOString() });
+      },
+      { content: { ...CONTENT, openMeeting } },
+    );
+    await openClient("שני כהן אזולאי");
+    await tap(/שביל הגורל 33/);
+    await tap("מצב פגישה");
+    expect(openMeeting).toHaveBeenCalledTimes(1);
+    expect(openMeeting.mock.calls[0][0]).toMatchObject({ lp: 33, nv: 4, py: 6 });
+    expect(openMeeting.mock.calls[0][1]).toBe(SHANI.fullName);
+  });
+
+  it("offers no meeting mode where the app has none", async () => {
+    await setup(async (s) => {
+      const c = await s.clients.create(SHANI);
+      const calc = fullCalc(15, 8, 1990, SHANI.fullName, false, NOW);
+      await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: false }, result: { ...calc, insights: { he: [], en: [] } }, engineVersion: "1.0.0", computedFor: NOW.toISOString() });
+    });
+    await openClient("שני כהן אזולאי");
+    await tap(/שביל הגורל 33/);
+    expect(await screen.findByText("גרסת מנוע 1.0.0")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "מצב פגישה" })).toBeNull();
   });
 
   it("matches the client with another client and shows the score and the compatibility text", async () => {
