@@ -1,0 +1,252 @@
+/*
+ * The 3D tarot card (Card.jsx). The button holds the perspective; .st-card-tilt
+ * leans toward the mouse; .st-card-inner turns over with a little overshoot.
+ * Opening adds st-open: the flip, then a glow and one sweep of shine, while
+ * Card.jsx sends out the sparks. 132px wide (md) or 190px (lg), always 2:3,
+ * unless a parent sets --st-card-w (a grid cell, a deck slot). The text
+ * follows the card's own width. Motion is transform and opacity only, plus
+ * the one filter glow on an opened card.
+ */
+.st-card {
+  --st-card-accent: var(--st-accent, var(--st-gold));
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  width: var(--st-card-w, 132px);
+  aspect-ratio: 2 / 3;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  color: var(--st-ink);
+  font: inherit;
+  font-family: var(--st-body);
+  cursor: pointer;
+  perspective: 900px;
+  container: st-card / inline-size;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.25, 1.15), opacity 0.45s ease;
+}
+.st-card-lg {
+  width: var(--st-card-w, 190px);
+}
+.st-card:focus-visible {
+  outline: 2px solid var(--st-gold);
+  outline-offset: 3px;
+}
+
+/* --tx turns the card side to side (about its upright axis), --ty top to bottom */
+.st-card-tilt {
+  position: absolute;
+  inset: 0;
+  transform: rotateX(var(--ty, 0deg)) rotateY(var(--tx, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.18s ease-out;
+}
+.st-card-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.95s cubic-bezier(0.2, 0.85, 0.25, 1.18);
+}
+.st-card.st-open .st-card-inner {
+  transform: rotateY(180deg);
+}
+
+.st-card-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px var(--st-shadow);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/*
+ * the gold diagonal pattern on a deep ground, lighter in the middle; the deck's
+ * stacked backs wear it too. The light theme orders its panels the other way.
+ * Colour and image are separate properties, so the plain colour stays if the
+ * image fails (a later shorthand with var() would replace it and fail to transparent).
+ */
+.st-card-pattern {
+  --st-back-mid: var(--st-panel-2);
+  --st-back-edge: var(--st-void);
+  background-color: var(--st-panel);
+  background-image:
+    repeating-linear-gradient(45deg, var(--st-gold-wash) 0 6px, transparent 6px 12px),
+    radial-gradient(circle at 50% 45%, var(--st-back-mid), var(--st-back-edge) 78%);
+}
+:root[data-st-theme="light"] .st-card-pattern {
+  --st-back-mid: var(--st-panel);
+  --st-back-edge: var(--st-panel-2);
+}
+/* Safari hides a turned-away face reliably only when the face has a 3D transform of its own */
+.st-card-back {
+  display: grid;
+  place-items: center;
+  color: var(--st-gold);
+  font-size: 26px;
+  line-height: 1;
+  transform: rotateY(0deg);
+}
+.st-card-back::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid var(--st-line);
+  border-radius: 9px;
+}
+
+.st-card-front {
+  transform: rotateY(180deg);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  justify-items: center;
+  padding: 10px 8px 12px;
+  text-align: center;
+  /* two properties: where color-mix() is not understood only the accent's glow is lost, not the whole face */
+  background-color: var(--st-panel-2);
+  background-image: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--st-card-accent) 18%, transparent), transparent 62%);
+}
+.st-card-num {
+  font-family: var(--st-display);
+  font-size: 38px;
+  font-size: clamp(24px, 28.8cqi, 56px);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--st-gold);
+}
+.st-card-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62%;
+  min-height: 0;
+  margin-block: 4px;
+}
+.st-card-art > svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--st-gold);
+  stroke-width: 1.2;
+  opacity: 0.85;
+}
+.st-card-title {
+  font-size: 14px;
+  font-size: clamp(12px, 10.6cqi, 18px);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--st-ink);
+  text-wrap: balance;
+}
+/* soft, not faint: faint is 4.9:1 on the plain face but falls under 4.5:1 where the accent's glow reaches */
+.st-card-sub {
+  font-size: 11px;
+  font-size: clamp(10px, 8.4cqi, 13px);
+  line-height: 1.35;
+  color: var(--st-ink-soft);
+  text-wrap: balance;
+}
+/* three to a row on a phone: a smaller number and no subtitle */
+@container st-card (max-width: 119px) {
+  .st-card-front {
+    padding: 8px 6px 10px;
+  }
+  .st-card-sub {
+    display: none;
+  }
+}
+
+/* opening: a glow that peaks as the card lands and settles soft, and one sweep of light across the face */
+.st-card.st-open {
+  animation: st-card-glow 1.4s ease-out forwards;
+}
+@keyframes st-card-glow {
+  0% { filter: drop-shadow(0 0 0 transparent); }
+  45% { filter: drop-shadow(0 0 26px color-mix(in srgb, var(--st-card-accent) 60%, transparent)); }
+  100% { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--st-card-accent) 28%, transparent)); }
+}
+/* the shine is a band of light 2.6 times the card's width, moved by transform alone and clipped to the card */
+.st-card-shine {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  pointer-events: none;
+  transform: translateZ(1px);
+  mix-blend-mode: screen;
+}
+.st-card-shine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 260%;
+  opacity: 0;
+  background-image: linear-gradient(110deg, transparent 30%, color-mix(in srgb, var(--st-gold-hi) 55%, transparent) 48%, transparent 66%);
+  transform: translateX(-100%);
+}
+.st-card.st-open .st-card-shine::before {
+  animation: st-card-sweep 1.05s 0.6s ease-out;
+}
+/* the band's brightest line starts well left of the card and ends well right of it */
+@keyframes st-card-sweep {
+  0% { opacity: 1; transform: translateX(-100%); }
+  100% { opacity: 0; transform: translateX(45%); }
+}
+
+/* the sparks: hidden until their delay ends, then out to --dx/--dy, fading and shrinking */
+.st-card-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.st-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--st-gold-hi);
+  box-shadow: 0 0 10px var(--st-gold);
+  opacity: 0;
+  animation: st-card-spark 0.95s cubic-bezier(0.15, 0.7, 0.3, 1) var(--delay, 0.4s) both;
+}
+@keyframes st-card-spark {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+  8% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.15); }
+}
+
+/* the cards not chosen step back; Card.jsx also disables them, so they no longer invite a press */
+.st-card.st-dim {
+  opacity: 0.38;
+  transform: scale(0.92);
+}
+.st-card:disabled {
+  cursor: default;
+}
+
+/* a grid of cards that fill their cells: as many as fit at 150px or more, three in a row on a phone */
+.st-cards {
+  --st-card-w: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 18px;
+  justify-items: center;
+}
+@media (max-width: 639.98px) {
+  .st-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+}

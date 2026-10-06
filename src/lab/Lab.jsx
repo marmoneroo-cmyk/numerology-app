@@ -13,6 +13,7 @@ import { useLayout } from "../studio/useMediaQuery.js";
 import { AccountProvider } from "../account/AccountContext.jsx";
 import App from "../App.jsx";
 import { labService } from "./labAccount.js";
+import CardsSection from "./sections/CardsSection.jsx";
 import MeetingSection from "./sections/MeetingSection.jsx";
 import PaletteSection from "./sections/PaletteSection.jsx";
 import TodaySection from "./sections/TodaySection.jsx";
@@ -61,6 +62,7 @@ function Basics() {
 export const SECTIONS = [
   ["basics", "בסיס", Basics],
   ["today", "היום", TodaySection],
+  ["cards", "קלפים", CardsSection],
   ["meeting", "מצב פגישה", MeetingSection],
   ["palette", "חיפוש מהיר", PaletteSection],
   ["studio", "הסטודיו המלא", StudioPreview],

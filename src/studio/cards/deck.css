@@ -1,0 +1,166 @@
+/*
+ * Today's card ritual (Deck.jsx): the deck and its button beside three slots,
+ * the status line underneath. Below 640px the deck sits above the slots and
+ * the three cards share the row (about 30% each). From 1024px the deck and
+ * the cards grow and gather in the middle of the wide panel. The three slots
+ * always fit in one row: where 132px (or 30%) is too wide, each takes a third.
+ * The stacked backs take their pattern from .st-card-pattern in card.css.
+ */
+.st-deck {
+  display: grid;
+  gap: 12px;
+}
+.st-deck-table {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  padding: 8px 4px;
+}
+.st-deck-side {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+
+.st-deck-pile {
+  position: relative;
+  width: 104px;
+  aspect-ratio: 2 / 3;
+}
+.st-deck-back {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px var(--st-shadow);
+}
+.st-deck-back:nth-child(2) { transform: translate(-3px, -3px); }
+.st-deck-back:nth-child(3) { transform: translate(-6px, -6px); }
+.st-deck-back:nth-child(4) { transform: translate(-9px, -9px); }
+/* the riffle: the cards swing out to either side and back, four times */
+.st-deck-pile.st-shuffling .st-deck-back:nth-child(odd) {
+  animation: st-deck-riffle-a 0.22s ease-in-out 4 alternate;
+}
+.st-deck-pile.st-shuffling .st-deck-back:nth-child(even) {
+  animation: st-deck-riffle-b 0.22s ease-in-out 4 alternate;
+}
+@keyframes st-deck-riffle-a {
+  to { transform: translate(-30px, -4px) rotate(-8deg); }
+}
+@keyframes st-deck-riffle-b {
+  to { transform: translate(30px, -6px) rotate(8deg); }
+}
+
+.st-deck-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 12px;
+  background: var(--st-gold-wash);
+  color: var(--st-gold-text);
+  font: inherit;
+  font-family: var(--st-body);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.2s ease;
+}
+.st-deck-btn:hover {
+  border-color: var(--st-gold);
+}
+.st-deck-btn:focus-visible {
+  outline: 2px solid var(--st-gold);
+  outline-offset: 2px;
+}
+
+.st-deck-slots {
+  --st-deck-gap: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--st-deck-gap);
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+/* a third of the row, less the two gaps and the slot's own 1px border on each side */
+.st-deck-slot {
+  --st-deck-third: calc((100% - 2 * var(--st-deck-gap)) / 3 - 2px);
+  width: min(132px, var(--st-deck-third));
+  aspect-ratio: 2 / 3;
+  border: 1px dashed var(--st-line);
+  border-radius: 14px;
+}
+.st-deck-slot.st-filled {
+  border-color: transparent;
+}
+.st-deck-fly {
+  --st-card-w: 100%;
+  width: 100%;
+}
+.st-deck-fly > .st-card {
+  display: block;
+}
+
+.st-deck-status {
+  margin: 0;
+  min-height: 1.6em;
+  text-align: center;
+  color: var(--st-ink-soft);
+  line-height: 1.6;
+  text-wrap: balance;
+}
+.st-deck-status b {
+  color: var(--st-gold-text);
+  font-weight: 500;
+}
+
+@media (max-width: 639.98px) {
+  .st-deck-table {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 18px;
+    padding: 4px 0;
+  }
+  .st-deck-side {
+    grid-auto-flow: column;
+    align-items: center;
+    gap: 22px;
+  }
+  .st-deck-pile {
+    width: 78px;
+  }
+  .st-deck-slots {
+    --st-deck-gap: 10px;
+    justify-self: stretch;
+    min-height: 0;
+  }
+  .st-deck-slot {
+    width: min(30%, var(--st-deck-third));
+  }
+}
+
+/* a computer: a bigger deck and bigger cards, gathered in the middle of the full-width panel */
+@media (min-width: 1024px) {
+  .st-deck-table {
+    grid-template-columns: auto auto;
+    justify-content: center;
+    gap: 56px;
+    padding: 14px 8px;
+  }
+  .st-deck-side {
+    gap: 22px;
+  }
+  .st-deck-pile {
+    width: 128px;
+  }
+  .st-deck-slots {
+    --st-deck-gap: 26px;
+  }
+  .st-deck-slot {
+    width: 168px;
+  }
+}
