@@ -32,31 +32,29 @@ export default function AdminScreen({ account, he, dk }) {
       </Card>
     );
   }
-  if (split) {
-    return (
-      <div dir={he ? "rtl" : "ltr"} className="st-split" style={{ color: c.tm }}>
-        <section className="st-split-list" aria-label={he ? "רשימת החשבונות" : "Account list"}>
+  // the open account keeps its place (key "open") whether or not the list is beside it, so a form
+  // half typed survives the window crossing the computer's width
+  return (
+    <div dir={he ? "rtl" : "ltr"} className={split ? "st-split" : undefined} style={{ color: c.tm }}>
+      {split && (
+        <section key="list" className="st-split-list" aria-label={he ? "רשימת החשבונות" : "Account list"}>
           <AccountList {...props} selectedId={view.name === "details" ? view.userId : null} refreshKey={changes} />
         </section>
-        <section aria-label={he ? "החשבון הפתוח" : "Open account"}>
-          {view.name === "list" && (
+      )}
+      <section key="open" aria-label={split ? (he ? "החשבון הפתוח" : "Open account") : undefined}>
+        {view.name === "list" &&
+          (split ? (
             <Card>
               <div className="st-split-empty">
                 <p style={{ margin: 0, color: c.ts, lineHeight: 1.7 }}>{he ? "בחרו חשבון מהרשימה, או פתחו חשבון חדש." : "Choose an account from the list, or open a new one."}</p>
               </div>
             </Card>
-          )}
-          {view.name === "create" && <CreateAccount {...props} />}
-          {view.name === "details" && <AccountDetails key={view.userId} {...props} userId={view.userId} />}
-        </section>
-      </div>
-    );
-  }
-  return (
-    <div dir={he ? "rtl" : "ltr"} style={{ color: c.tm }}>
-      {view.name === "list" && <AccountList {...props} />}
-      {view.name === "create" && <CreateAccount {...props} />}
-      {view.name === "details" && <AccountDetails {...props} userId={view.userId} />}
+          ) : (
+            <AccountList {...props} />
+          ))}
+        {view.name === "create" && <CreateAccount {...props} />}
+        {view.name === "details" && <AccountDetails key={view.userId} {...props} userId={view.userId} />}
+      </section>
     </div>
   );
 }

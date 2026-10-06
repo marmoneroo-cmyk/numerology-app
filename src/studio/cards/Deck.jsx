@@ -156,14 +156,24 @@ export default function Deck({ pool = [], he = true, random = Math.random, onPic
   const t = he ? TEXT.he : TEXT.en;
   const { phase, hand, picked, deals, shuffle, choose, deckRef, flyers } = useRitual(pool, random, onPick);
   const rootRef = useRef(null);
+  const followFirstDeal = useRef(shuffleOnMount);
+  const bringIntoView = () => rootRef.current?.scrollIntoView?.({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
 
   useEffect(() => {
     if (!shuffleOnMount) return;
-    rootRef.current?.scrollIntoView?.({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    bringIntoView();
     shuffle();
     // once, as the deck appears
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // and once more as those cards land: what is above the deck may have grown meanwhile (a phone loading lists)
+  useEffect(() => {
+    if (deals === 0 || !followFirstDeal.current) return;
+    followFirstDeal.current = false;
+    bringIntoView();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deals]);
 
   return (
     <div ref={rootRef} className="st-deck">

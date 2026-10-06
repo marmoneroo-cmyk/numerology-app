@@ -5,7 +5,7 @@
  * is one screen at a time, as before. Other screens can ask it to open a client.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, within, act } from "@testing-library/react";
 import WorkspaceApp from "../WorkspaceApp.jsx";
 import { createStore } from "../../data/store.js";
 import { memoryBackend } from "../../data/memoryBackend.js";
@@ -18,6 +18,27 @@ function screenWidth(width) {
     const min = Number((query.match(/min-width: ([0-9]+)px/) || [])[1] || 0);
     return { matches: !query.includes("reduce") && width >= min, addEventListener() {}, removeEventListener() {} };
   });
+}
+
+/** A screen whose width changes mid-test: each query reads the current width, and `resize` tells the listeners. */
+function resizableScreen(initial) {
+  let width = initial;
+  const listeners = new Set();
+  vi.spyOn(window, "matchMedia").mockImplementation((query) => {
+    const min = Number((query.match(/min-width: ([0-9]+)px/) || [])[1] || 0);
+    return {
+      get matches() {
+        return !query.includes("reduce") && width >= min;
+      },
+      addEventListener: (_, fn) => listeners.add(fn),
+      removeEventListener: (_, fn) => listeners.delete(fn),
+    };
+  });
+  return (next) =>
+    act(() => {
+      width = next;
+      listeners.forEach((fn) => fn());
+    });
 }
 
 async function seeded() {
@@ -69,6 +90,28 @@ describe("the workspace on a computer", () => {
     rerender(<WorkspaceApp store={store} now={() => NOW} openRequest={{ view: { name: "client", clientId: "id-2" }, nonce: 1 }} />);
     const detail = screen.getByRole("region", { name: "הלקוח הפתוח" });
     expect(await within(detail).findByRole("heading", { name: "יוסי לוי" })).toBeTruthy();
+  });
+
+  it("says when it has opened what another screen asked for, so the request is not replayed later", async () => {
+    screenWidth(1300);
+    const onOpenHandled = vi.fn();
+    render(<WorkspaceApp store={await seeded()} now={() => NOW} openRequest={{ view: { name: "client", clientId: "id-2" }, nonce: 3 }} onOpenHandled={onOpenHandled} />);
+    expect(await screen.findByRole("heading", { name: "יוסי לוי" })).toBeTruthy();
+    expect(onOpenHandled).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a half-typed form when the window crosses the computer's width, both ways", async () => {
+    const resize = resizableScreen(1300);
+    render(<WorkspaceApp store={await seeded()} now={() => NOW} />);
+    const list = await screen.findByRole("region", { name: "רשימת הלקוחות" });
+    fireEvent.click(within(list).getByRole("button", { name: "לקוח חדש" }));
+    fireEvent.change(await screen.findByLabelText("שם מלא"), { target: { value: "מיכל אב" } });
+    resize(800);
+    expect(screen.queryByRole("region", { name: "רשימת הלקוחות" })).toBeNull();
+    expect(screen.getByLabelText("שם מלא").value).toBe("מיכל אב");
+    resize(1300);
+    expect(screen.getByRole("region", { name: "רשימת הלקוחות" })).toBeTruthy();
+    expect(screen.getByLabelText("שם מלא").value).toBe("מיכל אב");
   });
 });
 

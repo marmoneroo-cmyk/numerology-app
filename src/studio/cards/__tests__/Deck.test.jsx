@@ -156,6 +156,11 @@ describe("Deck", () => {
       expect(scrolled).toHaveBeenCalledTimes(1);
       act(() => vi.advanceTimersByTime(900));
       expect(faceDown()).toHaveLength(3);
+      // once more as the cards land: what is above it may have grown meanwhile (a phone loading the client lists)
+      expect(scrolled).toHaveBeenCalledTimes(2);
+      shuffle("ערבוב מחדש");
+      act(() => vi.advanceTimersByTime(900));
+      expect(scrolled).toHaveBeenCalledTimes(2);
     } finally {
       delete Element.prototype.scrollIntoView;
     }

@@ -15,6 +15,7 @@ import Card from "./studio/cards/Card.jsx";
 import Deck from "./studio/cards/Deck.jsx";
 import { useToast } from "./studio/Toasts.jsx";
 import { personOf } from "./workspace/format.js";
+import { whatsappLink } from "./studio/today.js";
 import AdminScreen from "./account/AdminScreen.jsx";
 import LocalDataOffer from "./account/LocalDataOffer.jsx";
 import { accountStore } from "./account/workspaceStore.js";
@@ -1067,7 +1068,7 @@ function CalculatorsWidget({he,dk}){
     {/* ═══════ CATEGORY 4: Cards ═══════ */}
     {cat===3&&(<div>
       <div className="gc" style={{marginBottom:14}}>
-        <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="cards" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"קלפי נומרולוגיה":"Numerology Cards"}</div><p style={{fontSize:11,color:ts,marginTop:4}}>{he?"לחץ על קלף להפיכה":"Tap a card to flip"}</p></div>
+        <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="cards" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"קלפי נומרולוגיה":"Numerology Cards"}</div><p style={{fontSize:11,color:ts,marginTop:4}}>{he?"לוחצים על קלף כדי להפוך אותו":"Press a card to turn it over"}</p></div>
         <div className="st-cards">
           {studioDeck(he).map(card=><Card key={card.number} {...card} he={he} onToggle={chimeOnOpen}/>)}
         </div>
@@ -1858,14 +1859,14 @@ function LeadsWidget({ he, dk }) {
       <ul className="st-leads">
         {leads.map((l, i) => (<li key={i} className="st-panel st-lead">
           <div className="st-lead-top"><b>{l.name || "-"}</b><span className="st-lead-date">{l.date}</span></div>
-          {l.phone && <a className="st-lead-phone" dir="ltr" href={`https://wa.me/${l.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">{l.phone}</a>}
+          {l.phone && (whatsappLink(l.phone) ? <a className="st-lead-phone" dir="ltr" href={whatsappLink(l.phone)} target="_blank" rel="noopener noreferrer">{l.phone}</a> : <span className="st-lead-phone" dir="ltr">{l.phone}</span>)}
           <div className="st-lead-nums"><span>{he ? "שביל" : "LP"} <b>{l.lp}</b></span><span>{he ? "שנה" : "PY"} <b>{l.py}</b></span><span>{he ? "חוב" : "Debt"} <b>{l.kd || "-"}</b></span></div>
         </li>))}
       </ul> :
       <div className="gc" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr><th style={th}>{he ? "שם" : "Name"}</th><th style={th}>{he ? "טלפון" : "Phone"}</th><th style={th}>{he ? "שביל" : "LP"}</th><th style={th}>{he ? "שנה" : "PY"}</th><th style={th}>{he ? "חוב" : "Debt"}</th><th style={th}>{he ? "תאריך" : "Date"}</th></tr></thead>
-          <tbody>{leads.map((l, i) => (<tr key={i}><td style={td}>{l.name || "-"}</td><td style={td}><a href={`https://wa.me/${(l.phone || "").replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: ac, textDecoration: "none" }}>{l.phone}</a></td><td style={td}>{l.lp}</td><td style={td}>{l.py}</td><td style={td}>{l.kd || "-"}</td><td style={td}>{l.date}</td></tr>))}</tbody>
+          <tbody>{leads.map((l, i) => (<tr key={i}><td style={td}>{l.name || "-"}</td><td style={td}>{whatsappLink(l.phone) ? <a href={whatsappLink(l.phone)} target="_blank" rel="noopener noreferrer" style={{ color: ac, textDecoration: "none" }}>{l.phone}</a> : l.phone}</td><td style={td}>{l.lp}</td><td style={td}>{l.py}</td><td style={td}>{l.kd || "-"}</td><td style={td}>{l.date}</td></tr>))}</tbody>
         </table>
       </div>}
     <p style={{ fontSize: 10, color: ts, opacity: .6, textAlign: "center", marginTop: 12 }}>{he ? "* נשמר מקומית בדפדפן זה. ל-CRM ענן אמיתי נדרש חיבור שרת." : "* Stored locally in this browser. A real cloud CRM needs a backend."}</p>
@@ -1877,7 +1878,10 @@ export default function App(){
   const[lang,setLang]=useState("he");const[dk,setDk]=useState(true);const[snd,setSnd]=useState(true);const[intro,setIntro]=useState(true);
   const[step,setStep]=useState(1);const[tab,setTab]=useState("today");const[name,setName]=useState("");const[dob,setDob]=useState("");const[addOne,setAddOne]=useState(false);
   const[results,setResults]=useState(null);const[showRes,setShowRes]=useState(false);const[error,setError]=useState("");
+  const[readingName,setReadingName]=useState(""); // whom `results` were made for: the name field may change after
   const[chapters,setChapters]=useState([false,false,false,false,false,false]);
+  /** Back to an empty reading form, the last reading gone. */
+  const clearReading=()=>{setShowRes(false);setResults(null);setReadingName("");setStep(1);setName("");setDob("");setAddOne(false);setError("");setChapters([false,false,false,false,false,false]);};
   const[streak,setStreak]=useState(0);
   const[owner,setOwner]=useState(()=>{try{const h=location.hash+location.search;if(/customer/i.test(h))return false;if(/owner|studio|admin/i.test(h))return true;return localStorage.getItem(OWNER_STORE_KEY)!=="customer";}catch(e){return true;}});const[previewCustomer,setPreviewCustomer]=useState(false);
   const[cart,setCart]=useState({});const[cartOpen,setCartOpen]=useState(false);
@@ -1901,7 +1905,9 @@ export default function App(){
   // another account in the Studio (or none) starts clean: nothing of the previous subscriber's client stays on screen
   const studioUser=account.profile?.id??null;
   const lastStudioUser=useRef(studioUser);
-  useEffect(()=>{if(lastStudioUser.current===studioUser)return;lastStudioUser.current=studioUser;setStep(1);setTab("today");setName("");setDob("");setAddOne(false);setResults(null);setShowRes(false);setError("");setChapters([false,false,false,false,false,false]);},[studioUser]);
+  useEffect(()=>{if(lastStudioUser.current===studioUser)return;lastStudioUser.current=studioUser;clearReading();setTab("today");
+    // and nothing of theirs in quick search, meeting mode or a client waiting to open
+    setPaletteOpen(false);setPaletteClients([]);setMeeting(null);setOpenRequest(null);setDeckDeal(0);},[studioUser]);
   useEffect(()=>{if(tab==="admin"&&account.profile?.role!=="admin")setTab("today");},[tab,account.profile?.role]);
   useEffect(()=>{if(tab!=="today")setDeckDeal(0);},[tab]); // the next visit to "היום" waits for a press again
   // a saved map opens in meeting mode too (meetingFor is defined below; it runs only on a press)
@@ -1934,7 +1940,7 @@ export default function App(){
 
   const runReading=useCallback((nm,dobStr,add)=>{
     try{setError("");const parts=String(dobStr).split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;
-      AU.init();AU.p("reveal");const r=fullCalc(d,m,y,nm,add);setResults(r);setShowRes(true);
+      AU.init();AU.p("reveal");const r=fullCalc(d,m,y,nm,add);setResults(r);setReadingName(nm);setShowRes(true);
       setChapters([false,false,false,false,false,false]);
       setTimeout(()=>{setChapters(c=>{const n=[...c];n[0]=true;return n;});AU.p("chapter");},800);saveStreak();
       return true;
@@ -1944,8 +1950,7 @@ export default function App(){
 
   const goHome=()=>{
     AU.init();AU.p("click");
-    setShowRes(false);setResults(null);setStep(1);setName("");setDob("");setAddOne(false);
-    setChapters([false,false,false,false,false,false]);setTab("reading");
+    clearReading();setTab("reading");
   };
 
   const nextUnrevealed=chapters.findIndex(c=>!c);
@@ -1970,7 +1975,7 @@ export default function App(){
     numbers:[{value:r.ex,label:he?"מספר הביטוי":"Expression"},{value:r.su,label:he?"קול הנשמה":"Soul Urge"},{value:r.py,label:he?"שנה אישית":"Personal Year"}],
     text:he?info.narrative:info.narrativeE};};
   const openMeeting=()=>{
-    if(results&&name){setMeeting(meetingFor(results,name));return;}
+    if(results&&readingName){setMeeting(meetingFor(results,readingName));return;}
     setTab("reading");setShowRes(false);
     toast(he?"פותחים קריאה, ואז ׳מצב פגישה׳ מציג אותה בגדול.":"Open a reading, and meeting mode shows it in large type.");
   };
@@ -1979,9 +1984,11 @@ export default function App(){
   const dayNum=dailyRitualNumber(); // the owner's daily number, the same one "יומי" uses
   const deckPool=useMemo(()=>studioDeck(he),[he]);
   const studioTools=account.profile?.role==="admin"?[...STUDIO_TOOLS,ADMIN_TOOL]:STUDIO_TOOLS;
+  /** When the focused element went away with the screen it was on, the keyboard focus goes to the current tool's button. */
+  const keepFocus=()=>{const a=document.activeElement;if(!a||a===document.body)document.querySelector('.snav [aria-current="page"]')?.focus({preventScroll:true});};
   // the screens cross-fade where the browser can (view transitions), and simply change elsewhere or under reduced motion
-  const selectTool=(k)=>{AU.init();AU.p("click");withViewTransition(()=>flushSync(()=>{setTab(k);if(k!=="reading")setShowRes(false);}));};
-  const newReading=()=>{setTab("reading");setShowRes(false);setStep(1);};
+  const selectTool=(k)=>{AU.init();AU.p("click");withViewTransition(()=>{flushSync(()=>{setTab(k);if(k!=="reading")setShowRes(false);});keepFocus();});};
+  const newReading=()=>{clearReading();setTab("reading");};
   // quick search (Ctrl+K): in the signed-in Studio only, and not over meeting mode
   const canSearch=showOwnerUI&&studioReady&&!meeting;
   const openPalette=useCallback(()=>setPaletteOpen(true),[]);
@@ -1999,14 +2006,14 @@ export default function App(){
     {id:"new-reading",label:he?"קריאה חדשה":"New reading",hint:he?"פעולה":"Action",keywords:["קריאה","reading"],run:newReading},
     {id:"new-client",label:he?"לקוח חדש":"New client",hint:he?"פעולה":"Action",keywords:["לקוח","client"],run:()=>openClient({name:"clientForm"})},
     {id:"today-card",label:he?"קלף היום":"Today's card",hint:he?"ערבוב וחלוקה":"Shuffle and deal",keywords:["קלף","קלפים","card","deck"],run:()=>{setDeckDeal(n=>n+1);selectTool("today");}},
-    ...(results&&name?[{id:"meeting",label:he?"מצב פגישה":"Meeting mode",hint:name,keywords:["פגישה","meeting"],run:openMeeting}]:[]),
+    ...(results&&readingName?[{id:"meeting",label:he?"מצב פגישה":"Meeting mode",hint:readingName,keywords:["פגישה","meeting"],run:openMeeting}]:[]),
     ...paletteClients.map(c=>{const p=c.birthDate?personOf("",c.birthDate):null;return{id:`client-${c.id}`,label:c.fullName,
       hint:p?`${he?"לקוח · מסלול":"Client · life path"} ${LPm(p.d,p.m,p.y)}`:(he?"לקוח":"Client"),
       keywords:[c.phone,String(c.phone||"").replace(/\D/g,""),c.email,...(c.tags||[])].filter(Boolean),
       run:()=>openClient({name:"client",clientId:c.id})};}),
   ];
 
-  return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"hidden",transition:"background .7s,color .4s"}}>
+  return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"clip",transition:"background .7s,color .4s"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Hebrew:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}html,body{overflow-x:hidden;max-width:100%}@supports (overflow-x:clip){html,body{overflow-x:clip}}::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:${ac}33;border-radius:3px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
@@ -2126,7 +2133,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {showOwnerUI&&tab==="clients"&&workspaceStore&&<ContentContext.Provider value={workspaceContent}>
           <LocalDataOffer store={workspaceStore} userId={account.profile.id} he={he} dk={dk} logEvent={account.service.logEvent} onUploaded={()=>setWorkspaceKey(k=>k+1)}/>
-          <WorkspaceApp key={workspaceKey} he={he} dk={dk} store={workspaceStore} openRequest={openRequest} onEvent={(action)=>{account.service.logEvent(action).catch(()=>{});}}/>
+          <WorkspaceApp key={workspaceKey} he={he} dk={dk} store={workspaceStore} openRequest={openRequest} onOpenHandled={()=>setOpenRequest(null)} onEvent={(action)=>{account.service.logEvent(action).catch(()=>{});}}/>
         </ContentContext.Provider>}
 
         {showOwnerUI&&tab==="shop"&&<div className="st-tool-wide"><ShopSection he={he} dk={dk}/></div>}
@@ -2306,8 +2313,8 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           </div>
         </SR>)}
         {chapters[5]&&(<SR delay={250}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
-          <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);if(showOwnerUI)toast(he?"הדו״ח נשמר בתיקיית ההורדות.":"The report is in your downloads.");}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמור דו״ח PDF":"Save PDF"}</span></button>
-          {showOwnerUI&&<button className="ghost" onClick={()=>setMeeting(meetingFor(results,name))} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="eye" size={15}/>{he?"מצב פגישה":"Meeting mode"}</span></button>}
+          <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);if(showOwnerUI)toast(he?"הדו״ח נשמר בתיקיית ההורדות.":"The report is in your downloads.");}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמירת דו״ח PDF":"Save PDF"}</span></button>
+          {showOwnerUI&&<button className="ghost" onClick={()=>setMeeting(meetingFor(results,readingName||name))} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="eye" size={15}/>{he?"מצב פגישה":"Meeting mode"}</span></button>}
           <button className="ghost" onClick={goHome}>{he?"קריאה חדשה":"New Reading"}</button>
         </div></SR>)}
       </div>)}
@@ -2339,7 +2346,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     {showOwnerUI&&studioReady&&<MeetingMode open={!!meeting} onClose={()=>setMeeting(null)} he={he} {...(meeting||{})}/>}
 
     {/* quick search: tools, clients and actions, from the top bar or Ctrl+K */}
-    <CommandPalette open={paletteOpen&&canSearch} onClose={()=>setPaletteOpen(false)} he={he} items={paletteItems}/>
+    <CommandPalette open={paletteOpen&&canSearch} onClose={()=>{setPaletteOpen(false);setTimeout(keepFocus,0);}} he={he} items={paletteItems}/>
 
     {/* ═══ CART (customer only) ═══ */}
     {!showOwnerUI&&(<>

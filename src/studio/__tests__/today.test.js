@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { upcomingBirthdays, recentClients, greetingLink, greetingText, initialsOf } from "../today.js";
+import { upcomingBirthdays, recentClients, greetingLink, whatsappLink, greetingText, initialsOf } from "../today.js";
 
 /** A client record with only what these helpers read. */
 const client = (fullName, birthDate, extra = {}) => ({ id: `id-${fullName}`, fullName, birthDate, archived: false, ...extra });
@@ -125,6 +125,18 @@ describe("recentClients", () => {
     expect(recentClients(clients, 2).map((c) => c.fullName)).toEqual(["read", "edited"]);
     expect(clients.map((c) => c.fullName)).toEqual(before);
     expect(recentClients([])).toEqual([]);
+  });
+});
+
+describe("whatsappLink", () => {
+  it("opens a chat with the number in international form", () => {
+    expect(whatsappLink("050-1234567")).toBe("https://wa.me/972501234567");
+    expect(whatsappLink("+972 (0)52-123-4567")).toBe("https://wa.me/972521234567");
+    expect(whatsappLink("+44 20 7946 0958")).toBe("https://wa.me/442079460958");
+  });
+
+  it("gives null for a number too short or too long, junk or nothing", () => {
+    for (const phone of ["050-123", "1234567890123456", "abc", "", null, undefined]) expect(whatsappLink(phone)).toBeNull();
   });
 });
 

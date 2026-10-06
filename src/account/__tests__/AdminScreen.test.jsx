@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup, within, act } from "@testing-library/react";
 import AdminScreen from "../AdminScreen.jsx";
 import { AccountError } from "../service.js";
 
@@ -60,6 +60,37 @@ describe("accounts on a computer", () => {
       await waitFor(() => expect(admin.listAccounts.mock.calls.length).toBeGreaterThan(loads + 1));
       fireEvent.click(within(list).getByRole("button", { name: "חשבון חדש" }));
       expect(await within(open).findByRole("heading", { name: "חשבון חדש" })).toBeTruthy();
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("keeps a half-typed new account when the window crosses the computer's width, both ways", async () => {
+    let width = 1300;
+    const listeners = new Set();
+    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({
+      get matches() {
+        return !q.includes("reduce") && width >= Number((q.match(/min-width: ([0-9]+)px/) || [])[1] || 0);
+      },
+      addEventListener: (_, fn) => listeners.add(fn),
+      removeEventListener: (_, fn) => listeners.delete(fn),
+    }));
+    const resize = (next) =>
+      act(() => {
+        width = next;
+        listeners.forEach((fn) => fn());
+      });
+    try {
+      setup();
+      const list = await screen.findByRole("region", { name: "רשימת החשבונות" });
+      fireEvent.click(within(list).getByRole("button", { name: "חשבון חדש" }));
+      fireEvent.change(await screen.findByLabelText("שם מלא"), { target: { value: "נועה פ" } });
+      resize(800);
+      expect(screen.queryByRole("region", { name: "רשימת החשבונות" })).toBeNull();
+      expect(screen.getByLabelText("שם מלא").value).toBe("נועה פ");
+      resize(1300);
+      expect(screen.getByRole("region", { name: "רשימת החשבונות" })).toBeTruthy();
+      expect(screen.getByLabelText("שם מלא").value).toBe("נועה פ");
     } finally {
       vi.restoreAllMocks();
     }

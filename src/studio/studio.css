@@ -94,6 +94,10 @@
     gap: 6px;
   }
 }
+/* the Studio's top bar buttons: gold that small text can read at 4.5:1 in the light theme too */
+.st-tbar .tbtn {
+  color: var(--st-gold-text);
+}
 /* a phone's top bar in the Studio: the customer-view and exit buttons keep their icons and drop their words */
 @media (max-width: 519.98px) {
   .st-tbar .tbtn-text {

@@ -21,12 +21,14 @@ const fileInputCss = (ac) =>
   `.ws-file:focus-visible+label{outline:2px solid ${ac};outline-offset:2px}`;
 
 /**
- * @param {{he?: boolean, dk?: boolean, store?: object, now?: () => Date, onEvent?: (action: string) => void, openRequest?: {view: object, nonce: number} | null}} props
+ * @param {{he?: boolean, dk?: boolean, store?: object, now?: () => Date, onEvent?: (action: string) => void,
+ *   openRequest?: {view: object, nonce: number} | null, onOpenHandled?: () => void}} props
  *   `store` and `now` are injectable (by default the device store and the real clock);
  *   `onEvent(action)` hears of backups and restores, for the account's log;
- *   a new `openRequest.nonce` opens `openRequest.view` (other screens open a client this way).
+ *   a new `openRequest.nonce` opens `openRequest.view` (other screens open a client this way), then
+ *   `onOpenHandled()` lets the asker drop the request, so the next visit starts at the list.
  */
-export default function WorkspaceApp({ he = true, dk = true, store: injected = null, now = () => new Date(), onEvent = () => {}, openRequest = null }) {
+export default function WorkspaceApp({ he = true, dk = true, store: injected = null, now = () => new Date(), onEvent = () => {}, openRequest = null, onOpenHandled = () => {} }) {
   const [store, setStore] = useState(injected);
   const [failed, setFailed] = useState(false);
   // every move counts, so the screen (and its error boundary) starts fresh even when it is the same screen again
@@ -37,7 +39,9 @@ export default function WorkspaceApp({ he = true, dk = true, store: injected = n
   const c = colors(dk);
 
   useEffect(() => {
-    if (openRequest?.view) go(openRequest.view);
+    if (!openRequest?.view) return;
+    go(openRequest.view);
+    onOpenHandled();
     // only a new request moves; the same one re-rendered does not
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openRequest?.nonce]);
@@ -85,21 +89,21 @@ export default function WorkspaceApp({ he = true, dk = true, store: injected = n
           </span>
         </Card>
       )}
-      {split ? (
-        <div className="st-split">
-          <section className="st-split-list" aria-label={he ? "רשימת הלקוחות" : "Client list"}>
+      {/* the open screen keeps its place (key "open") whether or not the list is beside it, so a form
+          half typed survives the window crossing the computer's width */}
+      <div className={split ? "st-split" : undefined}>
+        {split && (
+          <section key="list" className="st-split-list" aria-label={he ? "רשימת הלקוחות" : "Client list"}>
             {/* one boundary for the list that never restarts: the search and the scroll survive a move */}
             <ScreenBoundary key="list" fallback={crashed}>
               <ClientsScreen {...props} selectedId={view.clientId ?? null} refreshKey={nav.moves} />
             </ScreenBoundary>
           </section>
-          <section aria-label={he ? "הלקוח הפתוח" : "Open client"}>
-            <OpenView view={view} props={props} moves={nav.moves} crashed={crashed} split={split} he={he} c={c} />
-          </section>
-        </div>
-      ) : (
-        <OpenView view={view} props={props} moves={nav.moves} crashed={crashed} split={split} he={he} c={c} />
-      )}
+        )}
+        <section key="open" aria-label={split ? (he ? "הלקוח הפתוח" : "Open client") : undefined}>
+          <OpenView view={view} props={props} moves={nav.moves} crashed={crashed} split={split} he={he} c={c} />
+        </section>
+      </div>
     </div>
   );
 }

@@ -76,14 +76,19 @@ function internationalDigits(phone) {
 const wellFormed = (text) =>
   Array.from(String(text ?? ""), (ch) => (ch.length === 1 && ch >= SURROGATE_FIRST && ch <= SURROGATE_LAST ? REPLACEMENT : ch)).join("");
 
+/** A WhatsApp link that opens a chat with `phone`, or null when the phone cannot be a full number. */
+export function whatsappLink(phone) {
+  const digits = internationalDigits(phone);
+  return digits.length < MIN_DIGITS || digits.length > MAX_DIGITS ? null : `https://wa.me/${digits}`;
+}
+
 /**
  * A WhatsApp link that opens a chat with `phone`, the greeting already typed,
  * or null when the phone cannot be a full number.
  */
 export function greetingLink(phone, text) {
-  const digits = internationalDigits(phone);
-  if (digits.length < MIN_DIGITS || digits.length > MAX_DIGITS) return null;
-  return `https://wa.me/${digits}?text=${encodeURIComponent(wellFormed(text))}`;
+  const chat = whatsappLink(phone);
+  return chat && `${chat}?text=${encodeURIComponent(wellFormed(text))}`;
 }
 
 const wordsOf = (name) => String(name ?? "").split(" ").filter(Boolean);
