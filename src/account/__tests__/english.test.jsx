@@ -31,7 +31,7 @@ function gateService(overrides = {}) {
 }
 const gate = (service) =>
   render(
-    <AccountProvider active loadService={async () => service}>
+    <AccountProvider active loadService={async () => service} selfServiceReset>
       <AccountGate he={false} dk={false} onLeave={() => {}}><p>studio</p></AccountGate>
     </AccountProvider>,
   );

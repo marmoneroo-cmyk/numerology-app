@@ -19,6 +19,14 @@ export const useAccount = () => useContext(AccountContext);
 /** How often a ready session asks whether it is still the account's active one. */
 const WATCH_MS = 60000;
 
+/**
+ * Whether the sign-in screen offers "forgot password". It needs Supabase to
+ * email a 6-digit code, which takes custom SMTP: without it the email
+ * templates cannot be edited, and the default email carries only a link,
+ * which this app does not use. Until then the administrator sets new passwords.
+ */
+export const SELF_SERVICE_RESET = false;
+
 /** The account service over the real Supabase client, created once per page (again after a failed load). */
 let shared;
 function loadAccountService() {
@@ -42,11 +50,11 @@ function loadAccountService() {
 }
 
 /**
- * @param {{active?: boolean, loadService?: () => Promise<object>}} props
+ * @param {{active?: boolean, loadService?: () => Promise<object>, selfServiceReset?: boolean}} props
  *   `active`: the Studio is open; without it, the app calls activate() when
- *   the Studio first opens. `loadService` is injectable for tests.
+ *   the Studio first opens. `loadService` and `selfServiceReset` are injectable for tests.
  */
-export function AccountProvider({ active, loadService = loadAccountService, children }) {
+export function AccountProvider({ active, loadService = loadAccountService, selfServiceReset = SELF_SERVICE_RESET, children }) {
   // idle | checking | signed_out | code | claiming | ready | blocked | replaced | problem,
   // and for a forgotten password: forgot (the email) | reset (the emailed code) | new_password
   const [state, setState] = useState({ name: "idle" });
@@ -150,6 +158,7 @@ export function AccountProvider({ active, loadService = loadAccountService, chil
     limit: state.limit,
     /** The address a forgotten-password code goes to. */
     email: state.email || "",
+    selfServiceReset,
     profile: state.profile || null,
     aal: state.aal || "aal1",
     service: serviceRef.current,
@@ -229,7 +238,7 @@ export function AccountProvider({ active, loadService = loadAccountService, chil
     /** The profile after the subscriber edited their name or phone. */
     updateProfile: (patch) => setState((s) => (s.name === "ready" ? { ...s, profile: { ...s.profile, ...patch } } : s)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [state, claim, start, check, proceed]);
+  }), [state, claim, start, check, proceed, selfServiceReset]);
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;
 }

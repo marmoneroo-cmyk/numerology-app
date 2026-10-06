@@ -48,11 +48,11 @@ function Studio() {
   );
 }
 
-function setup(service, { active = true } = {}) {
+function setup(service, { active = true, selfServiceReset = true } = {}) {
   const loadService = vi.fn(async () => service);
   const onLeave = vi.fn();
   const ui = (isActive) => (
-    <AccountProvider active={isActive} loadService={loadService}>
+    <AccountProvider active={isActive} loadService={loadService} selfServiceReset={selfServiceReset}>
       <AccountGate he dk onLeave={onLeave}>
         <Studio />
       </AccountGate>
@@ -265,6 +265,16 @@ describe("account gate", () => {
 });
 
 describe("a forgotten password", () => {
+  it("is not offered until Supabase can email a code (custom SMTP): the administrator sets a new one", async () => {
+    render(
+      <AccountProvider active loadService={async () => fakeService()}>
+        <AccountGate he dk onLeave={() => {}}><Studio /></AccountGate>
+      </AccountProvider>,
+    );
+    expect(await screen.findByText("שכחתם את הסיסמה? פנו למנהלת המערכת, והיא תקבע לכם סיסמה חדשה.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "שכחתי סיסמה" })).toBeNull();
+  });
+
   const typeNewPassword = async (first, second = first) => {
     fireEvent.change(await screen.findByLabelText("סיסמה חדשה"), { target: { value: first } });
     fireEvent.change(screen.getByLabelText("הסיסמה החדשה שוב"), { target: { value: second } });

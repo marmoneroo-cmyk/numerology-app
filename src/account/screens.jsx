@@ -42,8 +42,13 @@ export function SignInScreen({ he, dk, account, onLeave }) {
         {error && <p role="alert" style={{ color: c.danger, fontSize: 13, margin: "0 0 12px" }}>{error}</p>}
         <button className="gb" type="submit" style={btnPrimary} disabled={busy || !email.trim() || !password}>{he ? "כניסה" : "Sign in"}</button>
       </form>
+      {!account.selfServiceReset && (
+        <p style={{ margin: "16px 0 0", fontSize: 12, color: c.ts, lineHeight: 1.7 }}>
+          {he ? "שכחתם את הסיסמה? פנו למנהלת המערכת, והיא תקבע לכם סיסמה חדשה." : "Forgot your password? Ask the administrator to set a new one."}
+        </p>
+      )}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
-        <button className="ghost" style={btnGhost} onClick={() => account.toForgot(email)}>{he ? "שכחתי סיסמה" : "Forgot password"}</button>
+        {account.selfServiceReset && <button className="ghost" style={btnGhost} onClick={() => account.toForgot(email)}>{he ? "שכחתי סיסמה" : "Forgot password"}</button>}
         <button className="ghost" style={btnGhost} onClick={onLeave}>{he ? "חזרה לאתר" : "Back to the site"}</button>
       </div>
     </Card>
