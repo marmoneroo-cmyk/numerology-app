@@ -1,0 +1,127 @@
+/*
+ * Quick search (CommandPalette.jsx): a dimmed, blurred backdrop over the whole
+ * window and a panel near the top with the input, the results and a line of
+ * key hints. Colours come from the Studio tokens in studio.css.
+ */
+.st-palette {
+  position: fixed;
+  inset: 0;
+  z-index: 650;
+  display: grid;
+  align-items: start;
+  justify-items: center;
+  padding: 12vh 16px 16px;
+  background: rgba(4, 4, 12, 0.62);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+}
+.st-palette-panel {
+  box-sizing: border-box;
+  width: min(580px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 16px;
+  background: var(--st-panel-2);
+  box-shadow: 0 24px 60px var(--st-shadow);
+  color: var(--st-ink);
+  font-family: var(--st-body);
+  font-size: 15px;
+  line-height: 1.6;
+  animation: st-palette-in 0.2s ease-out;
+}
+@keyframes st-palette-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.st-palette-input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 16px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--st-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--st-ink);
+  font: inherit;
+  font-size: 16px; /* 16px also keeps iOS from zooming in */
+  outline: none;
+  appearance: none;
+}
+.st-palette-input::placeholder {
+  color: var(--st-ink-faint);
+  opacity: 1;
+}
+.st-palette-input:focus {
+  border-bottom-color: var(--st-line-strong);
+}
+
+.st-palette-list {
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 50vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--st-line-strong) transparent;
+}
+.st-palette-list:empty {
+  padding: 0;
+}
+.st-palette-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.st-palette-option[aria-selected="true"] {
+  background: var(--st-gold-wash);
+  color: var(--st-gold-text);
+  outline: 1px solid transparent; /* a frame in Windows high-contrast mode, which drops backgrounds */
+  outline-offset: -1px;
+}
+.st-palette-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-palette-hint {
+  flex-shrink: 0;
+  max-width: 45%;
+  margin-inline-start: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--st-ink-faint);
+}
+
+.st-palette-empty {
+  margin: 0;
+  padding: 18px;
+  text-align: center;
+  color: var(--st-ink-soft);
+}
+.st-palette-keys {
+  margin: 0;
+  padding: 8px 16px;
+  border-top: 1px solid var(--st-line);
+  font-size: 12px;
+  color: var(--st-ink-faint);
+}
+
+/* phones: the soft keyboard covers the lower half, which vh does not see, so the panel sits higher and the list is shorter */
+@media (max-width: 639px) {
+  .st-palette {
+    padding-top: 16px;
+  }
+  .st-palette-list {
+    max-height: min(50vh, 240px);
+  }
+}
