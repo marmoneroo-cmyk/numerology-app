@@ -41,7 +41,11 @@ function restoreError(err, he) {
   return he ? `הגיבוי פגום ולכן לא שוחזר ממנו דבר (${n}).` : `The backup is damaged, so nothing was restored from it (${n}).`;
 }
 
-export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {} }) {
+/**
+ * `selectedId` marks the client open beside the list (on a computer), and a
+ * new `refreshKey` reloads the list and summary after a change made there.
+ */
+export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {}, selectedId = null, refreshKey = 0 }) {
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState(null);
   const [followMsg, setFollowMsg] = useState(null);
@@ -49,8 +53,8 @@ export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {
   const followUpsRef = useRef(null);
   const searchRef = useRef(null);
   const refocusAfterDone = useRef(false);
-  const list = useLoad(() => store.clients.list({ search }), [store, search]);
-  const sum = useLoad(() => store.summary(now()), [store]);
+  const list = useLoad(() => store.clients.list({ search }), [store, search, refreshKey]);
+  const sum = useLoad(() => store.summary(now()), [store, refreshKey]);
 
   // a follow-up marked done leaves the list: the focus moves to the next one, or else to the search
   useEffect(() => {
@@ -208,7 +212,13 @@ export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {
             const p = cl.birthDate ? personOf(cl.fullName, cl.birthDate) : null;
             const lp = p ? LPm(p.d, p.m, p.y) : null;
             return (
-              <button key={cl.id} className="rrow" style={rowButton(c)} onClick={() => go({ name: "client", clientId: cl.id })}>
+              <button
+                key={cl.id}
+                className="rrow"
+                aria-current={cl.id === selectedId ? "true" : undefined}
+                style={{ ...rowButton(c), ...(cl.id === selectedId ? { background: `${c.ac}14`, borderRadius: 10 } : null) }}
+                onClick={() => go({ name: "client", clientId: cl.id })}
+              >
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: "block", fontSize: 15, color: c.tm }}>{cl.fullName}</span>
                   <span style={{ display: "block", fontSize: 12, color: c.ts }}>
