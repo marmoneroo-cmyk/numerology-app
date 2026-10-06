@@ -17,10 +17,17 @@ export default function AccountScreen({ account, he, dk }) {
           {profile.email} · {he ? `מסלול: ${planLabel(profile.plan, he)}` : `Plan: ${planLabel(profile.plan, he)}`} · {he ? `עד ${countLabel(profile.deviceLimit, "devices", he)}` : `up to ${countLabel(profile.deviceLimit, "devices", he)}`}
         </p>
       </Card>
-      <Details account={account} he={he} c={c} />
-      <Password account={account} he={he} c={c} />
-      <TwoStep account={account} he={he} c={c} />
-      <Devices account={account} he={he} c={c} />
+      {/* two columns on a computer (studio.css); one column, in this order, on narrower screens */}
+      <div className="st-cols-2">
+        <div>
+          <Details account={account} he={he} c={c} />
+          <Password account={account} he={he} c={c} />
+        </div>
+        <div>
+          <TwoStep account={account} he={he} c={c} />
+          <Devices account={account} he={he} c={c} />
+        </div>
+      </div>
       <Card style={{ padding: 16 }}>
         <button className="ghost" style={btnGhost} onClick={account.signOut}>{he ? "יציאה מהחשבון" : "Sign out"}</button>
       </Card>

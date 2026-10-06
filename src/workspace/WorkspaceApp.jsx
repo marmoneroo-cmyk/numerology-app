@@ -9,7 +9,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { openWorkspaceStore } from "../data/open.js";
 import { useLayout } from "../studio/useMediaQuery.js";
 import { colors, Card, ErrorCard, ScreenBoundary, FocusTitleContext } from "./ui.jsx";
-import "./split.css";
 import ClientsScreen from "./ClientsScreen.jsx";
 import ClientForm from "./ClientForm.jsx";
 import ClientFile from "./ClientFile.jsx";
@@ -87,8 +86,8 @@ export default function WorkspaceApp({ he = true, dk = true, store: injected = n
         </Card>
       )}
       {split ? (
-        <div className="ws-split">
-          <section className="ws-split-list" aria-label={he ? "רשימת הלקוחות" : "Client list"}>
+        <div className="st-split">
+          <section className="st-split-list" aria-label={he ? "רשימת הלקוחות" : "Client list"}>
             {/* one boundary for the list that never restarts: the search and the scroll survive a move */}
             <ScreenBoundary key="list" fallback={crashed}>
               <ClientsScreen {...props} selectedId={view.clientId ?? null} refreshKey={nav.moves} />
@@ -113,7 +112,7 @@ function OpenView({ view, props, moves, crashed, split, he, c }) {
         {view.name === "list" &&
           (split ? (
             <Card>
-              <div className="ws-split-empty">
+              <div className="st-split-empty">
                 <p style={{ margin: 0, color: c.ts, lineHeight: 1.7 }}>{he ? "בחרו לקוח מהרשימה, או פתחו לקוח חדש." : "Choose a client from the list, or open a new one."}</p>
               </div>
             </Card>

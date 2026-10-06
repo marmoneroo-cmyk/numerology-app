@@ -38,6 +38,34 @@ afterEach(() => {
   delete navigator.clipboard;
 });
 
+describe("accounts on a computer", () => {
+  it("keeps the account list beside the open account, and marks which one is open", async () => {
+    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({
+      matches: !q.includes("reduce") && 1300 >= Number((q.match(/min-width: ([0-9]+)px/) || [])[1] || 0),
+      addEventListener() {},
+      removeEventListener() {},
+    }));
+    try {
+      const admin = setup();
+      const list = await screen.findByRole("region", { name: "רשימת החשבונות" });
+      const open = screen.getByRole("region", { name: "החשבון הפתוח" });
+      expect(within(open).getByText("בחרו חשבון מהרשימה, או פתחו חשבון חדש.")).toBeTruthy();
+      fireEvent.click(await within(list).findByRole("button", { name: /דנה לוי/ }));
+      expect(await within(open).findByRole("heading", { name: "דנה לוי" })).toBeTruthy();
+      expect(within(list).getByRole("button", { name: /דנה לוי/ }).getAttribute("aria-current")).toBe("true");
+      // a change reloads the list beside it
+      const loads = admin.listAccounts.mock.calls.length;
+      fireEvent.click(within(open).getByRole("button", { name: "השהיית החשבון" }));
+      fireEvent.click(await within(open).findByRole("button", { name: "כן, להשהות" }));
+      await waitFor(() => expect(admin.listAccounts.mock.calls.length).toBeGreaterThan(loads + 1));
+      fireEvent.click(within(list).getByRole("button", { name: "חשבון חדש" }));
+      expect(await within(open).findByRole("heading", { name: "חשבון חדש" })).toBeTruthy();
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+});
+
 describe("accounts (admin)", () => {
   it("first asks for two-step verification, without which the database refuses admin work anyway", async () => {
     const admin = setup({ aal: "aal1" });

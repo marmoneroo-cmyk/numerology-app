@@ -9,12 +9,16 @@ import { Card, Field, SectionTitle, ScreenTitle, BackButton, ConfirmAction, Load
 import { PLAN_KEYS, planLabel, statusLabel, auditLine, dateTime, generatePassword, accountProblems, MIN_PASSWORD, MAX_PASSWORD } from "./labels.js";
 import { AccountError } from "./service.js";
 import { countLabel } from "../workspace/format.js";
+import { useLayout } from "../studio/useMediaQuery.js";
 
 export default function AdminScreen({ account, he, dk }) {
   const c = colors(dk);
   const [view, setView] = useState({ name: "list" });
+  // on a computer the list stays beside the open account, and reloads when something changes there
+  const [changes, setChanges] = useState(0);
+  const split = useLayout() === "desk";
   const admin = account.service.admin;
-  const props = { admin, he, c, me: account.profile, go: setView };
+  const props = { admin, he, c, me: account.profile, go: setView, onChanged: () => setChanges((n) => n + 1) };
   // the database refuses admin work to a session without the second step; say so plainly instead
   if (account.aal !== "aal2") {
     return (
@@ -28,6 +32,26 @@ export default function AdminScreen({ account, he, dk }) {
       </Card>
     );
   }
+  if (split) {
+    return (
+      <div dir={he ? "rtl" : "ltr"} className="st-split" style={{ color: c.tm }}>
+        <section className="st-split-list" aria-label={he ? "רשימת החשבונות" : "Account list"}>
+          <AccountList {...props} selectedId={view.name === "details" ? view.userId : null} refreshKey={changes} />
+        </section>
+        <section aria-label={he ? "החשבון הפתוח" : "Open account"}>
+          {view.name === "list" && (
+            <Card>
+              <div className="st-split-empty">
+                <p style={{ margin: 0, color: c.ts, lineHeight: 1.7 }}>{he ? "בחרו חשבון מהרשימה, או פתחו חשבון חדש." : "Choose an account from the list, or open a new one."}</p>
+              </div>
+            </Card>
+          )}
+          {view.name === "create" && <CreateAccount {...props} />}
+          {view.name === "details" && <AccountDetails key={view.userId} {...props} userId={view.userId} />}
+        </section>
+      </div>
+    );
+  }
   return (
     <div dir={he ? "rtl" : "ltr"} style={{ color: c.tm }}>
       {view.name === "list" && <AccountList {...props} />}
@@ -37,9 +61,10 @@ export default function AdminScreen({ account, he, dk }) {
   );
 }
 
-function AccountList({ admin, he, c, go }) {
+/** `selectedId` marks the account open beside the list; a new `refreshKey` reloads the list. */
+function AccountList({ admin, he, c, go, selectedId = null, refreshKey = 0 }) {
   const [search, setSearch] = useState("");
-  const accounts = useLoad(() => admin.listAccounts(), [admin]);
+  const accounts = useLoad(() => admin.listAccounts(), [admin, refreshKey]);
   const q = search.trim().toLowerCase();
   const shown = (accounts.data || []).filter((a) => !q || `${a.fullName} ${a.email} ${a.phone}`.toLowerCase().includes(q));
   return (
@@ -54,7 +79,13 @@ function AccountList({ admin, he, c, go }) {
       {accounts.loading ? <Loading he={he} c={c} /> : accounts.error ? <ErrorCard he={he} c={c} /> : (
         <Card style={{ padding: "8px 14px" }}>
           {shown.map((a) => (
-            <button key={a.id} className="rrow" style={rowButton(c)} onClick={() => go({ name: "details", userId: a.id })}>
+            <button
+              key={a.id}
+              className="rrow"
+              aria-current={a.id === selectedId ? "true" : undefined}
+              style={{ ...rowButton(c), ...(a.id === selectedId ? { background: `${c.ac}14`, borderRadius: 10 } : null) }}
+              onClick={() => go({ name: "details", userId: a.id })}
+            >
               <span style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ display: "block", fontSize: 15 }}>{a.fullName || a.email}{a.role === "admin" ? ` · ${he ? "מנהל/ת" : "admin"}` : ""}</span>
                 <span style={{ display: "block", fontSize: 12, color: c.ts, direction: "ltr", textAlign: he ? "right" : "left" }}>{a.email}</span>
@@ -118,7 +149,7 @@ const FIELD_ERRORS = {
 };
 const FIELD_ORDER = ["email", "fullName", "phone", "password"];
 
-function CreateAccount({ admin, he, c, go }) {
+function CreateAccount({ admin, he, c, go, onChanged }) {
   const accounts = useLoad(() => admin.listAccounts(), [admin]);
   const [form, setForm] = useState({ email: "", fullName: "", phone: "", plan: "pro", password: generatePassword() });
   const [touched, setTouched] = useState({});
@@ -147,6 +178,7 @@ function CreateAccount({ admin, he, c, go }) {
     try {
       await admin.createAccount({ email, fullName: form.fullName.trim(), phone: form.phone.trim(), plan: form.plan, password: form.password });
       setCreated({ email, password: form.password });
+      onChanged?.();
     } catch (e) {
       setError(errorText(e, he));
     } finally {
@@ -190,7 +222,7 @@ function CreateAccount({ admin, he, c, go }) {
   );
 }
 
-function AccountDetails({ admin, he, c, me, go, userId }) {
+function AccountDetails({ admin, he, c, me, go, userId, onChanged }) {
   const data = useLoad(async () => {
     const [accounts, devices, audit] = await Promise.all([admin.listAccounts(), admin.listDevices(userId), admin.audit(userId, 100)]);
     return { account: accounts.find((a) => a.id === userId), devices, audit };
@@ -206,6 +238,7 @@ function AccountDetails({ admin, he, c, me, go, userId }) {
     try {
       await fn();
       data.reload();
+      onChanged?.();
     } catch (e) {
       setMessage(errorText(e, he));
     }

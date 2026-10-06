@@ -195,6 +195,18 @@ describe("my account", () => {
     expect(screen.queryByRole("link", { name: "בטלפון? פתיחה ישירה באפליקציית האימות" })).toBeNull();
   });
 
+  it("groups details and password beside two-step and devices, in reading order", async () => {
+    setup();
+    await screen.findByRole("heading", { name: "פרטים" });
+    const columns = document.querySelector(".st-cols-2");
+    expect(columns).toBeTruthy();
+    const [first, second] = columns.children;
+    expect(within(first).getByRole("heading", { name: "פרטים" })).toBeTruthy();
+    expect(within(first).getByRole("heading", { name: "סיסמה" })).toBeTruthy();
+    expect(within(second).getByRole("heading", { name: "אימות דו-שלבי" })).toBeTruthy();
+    expect(await within(second).findByRole("list", { name: "המכשירים בחשבון" })).toBeTruthy();
+  });
+
   it("shows two-step verification as on when it is", async () => {
     setup({ aal: "aal2" });
     expect(await screen.findByText("האימות הדו-שלבי פעיל")).toBeTruthy();
