@@ -47,6 +47,12 @@
 .fx:active {
   transform: scale(0.97);
 }
+/* the app's existing buttons get the ripple too (App.jsx passes them to attachRipple in the Studio) */
+.st-root :is(.gb, .ghost, .snav-b),
+.tbar :is(.tbtn, .home-btn) {
+  position: relative;
+  overflow: hidden;
+}
 .st-ripple {
   position: absolute;
   left: var(--x);

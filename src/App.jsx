@@ -5,6 +5,10 @@ import { ContentContext } from "./workspace/content.js";
 import { useAccount, AccountGate } from "./account/AccountContext.jsx";
 import AccountScreen from "./account/AccountScreen.jsx";
 import StudioNav from "./StudioNav.jsx";
+import { attachRipple } from "./studio/motion.js";
+
+/** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
+const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
 import AdminScreen from "./account/AdminScreen.jsx";
 import LocalDataOffer from "./account/LocalDataOffer.jsx";
 import { accountStore } from "./account/workspaceStore.js";
@@ -1897,6 +1901,9 @@ export default function App(){
 
   const showOwnerUI = owner && !previewCustomer; // owner console vs. public customer landing
   useEffect(()=>{if(showOwnerUI)account.activate();},[showOwnerUI]); // the account machinery loads only for the Studio
+  // the Studio's look: its theme tokens follow the dark/light switch, and its buttons answer a press with the gold ripple
+  useEffect(()=>{document.documentElement.dataset.stTheme=dk?"dark":"light";},[dk]);
+  useEffect(()=>(showOwnerUI?attachRipple(document,RIPPLE_TARGETS):undefined),[showOwnerUI]);
   const workspaceStore=showOwnerUI&&studioReady?accountStore(account):null;
   const lpBase = results ? R(results.lp) : 0; // reduced life path for D[] rich content (master carries base energy)
 
@@ -1977,7 +1984,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       </div>
     </div>
 
-    <div style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?600:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
+    <div className={showOwnerUI?"st-root":undefined} style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?1240:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
       {showOwnerUI&&!studioReady?<AccountGate he={he} dk={dk} onLeave={exitOwner}/>:(<>
 
       {/* Header (owner) / Hero (customer) */}

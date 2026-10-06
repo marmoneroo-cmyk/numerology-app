@@ -77,6 +77,20 @@ describe("motion", () => {
     expect(document.querySelector(".st-ripple")).toBeNull();
   });
 
+  it("can draw the ripple on other button classes too", () => {
+    motion(false);
+    document.body.innerHTML = '<button class="gb" id="g">g</button><button class="fx" id="f">f</button><button class="other" id="o">o</button>';
+    const detach = attachRipple(document, ".gb, .ghost");
+    const press = (id) => document.getElementById(id).dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    press("g");
+    press("f");
+    press("o");
+    expect(document.querySelector("#g .st-ripple")).toBeTruthy();
+    expect(document.querySelector("#f .st-ripple")).toBeNull();
+    expect(document.querySelector("#o .st-ripple")).toBeNull();
+    detach();
+  });
+
   it("draws no ripple under reduced motion", () => {
     motion(true);
     document.body.innerHTML = '<button class="fx" id="a">a</button>';

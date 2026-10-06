@@ -20,10 +20,14 @@ export function withViewTransition(update, doc = document) {
   return null;
 }
 
-/** One listener on `root` draws the gold ripple on any pressed `.fx` element. @returns {() => void} a function that removes it */
-export function attachRipple(root = document) {
+/**
+ * One listener on `root` draws the gold ripple on any pressed element that
+ * matches `selector` (`.fx` by default; the target needs position: relative
+ * and overflow: hidden). @returns {() => void} a function that removes it
+ */
+export function attachRipple(root = document, selector = ".fx") {
   const onDown = (e) => {
-    const el = e.target.closest?.(".fx");
+    const el = e.target.closest?.(selector);
     if (!el || prefersReducedMotion()) return;
     const r = el.getBoundingClientRect();
     const ripple = document.createElement("span");
