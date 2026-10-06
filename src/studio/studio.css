@@ -177,6 +177,82 @@
   }
 }
 
+/* the calculators' tiles: two to a row on a phone, then as many as fit at 200px or more */
+.st-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (min-width: 640px) {
+  .st-tiles {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+}
+
+/* two people's details ("התאמה"): one above the other on a phone, side by side from 640px */
+.st-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (min-width: 640px) {
+  .st-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* a tool's own tabs, as buttons; the active one keeps its .ti.act look */
+.st-subtab {
+  font-family: inherit;
+  background: transparent;
+}
+
+/* leads on a phone: a card per lead, with the phone as a WhatsApp link */
+.st-leads {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.st-lead {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+}
+.st-lead-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.st-lead-top b {
+  font-weight: 600;
+  color: var(--st-ink);
+}
+.st-lead-date {
+  font-size: 12px;
+  color: var(--st-ink-soft);
+}
+.st-lead-phone {
+  justify-self: start;
+  font-size: 14px;
+  color: var(--st-gold-text);
+  text-decoration: none;
+}
+.st-lead-nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--st-ink-soft);
+}
+.st-lead-nums b {
+  font-weight: 600;
+  color: var(--st-gold-text);
+}
+
 /* "יומי": the affirmation beside the ritual on a computer */
 .st-daily {
   display: grid;

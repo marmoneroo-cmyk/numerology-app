@@ -6,6 +6,7 @@ import { useAccount, AccountGate } from "./account/AccountContext.jsx";
 import AccountScreen from "./account/AccountScreen.jsx";
 import StudioNav from "./StudioNav.jsx";
 import { attachRipple } from "./studio/motion.js";
+import { useLayout } from "./studio/useMediaQuery.js";
 import Today from "./studio/Today.jsx";
 import MeetingMode from "./studio/MeetingMode.jsx";
 import CommandPalette, { useCommandShortcut } from "./studio/CommandPalette.jsx";
@@ -699,11 +700,11 @@ function CalculatorsWidget({he,dk}){
 
   // ── CARD: calculator tile ──
   const CalcTile=({icon,title,desc,onClick})=>(
-    <div onClick={onClick} style={{padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.45)",border:`1px solid ${ac}0a`,borderRadius:16,cursor:"pointer",transition:"all .3s",textAlign:"center"}} onMouseEnter={e=>e.currentTarget.style.borderColor=ac+"44"} onMouseLeave={e=>e.currentTarget.style.borderColor=ac+"0a"}>
-      <div style={{color:ac,marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name={icon} size={24} stroke={1.3}/></div>
-      <div style={{fontSize:13,fontWeight:600,color:ac,marginBottom:3}}>{title}</div>
-      <div style={{fontSize:10,color:ts,lineHeight:1.5}}>{desc}</div>
-    </div>
+    <button type="button" className="fx" onClick={onClick} style={{display:"block",width:"100%",padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.45)",border:`1px solid ${ac}0a`,borderRadius:16,cursor:"pointer",transition:"all .3s",textAlign:"center",font:"inherit",color:"inherit"}} onMouseEnter={e=>e.currentTarget.style.borderColor=ac+"44"} onMouseLeave={e=>e.currentTarget.style.borderColor=ac+"0a"}>
+      <span style={{color:ac,marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name={icon} size={24} stroke={1.3}/></span>
+      <span style={{display:"block",fontSize:13,fontWeight:600,color:ac,marginBottom:3}}>{title}</span>
+      <span style={{display:"block",fontSize:11,color:"var(--st-ink-soft)",lineHeight:1.5}}>{desc}</span>
+    </button>
   );
 
   // ── BACK BUTTON ──
@@ -713,9 +714,9 @@ function CalculatorsWidget({he,dk}){
   return(<div style={{animation:"fadeInUp .5s ease-out"}}>
 
     {/* Category tabs */}
-    <div style={{display:"flex",gap:4,marginBottom:16,overflowX:"auto",WebkitOverflowScrolling:"touch",padding:"2px 0"}}>
+    <div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:4,marginBottom:16,padding:"2px 0"}}>
       {categories.map((c,i)=>(
-        <div key={i} onClick={()=>{setCat(i);resetCalc();AU.init();AU.p("click");}} style={{flex:"0 0 auto",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .3s",whiteSpace:"nowrap",background:cat===i?(dk?"rgba(200,169,106,.1)":"rgba(147,118,64,.06)"):"transparent",color:cat===i?ac:ts,border:`1px solid ${cat===i?ac+"33":"transparent"}`}}><span style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={c.i} size={13}/>{c.l}</span></div>
+        <button type="button" key={i} aria-pressed={cat===i} onClick={()=>{setCat(i);resetCalc();AU.init();AU.p("click");}} style={{fontFamily:"inherit",flex:"0 0 auto",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .3s",whiteSpace:"nowrap",background:cat===i?(dk?"rgba(200,169,106,.1)":"rgba(147,118,64,.06)"):"transparent",color:cat===i?ac:ts,border:`1px solid ${cat===i?ac+"33":"transparent"}`}}><span style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={c.i} size={13}/>{c.l}</span></button>
       ))}
     </div>
 
@@ -723,7 +724,7 @@ function CalculatorsWidget({he,dk}){
 
     {/* ═══════ CATEGORY 1: Personal Numerology ═══════ */}
     {cat===0&&!calc&&(
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+      <div className="st-tiles">
         <CalcTile icon="chart" title={he?"כל המספרים שלי":"All My Numbers"} desc={he?"LP, גורל, נשמה, ביטוי ועוד":"LP, Destiny, Soul, Expression & more"} onClick={()=>setCalc("allnums")}/>
         <CalcTile icon="calendar" title={he?"נומרוסקופ יומי":"Daily Numeroscope"} desc={he?"אנרגיות יום/חודש/שנה":"Day/Month/Year energies"} onClick={()=>setCalc("daily")}/>
         <CalcTile icon="refresh" title={he?"מחזורי חיים":"Life Cycles"} desc={he?"פסגות, אתגרים, תקופות":"Peaks, Challenges, Periods"} onClick={()=>setCalc("cycles")}/>
@@ -928,7 +929,7 @@ function CalculatorsWidget({he,dk}){
 
     {/* ═══════ CATEGORY 2: Compatibility ═══════ */}
     {cat===1&&!calc&&(
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+      <div className="st-tiles">
         <CalcTile icon="heart" title={he?"התאמה זוגית":"Love Match"} desc={he?"שבילי גורל + נשמה + ביטוי":"Life paths + soul + expression"} onClick={()=>setCalc("love")}/>
         <CalcTile icon="flame" title={he?"להבה תאומה":"Twin Flame"} desc={he?"חיבור נשמתי עמוק":"Deep soul connection"} onClick={()=>setCalc("twin")}/>
         <CalcTile icon="briefcase" title={he?"שותפות עסקית":"Business Match"} desc={he?"התאמה מקצועית":"Professional compatibility"} onClick={()=>setCalc("biz")}/>
@@ -1060,7 +1061,7 @@ function CalculatorsWidget({he,dk}){
 
     {/* ═══════ CATEGORY 5: Tools ═══════ */}
     {cat===4&&!calc&&(
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+      <div className="st-tiles">
         <CalcTile icon="sparkle" title={he?"מחולל שמות":"Name Generator"} desc={he?"שמות לפי מספר נומרולוגי":"Names by numerology number"} onClick={()=>setCalc("namegen")}/>
         <CalcTile icon="share" title={he?"ייצוא תוצאות":"Export Results"} desc={he?"שמור את הקריאה שלך":"Save your reading"} onClick={()=>setCalc("export")}/>
       </div>
@@ -1822,7 +1823,8 @@ function LeadsWidget({ he, dk }) {
   const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
   const [leads, setLeads] = useState(loadLeads());
   const toast = useToast();
-  const clearAll =() => { if (window.confirm(he ? "למחוק את כל הלידים?" : "Delete all leads?")) { try { localStorage.removeItem(LEADS_STORE_KEY); } catch (e) {} setLeads([]); } };
+  const onPhone = useLayout() === "phone"; // a card per lead instead of a table too wide for the screen
+  const clearAll = () => { if (window.confirm(he ? "למחוק את כל הלידים?" : "Delete all leads?")) { try { localStorage.removeItem(LEADS_STORE_KEY); } catch (e) {} setLeads([]); } };
   const exportCsv = () => { const rows = [["שם", "טלפון", "שביל גורל", "ערך שם", "קול נשמה", "שנה אישית", "חוב קארמי", "תאריך"], ...leads.map(l => [l.name, l.phone, l.lp, l.nv, l.su, l.py, l.kd, l.date])]; const csv = "﻿" + rows.map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "leads.csv"; a.click(); toast(he ? "קובץ הלידים נשמר בתיקיית ההורדות." : "The leads file is in your downloads."); };
   const th = { textAlign: he ? "right" : "left", fontSize: 11, color: ac, fontWeight: 700, padding: "8px 6px", borderBottom: `1px solid ${ac}22`, whiteSpace: "nowrap" };
   const td = { fontSize: 12.5, color: tm, padding: "9px 6px", borderBottom: `1px solid ${ac}0e`, whiteSpace: "nowrap" };
@@ -1837,7 +1839,14 @@ function LeadsWidget({ he, dk }) {
       <button className="ghost" onClick={exportCsv} disabled={!leads.length} style={{ fontSize: 13 }}>{he ? "ייצוא CSV" : "Export CSV"}</button>
       <button className="ghost" onClick={clearAll} disabled={!leads.length} style={{ fontSize: 13 }}>{he ? "מחיקה" : "Clear"}</button>
     </div>
-    {leads.length === 0 ? <p style={{ textAlign: "center", color: ts, fontSize: 14, padding: "30px 0", lineHeight: 1.7 }}>{he ? "עדיין אין לידים. כשמבקרים ימלאו טלפון לפני הקריאה — הם יופיעו כאן." : "No leads yet. They appear here once visitors enter a phone before the reading."}</p> :
+    {leads.length === 0 ? <p style={{ textAlign: "center", color: ts, fontSize: 14, padding: "30px 0", lineHeight: 1.7 }}>{he ? "עדיין אין לידים. כשמבקרים ימלאו טלפון לפני הקריאה — הם יופיעו כאן." : "No leads yet. They appear here once visitors enter a phone before the reading."}</p> : onPhone ?
+      <ul className="st-leads">
+        {leads.map((l, i) => (<li key={i} className="st-panel st-lead">
+          <div className="st-lead-top"><b>{l.name || "-"}</b><span className="st-lead-date">{l.date}</span></div>
+          {l.phone && <a className="st-lead-phone" dir="ltr" href={`https://wa.me/${l.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">{l.phone}</a>}
+          <div className="st-lead-nums"><span>{he ? "שביל" : "LP"} <b>{l.lp}</b></span><span>{he ? "שנה" : "PY"} <b>{l.py}</b></span><span>{he ? "חוב" : "Debt"} <b>{l.kd || "-"}</b></span></div>
+        </li>))}
+      </ul> :
       <div className="gc" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead><tr><th style={th}>{he ? "שם" : "Name"}</th><th style={th}>{he ? "טלפון" : "Phone"}</th><th style={th}>{he ? "שביל" : "LP"}</th><th style={th}>{he ? "שנה" : "PY"}</th><th style={th}>{he ? "חוב" : "Debt"}</th><th style={th}>{he ? "תאריך" : "Date"}</th></tr></thead>
@@ -2460,7 +2469,7 @@ function CompatWidget({he,dk}){
     <div className="gc" style={{padding:"6px",marginBottom:16}}>
       <div style={{display:"flex",gap:2}}>
         {[{k:"couple",i:"heart",l:he?"זוגיות":"Couple"},{k:"profile",i:"dna",l:he?"פרופיל אישי":"Profile"},{k:"parent",i:"users","l":he?"הורה-ילד":"Parent-Child"}].map(t=>(
-          <div key={t.k} className={`ti ${mode===t.k?"act":""}`} onClick={()=>{setMode(t.k);setError("");AU.init();AU.p("click");}} style={{flex:1}}><span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"center"}}><Icon name={t.i} size={13}/>{t.l}</span></div>
+          <button type="button" key={t.k} aria-pressed={mode===t.k} className={`ti st-subtab ${mode===t.k?"act":""}`} onClick={()=>{setMode(t.k);setError("");AU.init();AU.p("click");}} style={{flex:1}}><span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"center"}}><Icon name={t.i} size={13}/>{t.l}</span></button>
         ))}
       </div>
     </div>
@@ -2473,7 +2482,7 @@ function CompatWidget({he,dk}){
         <div style={{textAlign:"center",marginBottom:16}}>
           <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"התאמה זוגית":"Couple Compatibility"}</div>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+        <div className="st-pair">
           <div style={personBlockSt}>
             <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="user" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"בן/בת זוג 1":"Partner 1"}</div></div>
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={c1name} onChange={e=>setC1name(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
@@ -2611,7 +2620,7 @@ function CompatWidget({he,dk}){
         <div style={{textAlign:"center",marginBottom:16}}>
           <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"חיבור הורה-ילד":"Parent-Child Connection"}</div>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+        <div className="st-pair">
           <div style={personBlockSt}>
             <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="users" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"הורה":"Parent"}</div></div>
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={parentName} onChange={e=>setParentName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
