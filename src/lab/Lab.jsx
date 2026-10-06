@@ -10,6 +10,25 @@ import "../studio/studio.css";
 import { ToastProvider, useToast } from "../studio/Toasts.jsx";
 import { attachRipple } from "../studio/motion.js";
 import { useLayout } from "../studio/useMediaQuery.js";
+import { AccountProvider } from "../account/AccountContext.jsx";
+import App from "../App.jsx";
+import { labService } from "./labAccount.js";
+
+/** The whole Studio, signed in as the sample admin with sample clients (see labAccount.js). */
+function StudioPreview() {
+  try {
+    localStorage.setItem("numerology_owner_mode", "owner");
+  } catch {
+    /* storage blocked: the app falls back to its default view */
+  }
+  return (
+    <AccountProvider active loadService={async () => labService()}>
+      <ToastProvider>
+        <App />
+      </ToastProvider>
+    </AccountProvider>
+  );
+}
 
 function Basics() {
   const toast = useToast();
@@ -35,8 +54,11 @@ function Basics() {
   );
 }
 
-/** Each later task adds its own section here: [key, label, Component]. */
-export const SECTIONS = [["basics", "בסיס", Basics]];
+/** Each later task adds its own section here: [key, label, Component]. "studio" fills the whole page. */
+export const SECTIONS = [
+  ["basics", "בסיס", Basics],
+  ["studio", "הסטודיו המלא", StudioPreview],
+];
 
 const readHash = () => Object.fromEntries(new URLSearchParams(window.location.hash.slice(1)));
 
@@ -45,11 +67,14 @@ export default function Lab() {
   const [section, setSection] = useState(SECTIONS.some(([k]) => k === initial.s) ? initial.s : SECTIONS[0][0]);
   const [theme, setTheme] = useState(initial.t === "light" ? "light" : "dark");
   useEffect(() => {
-    document.documentElement.dataset.stTheme = theme;
+    // the full Studio sets its own theme from its dark/light switch
+    if (section !== "studio") document.documentElement.dataset.stTheme = theme;
     window.history.replaceState(null, "", `#s=${section}&t=${theme}`);
   }, [section, theme]);
-  useEffect(() => attachRipple(document), []);
+  useEffect(() => (section === "studio" ? undefined : attachRipple(document)), [section]);
   const Current = SECTIONS.find(([k]) => k === section)[2];
+  // the full Studio brings its own top bar and theme; to leave it, change #s= in the address and reload
+  if (section === "studio") return <Current />;
   return (
     <ToastProvider>
       <style>{`

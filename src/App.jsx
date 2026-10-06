@@ -1948,6 +1948,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 .snav-b{font-family:inherit;background:transparent;line-height:1.25}.snav-b:focus-visible{outline:2px solid ${ac};outline-offset:1px}
 @media (max-width:520px){.snav{grid-template-columns:repeat(3,1fr)}.snav-b{padding:9px 4px;font-size:11.5px}}
 @media (min-width:700px){.snav{position:sticky;top:58px;z-index:60;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
+@media (min-width:1024px){.snav{grid-template-columns:repeat(auto-fit,minmax(78px,1fr))}.snav-b{padding:9px 4px 8px}.snav-b>span{flex-direction:column;gap:4px !important}}
 .rrow{display:flex;align-items:center;gap:16px;padding:14px 8px;border-bottom:1px solid ${ac}06;transition:background .3s;border-radius:10px}.rrow:hover{background:${ac}04}.rrow:last-child{border-bottom:none}
 .badge{display:inline-block;padding:4px 11px;background:${ac}0a;border:1px solid ${ac}15;border-radius:16px;font-size:11px;color:${ac}bb;margin-top:2px}
 .divider{height:1px;background:linear-gradient(90deg,transparent,${ac}33,transparent);margin:20px 0}
@@ -2017,22 +2018,22 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           <WorkspaceApp key={workspaceKey} he={he} dk={dk} store={workspaceStore} onEvent={(action)=>{account.service.logEvent(action).catch(()=>{});}}/>
         </ContentContext.Provider>}
 
-        {showOwnerUI&&tab==="shop"&&<ShopSection he={he} dk={dk}/>}
+        {showOwnerUI&&tab==="shop"&&<div className="st-tool-wide"><ShopSection he={he} dk={dk}/></div>}
 
-        {showOwnerUI&&tab==="leads"&&<LeadsWidget he={he} dk={dk}/>}
+        {showOwnerUI&&tab==="leads"&&<div className="st-tool-wide"><LeadsWidget he={he} dk={dk}/></div>}
 
         {showOwnerUI&&tab==="account"&&<AccountScreen account={account} he={he} dk={dk}/>}
 
         {showOwnerUI&&tab==="admin"&&account.profile?.role==="admin"&&<AdminScreen account={account} he={he} dk={dk}/>}
 
-        {tab==="tables"&&<TablesWidget he={he} dk={dk}/>}
+        {tab==="tables"&&<div className="st-tool"><TablesWidget he={he} dk={dk}/></div>}
 
-        {tab==="calc"&&<CalculatorsWidget he={he} dk={dk}/>}
+        {tab==="calc"&&<div className="st-tool"><CalculatorsWidget he={he} dk={dk}/></div>}
 
-        {tab==="match"&&<CompatWidget he={he} dk={dk}/>}
+        {tab==="match"&&<div className="st-tool-wide"><CompatWidget he={he} dk={dk}/></div>}
 
         {tab==="daily"&&(
-          <div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
+          <div className="gc st-tool-wide st-daily" style={{animation:"fadeInUp .5s ease-out"}}>
             <AffirmWidget he={he} dk={dk}/>
             <div className="divider"/>
             <RitualWidget number={dailyRitualNumber()} he={he} dk={dk}/>
@@ -2085,7 +2086,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       {showRes&&results&&!showOwnerUI&&LEAD_GATE&&!leadDone&&(
         <LeadGate he={he} dk={dk} results={results} name={name} onUnlock={()=>setLeadDone(true)}/>
       )}
-      {showRes&&results&&(showOwnerUI||!LEAD_GATE||leadDone)&&(<div style={{maxWidth:640,margin:"0 auto"}}>
+      {showRes&&results&&(showOwnerUI||!LEAD_GATE||leadDone)&&(<div className={showOwnerUI?"st-results":undefined} style={{maxWidth:showOwnerUI?undefined:640,margin:"0 auto"}}>
         <SR><div style={{textAlign:"center",marginBottom:8}}>
           <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:5,marginBottom:6}}>{he?"הקריאה של":"The reading of"}</div>
           <div style={{fontSize:isRtl?26:30,fontWeight:isRtl?700:400,color:ac,fontFamily:"'Cormorant Garamond',serif",letterSpacing:isRtl?0:3}}>{name}</div>
@@ -2096,13 +2097,13 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {/* CHAPTER 1 */}
         <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk}>
-          <div style={{textAlign:"center",marginBottom:20}}><TarotCard number={lpBase||1} dk={dk} flipped={true} size="lg"/></div>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:20}}><TarotCard number={lpBase||1} dk={dk} flipped={true} size="lg"/></div>
           <p className="nar-line">{he?D[lpBase]?.narrative:D[lpBase]?.narrativeE}</p>
           {results.lp>9&&MASTER[results.lp]&&<div style={{textAlign:"center",marginTop:-6,marginBottom:8}}><span className="badge" style={{borderColor:`${ac}55`}}>{he?`מספר מאסטר ${results.lp} · ${MASTER[results.lp].t}`:`Master ${results.lp} · ${MASTER[results.lp].te}`}</span><p style={{fontSize:12.5,lineHeight:1.8,color:ts,marginTop:8}}>{he?MASTER[results.lp].he:MASTER[results.lp].en}</p></div>}
           <div className="divider"/>
-          {[{l:he?"ערך השם":"Name Value",v:results.nv},{l:he?"שביל הגורל":"Life Path",v:results.lp},{l:he?"קול הנשמה":"Soul Urge",v:results.su},{l:he?"מספר הביטוי":"Expression",v:results.ex}].map((it,i)=>{const info=D[it.v]||MASTER[it.v];return(
+          <div className="st-num-rows">{[{l:he?"ערך השם":"Name Value",v:results.nv},{l:he?"שביל הגורל":"Life Path",v:results.lp},{l:he?"קול הנשמה":"Soul Urge",v:results.su},{l:he?"מספר הביטוי":"Expression",v:results.ex}].map((it,i)=>{const info=D[it.v]||MASTER[it.v];return(
             <div key={i} className="rrow"><div className="orb"><AN value={it.v} delay={i*200}/></div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:isRtl?600:500,color:tm}}>{it.l}</div>{it.v>0&&info&&<div className="badge">{he?info.t:info.te}</div>}</div></div>
-          );})}
+          );})}</div>
         </Chapter>
 
         {/* CHAPTER 2 */}

@@ -105,6 +105,52 @@
   .st-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* tools made for a narrow column keep a readable width inside the wide Studio */
+.st-tool {
+  max-width: 920px;
+  margin-inline: auto;
+}
+.st-tool-wide {
+  max-width: 1100px;
+  margin-inline: auto;
+}
+/* a reading's results: a reading column on a phone, room for each chapter's card and text on a computer */
+.st-results {
+  max-width: 640px;
+}
+@media (min-width: 1024px) {
+  .st-results {
+    max-width: 920px;
+  }
+}
+
+/* the key numbers of a reading: one list on a phone, two columns on a computer */
+@media (min-width: 1024px) {
+  .st-results .st-num-rows {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+  }
+  .st-results .st-num-rows > .rrow:nth-last-child(-n + 2) {
+    border-bottom: none;
+  }
+}
+
+/* "יומי": the affirmation beside the ritual on a computer */
+.st-daily {
+  display: grid;
+  gap: 24px;
+}
+@media (min-width: 1024px) {
+  .st-daily {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .st-daily > .divider {
+    display: none;
+  }
+}
+
 /* a list beside what is open (clients, accounts) on a computer; the list stays in view with its own scroll */
 .st-split {
   display: grid;
