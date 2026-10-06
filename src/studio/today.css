@@ -120,6 +120,12 @@
   font-size: 11px;
   font-weight: 400;
 }
+/* a touch screen has no Ctrl key */
+@media (hover: none) and (pointer: coarse) {
+  .st-today-kbd {
+    display: none;
+  }
+}
 
 /* the panels */
 .st-today-title {

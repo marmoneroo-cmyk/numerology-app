@@ -109,6 +109,12 @@
   border-radius: 5px;
   color: var(--st-ink-soft);
 }
+/* a touch screen has no Ctrl key */
+@media (hover: none) and (pointer: coarse) {
+  .st-search-text kbd {
+    display: none;
+  }
+}
 
 /* text for screen readers only */
 .st-sr {
@@ -251,6 +257,11 @@
 .st-lead-nums b {
   font-weight: 600;
   color: var(--st-gold-text);
+}
+
+/* the app's card drawings (CardArt) carry their own number; on a Card the number already sits above the drawing */
+.st-card-art text {
+  display: none;
 }
 
 /* "יומי": the affirmation beside the ritual on a computer */

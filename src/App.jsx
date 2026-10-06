@@ -5,11 +5,14 @@ import { ContentContext } from "./workspace/content.js";
 import { useAccount, AccountGate } from "./account/AccountContext.jsx";
 import AccountScreen from "./account/AccountScreen.jsx";
 import StudioNav from "./StudioNav.jsx";
-import { attachRipple } from "./studio/motion.js";
+import { flushSync } from "react-dom";
+import { attachRipple, withViewTransition } from "./studio/motion.js";
 import { useLayout } from "./studio/useMediaQuery.js";
 import Today from "./studio/Today.jsx";
 import MeetingMode from "./studio/MeetingMode.jsx";
 import CommandPalette, { useCommandShortcut } from "./studio/CommandPalette.jsx";
+import Card from "./studio/cards/Card.jsx";
+import Deck from "./studio/cards/Deck.jsx";
 import { useToast } from "./studio/Toasts.jsx";
 import { personOf } from "./workspace/format.js";
 import AdminScreen from "./account/AdminScreen.jsx";
@@ -388,6 +391,18 @@ function TarotCard({number,dk,flipped:ext,size="sm"}){
       </div>
     </div>
   </div>);
+}
+
+/** The Studio's nine cards (Card and Deck): number, archetype, keywords, the number's colour and its drawing. */
+const studioDeck=(he)=>[1,2,3,4,5,6,7,8,9].map(n=>({number:n,title:he?D[n].t:D[n].te,subtitle:he?D[n].s:D[n].se,accent:D[n].c,art:<CardArt number={n} size={100}/>}));
+/** A card's chime as it turns face up. */
+const chimeOnOpen=(next)=>{if(next){AU.init();AU.p("card");}};
+
+/** A card that turns face up a moment after it appears (a reading's first chapter); a press turns it back and forth. */
+function RevealCard({delay=450,...card}){
+  const[open,setOpen]=useState(false);
+  useEffect(()=>{const t=setTimeout(()=>setOpen(true),delay);return()=>clearTimeout(t);},[delay]);
+  return <Card {...card} open={open} onToggle={(next)=>{setOpen(next);chimeOnOpen(next);}}/>;
 }
 
 // ═══════════════════ PSYCHOLOGICAL RADAR ═══════════════════
@@ -1053,8 +1068,8 @@ function CalculatorsWidget({he,dk}){
     {cat===3&&(<div>
       <div className="gc" style={{marginBottom:14}}>
         <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="cards" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"קלפי נומרולוגיה":"Numerology Cards"}</div><p style={{fontSize:11,color:ts,marginTop:4}}>{he?"לחץ על קלף להפיכה":"Tap a card to flip"}</p></div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,justifyItems:"center"}}>
-          {[1,2,3,4,5,6,7,8,9].map(n=><TarotCard key={n} number={n} dk={dk}/>)}
+        <div className="st-cards">
+          {studioDeck(he).map(card=><Card key={card.number} {...card} he={he} onToggle={chimeOnOpen}/>)}
         </div>
       </div>
     </div>)}
@@ -1879,6 +1894,8 @@ export default function App(){
   const[meeting,setMeeting]=useState(null);
   const[paletteOpen,setPaletteOpen]=useState(false);
   const[paletteClients,setPaletteClients]=useState([]);
+  // quick search's "today's card": a new number remounts the deck in "היום", which then deals at once
+  const[deckDeal,setDeckDeal]=useState(0);
   const licensee=studioReady?{fullName:account.profile.fullName||account.profile.email,phone:account.profile.phone}:null;
   const[workspaceKey,setWorkspaceKey]=useState(0);
   // another account in the Studio (or none) starts clean: nothing of the previous subscriber's client stays on screen
@@ -1886,6 +1903,7 @@ export default function App(){
   const lastStudioUser=useRef(studioUser);
   useEffect(()=>{if(lastStudioUser.current===studioUser)return;lastStudioUser.current=studioUser;setStep(1);setTab("today");setName("");setDob("");setAddOne(false);setResults(null);setShowRes(false);setError("");setChapters([false,false,false,false,false,false]);},[studioUser]);
   useEffect(()=>{if(tab==="admin"&&account.profile?.role!=="admin")setTab("today");},[tab,account.profile?.role]);
+  useEffect(()=>{if(tab!=="today")setDeckDeal(0);},[tab]); // the next visit to "היום" waits for a press again
   // a saved map opens in meeting mode too (meetingFor is defined below; it runs only on a press)
   const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:(r,n,h,i)=>exportReport(r,n,h,i,licensee),
     openMeeting:(r,n)=>setMeeting(meetingFor(r,n))}),[licensee?.fullName,licensee?.phone,he]);
@@ -1959,8 +1977,10 @@ export default function App(){
   /** Opens a view of the workspace (a client, the new-client form) from another screen. */
   const openClient=(view)=>{setTab("clients");setOpenRequest({view,nonce:Date.now()});};
   const dayNum=dailyRitualNumber(); // the owner's daily number, the same one "יומי" uses
+  const deckPool=useMemo(()=>studioDeck(he),[he]);
   const studioTools=account.profile?.role==="admin"?[...STUDIO_TOOLS,ADMIN_TOOL]:STUDIO_TOOLS;
-  const selectTool=(k)=>{setTab(k);AU.init();AU.p("click");if(k!=="reading")setShowRes(false);};
+  // the screens cross-fade where the browser can (view transitions), and simply change elsewhere or under reduced motion
+  const selectTool=(k)=>{AU.init();AU.p("click");withViewTransition(()=>flushSync(()=>{setTab(k);if(k!=="reading")setShowRes(false);}));};
   const newReading=()=>{setTab("reading");setShowRes(false);setStep(1);};
   // quick search (Ctrl+K): in the signed-in Studio only, and not over meeting mode
   const canSearch=showOwnerUI&&studioReady&&!meeting;
@@ -1978,6 +1998,7 @@ export default function App(){
     ...studioTools.map(tb=>({id:`tool-${tb.k}`,label:he?tb.he:tb.en,hint:he?"כלי":"Tool",keywords:[tb.he,tb.en],run:()=>selectTool(tb.k)})),
     {id:"new-reading",label:he?"קריאה חדשה":"New reading",hint:he?"פעולה":"Action",keywords:["קריאה","reading"],run:newReading},
     {id:"new-client",label:he?"לקוח חדש":"New client",hint:he?"פעולה":"Action",keywords:["לקוח","client"],run:()=>openClient({name:"clientForm"})},
+    {id:"today-card",label:he?"קלף היום":"Today's card",hint:he?"ערבוב וחלוקה":"Shuffle and deal",keywords:["קלף","קלפים","card","deck"],run:()=>{setDeckDeal(n=>n+1);selectTool("today");}},
     ...(results&&name?[{id:"meeting",label:he?"מצב פגישה":"Meeting mode",hint:name,keywords:["פגישה","meeting"],run:openMeeting}]:[]),
     ...paletteClients.map(c=>{const p=c.birthDate?personOf("",c.birthDate):null;return{id:`client-${c.id}`,label:c.fullName,
       hint:p?`${he?"לקוח · מסלול":"Client · life path"} ${LPm(p.d,p.m,p.y)}`:(he?"לקוח":"Client"),
@@ -2096,7 +2117,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           day={{number:dayNum,title:he?D[dayNum].t:D[dayNum].te,text:he?D[dayNum].s:D[dayNum].se}}
           lifePath={(iso)=>{const p=personOf("",iso);return LPm(p.d,p.m,p.y);}}
           personalYear={(iso,at)=>{const p=personOf("",iso);return PY(p.d,p.m,at.getFullYear());}}
-          deck={null}
+          deck={<Deck key={deckDeal} pool={deckPool} he={he} shuffleOnMount={deckDeal>0} onPick={()=>chimeOnOpen(true)}/>}
           onOpenClient={(id)=>openClient({name:"client",clientId:id})}
           onNewReading={newReading}
           onNewClient={()=>openClient({name:"clientForm"})}
@@ -2131,10 +2152,10 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         )}
 
         {tab==="cards"&&(
-          <div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
-            <p style={{textAlign:"center",fontSize:12,color:ts,marginBottom:14}}>{he?"לחץ להפיכה":"Tap to flip"}</p>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,justifyItems:"center"}}>
-              {[1,2,3,4,5,6,7,8,9].map(n=><TarotCard key={n} number={n} dk={dk}/>)}
+          <div className="st-panel st-tool" style={{padding:24,animation:"fadeInUp .5s ease-out"}}>
+            <p style={{textAlign:"center",fontSize:13,color:"var(--st-ink-soft)",marginBottom:18}}>{he?"לוחצים על קלף כדי להפוך אותו.":"Press a card to turn it over."}</p>
+            <div className="st-cards">
+              {studioDeck(he).map(card=><Card key={card.number} {...card} he={he} onToggle={chimeOnOpen}/>)}
             </div>
           </div>
         )}
@@ -2187,7 +2208,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {/* CHAPTER 1 */}
         <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk}>
-          <div style={{display:"flex",justifyContent:"center",marginBottom:20}}><TarotCard number={lpBase||1} dk={dk} flipped={true} size="lg"/></div>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>{showOwnerUI?<RevealCard {...studioDeck(he)[(lpBase||1)-1]} he={he} size="lg"/>:<TarotCard number={lpBase||1} dk={dk} flipped={true} size="lg"/>}</div>
           <p className="nar-line">{he?D[lpBase]?.narrative:D[lpBase]?.narrativeE}</p>
           {results.lp>9&&MASTER[results.lp]&&<div style={{textAlign:"center",marginTop:-6,marginBottom:8}}><span className="badge" style={{borderColor:`${ac}55`}}>{he?`מספר מאסטר ${results.lp} · ${MASTER[results.lp].t}`:`Master ${results.lp} · ${MASTER[results.lp].te}`}</span><p style={{fontSize:12.5,lineHeight:1.8,color:ts,marginTop:8}}>{he?MASTER[results.lp].he:MASTER[results.lp].en}</p></div>}
           <div className="divider"/>
