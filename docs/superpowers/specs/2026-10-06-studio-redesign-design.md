@@ -60,7 +60,7 @@ Nothing the owner relies on changes: the colours (dark cosmic, champagne gold), 
 
 - **Day number:** today's number from the engine (`dailyRitualNumber`), with its meaning from the existing content.
 - **Birthdays this week:** clients whose birthday falls in the next 7 days, across New Year. Each shows the date, the age they turn, their life path (`LP`) and the personal year they enter (`PY`). A "ברכה" button opens WhatsApp with a ready greeting, in a new tab, only when the client has a phone number.
-- **Recent clients:** the 4 most recently updated (`updatedAt`). A click opens the file.
+- **Recent clients:** the 4 most recently active (`lastActive` from the store: last reading or last edit). A click opens the file.
 - **Quick actions:** new reading, new client, meeting mode, quick search.
 - **Today's card:** the Deck ritual.
 - **Empty states:** with no clients yet, the panels say how to add the first one.
