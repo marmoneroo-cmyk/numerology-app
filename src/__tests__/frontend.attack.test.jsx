@@ -375,49 +375,16 @@ describe("leads CSV export", () => {
   });
 });
 
-// ---------- 4. Shop and cart ----------
+// ---------- 4. Nothing is for sale ----------
 
-describe("shop: what a customer can and cannot change", () => {
-  const CART_KEY = "numerology_cart_v1";
-
-  async function orderLink(cartJson) {
-    localStorage.setItem(CART_KEY, cartJson);
+describe("nothing is for sale on the site", () => {
+  it("shows no shop, cart, prices or checkout, and forgets a cart a browser kept from before", async () => {
+    localStorage.setItem("numerology_cart_v1", '{"full-map":2,"vip":1}');
     customerPage();
-    fireEvent.click(await screen.findByRole("button", { name: /^עגלה/ }, SIGNED_IN));
-    const link = await screen.findByRole("link", { name: /סיום הזמנה/ });
-    return link;
-  }
-
-  it("prices come from the page, not from storage: unknown, negative and text quantities add no line and no money", async () => {
-    const link = await orderLink('{"full-map":2,"vip":-3,"gift":"abc","evil":9,"__proto__":4}');
-    const url = new URL(link.getAttribute("href"));
-    expect(url.origin + url.pathname).toBe("https://wa.me/972547640203");
-    const message = url.searchParams.get("text");
-    expect(message).toContain("×2");
-    expect(message).toContain('סה"כ: ₪298'); // 2 x the page's own 149
-    expect(message).not.toMatch(/VIP|שובר מתנה|evil|__proto__/);
-    expect(link.getAttribute("rel")).toContain("noopener");
-    expect(link.getAttribute("target")).toBe("_blank");
-  });
-
-  it("the order message is URL-encoded text: nothing in it can add a parameter or leave wa.me", async () => {
-    const link = await orderLink('{"full-map":1}');
-    const url = new URL(link.getAttribute("href"));
-    expect([...url.searchParams.keys()]).toEqual(["text"]);
-    expect(url.hash).toBe("");
-  });
-
-  // FIXED after the 2026-10-07 audit; was (LOW; the order is a WhatsApp text the owner reads before sending any payment link): src/App.jsx:1246-1248.
-  // Quantities are not checked: 0.001 or 1e9 in localStorage gives a total of 0.149 or 149000000000 shekels.
-  // Fix: in cartEntries and cartCount keep only whole quantities in a sane range:
-  //   Object.entries(cart || {}).filter(([, q]) => Number.isInteger(q) && q > 0 && q <= 20)
-  it("a fractional quantity in storage is ignored, so no cart line or total shows 0.001 or 0.149", async () => {
-    localStorage.setItem(CART_KEY, '{"full-map":0.001}');
-    customerPage();
-    await screen.findByTitle("דברו איתי בוואטסאפ"); // the customer page is up, so a missing cart is not a broken harness
-    const cart = screen.queryByRole("button", { name: /^עגלה/ });
-    if (cart) fireEvent.click(cart);
-    expect(visibleText()).not.toMatch(/0\.001|0\.149/);
+    await screen.findByTitle("דברו איתי בוואטסאפ", {}, SIGNED_IN); // the customer page is up
+    expect(screen.queryByRole("button", { name: /^עגלה/ })).toBeNull();
+    expect(visibleText()).not.toMatch(/לעגלה|סיום הזמנה|לרכישה|₪[0-9]/);
+    expect(localStorage.getItem("numerology_cart_v1")).toBeNull();
   });
 });
 
@@ -482,19 +449,8 @@ describe("lead capture gate", () => {
   });
 });
 
-describe("shop content that customers rely on", () => {
+describe("contact details customers rely on", () => {
   const app = read(join(ROOT, "src", "App.jsx"));
-
-  // FIXED after the 2026-10-07 audit; was (LOW, trust and consumer law): src/App.jsx:1175. The bundle claims "Save 99" but
-  // 149 (full map) + 349 (deep consultation) = 498, and it sells for 449: the saving is 49.
-  // Fix: badge:{he:"חיסכון ₪49",en:"Save ₪49"}, or price the bundle at ₪399.
-  it("the bundle's advertised saving equals the sum of its parts minus its price", () => {
-    const bundle = app.slice(app.indexOf('id:"bundle"'), app.indexOf('id:"vip"'));
-    const claimed = Number(/חיסכון ₪(\d+)/.exec(bundle)[1]);
-    const price = Number(/priceNum:(\d+)/.exec(bundle)[1]);
-    const separate = Number(/₪(\d+) בנפרד/.exec(bundle)[1]);
-    expect(claimed).toBe(separate - price);
-  });
 
   // FIXED after the 2026-10-07 audit; was (LOW): src/App.jsx:1142. The footer's "Email" link opens mailto:shani@example.com,
   // a reserved domain nobody owns, so a customer's message (and birth date) goes nowhere.

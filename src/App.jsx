@@ -33,7 +33,6 @@ const STUDIO_TOOLS = [
   { k: "clients", i: "user", he: "לקוחות", en: "Clients" },
   { k: "reading", i: "orb", he: "קריאה", en: "Reading" },
   { k: "leads", i: "users", he: "לידים", en: "Leads" },
-  { k: "shop", i: "cart", he: "חנות", en: "Shop" },
   { k: "tables", i: "chart", he: "טבלאות", en: "Tables" },
   { k: "match", i: "heart", he: "התאמה", en: "Match" },
   { k: "daily", i: "sun", he: "יומי", en: "Daily" },
@@ -1126,20 +1125,11 @@ function CalculatorsWidget({he,dk}){
   </div>);
 }
 
-// ═══════════════════ SHOP / CHECKOUT CONFIG ═══════════════════
-// ┌─────────────────────────────────────────────────────────────┐
-// │  הגדרת מערכת הסליקה — Grow / משולם                          │
-// │  1. עדכן WHATSAPP_PHONE למספר שלך (פורמט: 9725XXXXXXXX)      │
-// │  2. ב-Grow (grow.business) ← "עמודי תשלום" צור עמוד תשלום     │
-// │     לכל מוצר (שם, מחיר, חשבונית מס אוטומטית).                 │
-// │  3. הדבק את הלינק של כל עמוד בשדה link של המוצר למטה.         │
-// │  • כפתור "שלם עכשיו" → ישר לעמוד הסליקה של המוצר.            │
-// │  • "הוסף לעגלה" + "סיום הזמנה" → שולח הזמנה מרוכזת בוואטסאפ   │
-// │     ואז שולחים ללקוח לינק תשלום אחד / בקשת Bit.              │
-// └─────────────────────────────────────────────────────────────┘
+// ═══════════════════ CONTACT ═══════════════════
+// Nothing is sold on the site: contact is WhatsApp and email.
 const WHATSAPP_PHONE = "972547640203"; // שני כהן אזולאי — 054-764-0203
 const CONTACT_URL = `https://wa.me/${WHATSAPP_PHONE}`;
-const BUSINESS_EMAIL = null; // 👈 the business's real address, e.g. "name@domain.co.il"; while null, no email link shows
+const BUSINESS_EMAIL = "shlomi.cohen4444@gmail.com"; // the business's address for now; null hides the email link
 /** A lead's phone as the gate keeps it: digits, +, (, ), - and spaces, 6 to 25 characters. */
 const PHONE_SHAPE = /^[+]?[-0-9() ]{6,25}$/;
 /** A CSV cell. One that starts with = + - @, a tab or a carriage return gets a ' first, so a spreadsheet shows it as text instead of running it. */
@@ -1149,130 +1139,15 @@ const csvCell = (value) => {
   const safe = FORMULA_START.includes(text.charAt(0)) ? `'${text}` : text;
   return `"${safe.replace(/"/g, '""')}"`;
 };
-/** A cart quantity the shop accepts: a whole number of items from 1 to 20. */
-const validQty = (q) => Number.isInteger(q) && q > 0 && q <= 20;
 const OWNER_STORE_KEY = "numerology_owner_mode";
-const CART_STORE_KEY = "numerology_cart_v1";
 const LEADS_STORE_KEY = "numerology_leads_v1";
 const LEAD_DONE_KEY = "numerology_lead_done";
 const LEAD_GATE = true; // gate the full reading behind a contact detail (customer view only)
 const loadLeads = () => { try { return JSON.parse(localStorage.getItem(LEADS_STORE_KEY) || "[]") || []; } catch (e) { return []; } };
 const saveLead = (lead) => { try { const a = loadLeads(); a.unshift(lead); localStorage.setItem(LEADS_STORE_KEY, JSON.stringify(a.slice(0, 1000))); } catch (e) {} };
 
-// Photographic backdrops (Unsplash CDN, hotlink-allowed). Swap freely with your own photos.
-const U = (id, w) => `https://images.unsplash.com/photo-${id}?w=${w}&q=68&auto=format&fit=crop`;
-const IMG = {
-  hero: U("1462331940025-496dfbfc7564", 1600),
-  heroAlt: U("1419242902214-272b3f66ee7a", 1600),
-  "full-map": U("1470071459604-3b5ec3a7fe05", 800),
-  "year-forecast": U("1532693322450-2cb5c511067d", 800),
-  couple: U("1483347756197-71ef80e95f73", 800),
-  name: U("1543722530-d2c3201371e7", 800),
-  "intro-call": U("1419242902214-272b3f66ee7a", 800),
-  "deep-consult": U("1502134249126-9f3755a50d78", 800),
-  mentoring: U("1444703686981-a3abbc4d4fe3", 800),
-  gift: U("1462331940025-496dfbfc7564", 800),
-  "monthly-insight": U("1483347756197-71ef80e95f73", 800),
-  bundle: U("1543722530-d2c3201371e7", 800),
-  vip: U("1419242902214-272b3f66ee7a", 800),
-  band: U("1444703686981-a3abbc4d4fe3", 1600),
-};
-
-const SHOP = [
-  {
-    cat: { he: "חבילות משתלמות", en: "Value Bundles" },
-    sub: { he: "המסלול המלא במחיר מיוחד", en: "The full path at a special price" },
-    items: [
-      { id:"bundle", icon:"sparkles", featured:true, badge:{he:"חיסכון ₪49",en:"Save ₪49"}, priceNum:449,
-        name:{he:"חבילת המסע המלא — מפה + שיחה מעמיקה",en:"Full Journey — Map + Deep Call"},
-        desc:{he:"מפה נומרולוגית אישית מלאה + ייעוץ מעמיק 75 דק׳ עם שני. הדרך השלמה להבין את עצמך ולקבל כיוון. (₪498 בנפרד)",en:"Full personal map + 75-min deep consultation with Shani. (₪498 separately)"},
-        price:{he:"₪449",en:"$135"}, link:"" },
-      { id:"vip", icon:"crown", featured:true, badge:{he:"פרימיום",en:"Premium"}, priceNum:1290,
-        name:{he:"קריאת עומק מלאה — חבילת VIP",en:"Full Depth Reading — VIP"},
-        desc:{he:"החבילה המקיפה ביותר: מפה אישית מלאה + תחזית שנתית + שיחת עומק 90 דק׳ + דוח PDF מורחב + חודש ליווי אישי בוואטסאפ. הכול במקום אחד.",en:"The most comprehensive package: full personal map + yearly forecast + 90-min deep call + extended PDF + a month of personal WhatsApp guidance."},
-        price:{he:"₪1,290",en:"$390"}, link:"" },
-    ],
-  },
-  {
-    cat: { he: "מפות ודוחות דיגיטליים", en: "Digital Maps & Reports" },
-    sub: { he: "נשלח אליך כ-PDF מעוצב תוך 48 שעות", en: "Delivered as a designed PDF within 48h" },
-    items: [
-      { id:"full-map", icon:"map", featured:true, badge:{he:"הכי נמכר",en:"Best seller"}, priceNum:149,
-        name:{he:"מפה נומרולוגית אישית מלאה",en:"Full Personal Numerology Map"},
-        desc:{he:"ניתוח מעמיק של כל המספרים שלך — שביל גורל, נשמה, ביטוי, חובות קארמיים, מחזורי חיים ומפת לו-שו, עם פרשנות אישית כתובה.",en:"In-depth analysis of all your numbers — life path, soul, expression, karmic debts, life cycles and Lo Shu, with written personal interpretation."},
-        price:{he:"₪149",en:"$45"}, link:"" },
-      { id:"year-forecast", icon:"orb", priceNum:99,
-        name:{he:"תחזית שנתית אישית (12 חודשים)",en:"Personal Year Forecast (12 months)"},
-        desc:{he:"מה צופן לך השנה — חודש-חודש: הזדמנויות, אתגרים ותזמון נכון לצעדים גדולים.",en:"What this year holds — month by month: opportunities, challenges and right timing for big moves."},
-        price:{he:"₪99",en:"$29"}, link:"" },
-      { id:"couple", icon:"heart", priceNum:129,
-        name:{he:"דוח התאמה זוגית",en:"Couple Compatibility Report"},
-        desc:{he:"ניתוח דינמיקה בין שני אנשים — נקודות חוזק, אתגרים וטיפים מעשיים לזוגיות.",en:"Dynamic analysis between two people — strengths, challenges and practical relationship tips."},
-        price:{he:"₪129",en:"$39"}, link:"" },
-      { id:"name", icon:"pen", priceNum:179,
-        name:{he:"נומרולוגיה לבחירת שם",en:"Name Selection Numerology"},
-        desc:{he:"בחירת/תיקון שם לתינוק, לעסק או למותג — כדי שהאנרגיה של השם תתמוך ביעד שלך.",en:"Choosing/correcting a name for a baby, business or brand — so the name's energy supports your goal."},
-        price:{he:"₪179",en:"$54"}, link:"" },
-    ],
-  },
-  {
-    cat: { he: "שיחות וייעוץ אישי איתי", en: "1-on-1 Calls & Consulting" },
-    sub: { he: "פגישת זום / טלפון — תיאום אחרי הרכישה", en: "Zoom / phone — scheduled after purchase" },
-    items: [
-      { id:"intro-call", icon:"phone", priceNum:149,
-        name:{he:"שיחת אבחון 1:1 (30 דק׳)",en:"Diagnostic Call 1:1 (30 min)"},
-        desc:{he:"שיחה ממוקדת על השאלה הכי בוערת שלך כרגע — תשובה נומרולוגית ברורה וכיוון לפעולה.",en:"A focused call on your most pressing question — a clear numerological answer and direction."},
-        price:{he:"₪149",en:"$45"}, link:"" },
-      { id:"deep-consult", icon:"star", featured:true, badge:{he:"מומלץ",en:"Recommended"}, priceNum:349,
-        name:{he:"ייעוץ נומרולוגי מעמיק (75 דק׳)",en:"Deep Numerology Consultation (75 min)"},
-        desc:{he:"צלילה מלאה למפה שלך — מטרת חיים, יחסים, קריירה ותזמון. כולל מפה אישית מלאה והקלטה.",en:"A full dive into your map — life purpose, relationships, career and timing. Includes the full map + recording."},
-        price:{he:"₪349",en:"$99"}, link:"" },
-      { id:"mentoring", icon:"compass", priceNum:690,
-        name:{he:"ליווי חודשי (4 שיחות)",en:"Monthly Mentoring (4 sessions)"},
-        desc:{he:"ליווי צמוד לאורך חודש — 4 שיחות + זמינות בוואטסאפ לשאלות בין הפגישות.",en:"Close guidance over a month — 4 sessions + WhatsApp availability between meetings."},
-        price:{he:"₪690",en:"$199"}, link:"" },
-    ],
-  },
-  {
-    cat: { he: "מתנות ומנויים", en: "Gifts & Subscriptions" },
-    sub: { he: "", en: "" },
-    items: [
-      { id:"gift", icon:"gift", priceNum:149,
-        name:{he:"שובר מתנה — מפה אישית",en:"Gift Voucher — Personal Map"},
-        desc:{he:"מתנה מקורית ומרגשת. השובר נשלח אליך/למקבל/ת עם הוראות מימוש.",en:"A meaningful, original gift. The voucher is sent with redemption instructions."},
-        price:{he:"₪149",en:"$45"}, link:"" },
-      { id:"monthly-insight", icon:"mail", priceNum:29, recurring:true,
-        name:{he:"מנוי תובנה חודשית",en:"Monthly Insight Subscription"},
-        desc:{he:"דוח נומרולוגי קצר ומותאם אישית בכל ראש חודש, ישירות למייל. ביטול בכל עת.",en:"A short, personalized numerology report each month, straight to your inbox. Cancel anytime."},
-        price:{he:"₪29 / חודש",en:"$9 / mo"}, link:"" },
-    ],
-  },
-];
-
-// ── checkout + cart helpers ──
-const allProducts = () => SHOP.flatMap((g) => g.items);
-const findProduct = (id) => allProducts().find((p) => p.id === id);
-/** A product's payment page: only an https:// link counts (a javascript: or http: one never opens); otherwise WhatsApp. */
-const productLink = (p) => {
-  const link = String(p?.link || "").trim();
-  return link.startsWith("https://") ? link : CONTACT_URL;
-};
-/** Whether any product has a real payment page yet (until then, orders go by WhatsApp). */
-const paymentPagesLive = () => allProducts().some((p) => productLink(p) !== CONTACT_URL);
-const goToCheckout = (p) => { AU.init(); AU.p("reveal"); window.open(productLink(p), "_blank", "noopener,noreferrer"); };
-const cartEntries = (cart) => Object.entries(cart || {}).filter(([, q]) => validQty(q)).map(([id, qty]) => ({ product: findProduct(id), qty })).filter((x) => x.product);
-const cartCount = (cart) => Object.values(cart || {}).reduce((a, q) => a + (validQty(q) ? q : 0), 0);
-const cartTotal = (cart) => cartEntries(cart).reduce((a, { product, qty }) => a + (product.priceNum || 0) * qty, 0);
-function waOrderLink(cart, he) {
-  const entries = cartEntries(cart);
-  const lines = entries.map(({ product, qty }) => `• ${product.name[he ? "he" : "en"]} ×${qty} — ${product.price[he ? "he" : "en"]}`);
-  const total = cartTotal(cart);
-  const hasRecurring = entries.some(({ product }) => product.recurring);
-  const head = he ? "היי! אני רוצה להזמין:" : "Hi! I'd like to order:";
-  const tot = he ? `סה"כ: ₪${total}${hasRecurring ? " (+ מנוי חודשי)" : ""}` : `Total: ₪${total}${hasRecurring ? " (+ monthly)" : ""}`;
-  const msg = `${head}\n${lines.join("\n")}\n\n${tot}`;
-  return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`;
-}
+/** The hero's photographic backdrop (Unsplash CDN). */
+const HERO_IMG = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1600&q=68&auto=format&fit=crop";
 
 // ═══════════════════ LANDING: HERO ═══════════════════
 function NumWheel({ ac, size = 520 }) {
@@ -1288,7 +1163,7 @@ function NumWheel({ ac, size = 520 }) {
   );
 }
 
-function Hero({ he, dk, onStart, onShop, onUseName, onReveal }) {
+function Hero({ he, dk, onStart, onUseName, onReveal }) {
   const ac = dk ? "#c8a96a" : "#937640";
   const tm = dk ? "#e8e0d0" : "#2a2520";
   const ts = dk ? "rgba(232,224,208,.62)" : "rgba(42,37,32,.6)";
@@ -1307,7 +1182,7 @@ function Hero({ he, dk, onStart, onShop, onUseName, onReveal }) {
   return (
     <div style={{ position: "relative", width: "100%", borderRadius: 26, minHeight: "86vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "70px 18px 56px", boxShadow: dk ? "0 30px 80px rgba(0,0,0,.45)" : "0 30px 80px rgba(0,0,0,.12)" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-        <img src={IMG.hero} alt="" loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: dk ? .6 : .42, transform: "scale(1.05)" }}/>
+        <img src={HERO_IMG} alt="" loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: dk ? .6 : .42, transform: "scale(1.05)" }}/>
         <div style={{ position: "absolute", inset: 0, background: dk ? "radial-gradient(ellipse at center,rgba(8,8,20,.25),rgba(8,8,18,.82) 80%)" : "radial-gradient(ellipse at center,rgba(245,240,232,.45),rgba(245,240,232,.92) 80%)" }}/>
       </div>
       <Parallax speed={0.16} style={{ position: "absolute", inset: 0, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
@@ -1346,13 +1221,10 @@ function Hero({ he, dk, onStart, onShop, onUseName, onReveal }) {
           <button className="gb" onClick={() => (bothReady ? onReveal(nm, dob) : (nm.trim() ? onUseName(nm) : onStart()))} style={{ width: "100%", marginTop: 14, padding: "14px", fontSize: 15 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="orb" size={16}/>{bothReady ? (he ? "גלה את הקריאה המלאה שלי" : "Reveal my full reading") : (he ? "קבל את הקריאה המלאה" : "Get the full reading")}</span></button>
         </div>
 
-        <div style={{ marginTop: 16 }}>
-          <Magnetic><button className="ghost shine" onClick={onShop} style={{ padding: "13px 26px", fontSize: 14, backdropFilter: "blur(6px)" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="cart" size={15}/>{he ? "לחנות ולמחירים" : "Shop & prices"}</span></button></Magnetic>
-        </div>
         <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginTop: 24, fontSize: 12.5, color: ts }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={13}/>{he ? "תוצאה מיידית" : "Instant result"}</span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="lock" size={13}/>{he ? "תשלום מאובטח" : "Secure checkout"}</span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="doc" size={13}/>{he ? "חשבונית מס" : "Tax invoice"}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="lock" size={13}/>{he ? "בלי הרשמה" : "No sign-up"}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="star" size={13}/>{he ? "חינם" : "Free"}</span>
         </div>
       </div>
       <div onClick={onStart} style={{ position: "absolute", bottom: 18, zIndex: 2, color: ac, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "bob 2.2s ease-in-out infinite" }}>
@@ -1371,11 +1243,11 @@ function HowItWorks({ he, dk }) {
   const steps = he ? [
     { i: "pen", t: "מזינים שם ותאריך לידה", d: "תוך דקה, בלי הרשמה" },
     { i: "orb", t: "מקבלים קריאה חינמית", d: "המספרים, האישיות והשנה שלך" },
-    { i: "star", t: "משדרגים למפה מלאה / שיחה", d: "תובנות עמוקות והכוונה אישית" },
+    { i: "star", t: "מעמיקים בקריאה המלאה", d: "מחזורי חיים, מפת לו-שו והמלצות" },
   ] : [
     { i: "pen", t: "Enter name & birth date", d: "In a minute, no signup" },
     { i: "orb", t: "Get a free reading", d: "Your numbers, personality & year" },
-    { i: "star", t: "Upgrade to a full map / call", d: "Deep insights & personal guidance" },
+    { i: "star", t: "Go deeper in the full reading", d: "Life cycles, Lo Shu grid & guidance" },
   ];
   return (
     <SR><div className="gc" style={{ marginBottom: 16 }}>
@@ -1461,17 +1333,13 @@ function FAQ({ he, dk }) {
   const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
   const [open, setOpen] = useState(null);
   const qa = he ? [
-    { q: "איך אני מקבל את המוצר?", a: "דוחות ומפות נשלחים כ-PDF מעוצב לאימייל/וואטסאפ תוך 48 שעות. שיחות מתואמות איתך אישית לאחר הרכישה." },
-    { q: "איך מתבצע התשלום?", a: "התשלום מאובטח דרך מערכת הסליקה Grow — כרטיס אשראי, Bit, Apple/Google Pay. מקבלים חשבונית מס כחוק." },
-    { q: "הקריאה החינמית — באמת חינם?", a: "כן, לגמרי. היא נותנת לך טעימה אמיתית מהמספרים שלך, בלי התחייבות ובלי הרשמה." },
-    { q: "אפשר לבטל מנוי?", a: "בהחלט. מנוי התובנה החודשית ניתן לביטול בכל עת, ללא קנסות." },
-    { q: "המידע שלי בטוח?", a: "הפרטים משמשים אך ורק להכנת הקריאה/המפה ולא מועברים לאף גורם שלישי." },
+    { q: "הקריאה החינמית — באמת חינם?", a: "כן, לגמרי. היא נותנת טעימה אמיתית מהמספרים, בלי התחייבות ובלי הרשמה." },
+    { q: "המידע שלי בטוח?", a: "השם ותאריך הלידה מחושבים בדפדפן עצמו ולא נשלחים אלינו. כל הפרטים במדיניות הפרטיות שבתחתית העמוד." },
+    { q: "איך יוצרים קשר?", a: "בוואטסאפ או במייל, בקישורים שבתחתית העמוד." },
   ] : [
-    { q: "How do I receive my product?", a: "Reports and maps are sent as a designed PDF to email/WhatsApp within 48h. Calls are scheduled with you personally after purchase." },
-    { q: "How does payment work?", a: "Secure checkout via Grow — credit card, Bit, Apple/Google Pay. You receive a proper tax invoice." },
-    { q: "Is the free reading really free?", a: "Yes, completely. It gives you a real taste of your numbers — no commitment, no signup." },
-    { q: "Can I cancel a subscription?", a: "Absolutely. The monthly insight subscription can be cancelled anytime, no penalties." },
-    { q: "Is my data safe?", a: "Your details are used only to prepare your reading/map and are never shared with third parties." },
+    { q: "Is the free reading really free?", a: "Yes, completely. It gives a real taste of the numbers — no commitment, no signup." },
+    { q: "Is my data safe?", a: "The name and birth date are calculated in the browser itself and are not sent to us. The full details are in the privacy policy at the bottom of the page." },
+    { q: "How can I get in touch?", a: "By WhatsApp or email, with the links at the bottom of the page." },
   ];
   return (
     <SR><div className="gc" style={{ marginBottom: 16 }}>
@@ -1510,11 +1378,11 @@ function LandingFooter({ he, dk, onOwner }) {
       </div>
 
       <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap", marginTop: 14, fontSize: 11.5 }}>
-        <a href="#" style={link}>{he ? "תקנון" : "Terms"}</a>
+        <a href="#terms" style={link}>{he ? "תקנון" : "Terms"}</a>
         <span style={{ color: `${ac}33` }}>·</span>
-        <a href="#" style={link}>{he ? "מדיניות פרטיות" : "Privacy"}</a>
+        <a href="#privacy" style={link}>{he ? "מדיניות פרטיות" : "Privacy"}</a>
         <span style={{ color: `${ac}33` }}>·</span>
-        <a href="#" style={link}>{he ? "מדיניות החזרים" : "Refunds"}</a>
+        <a href="#refunds" style={link}>{he ? "ביטולים והחזרים" : "Cancellations & refunds"}</a>
       </div>
 
       <p style={{ fontSize: 10.5, color: ts, opacity: .7, marginTop: 16 }}>© {2026} {he ? "שני כהן אזולאי · כל הזכויות שמורות" : "Shani Cohen Azulai · All rights reserved"}</p>
@@ -1524,105 +1392,23 @@ function LandingFooter({ he, dk, onOwner }) {
   );
 }
 
-// ═══════════════════ FLOATING CART BUTTON ═══════════════════
-function FloatingCart({ he, dk, cart, onOpen }) {
-  const ac = dk ? "#c8a96a" : "#937640";
-  const count = cartCount(cart);
-  if (count === 0) return null;
-  return (
-    <button onClick={onOpen} style={{ position: "fixed", bottom: 20, [he ? "left" : "right"]: 18, zIndex: 200, display: "flex", alignItems: "center", gap: 8, padding: "13px 20px", background: `linear-gradient(135deg,${dk ? "#c8a96a" : "#b8942e"},${dk ? "#b8942e" : "#937640"})`, color: dk ? "#080812" : "#fff", border: "none", borderRadius: 30, fontFamily: "inherit", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: `0 8px 30px ${ac}55`, animation: "fadeInUp .4s ease-out" }}>
-      <Icon name="cart" size={16}/> <span>{he ? "עגלה" : "Cart"}</span>
-      <span style={{ background: dk ? "#080812" : "#fff", color: ac, borderRadius: 12, minWidth: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>{count}</span>
-      <span style={{ fontSize: 13, opacity: .9 }}>₪{cartTotal(cart)}</span>
-    </button>
-  );
-}
-
-// ═══════════════════ CART DRAWER ═══════════════════
-function CartDrawer({ he, dk, cart, open, onClose, onQty, onRemove, onClear }) {
-  const ac = dk ? "#c8a96a" : "#937640";
-  const tm = dk ? "#e8e0d0" : "#2a2520";
-  const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
-  const entries = cartEntries(cart);
-  const total = cartTotal(cart);
-  if (!open) return null;
-  return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,.55)", backdropFilter: "blur(4px)", display: "flex", justifyContent: he ? "flex-start" : "flex-end", animation: "fadeInUp .25s ease-out" }}>
-      <div onClick={(e) => e.stopPropagation()} dir={he ? "rtl" : "ltr"} style={{ width: "min(420px,92vw)", height: "100%", overflowY: "auto", background: dk ? "linear-gradient(160deg,#12122a,#0a0a1a)" : "linear-gradient(160deg,#fff,#f0ebe0)", borderInlineStart: `1px solid ${ac}33`, padding: "22px 18px", boxShadow: "0 0 60px rgba(0,0,0,.5)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-          <h3 style={{ fontSize: 20, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif", display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="cart" size={18}/>{he ? "העגלה שלי" : "My Cart"}</h3>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: ts, fontSize: 24, cursor: "pointer", lineHeight: 1 }}>×</button>
-        </div>
-
-        {entries.length === 0 ? (
-          <p style={{ textAlign: "center", color: ts, fontSize: 14, padding: "40px 0" }}>{he ? "העגלה ריקה" : "Your cart is empty"}</p>
-        ) : (
-          <>
-            {entries.map(({ product, qty }) => (
-              <div key={product.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 0", borderBottom: `1px solid ${ac}10` }}>
-                <div style={{ color: ac, marginTop: 1 }}><Icon name={product.icon} size={22}/></div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: tm }}>{product.name[he ? "he" : "en"]}</div>
-                  <div style={{ fontSize: 12, color: ac, marginTop: 2 }}>{product.price[he ? "he" : "en"]}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                    <button onClick={() => onQty(product.id, -1)} style={qtyBtn(ac, dk)}>−</button>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: tm, minWidth: 18, textAlign: "center" }}>{qty}</span>
-                    <button onClick={() => onQty(product.id, 1)} style={qtyBtn(ac, dk)}>+</button>
-                    <button onClick={() => onRemove(product.id)} style={{ background: "none", border: "none", color: ts, fontSize: 12, cursor: "pointer", marginInlineStart: "auto" }}>{he ? "הסר" : "Remove"}</button>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", margin: "18px 0 6px" }}>
-              <span style={{ fontSize: 14, color: ts }}>{he ? 'סה"כ לתשלום' : "Total"}</span>
-              <span style={{ fontSize: 24, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>₪{total}</span>
-            </div>
-
-            <a href={waOrderLink(cart, he)} target="_blank" rel="noopener noreferrer" onClick={() => { AU.init(); AU.p("reveal"); }} className="gb" style={{ display: "block", textAlign: "center", textDecoration: "none", marginTop: 12, padding: "15px" }}>
-              {he ? "סיום הזמנה ←" : "Complete order →"}
-            </a>
-            <p style={{ fontSize: 11, color: ts, textAlign: "center", marginTop: 10, lineHeight: 1.7 }}>
-              {he ? "ההזמנה תישלח אליי בוואטסאפ ואחזור אליך עם לינק תשלום מאובטח / בקשת Bit. רוצה לשלם מיד בכרטיס? לחץ \"שלם עכשיו\" על המוצר." : "Your order is sent to me on WhatsApp and I'll reply with a secure payment link / Bit request. Want to pay by card now? Use \"Pay now\" on the product."}
-            </p>
-            <button onClick={onClear} style={{ background: "none", border: "none", color: ts, fontSize: 12, cursor: "pointer", display: "block", margin: "12px auto 0" }}>{he ? "רוקן עגלה" : "Clear cart"}</button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-const qtyBtn = (ac, dk) => ({ width: 26, height: 26, borderRadius: 8, border: `1px solid ${ac}44`, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.7)", color: ac, fontSize: 16, cursor: "pointer", lineHeight: 1, fontFamily: "inherit" });
-
 // ═══════════════════ ABOUT — SHANI COHEN AZULAI ═══════════════════
-function AboutShani({ he, dk, onBook }) {
+function AboutShani({ he, dk }) {
   const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.6)" : "rgba(42,37,32,.6)";
-  const [noPhoto, setNoPhoto] = useState(false);
   return (<SR><div className="gc" style={{ marginBottom: 16, textAlign: "center" }}>
     <div style={{ width: 124, height: 124, margin: "0 auto 14px", borderRadius: "50%", border: `2px solid ${ac}`, padding: 4, boxShadow: `0 0 34px ${ac}40` }}>
-      <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: `radial-gradient(circle at 30% 28%,${ac}3a,${dk ? "#14142e" : "#ece3d4"})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {!noPhoto && <img src="/shani.jpg" alt="שני כהן אזולאי" onError={() => setNoPhoto(true)} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 28%" }}/>}
-        {noPhoto && <span style={{ fontSize: 48, color: ac, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>ש</span>}
+      <div aria-hidden="true" style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", background: `radial-gradient(circle at 30% 28%,${ac}3a,${dk ? "#14142e" : "#ece3d4"})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ fontSize: 48, color: ac, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>ש</span>
       </div>
     </div>
     <div className="chip" style={{ marginBottom: 10 }}>✦ {he ? "מי אני" : "About"}</div>
     <h2 className="shimmer-text" style={{ fontSize: 28, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "שני כהן אזולאי" : "Shani Cohen Azulai"}</h2>
     <div style={{ fontSize: 12.5, color: ac, marginTop: 5, letterSpacing: .5 }}>{he ? "נומרולוגיה · מסרים · אימון אישי · הפרשת חלה" : "Numerology · Messages · Coaching · Challah"}</div>
     <p style={{ fontSize: 14, lineHeight: 1.9, color: ts, maxWidth: 460, margin: "14px auto 0" }}>{he ? "נעים להכיר, אני שני. כבר שנים אני מלווה אנשים דרך שפת המספרים — עוזרת להם להבין מי הם, מה הייעוד שלהם, ואיך לקבל החלטות מתוך בהירות וביטחון. סביבי נבנתה קהילה של אלפי עוקבים, ועכשיו גם אתם מוזמנים למסע אישי איתי." : "I'm Shani. For years I've been guiding people through the language of numbers — helping them understand who they are, their purpose, and how to make decisions with clarity and confidence."}</p>
-    <p style={{ fontSize: 10, color: ts, opacity: .55, marginTop: 8 }}>{he ? "* ניתן לערוך את הטקסט ולהוסיף תמונה (קובץ public/shani.jpg)" : "* Editable text; add public/shani.jpg"}</p>
     <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 18 }}>
       <a href="https://www.instagram.com/shani_cohen_8/" target="_blank" rel="noopener noreferrer" className="ghost" style={{ display: "inline-flex", alignItems: "center", gap: 7, textDecoration: "none" }}><Icon name="instagram" size={16}/>{he ? "אינסטגרם · 14K" : "Instagram · 14K"}</a>
-      <button className="gb" onClick={onBook} style={{ width: "auto", padding: "13px 24px", fontSize: 14 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="phone" size={15}/>{he ? "לשיחה אישית איתי" : "Book a session"}</span></button>
+      <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="gb" style={{ width: "auto", padding: "13px 24px", fontSize: 14, textDecoration: "none" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="whatsapp" size={15}/>{he ? "לשיחה איתי בוואטסאפ" : "Chat on WhatsApp"}</span></a>
     </div>
-  </div></SR>);
-}
-
-// ═══════════════════ TRUST BAR ═══════════════════
-function TrustBar({ he, dk }) {
-  const ac = dk ? "#c8a96a" : "#937640"; const ts = dk ? "rgba(232,224,208,.62)" : "rgba(42,37,32,.6)";
-  const items = he ? [{ i: "lock", t: "תשלום מאובטח" }, { i: "doc", t: "חשבונית מס" }, { i: "share", t: "אספקה תוך 48 שעות" }, { i: "heart", t: "ליווי אישי" }] : [{ i: "lock", t: "Secure payment" }, { i: "doc", t: "Tax invoice" }, { i: "share", t: "48h delivery" }, { i: "heart", t: "Personal care" }];
-  return (<SR><div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 10, marginBottom: 16 }}>
-    {items.map((it, i) => (<div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", borderRadius: 14, border: `1px solid ${ac}14`, background: dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)" }}><span style={{ color: ac, display: "inline-flex" }}><Icon name={it.i} size={20} stroke={1.3}/></span><span style={{ fontSize: 11.5, color: ts, textAlign: "center" }}>{it.t}</span></div>))}
   </div></SR>);
 }
 
@@ -1650,7 +1436,7 @@ function FloatingWhatsApp({ he }) {
 }
 
 // ═══════════════════ SAMPLE MAP PREVIEW ═══════════════════
-function SampleMap({ he, dk, onBuy }) {
+function SampleMap({ he, dk, onStart }) {
   const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.6)" : "rgba(42,37,32,.6)";
   let demo; try { demo = fullCalc(7, 3, 1988, "אורה לוי", false); } catch (e) { demo = null; }
   if (!demo) return null;
@@ -1663,7 +1449,7 @@ function SampleMap({ he, dk, onBuy }) {
     <div style={{ textAlign: "center", marginBottom: 16 }}>
       <div className="chip" style={{ marginBottom: 10 }}>✦ {he ? "הצצה למפה" : "Sample map"}</div>
       <h2 className="shimmer-text" style={{ fontSize: 22, fontWeight: 600, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "מה מחכה לך במפה האישית" : "What's inside your personal map"}</h2>
-      <p style={{ fontSize: 12.5, color: ts, marginTop: 4 }}>{he ? "דוגמה אמיתית — כך נראית המפה שתקבל/י" : "A real example of the map you'll receive"}</p>
+      <p style={{ fontSize: 12.5, color: ts, marginTop: 4 }}>{he ? "דוגמה אמיתית למפה נומרולוגית" : "A real example of a numerology map"}</p>
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16, alignItems: "center" }}>
       <div>
@@ -1681,149 +1467,10 @@ function SampleMap({ he, dk, onBuy }) {
     </div>
     <div className="divider"/>
     <div style={{ textAlign: "center" }}>
-      <p style={{ fontSize: 13, color: ts, lineHeight: 1.8, maxWidth: 480, margin: "0 auto 14px" }}>{he ? "וזו רק ההתחלה — המפה המלאה כוללת גם פרשנות אישית כתובה, מחזורי חיים, חובות קארמיים, מפת לו-שו וטקסים מותאמים." : "And that's just the start — the full map also includes written interpretation, life cycles, karmic debts, Lo Shu grid and tailored rituals."}</p>
-      <button className="gb" onClick={onBuy} style={{ width: "auto", padding: "13px 28px", fontSize: 14 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="map" size={16}/>{he ? "הזמן את המפה שלך" : "Order your map"}</span></button>
+      <p style={{ fontSize: 13, color: ts, lineHeight: 1.8, maxWidth: 480, margin: "0 auto 14px" }}>{he ? "וזו רק ההתחלה — בקריאה המלאה כאן באתר מחכים גם מחזורי חיים, חובות קארמיים, מפת לו-שו והמלצות, בחינם." : "And that's just the start — the full reading here also has life cycles, karmic debts, the Lo Shu grid and guidance, free."}</p>
+      <button className="gb" onClick={onStart} style={{ width: "auto", padding: "13px 28px", fontSize: 14 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="map" size={16}/>{he ? "לקריאה החינמית" : "Get the free reading"}</span></button>
     </div>
   </div></SR>);
-}
-
-// ═══════════════════ CINEMATIC CTA BAND ═══════════════════
-function CtaBand({ he, dk, onShop }) {
-  const ac = dk ? "#c8a96a" : "#937640";
-  return (
-    <div style={{ position: "relative", width: "100%", borderRadius: 22, minHeight: 300, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", margin: "8px 0 20px", backgroundImage: `url(${IMG.band})`, backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
-      <div style={{ position: "absolute", inset: 0, background: dk ? "linear-gradient(180deg,rgba(8,8,18,.82),rgba(10,10,24,.6),rgba(8,8,18,.88))" : "linear-gradient(180deg,rgba(245,240,232,.88),rgba(245,240,232,.7),rgba(245,240,232,.92))" }}/>
-      <SR><div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "44px 22px", maxWidth: 560 }}>
-        <div style={{ color: ac, marginBottom: 14, display: "flex", justifyContent: "center" }}><Icon name="sparkle" size={30} stroke={1.2}/></div>
-        <h2 className="shimmer-text" style={{ fontSize: "clamp(26px,5.5vw,42px)", fontWeight: he ? 700 : 400, fontFamily: "'Cormorant Garamond',serif", lineHeight: 1.18 }}>{he ? "המסע שלך אל המספרים מתחיל כאן" : "Your journey into the numbers starts here"}</h2>
-        <p style={{ fontSize: 15, color: dk ? "rgba(232,224,208,.72)" : "rgba(42,37,32,.65)", margin: "14px auto 24px", maxWidth: 440, lineHeight: 1.85 }}>{he ? "מפה אישית, שיחה אחד-על-אחד, או ליווי מתמשך — בחר את הדרך שלך." : "A personal map, a 1-on-1 call, or ongoing guidance — choose your path."}</p>
-        <button className="gb" onClick={onShop} style={{ width: "auto", padding: "15px 34px", fontSize: 16 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 9, justifyContent: "center" }}><Icon name="cart" size={17}/>{he ? "גלה את החבילות" : "Explore the offerings"}</span></button>
-      </div></SR>
-    </div>
-  );
-}
-
-// ═══════════════════ SHOP SECTION (cart-aware) ═══════════════════
-// onAdd present → customer mode (add-to-cart). Absent → owner mode (buy-now).
-// ═══════════════════ PRODUCT DETAIL MODAL ═══════════════════
-function ProductModal({ product, he, dk, onClose, onAdd }) {
-  const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.6)" : "rgba(42,37,32,.6)";
-  const customer = typeof onAdd === "function";
-  const kind = product.recurring ? "sub" : (["intro-call", "deep-consult", "mentoring"].includes(product.id) ? "call" : product.id === "gift" ? "gift" : product.id === "vip" ? "vip" : product.id === "bundle" ? "bundle" : "report");
-  const incl = (he ? {
-    report: ["קובץ PDF מעוצב ואישי", "פרשנות כתובה ומפורטת", "אספקה תוך 48 שעות", "אפשרות לשאלות המשך"],
-    bundle: ["מפה אישית מלאה (PDF)", "שיחת ייעוץ 75 דקות", "הקלטה של השיחה", "חיסכון של ₪49"],
-    vip: ["מפה אישית מלאה", "תחזית שנתית 12 חודשים", "שיחת עומק 90 דקות + הקלטה", "דוח PDF מורחב", "חודש ליווי אישי בוואטסאפ"],
-    call: ["פגישת זום או טלפון", "תיאום גמיש לפי הזמן שלך", "ליווי אישי וחם", "סיכום וכיווני פעולה"],
-    gift: ["שובר מתנה אלגנטי", "נשלח אליך או למקבל/ת", "הוראות מימוש פשוטות", "ללא תאריך תפוגה"],
-    sub: ["מסר חודשי מותאם אישית", "ישירות למייל בכל ראש חודש", "ביטול בכל עת", "ללא התחייבות"],
-  } : {
-    report: ["Designed personal PDF", "Detailed written interpretation", "Delivery within 48h", "Follow-up questions"],
-    bundle: ["Full personal map (PDF)", "75-min consultation", "Call recording", "Save ₪49"],
-    vip: ["Full personal map", "12-month forecast", "90-min deep call + recording", "Extended PDF report", "A month of WhatsApp guidance"],
-    call: ["Zoom or phone session", "Flexible scheduling", "Warm personal guidance", "Summary & next steps"],
-    gift: ["Elegant gift voucher", "Sent to you or recipient", "Simple redemption", "No expiry"],
-    sub: ["Monthly personalized message", "Straight to your inbox", "Cancel anytime", "No commitment"],
-  })[kind];
-  return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 350, background: "rgba(0,0,0,.62)", backdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, animation: "fadeInUp .25s ease-out" }}>
-      <div onClick={e => e.stopPropagation()} dir={he ? "rtl" : "ltr"} style={{ width: "min(520px,96vw)", maxHeight: "90vh", overflowY: "auto", borderRadius: 22, background: dk ? "linear-gradient(180deg,#14142e,#0c0c1c)" : "linear-gradient(180deg,#fff,#f4efe6)", border: `1px solid ${ac}44`, boxShadow: "0 30px 80px rgba(0,0,0,.55)" }}>
-        <div style={{ position: "relative", height: 210 }}>
-          <img src={IMG[product.id] || IMG.band} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
-          <div style={{ position: "absolute", inset: 0, background: dk ? "linear-gradient(180deg,rgba(8,8,20,.15),rgba(12,12,26,.92))" : "linear-gradient(180deg,rgba(255,255,255,.1),rgba(244,239,230,.92))" }}/>
-          <button onClick={onClose} style={{ position: "absolute", top: 12, insetInlineEnd: 12, width: 34, height: 34, borderRadius: "50%", border: `1px solid ${ac}55`, background: dk ? "rgba(8,8,18,.5)" : "rgba(255,255,255,.7)", color: ac, fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
-          <div style={{ position: "absolute", top: 14, insetInlineStart: 14, width: 44, height: 44, borderRadius: "50%", background: dk ? "rgba(8,8,18,.5)" : "rgba(255,255,255,.65)", border: `1px solid ${ac}66`, backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", color: ac }}><Icon name={product.icon} size={24} stroke={1.3}/></div>
-          <div style={{ position: "absolute", bottom: 10, insetInlineStart: 16, fontSize: 30, fontWeight: 700, color: "#fff", fontFamily: "'Cormorant Garamond',serif", textShadow: "0 2px 14px rgba(0,0,0,.7)" }}>{product.price[he ? "he" : "en"]}</div>
-          {product.badge && <div style={{ position: "absolute", bottom: 14, insetInlineEnd: 16, background: ac, color: dk ? "#080812" : "#fff", fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 20 }}>{product.badge[he ? "he" : "en"]}</div>}
-        </div>
-        <div style={{ padding: "20px 22px 24px", textAlign: "center" }}>
-          <h3 style={{ fontSize: 22, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{product.name[he ? "he" : "en"]}</h3>
-          <p style={{ fontSize: 13.5, lineHeight: 1.9, color: ts, margin: "10px auto 16px", maxWidth: 420 }}>{product.desc[he ? "he" : "en"]}</p>
-          <div style={{ textAlign: he ? "right" : "left", maxWidth: 340, margin: "0 auto 18px" }}>
-            <div style={{ fontSize: 12, color: ac, fontWeight: 700, marginBottom: 9, letterSpacing: 1, textAlign: "center" }}>{he ? "מה כלול" : "What's included"}</div>
-            {incl.map((it, i) => (<div key={i} style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 7 }}><span style={{ color: ac, display: "inline-flex", flexShrink: 0 }}><Icon name="check" size={16}/></span><span style={{ fontSize: 13, color: tm }}>{it}</span></div>))}
-          </div>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            {customer && <button className="gb" onClick={() => { onAdd(product.id); onClose(); }} style={{ width: "auto", padding: "13px 24px", fontSize: 14 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="plus" size={15}/>{he ? "הוסף לעגלה" : "Add to cart"}</span></button>}
-            <button className="gb" onClick={() => goToCheckout(product)} style={{ width: "auto", padding: "13px 24px", fontSize: 14 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="lock" size={14}/>{he ? "שלם עכשיו" : "Pay now"}</span></button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ShopSection({ he, dk, onAdd, cart }) {
-  const ac = dk ? "#c8a96a" : "#937640";
-  const tm = dk ? "#e8e0d0" : "#2a2520";
-  const ts = dk ? "rgba(232,224,208,.45)" : "rgba(42,37,32,.5)";
-  const customer = typeof onAdd === "function";
-  const [modal, setModal] = useState(null);
-  return (
-    <div style={{ animation: "fadeInUp .5s ease-out" }}>
-      <div style={{ textAlign: "center", marginBottom: 22 }}>
-        <div style={{ color: ac, marginBottom: 8, display: "flex", justifyContent: "center" }}><Icon name="cart" size={28} stroke={1.3}/></div>
-        <h2 style={{ fontSize: he ? 24 : 26, fontWeight: he ? 700 : 400, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "החנות" : "The Shop"}</h2>
-        <p style={{ fontSize: 13, color: ts, marginTop: 4 }}>{he ? "מפות אישיות, שיחות וייעוץ — תשלום מאובטח בכרטיס אשראי / Bit" : "Personal maps, calls & consulting — secure card / Bit checkout"}</p>
-      </div>
-
-      {SHOP.map((group, gi) => (
-        <div key={gi} style={{ marginBottom: 28 }}>
-          <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <h3 className="shimmer-text" style={{ fontSize: 21, fontWeight: 600, fontFamily: "'Cormorant Garamond',serif" }}>{group.cat[he ? "he" : "en"]}</h3>
-            {group.sub[he ? "he" : "en"] && <div style={{ fontSize: 11.5, color: ts, marginTop: 3 }}>{group.sub[he ? "he" : "en"]}</div>}
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(238px,1fr))", gap: 14 }}>
-            {group.items.map((p, pi) => {
-              const qty = customer && validQty(cart?.[p.id]) ? cart[p.id] : 0;
-              return (
-                <SR key={p.id} delay={pi * 80}>
-                  <div className="pcard" style={p.featured ? { borderColor: `${ac}55`, boxShadow: `0 0 30px ${ac}1a`, transformStyle: "preserve-3d" } : { transformStyle: "preserve-3d" }}
-                    onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - .5; const py = (e.clientY - r.top) / r.height - .5; e.currentTarget.style.transition = "transform .1s ease-out"; e.currentTarget.style.transform = `perspective(900px) rotateY(${px * 9}deg) rotateX(${-py * 9}deg) translateY(-8px)`; }}
-                    onMouseLeave={e => { e.currentTarget.style.transition = "transform .5s cubic-bezier(.16,1,.3,1),box-shadow .45s,border-color .45s"; e.currentTarget.style.transform = ""; }}>
-                    <div className="pmedia" style={{ cursor: "pointer" }} onClick={() => { AU.init(); AU.p("click"); setModal(p); }} title={he ? "פרטים מלאים" : "Full details"}>
-                      <img src={IMG[p.id] || IMG.band} alt="" loading="lazy"/>
-                      <div style={{ position: "absolute", inset: 0, background: dk ? "linear-gradient(180deg,rgba(8,8,20,.1),rgba(12,12,26,.9))" : "linear-gradient(180deg,rgba(255,255,255,.1),rgba(245,240,232,.9))" }}/>
-                      <div style={{ position: "absolute", top: 12, insetInlineStart: 12, width: 42, height: 42, borderRadius: "50%", background: dk ? "rgba(8,8,18,.45)" : "rgba(255,255,255,.6)", border: `1px solid ${ac}66`, backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", color: ac }}><Icon name={p.icon} size={22} stroke={1.3}/></div>
-                      {p.badge && <div style={{ position: "absolute", top: 14, insetInlineEnd: 12, background: ac, color: dk ? "#080812" : "#fff", fontSize: 10, fontWeight: 700, padding: "4px 11px", borderRadius: 20, letterSpacing: .5, boxShadow: `0 4px 16px ${ac}77` }}>{p.badge[he ? "he" : "en"]}</div>}
-                      <div style={{ position: "absolute", bottom: 9, insetInlineStart: 15, fontSize: 24, fontWeight: 700, color: "#fff", fontFamily: "'Cormorant Garamond',serif", textShadow: "0 2px 14px rgba(0,0,0,.7)" }}>{p.price[he ? "he" : "en"]}</div>
-                      <div style={{ position: "absolute", bottom: 12, insetInlineEnd: 14, fontSize: 11, color: "#fff", opacity: .9, display: "inline-flex", alignItems: "center", gap: 3, textShadow: "0 1px 8px rgba(0,0,0,.7)" }}>{he ? "פרטים" : "Details"}<span>{he ? "‹" : "›"}</span></div>
-                    </div>
-                    <div style={{ padding: "14px 16px 16px", textAlign: "center" }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: tm, marginBottom: 5 }}>{p.name[he ? "he" : "en"]}</div>
-                      <p style={{ fontSize: 12.5, lineHeight: 1.7, color: ts, marginBottom: 13, minHeight: customer ? 54 : undefined }}>{p.desc[he ? "he" : "en"]}</p>
-                      {customer ? (
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button className="gb" onClick={() => onAdd(p.id)} style={{ flex: 1, width: "auto", padding: "11px 12px", fontSize: 13 }}>
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 7, justifyContent: "center" }}>
-                              <Icon name={qty > 0 ? "check" : "plus"} size={15}/>
-                              {qty > 0 ? (he ? `בעגלה · ${qty}` : `In cart · ${qty}`) : (he ? "לעגלה" : "Add")}
-                            </span>
-                          </button>
-                          <button className="ghost" onClick={() => goToCheckout(p)} style={{ padding: "11px 14px", fontSize: 13, whiteSpace: "nowrap" }}>{he ? "שלם" : "Pay"}</button>
-                        </div>
-                      ) : (
-                        <button className="gb" onClick={() => goToCheckout(p)} style={{ width: "100%", padding: "11px", fontSize: 14 }}>{he ? "קנה עכשיו ←" : "Buy now →"}</button>
-                      )}
-                    </div>
-                  </div>
-                </SR>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-
-      <p style={{ textAlign: "center", fontSize: 11, color: ts, marginTop: 4, lineHeight: 1.8 }}>
-        <Icon name="lock" size={11} style={{ verticalAlign: "-1px", marginInlineEnd: 4 }}/>{paymentPagesLive()
-          ? (he ? "התשלום מתבצע בעמוד מאובטח של Grow (משולם). יש שאלה לפני רכישה? " : "Payment via a secure Grow checkout page. Questions before buying? ")
-          : (he ? "ההזמנה נשלחת בוואטסאפ, וקישור לתשלום מאובטח מגיע משם. יש שאלה לפני רכישה? " : "Orders go by WhatsApp, and a secure payment link comes from there. Questions before buying? ")}
-        <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" style={{ color: ac, fontWeight: 600 }}>{he ? "דברו איתי" : "Contact me"}</a>
-      </p>
-      {modal && <ProductModal product={modal} he={he} dk={dk} onClose={() => setModal(null)} onAdd={onAdd}/>}
-    </div>
-  );
 }
 
 // ═══════════════════ LEAD CAPTURE GATE ═══════════════════
@@ -1905,7 +1552,6 @@ export default function App(){
   const clearReading=()=>{setShowRes(false);setResults(null);setReadingName("");setStep(1);setName("");setDob("");setAddOne(false);setError("");setChapters([false,false,false,false,false,false]);};
   const[streak,setStreak]=useState(0);
   const[owner,setOwner]=useState(()=>{try{const h=location.hash+location.search;if(/customer/i.test(h))return false;if(/owner|studio|admin/i.test(h))return true;return localStorage.getItem(OWNER_STORE_KEY)!=="customer";}catch(e){return true;}});const[previewCustomer,setPreviewCustomer]=useState(false);
-  const[cart,setCart]=useState({});const[cartOpen,setCartOpen]=useState(false);
   const[leadDone,setLeadDone]=useState(()=>{try{return localStorage.getItem(LEAD_DONE_KEY)==="1";}catch(e){return false;}});
 
   const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
@@ -1936,18 +1582,10 @@ export default function App(){
     openMeeting:(r,n)=>setMeeting(meetingFor(r,n))}),[licensee?.fullName,licensee?.phone,he]);
   useEffect(()=>{AU.on=snd;},[snd]);
 
-  // ── cart persistence; owner/customer view preference is read in the useState initializer above ──
-  useEffect(()=>{try{
-    const saved=localStorage.getItem(CART_STORE_KEY);if(saved)setCart(JSON.parse(saved)||{});
-  }catch(e){}},[]);
-  useEffect(()=>{try{localStorage.setItem(CART_STORE_KEY,JSON.stringify(cart));}catch(e){}},[cart]);
+  // the shop is gone: a cart kept in this browser from before is forgotten (the owner/customer view preference is read in the useState initializer above)
+  useEffect(()=>{try{localStorage.removeItem("numerology_cart_v1");}catch(e){}},[]);
   const enterOwner=()=>{AU.init();AU.p("reveal");setOwner(true);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"owner");}catch(e){}};
   const exitOwner=()=>{AU.init();AU.p("click");setOwner(false);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"customer");}catch(e){}};
-  // quantities stay whole, from 1 to 20, whatever storage held before
-  const addToCart=(id)=>{AU.init();AU.p("card");setCart(c=>({...c,[id]:Math.min(20,(validQty(c[id])?c[id]:0)+1)}));};
-  const setQty=(id,delta)=>setCart(c=>{const q=Math.min(20,(validQty(c[id])?c[id]:0)+delta);const n={...c};if(q<=0)delete n[id];else n[id]=q;return n;});
-  const removeFromCart=(id)=>setCart(c=>{const n={...c};delete n[id];return n;});
-  const clearCart=()=>setCart({});
   const scrollToId=(id)=>{try{document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"});}catch(e){}};
 
   useEffect(()=>{
@@ -2126,7 +1764,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </div>
       ):(
         <>
-          <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onShop={()=>scrollToId("shop-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}} onReveal={(n,d)=>{setName(n);setDob(d);setStep(2);const ok=runReading(n,d,addOne);if(ok)setTimeout(()=>scrollToId("reading-section"),90);}}/>
+          <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}} onReveal={(n,d)=>{setName(n);setDob(d);setStep(2);const ok=runReading(n,d,addOne);if(ok)setTimeout(()=>scrollToId("reading-section"),90);}}/>
           <HowItWorks he={he} dk={dk}/>
           <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:11,color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · נסה עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
         </>
@@ -2158,7 +1796,6 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           <WorkspaceApp key={workspaceKey} he={he} dk={dk} store={workspaceStore} openRequest={openRequest} onOpenHandled={()=>setOpenRequest(null)} onEvent={(action)=>{account.service.logEvent(action).catch(()=>{});}}/>
         </ContentContext.Provider>}
 
-        {showOwnerUI&&tab==="shop"&&<div className="st-tool-wide"><ShopSection he={he} dk={dk}/></div>}
 
         {showOwnerUI&&tab==="leads"&&<div className="st-tool-wide"><LeadsWidget he={he} dk={dk}/></div>}
 
@@ -2298,42 +1935,6 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="target" size={22} stroke={1.3}/></div><div style={{fontSize:15,fontWeight:600,color:ac,marginTop:4}}>{he?"קריירות מתאימות":"Ideal Careers"}</div><div style={{fontSize:14,color:ts,marginTop:6,lineHeight:1.8}}>{D[lpBase]?.career}</div></div>
         </Chapter>
 
-        {chapters[5]&&(<SR delay={150}>
-          <div className="gc" style={{marginTop:26,textAlign:"center",border:`1px solid ${ac}44`,background:dk?`linear-gradient(135deg,${ac}10,rgba(12,12,28,.6))`:`linear-gradient(135deg,${ac}10,rgba(255,255,255,.7))`}}>
-            <div style={{fontSize:30,marginBottom:8}}>✦</div>
-            <h3 style={{fontSize:isRtl?21:23,fontWeight:isRtl?700:500,color:ac,fontFamily:"'Cormorant Garamond',serif",marginBottom:6}}>{he?"רוצה לרדת לעומק?":"Want to go deeper?"}</h3>
-            <p style={{fontSize:13.5,lineHeight:1.85,color:ts,maxWidth:420,margin:"0 auto 18px"}}>{he?`${name?name+", ":""}הקריאה החינמית היא רק ההתחלה. אני יכול להכין לך מפה נומרולוגית אישית מלאה, או לצלול יחד איתך בשיחה אישית — על מטרת החיים, יחסים, קריירה ותזמון.`:`${name?name+", ":""}this free reading is just the start. I can prepare your full personal numerology map, or dive deep together in a 1-on-1 call — life purpose, relationships, career and timing.`}</p>
-            {(()=>{
-              const lpB=R(results.lp),suB=R(results.su);const offers=[];
-              const add=(cond,id,reason)=>{if(cond&&offers.length<3&&!offers.some(o=>o.p.id===id)){const p=findProduct(id);if(p)offers.push({p,reason});}};
-              add(results.kd&&results.kd.length>0,"deep-consult",he?`חוב קארמי ${results.kd&&results.kd[0]} — שיחת עומק תעזור לך לרפא ולהשתחרר`:`Karmic debt — a deep call helps you heal`);
-              add(results.py===8,"year-forecast",he?"שנה אישית 8 — שנת שפע. תחזית שנתית תעזור לתזמן נכון":"Personal year 8 — abundance; a forecast times it right");
-              add(results.py===9,"year-forecast",he?"שנת סיום (9) — תחזית למחזור החדש שמתחיל":"Completion year (9) — forecast for the new cycle");
-              add([2,6].includes(lpB)||[2,6].includes(suB),"couple",he?"עולמך סובב סביב יחסים — דוח התאמה זוגית":"Your world centers on relationships — a couple report");
-              add([3,5].includes(lpB),"name",he?"אנרגיית ביטוי חזקה — נומרולוגיה לבחירת שם":"Strong expression energy — name numerology");
-              add(results.ls&&results.ls.miss&&results.ls.miss.length>=4,"full-map",he?"מספרים חסרים במפה — המפה המלאה תחשוף את התמונה":"Missing numbers — the full map reveals all");
-              add(true,"vip",he?"רוצה את הכול? קריאת עומק VIP מלאה":"Want it all? The full VIP depth reading");
-              return offers.length?(
-                <div style={{margin:"0 auto 18px",maxWidth:470,textAlign:isRtl?"right":"left"}}>
-                  <div style={{fontSize:11,color:`${ac}99`,textTransform:"uppercase",letterSpacing:2,marginBottom:8,textAlign:"center"}}>{he?"מותאם אישית עבורך":"Personalized for you"}</div>
-                  {offers.map((o,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",borderRadius:14,border:`1px solid ${ac}33`,background:`${ac}0a`,marginBottom:8}}>
-                      <span style={{color:ac,display:"inline-flex",flexShrink:0}}><Icon name="sparkles" size={17}/></span>
-                      <span style={{flex:1,fontSize:12.5,color:tm,lineHeight:1.6}}>{o.reason} · <strong style={{color:ac}}>{he?o.p.name.he:o.p.name.en}</strong> · {he?o.p.price.he:o.p.price.en}</span>
-                      <button className="gb" onClick={()=>goToCheckout(o.p)} style={{width:"auto",padding:"8px 14px",fontSize:12,flexShrink:0}}>{he?"לרכישה":"Get"}</button>
-                    </div>
-                  ))}
-                </div>
-              ):null;})()}
-            <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-              <button className="gb" onClick={()=>goToCheckout(findProduct("full-map"))} style={{width:"auto",padding:"13px 22px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="map" size={16}/>{he?"הזמן מפה אישית מלאה":"Order full map"}</span></button>
-              <button className="gb" onClick={()=>goToCheckout(findProduct("deep-consult"))} style={{width:"auto",padding:"13px 22px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="star" size={16}/>{he?"קבע שיחה 1:1":"Book a 1:1 call"}</span></button>
-            </div>
-            <div style={{marginTop:12}}>
-              <button className="ghost" onClick={()=>{AU.init();AU.p("click");setShowRes(false);setTab("shop");window.scrollTo({top:0,behavior:"smooth"});}} style={{fontSize:13}}>{he?"לכל המוצרים בחנות ←":"See all products →"}</button>
-            </div>
-          </div>
-        </SR>)}
         {chapters[5]&&(<SR delay={250}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
           <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);if(showOwnerUI)toast(he?"הדו״ח נשמר בתיקיית ההורדות.":"The report is in your downloads.");}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמירת דו״ח PDF":"Save PDF"}</span></button>
           {showOwnerUI&&<button className="ghost" onClick={()=>setMeeting(meetingFor(results,readingName||name))} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="eye" size={15}/>{he?"מצב פגישה":"Meeting mode"}</span></button>}
@@ -2344,13 +1945,9 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       {/* ═══ CUSTOMER LANDING SECTIONS ═══ */}
       {!showOwnerUI&&(<>
         <div style={{height:10}}/>
-        <div style={{maxWidth:760,margin:"0 auto"}}><AboutShani he={he} dk={dk} onBook={()=>scrollToId("shop-section")}/></div>
+        <div style={{maxWidth:760,margin:"0 auto"}}><AboutShani he={he} dk={dk}/></div>
         <div style={{maxWidth:760,margin:"0 auto"}}><WhyNumerology he={he} dk={dk}/></div>
-        <div style={{maxWidth:920,margin:"0 auto"}}><SampleMap he={he} dk={dk} onBuy={()=>scrollToId("shop-section")}/></div>
-        <CtaBand he={he} dk={dk} onShop={()=>scrollToId("shop-section")}/>
-        <div id="shop-section" style={{scrollMarginTop:70}}/>
-        <ShopSection he={he} dk={dk} onAdd={addToCart} cart={cart}/>
-        <TrustBar he={he} dk={dk}/>
+        <div style={{maxWidth:920,margin:"0 auto"}}><SampleMap he={he} dk={dk} onStart={()=>scrollToId("reading-section")}/></div>
         <div style={{maxWidth:920,margin:"0 auto"}}><Testimonials he={he} dk={dk}/></div>
         <div style={{maxWidth:620,margin:"0 auto"}}><LeadCapture he={he} dk={dk}/></div>
         <div style={{maxWidth:760,margin:"0 auto"}}><FAQ he={he} dk={dk}/></div>
@@ -2370,11 +1967,9 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     {/* quick search: tools, clients and actions, from the top bar or Ctrl+K */}
     <CommandPalette open={paletteOpen&&canSearch} onClose={()=>{setPaletteOpen(false);setTimeout(keepFocus,0);}} he={he} items={paletteItems}/>
 
-    {/* ═══ CART (customer only) ═══ */}
+    {/* ═══ CONTACT (customer only) ═══ */}
     {!showOwnerUI&&(<>
       <FloatingWhatsApp he={he}/>
-      <FloatingCart he={he} dk={dk} cart={cart} onOpen={()=>{AU.init();AU.p("click");setCartOpen(true);}}/>
-      <CartDrawer he={he} dk={dk} cart={cart} open={cartOpen} onClose={()=>setCartOpen(false)} onQty={setQty} onRemove={removeFromCart} onClear={clearCart}/>
     </>)}
 
     {/* Owner controls now live in the top bar */}
