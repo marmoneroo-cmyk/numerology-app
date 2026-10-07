@@ -19,7 +19,7 @@
  */
 import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "node:fs";
-import { transformWithEsbuild } from "vite";
+import { transformWithOxc } from "vite";
 import { createClient as realCreateClient } from "@supabase/supabase-js";
 import { handleRequest } from "./handler.js";
 import { createDatabase, createUser, newSession, endSession, rpc } from "../../tests/harness.js";
@@ -301,7 +301,7 @@ describe("what the production entry (index.ts) hands the function", () => {
   /** index.ts as it runs under Deno: types stripped, imports supplied, `Deno` faked. Returns the deps it builds. */
   async function loadIndex(denoEnv) {
     const source = readFileSync(new URL("./index.ts", import.meta.url), "utf8");
-    const { code } = await transformWithEsbuild(source, "index.ts", { loader: "ts", target: "es2022" });
+    const { code } = await transformWithOxc(source, "index.ts", { lang: "ts", target: "es2022" });
     let serve;
     let deps;
     const Deno = { env: { get: (name) => denoEnv[name] }, serve: (fn) => (serve = fn) };

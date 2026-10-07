@@ -6,6 +6,8 @@ export default defineConfig({
   test: {
     // Israel time on every machine (builds run in UTC): date tests cross its clock changes
     env: { TZ: 'Asia/Jerusalem' },
+    // a global a test fakes (jsdom has no matchMedia, for one) is put back after each test
+    unstubGlobals: true,
     // `npm run test:coverage`: the engine, the data layer, the workspace, the accounts and the Studio's units must stay at 80% or more
     coverage: {
       provider: 'v8',

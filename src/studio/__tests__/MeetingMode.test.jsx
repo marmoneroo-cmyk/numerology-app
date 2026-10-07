@@ -18,7 +18,7 @@ const OPENER = "פתיחת הפגישה";
 
 /** The device's reduced-motion setting. */
 const motion = (reduce) =>
-  vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: reduce && q.includes("reduce"), addEventListener() {}, removeEventListener() {} }));
+  vi.stubGlobal("matchMedia", vi.fn((q) => ({ matches: reduce && q.includes("reduce"), addEventListener() {}, removeEventListener() {} })));
 
 /** Meeting mode over a page with a button behind it, as on the reading screen. */
 function Page({ open, onClose = () => {}, ...props }) {

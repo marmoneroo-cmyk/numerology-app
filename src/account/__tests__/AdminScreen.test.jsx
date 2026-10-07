@@ -40,11 +40,11 @@ afterEach(() => {
 
 describe("accounts on a computer", () => {
   it("keeps the account list beside the open account, and marks which one is open", async () => {
-    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({
+    vi.stubGlobal("matchMedia", vi.fn((q) => ({
       matches: !q.includes("reduce") && 1300 >= Number((q.match(/min-width: ([0-9]+)px/) || [])[1] || 0),
       addEventListener() {},
       removeEventListener() {},
-    }));
+    })));
     try {
       const admin = setup();
       const list = await screen.findByRole("region", { name: "רשימת החשבונות" });
@@ -68,13 +68,13 @@ describe("accounts on a computer", () => {
   it("keeps a half-typed new account when the window crosses the computer's width, both ways", async () => {
     let width = 1300;
     const listeners = new Set();
-    vi.spyOn(window, "matchMedia").mockImplementation((q) => ({
+    vi.stubGlobal("matchMedia", vi.fn((q) => ({
       get matches() {
         return !q.includes("reduce") && width >= Number((q.match(/min-width: ([0-9]+)px/) || [])[1] || 0);
       },
       addEventListener: (_, fn) => listeners.add(fn),
       removeEventListener: (_, fn) => listeners.delete(fn),
-    }));
+    })));
     const resize = (next) =>
       act(() => {
         width = next;

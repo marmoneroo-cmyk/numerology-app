@@ -115,11 +115,11 @@ const canvas2d = new Proxy({}, { get: (store, key) => (key in store ? store[key]
 
 beforeEach(() => {
   delete window.__pwned;
-  vi.spyOn(window, "matchMedia").mockImplementation((q) => ({
+  vi.stubGlobal("matchMedia", vi.fn((q) => ({
     matches: !q.includes("reduce") && 1300 >= Number((q.match(/min-width: ([0-9]+)px/) || [])[1] || 0),
     addEventListener() {},
     removeEventListener() {},
-  }));
+  })));
   HTMLCanvasElement.prototype.getContext = () => canvas2d;
   window.IntersectionObserver = class {
     constructor(callback) {

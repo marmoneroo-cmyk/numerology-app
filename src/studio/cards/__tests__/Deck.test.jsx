@@ -7,7 +7,7 @@ import Deck from "../Deck.jsx";
 let reduce = false;
 beforeEach(() => {
   reduce = false;
-  vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: reduce && q.includes("reduce"), addEventListener() {}, removeEventListener() {} }));
+  vi.stubGlobal("matchMedia", vi.fn((q) => ({ matches: reduce && q.includes("reduce"), addEventListener() {}, removeEventListener() {} })));
 });
 
 afterEach(() => {

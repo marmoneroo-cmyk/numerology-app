@@ -18,11 +18,11 @@ const canvas2d = new Proxy({}, { get: (store, key) => (key in store ? store[key]
 beforeEach(() => {
   localStorage.setItem("numerology_owner_mode", "owner");
   // a computer's screen: the client list beside the open client
-  vi.spyOn(window, "matchMedia").mockImplementation((q) => ({
+  vi.stubGlobal("matchMedia", vi.fn((q) => ({
     matches: !q.includes("reduce") && 1300 >= Number((q.match(/min-width: ([0-9]+)px/) || [])[1] || 0),
     addEventListener() {},
     removeEventListener() {},
-  }));
+  })));
   HTMLCanvasElement.prototype.getContext = () => canvas2d;
   // scroll reveals show at once
   window.IntersectionObserver = class {

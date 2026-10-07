@@ -14,17 +14,17 @@ const NOW = new Date("2026-10-06T10:00:00Z");
 
 /** A screen of the given width, as far as min-width media queries can tell. */
 function screenWidth(width) {
-  vi.spyOn(window, "matchMedia").mockImplementation((query) => {
+  vi.stubGlobal("matchMedia", vi.fn((query) => {
     const min = Number((query.match(/min-width: ([0-9]+)px/) || [])[1] || 0);
     return { matches: !query.includes("reduce") && width >= min, addEventListener() {}, removeEventListener() {} };
-  });
+  }));
 }
 
 /** A screen whose width changes mid-test: each query reads the current width, and `resize` tells the listeners. */
 function resizableScreen(initial) {
   let width = initial;
   const listeners = new Set();
-  vi.spyOn(window, "matchMedia").mockImplementation((query) => {
+  vi.stubGlobal("matchMedia", vi.fn((query) => {
     const min = Number((query.match(/min-width: ([0-9]+)px/) || [])[1] || 0);
     return {
       get matches() {
@@ -33,7 +33,7 @@ function resizableScreen(initial) {
       addEventListener: (_, fn) => listeners.add(fn),
       removeEventListener: (_, fn) => listeners.delete(fn),
     };
-  });
+  }));
   return (next) =>
     act(() => {
       width = next;

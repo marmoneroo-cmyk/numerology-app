@@ -20,7 +20,7 @@ function fakeScreen(width) {
     lists.push(list);
     return list;
   };
-  vi.spyOn(window, "matchMedia").mockImplementation(matchMedia);
+  vi.stubGlobal("matchMedia", vi.fn(matchMedia));
   return {
     resize(to) {
       current = to;

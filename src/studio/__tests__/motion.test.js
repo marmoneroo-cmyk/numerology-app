@@ -9,7 +9,7 @@ const motion = (value) => {
 };
 beforeEach(() => {
   reduce = false;
-  vi.spyOn(window, "matchMedia").mockImplementation((q) => ({ matches: reduce && q.includes("reduce"), addEventListener() {}, removeEventListener() {} }));
+  vi.stubGlobal("matchMedia", vi.fn((q) => ({ matches: reduce && q.includes("reduce"), addEventListener() {}, removeEventListener() {} })));
 });
 
 afterEach(() => {
