@@ -463,14 +463,14 @@ function LoShu({ls,dk,he}){
 }
 
 // ═══════════════════ CHAPTER SYSTEM ═══════════════════
-function Chapter({index,title,subtitle,icon,children,isActive,isRevealed,onReveal,dk}){
+function Chapter({index,title,subtitle,icon,children,isActive,isRevealed,onReveal,dk,he}){
   const ac=dk?"#c8a96a":"#937640";
   if(!isRevealed)return(
     <div style={{textAlign:"center",padding:"40px 20px",opacity:isActive?1:.3,transition:"opacity .8s",cursor:isActive?"pointer":"default"}} onClick={isActive?onReveal:undefined}>
       <div style={{marginBottom:12,opacity:isActive?.55:.3,filter:isActive?"none":"blur(3px)",transition:"filter .5s,opacity .5s",color:ac,display:"flex",justifyContent:"center"}}><Icon name={icon} size={34} stroke={1.3}/></div>
       <div style={{fontSize:18,fontWeight:600,color:ac,opacity:isActive?1:.3,transition:"opacity .5s"}}>{title}</div>
       <div style={{fontSize:13,color:dk?"rgba(232,224,208,.3)":"rgba(0,0,0,.2)",marginTop:4}}>{subtitle}</div>
-      {isActive&&<div style={{marginTop:16,fontSize:13,color:ac,opacity:.6,animation:"pulse 2s ease-in-out infinite"}}>{dk?"לחץ לחשיפה ▾":"Tap to reveal ▾"}</div>}
+      {isActive&&<div style={{marginTop:16,fontSize:13,color:ac,opacity:.6,animation:"pulse 2s ease-in-out infinite"}}>{he?"לחצו לחשיפה ▾":"Tap to reveal ▾"}</div>}
     </div>);
   return(<div style={{animation:"fadeInUp .8s ease-out",padding:"12px 0"}}>
     <div style={{textAlign:"center",marginBottom:20}}>
@@ -490,7 +490,7 @@ function Intro({onDone,he,dk}){
   return(<div style={{position:"fixed",inset:0,zIndex:9999,background:dk?"#080812":"#f5f0e8",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",transition:"opacity 1s ease",opacity:p>=4?0:1,pointerEvents:p>=4?"none":"all"}}>
     <div style={{fontSize:80,color:ac,opacity:p>=1?1:0,transform:`scale(${p>=1?1:.2})`,transition:"all 1.2s cubic-bezier(.34,1.56,.64,1)",textShadow:`0 0 80px ${ac}33`,marginBottom:30}}>✦</div>
     <h1 style={{fontSize:52,fontWeight:300,letterSpacing:10,color:ac,opacity:p>=2?1:0,transform:`translateY(${p>=2?0:25}px)`,transition:"all 1s ease .3s",fontFamily:"'Cormorant Garamond',serif",textTransform:"uppercase"}}>{he?"נומרולוגיה":"Numerology"}</h1>
-    <p style={{fontSize:16,fontWeight:300,color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)",opacity:p>=3?1:0,transition:"all .8s ease",marginTop:14,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",letterSpacing:2}}>{he?"המספרים מדברים... האם אתה מוכן?":"The numbers speak... Are you ready?"}</p>
+    <p style={{fontSize:16,fontWeight:300,color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)",opacity:p>=3?1:0,transition:"all .8s ease",marginTop:14,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",letterSpacing:2}}>{he?"המספרים מדברים... מוכנים?":"The numbers speak... Are you ready?"}</p>
   </div>);
 }
 
@@ -1204,7 +1204,7 @@ function Hero({ he, dk, onStart, onUseName, onReveal }) {
           })}
         </h1>
         <p style={{ fontSize: "clamp(14px,2.3vw,18px)", color: ts, fontWeight: 300, marginTop: 16, lineHeight: 1.8, maxWidth: 480, marginInline: "auto" }}>
-          {he ? "התחל עכשיו — הקלד שם ותאריך לידה וצפה במספרים שלך מתגלים." : "Start now — enter your name and birth date and watch your numbers reveal."}
+          {he ? "התחילו עכשיו — הקלידו שם ותאריך לידה וצפו במספרים שלכם מתגלים." : "Start now — enter your name and birth date and watch your numbers reveal."}
         </p>
 
         <div style={{ marginTop: 24, marginInline: "auto", maxWidth: 460, padding: "18px 18px 20px", borderRadius: 20, border: `1px solid ${ac}3a`, background: dk ? "rgba(12,12,28,.5)" : "rgba(255,255,255,.6)", backdropFilter: "blur(14px)", boxShadow: `0 18px 55px rgba(0,0,0,${dk ? .42 : .12})` }}>
@@ -1299,37 +1299,6 @@ function WhyNumerology({ he, dk }) {
   );
 }
 
-// ═══════════════════ LANDING: TESTIMONIALS ═══════════════════
-function Testimonials({ he, dk }) {
-  const ac = dk ? "#c8a96a" : "#937640";
-  const tm = dk ? "#e8e0d0" : "#2a2520";
-  const ts = dk ? "rgba(232,224,208,.5)" : "rgba(42,37,32,.5)";
-  const list = he ? [
-    { n: "מאיה ל׳", t: "המפה האישית פשוט פגעה בול. הרגשתי שמישהו סוף סוף מבין אותי. תודה!" },
-    { n: "דניאל כ׳", t: "השיחה האישית נתנה לי בהירות על החלטה שהתלבטתי בה חודשים. שווה כל שקל." },
-    { n: "נועה ר׳", t: "קניתי מתנה לחברה והיא התרגשה עד דמעות. חוויה מדויקת ומרגשת." },
-  ] : [
-    { n: "Maya L.", t: "The personal map hit the nail on the head. I finally felt understood. Thank you!" },
-    { n: "Daniel C.", t: "The 1-on-1 call gave me clarity on a decision I'd agonized over for months. Worth every shekel." },
-    { n: "Noa R.", t: "I bought it as a gift and she was moved to tears. Precise and touching." },
-  ];
-  return (
-    <SR><div className="gc" style={{ marginBottom: 16 }}>
-      <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 16 }}>{he ? "מה אומרים עליי" : "What people say"}</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 10 }}>
-        {list.map((r, i) => (
-          <div key={i} style={{ padding: 16, background: dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)", border: `1px solid ${ac}10`, borderRadius: 14, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: ac, marginBottom: 4 }}>★★★★★</div>
-            <p style={{ fontSize: 13.5, lineHeight: 1.8, color: tm, fontStyle: "italic" }}>"{r.t}"</p>
-            <div style={{ fontSize: 12, color: ts, marginTop: 6, fontWeight: 600 }}>— {r.n}</div>
-          </div>
-        ))}
-      </div>
-      <p style={{ fontSize: 10, color: ts, textAlign: "center", marginTop: 12, opacity: .6 }}>{he ? "* החלף בביקורות אמיתיות שלך" : "* Replace with your real reviews"}</p>
-    </div></SR>
-  );
-}
-
 // ═══════════════════ LANDING: FAQ ═══════════════════
 function FAQ({ he, dk }) {
   const ac = dk ? "#c8a96a" : "#937640";
@@ -1338,11 +1307,11 @@ function FAQ({ he, dk }) {
   const [open, setOpen] = useState(null);
   const qa = he ? [
     { q: "הקריאה החינמית — באמת חינם?", a: "כן, לגמרי. היא נותנת טעימה אמיתית מהמספרים, בלי התחייבות ובלי הרשמה." },
-    { q: "המידע שלי בטוח?", a: "השם ותאריך הלידה מחושבים בדפדפן עצמו ולא נשלחים אלינו. כל הפרטים במדיניות הפרטיות שבתחתית העמוד." },
+    { q: "המידע שלי בטוח?", a: "השם ותאריך הלידה מחושבים בדפדפן עצמו ולא נשלחים אלינו. פרטים מגיעים אלינו רק אם בוחרים לשלוח לנו הודעת וואטסאפ. כל הפרטים במדיניות הפרטיות שבתחתית העמוד." },
     { q: "איך יוצרים קשר?", a: "בוואטסאפ או במייל, בקישורים שבתחתית העמוד." },
   ] : [
     { q: "Is the free reading really free?", a: "Yes, completely. It gives a real taste of the numbers — no commitment, no signup." },
-    { q: "Is my data safe?", a: "The name and birth date are calculated in the browser itself and are not sent to us. The full details are in the privacy policy at the bottom of the page." },
+    { q: "Is my data safe?", a: "The name and birth date are calculated in the browser itself and are not sent to us. Details reach us only if you choose to send us a WhatsApp message. The full details are in the privacy policy at the bottom of the page." },
     { q: "How can I get in touch?", a: "By WhatsApp or email, with the links at the bottom of the page." },
   ];
   return (
@@ -1361,6 +1330,18 @@ function FAQ({ he, dk }) {
         );
       })}
     </div></SR>
+  );
+}
+
+/** The legal pages, under the Studio's sign-in: new visitors see that screen first, before any footer. */
+function LegalLinks({ he, dk }) {
+  const link = { color: dk ? "rgba(232,224,208,.7)" : "rgba(42,37,32,.75)", fontSize: 12, textUnderlineOffset: 3 };
+  return (
+    <nav aria-label={he ? "מסמכים משפטיים" : "Legal"} style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginTop: 22 }}>
+      <a href="#terms" style={link}>{he ? "תקנון" : "Terms"}</a>
+      <a href="#privacy" style={link}>{he ? "מדיניות פרטיות" : "Privacy"}</a>
+      <a href="#refunds" style={link}>{he ? "ביטולים והחזרים" : "Cancellations & refunds"}</a>
+    </nav>
   );
 }
 
@@ -1497,12 +1478,12 @@ function LeadGate({ he, dk, results, name, onUnlock }) {
     <div style={{ color: ac, display: "flex", justifyContent: "center", marginBottom: 10 }}><Icon name="sparkle" size={30} stroke={1.2}/></div>
     <h2 className="shimmer-text" style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "הקריאה שלך מוכנה" : "Your reading is ready"}</h2>
     <p style={{ fontSize: 15, color: tm, marginTop: 8 }}>{he ? "מצאנו " : "We found "}<strong style={{ color: ac, fontSize: 22 }}>{N}</strong>{he ? " נקודות במפה האישית שלך" : " insights in your personal map"}</p>
-    <p style={{ fontSize: 12.5, color: ts, margin: "8px auto 16px", maxWidth: 360, lineHeight: 1.7 }}>{he ? "הזן/י מספר וואטסאפ כדי לחשוף את הקריאה המלאה — חינם, ללא התחייבות." : "Enter your WhatsApp number to unlock the full reading — free, no commitment."}</p>
+    <p style={{ fontSize: 12.5, color: ts, margin: "8px auto 16px", maxWidth: 360, lineHeight: 1.7 }}>{he ? "הזינו מספר וואטסאפ כדי לחשוף את הקריאה המלאה — חינם, ללא התחייבות." : "Enter your WhatsApp number to unlock the full reading — free, no commitment."}</p>
     <div style={{ display: "flex", gap: 8, maxWidth: 380, margin: "0 auto" }}>
       <input value={phone} onChange={e => setPhone(e.target.value)} placeholder={he ? "מספר וואטסאפ…" : "WhatsApp number…"} dir="ltr" inputMode="tel" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "13px 15px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
-      <button className="gb" onClick={submit} style={{ width: "auto", padding: "13px 20px", fontSize: 14 }}>{he ? "חשוף" : "Unlock"}</button>
+      <button className="gb" onClick={submit} style={{ width: "auto", padding: "13px 20px", fontSize: 14 }}>{he ? "חשפו" : "Unlock"}</button>
     </div>
-    <p style={{ fontSize: 10, color: ts, opacity: .65, marginTop: 10, display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center" }}><Icon name="lock" size={11}/>{he ? "הפרטים נשמרים אצל שני בלבד" : "Your details stay with Shani only"}</p>
+    <p style={{ fontSize: 10, color: ts, opacity: .65, marginTop: 10, display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center" }}><Icon name="lock" size={11}/>{he ? "הפרטים נשלחים בוואטסאפ ולא מועברים לאחרים" : "Sent by WhatsApp, never passed on to others"}</p>
   </div></SR>);
 }
 
@@ -1559,8 +1540,13 @@ export default function App(){
   const[leadDone,setLeadDone]=useState(()=>{try{return localStorage.getItem(LEAD_DONE_KEY)==="1";}catch(e){return false;}});
   // the terms, privacy and refund pages (the footer's links): shown in place of everything else, before any sign-in
   const[legalDoc,setLegalDoc]=useState(legalFromHash);
-  useEffect(()=>{const follow=()=>setLegalDoc(legalFromHash());window.addEventListener("hashchange",follow);return()=>window.removeEventListener("hashchange",follow);},[]);
-  const closeLegal=()=>{try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}setLegalDoc(null);};
+  // opened by a link on this page: going back returns to the address before it (#customer stays #customer)
+  const legalOpenedHere=useRef(false);
+  useEffect(()=>{const follow=()=>{const doc=legalFromHash();legalOpenedHere.current=Boolean(doc);setLegalDoc(doc);};window.addEventListener("hashchange",follow);return()=>window.removeEventListener("hashchange",follow);},[]);
+  const closeLegal=()=>{
+    if(legalOpenedHere.current){legalOpenedHere.current=false;history.back();return;} // the hashchange that follows closes the page
+    try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}setLegalDoc(null);
+  };
 
   const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
   // Shani's interpretation content, shared with the client workspace (src/workspace)
@@ -1618,6 +1604,7 @@ export default function App(){
 
   const goHome=()=>{
     AU.init();AU.p("click");
+    if(legalDoc)closeLegal();
     clearReading();setTab("reading");
   };
 
@@ -1761,7 +1748,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     </div>
 
     <div className={showOwnerUI?"st-root":undefined} style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?1240:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
-      {legalDoc?<LegalPage doc={legalDoc} he={he} dk={dk} onBack={closeLegal}/>:showOwnerUI&&!studioReady?<AccountGate he={he} dk={dk} onLeave={exitOwner}/>:(<>
+      {legalDoc?<LegalPage doc={legalDoc} he={he} dk={dk} onBack={closeLegal}/>:showOwnerUI&&!studioReady?<><AccountGate he={he} dk={dk} onLeave={exitOwner}/><LegalLinks he={he} dk={dk}/></>:(<>
 
       {/* Header (owner) / Hero (customer) */}
       {showOwnerUI?(
@@ -1881,7 +1868,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </div></SR>
 
         {/* CHAPTER 1 */}
-        <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk}>
+        <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk} he={he}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>{showOwnerUI?<RevealCard {...studioDeck(he)[(lpBase||1)-1]} he={he} size="lg"/>:<TarotCard number={lpBase||1} dk={dk} flipped={true} size="lg"/>}</div>
           <p className="nar-line">{he?D[lpBase]?.narrative:D[lpBase]?.narrativeE}</p>
           {results.lp>9&&MASTER[results.lp]&&<div style={{textAlign:"center",marginTop:-6,marginBottom:8}}><span className="badge" style={{borderColor:`${ac}55`}}>{he?`מספר מאסטר ${results.lp} · ${MASTER[results.lp].t}`:`Master ${results.lp} · ${MASTER[results.lp].te}`}</span><p style={{fontSize:12.5,lineHeight:1.8,color:ts,marginTop:8}}>{he?MASTER[results.lp].he:MASTER[results.lp].en}</p></div>}
@@ -1892,7 +1879,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </Chapter>
 
         {/* CHAPTER 2 */}
-        <Chapter index={2} title={chapterDefs[1]?.title} subtitle={chapterDefs[1]?.sub} icon={chapterDefs[1]?.icon} isActive={nextUnrevealed===1} isRevealed={chapters[1]} onReveal={()=>revealChapter(1)} dk={dk}>
+        <Chapter index={2} title={chapterDefs[1]?.title} subtitle={chapterDefs[1]?.sub} icon={chapterDefs[1]?.icon} isActive={nextUnrevealed===1} isRevealed={chapters[1]} onReveal={()=>revealChapter(1)} dk={dk} he={he}>
           <p className="nar-line">{he?"שביל הגורל שלך מספר "+results.lp+" חושף את הייעוד העמוק שלך":"Your Life Path "+results.lp+" reveals your deepest purpose"}</p>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,margin:"16px 0"}}>
             <div style={{padding:"16px",background:dk?"rgba(180,50,50,.06)":"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.12)",borderRadius:14,textAlign:"center"}}><div style={{color:"#d98a8a",marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="moon" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:"#e88",marginBottom:4}}>{he?"צד צל":"Shadow"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}>{he?D[lpBase]?.shadow:D[lpBase]?.shadowE}</div></div>
@@ -1908,7 +1895,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </Chapter>
 
         {/* CHAPTER 3 */}
-        <Chapter index={3} title={chapterDefs[2]?.title} subtitle={chapterDefs[2]?.sub} icon={chapterDefs[2]?.icon} isActive={nextUnrevealed===2} isRevealed={chapters[2]} onReveal={()=>revealChapter(2)} dk={dk}>
+        <Chapter index={3} title={chapterDefs[2]?.title} subtitle={chapterDefs[2]?.sub} icon={chapterDefs[2]?.icon} isActive={nextUnrevealed===2} isRevealed={chapters[2]} onReveal={()=>revealChapter(2)} dk={dk} he={he}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
             {[{l:he?"יום":"Day",v:results.pd},{l:he?"חודש":"Month",v:results.pm},{l:he?"שנה":"Year",v:results.py}].map((it,i)=>(
               <div key={i} style={{textAlign:"center",padding:"18px 8px",background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}0a`,borderRadius:14}}><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1}}>{it.l}</div><div style={{fontSize:32,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif",margin:"4px 0"}}><AN value={it.v} delay={i*200}/></div><div style={{fontSize:11,color:D[it.v]?.c||ac,opacity:.7}}>{he?D[it.v]?.t:D[it.v]?.te}</div></div>
@@ -1919,7 +1906,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </Chapter>
 
         {/* CHAPTER 4 */}
-        <Chapter index={4} title={chapterDefs[3]?.title} subtitle={chapterDefs[3]?.sub} icon={chapterDefs[3]?.icon} isActive={nextUnrevealed===3} isRevealed={chapters[3]} onReveal={()=>revealChapter(3)} dk={dk}>
+        <Chapter index={4} title={chapterDefs[3]?.title} subtitle={chapterDefs[3]?.sub} icon={chapterDefs[3]?.icon} isActive={nextUnrevealed===3} isRevealed={chapters[3]} onReveal={()=>revealChapter(3)} dk={dk} he={he}>
           <p className="nar-line">{he?"גלול קדימה כדי לראות את האנרגיה שלך ב-10 השנים הקרובות":"Scroll forward to see your energy over the next 10 years"}</p>
           <YearWave proj={results.proj} dk={dk} he={he}/>
           <div className="divider"/>
@@ -1929,14 +1916,14 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </Chapter>
 
         {/* CHAPTER 5 */}
-        <Chapter index={5} title={chapterDefs[4]?.title} subtitle={chapterDefs[4]?.sub} icon={chapterDefs[4]?.icon} isActive={nextUnrevealed===4} isRevealed={chapters[4]} onReveal={()=>revealChapter(4)} dk={dk}>
+        <Chapter index={5} title={chapterDefs[4]?.title} subtitle={chapterDefs[4]?.sub} icon={chapterDefs[4]?.icon} isActive={nextUnrevealed===4} isRevealed={chapters[4]} onReveal={()=>revealChapter(4)} dk={dk} he={he}>
           <p className="nar-line">{he?"המפה הפסיכולוגית שלך":"Your psychological map"}</p>
           <PsychRadar psych={results.psych} dk={dk} he={he}/>
           {(()=>{const max=Object.entries(results.psych).sort((a,b)=>b[1]-a[1])[0];const names={leadership:he?"מנהיגות":"Leadership",intuition:he?"אינטואיציה":"Intuition",creativity:he?"יצירתיות":"Creativity",stability:he?"יציבות":"Stability",ambition:he?"שאיפה":"Ambition",wisdom:he?"חכמה":"Wisdom"};return(<div style={{textAlign:"center",marginTop:14,padding:"14px",background:`${ac}06`,borderRadius:12}}><div style={{fontSize:13,fontWeight:600,color:ac,marginBottom:4}}>{he?"הכוח הדומיננטי שלך":"Your dominant strength"}</div><div style={{fontSize:22,fontWeight:700,color:ac}}>{names[max[0]]} — {max[1]}/10</div></div>);})()}
         </Chapter>
 
         {/* CHAPTER 6 */}
-        <Chapter index={6} title={chapterDefs[5]?.title} subtitle={chapterDefs[5]?.sub} icon={chapterDefs[5]?.icon} isActive={nextUnrevealed===5} isRevealed={chapters[5]} onReveal={()=>revealChapter(5)} dk={dk}>
+        <Chapter index={6} title={chapterDefs[5]?.title} subtitle={chapterDefs[5]?.sub} icon={chapterDefs[5]?.icon} isActive={nextUnrevealed===5} isRevealed={chapters[5]} onReveal={()=>revealChapter(5)} dk={dk} he={he}>
           <p className="nar-line">{he?"תובנות מותאמות אישית":"Personalized insights"}</p>
           {getRecommendations(results,lang).map((rec,i)=>(<div key={i} className="rec-card"><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name={rec.icon} size={20}/></span><span style={{fontSize:15,fontWeight:600,color:ac}}>{rec.t}</span></div><p style={{fontSize:13,lineHeight:1.8,color:ts}}>{rec.d}</p></div>))}
           <div className="divider"/>
@@ -1956,7 +1943,6 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <div style={{maxWidth:760,margin:"0 auto"}}><AboutShani he={he} dk={dk}/></div>
         <div style={{maxWidth:760,margin:"0 auto"}}><WhyNumerology he={he} dk={dk}/></div>
         <div style={{maxWidth:920,margin:"0 auto"}}><SampleMap he={he} dk={dk} onStart={()=>scrollToId("reading-section")}/></div>
-        <div style={{maxWidth:920,margin:"0 auto"}}><Testimonials he={he} dk={dk}/></div>
         <div style={{maxWidth:620,margin:"0 auto"}}><LeadCapture he={he} dk={dk}/></div>
         <div style={{maxWidth:760,margin:"0 auto"}}><FAQ he={he} dk={dk}/></div>
         <LandingFooter he={he} dk={dk} onOwner={enterOwner}/>

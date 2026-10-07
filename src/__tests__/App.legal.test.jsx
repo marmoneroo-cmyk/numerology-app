@@ -4,7 +4,7 @@
  * #terms, #privacy or #refunds. None of them waits for a sign-in.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor, within } from "@testing-library/react";
 import App from "../App.jsx";
 import { AccountProvider } from "../account/AccountContext.jsx";
 import { ToastProvider } from "../studio/Toasts.jsx";
@@ -68,6 +68,33 @@ describe("the legal pages", () => {
     expect(await h1("terms")).toBeTruthy();
     expect(screen.queryByLabelText("סיסמה")).toBeNull();
     expect(loadService).not.toHaveBeenCalled();
+  });
+
+  it("go back to where the visitor was, so a reload keeps the customer page", async () => {
+    history.replaceState(null, "", "/#customer");
+    page();
+    fireEvent.click(await screen.findByRole("link", { name: "מדיניות פרטיות" }));
+    expect(await h1("privacy")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "חזרה לאתר" }));
+    expect(await screen.findByRole("link", { name: "מדיניות פרטיות" })).toBeTruthy();
+    await waitFor(() => expect(location.hash).toBe("#customer"));
+  });
+
+  it("close when the top bar's home button is pressed", async () => {
+    history.replaceState(null, "", "/#customer");
+    page();
+    fireEvent.click(await screen.findByRole("link", { name: "תקנון" }));
+    expect(await h1("terms")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /בית$/ }));
+    expect(await screen.findByRole("link", { name: "תקנון" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 1, name: title("terms") })).toBeNull();
+  });
+
+  it("are linked from the sign-in screen too, which new visitors see first", async () => {
+    page(); // the Studio is the default view
+    const links = await screen.findByRole("navigation", { name: "מסמכים משפטיים" });
+    fireEvent.click(within(links).getByRole("link", { name: "מדיניות פרטיות" }));
+    expect(await h1("privacy")).toBeTruthy();
   });
 
   it("follow the address from one policy to another", async () => {

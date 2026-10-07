@@ -386,6 +386,14 @@ describe("nothing is for sale on the site", () => {
     expect(visibleText()).not.toMatch(/לעגלה|סיום הזמנה|לרכישה|₪[0-9]/);
     expect(localStorage.getItem("numerology_cart_v1")).toBeNull();
   });
+
+  it("shows no invented reviews, no gendered 'you', and no notes meant for the owner", async () => {
+    customerPage();
+    await screen.findByTitle("דברו איתי בוואטסאפ", {}, SIGNED_IN);
+    const text = visibleText();
+    expect(text).not.toMatch(/מה אומרים עליי|החלף בביקורות|ניתן לחבר לרשימת תפוצה/);
+    expect(text).not.toMatch(/הזן\/י|האם אתה מוכן|התחל עכשיו|לחץ לחשיפה/);
+  });
 });
 
 describe("lead capture gate", () => {
@@ -407,11 +415,11 @@ describe("lead capture gate", () => {
     const phone = await reachGate();
     // a value built to break out of the link never gets that far: the gate keeps phone-shaped values only
     fireEvent.change(phone, { target: { value: '0547640203&text=pwned#x"><b>' } });
-    fireEvent.click(screen.getByRole("button", { name: "חשוף" }));
+    fireEvent.click(screen.getByRole("button", { name: "חשפו" }));
     expect(open).not.toHaveBeenCalled();
     expect(stored()).toEqual([]);
     fireEvent.change(phone, { target: { value: "+972 (54) 764-0203" } });
-    fireEvent.click(screen.getByRole("button", { name: "חשוף" }));
+    fireEvent.click(screen.getByRole("button", { name: "חשפו" }));
     expect(open).toHaveBeenCalledTimes(1);
     const [href, target, features] = open.mock.calls[0];
     const url = new URL(href);
@@ -427,7 +435,7 @@ describe("lead capture gate", () => {
     const open = vi.spyOn(window, "open").mockImplementation(() => null);
     const phone = await reachGate();
     fireEvent.change(phone, { target: { value: "12-34" } });
-    fireEvent.click(screen.getByRole("button", { name: "חשוף" }));
+    fireEvent.click(screen.getByRole("button", { name: "חשפו" }));
     expect(open).not.toHaveBeenCalled();
     expect(stored()).toEqual([]);
   });
@@ -443,7 +451,7 @@ describe("lead capture gate", () => {
     vi.spyOn(window, "open").mockImplementation(() => null);
     const phone = await reachGate();
     fireEvent.change(phone, { target: { value: "=cmd|' /C calc'!A0 123456" } });
-    fireEvent.click(screen.getByRole("button", { name: "חשוף" }));
+    fireEvent.click(screen.getByRole("button", { name: "חשפו" }));
     for (const lead of stored()) expect(lead.phone).toMatch(/^[+]?[0-9()\- ]{6,25}$/);
     expect(stored()).toEqual([]);
   });
