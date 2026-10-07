@@ -16,11 +16,19 @@ describe("analytics", () => {
     expect(scrubbed({ type: "pageview", url: "not a url" })).toBeNull();
   });
 
-  it("starts only in the live build, with the scrubbing in place", () => {
+  it("starts only in the live build, once it is switched on, with the scrubbing in place", () => {
     const load = vi.fn();
-    startAnalytics({ production: false, load });
+    startAnalytics({ production: false, enabled: true, load });
+    startAnalytics({ production: true, enabled: false, load });
     expect(load).not.toHaveBeenCalled();
-    startAnalytics({ production: true, load });
+    startAnalytics({ production: true, enabled: true, load });
     expect(load).toHaveBeenCalledWith({ mode: "production", beforeSend: scrubbed });
+  });
+
+  it("stays off until Web Analytics is enabled for the project in Vercel", () => {
+    // until then the site answers the script's address with its own page, and the browser logs an error on every visit
+    const load = vi.fn();
+    startAnalytics({ production: true, load });
+    expect(load).not.toHaveBeenCalled();
   });
 });

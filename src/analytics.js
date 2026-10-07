@@ -18,9 +18,16 @@ export function scrubbed(event) {
 }
 
 /**
+ * On once Web Analytics is enabled for the project in Vercel (Analytics, then Enable, then a new
+ * deployment). Before that the site answers the script's address with its own page, which the
+ * browser refuses to run, logging an error on every visit.
+ */
+const VERCEL_ANALYTICS_ENABLED = false;
+
+/**
  * Starts counting page views in the live build; local runs and tests count nothing. The mode is
  * set rather than guessed, so the live site never loads the debug script from Vercel's own host.
  */
-export function startAnalytics({ production = import.meta.env.PROD, load = inject } = {}) {
-  if (production) load({ mode: "production", beforeSend: scrubbed });
+export function startAnalytics({ production = import.meta.env.PROD, enabled = VERCEL_ANALYTICS_ENABLED, load = inject } = {}) {
+  if (production && enabled) load({ mode: "production", beforeSend: scrubbed });
 }
