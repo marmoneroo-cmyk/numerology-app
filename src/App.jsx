@@ -4,6 +4,7 @@ import WorkspaceApp from "./workspace/WorkspaceApp.jsx";
 import { ContentContext } from "./workspace/content.js";
 import { useAccount, AccountGate } from "./account/AccountContext.jsx";
 import AccountScreen from "./account/AccountScreen.jsx";
+import LegalPage from "./legal/LegalPage.jsx";
 import StudioNav from "./StudioNav.jsx";
 import { flushSync } from "react-dom";
 import { attachRipple, withViewTransition } from "./studio/motion.js";
@@ -1143,6 +1144,9 @@ const OWNER_STORE_KEY = "numerology_owner_mode";
 const LEADS_STORE_KEY = "numerology_leads_v1";
 const LEAD_DONE_KEY = "numerology_lead_done";
 const LEAD_GATE = true; // gate the full reading behind a contact detail (customer view only)
+/** The pages a link opens by name, before any sign-in: #terms, #privacy and #refunds. */
+const LEGAL_PAGES = ["terms", "privacy", "refunds"];
+const legalFromHash = () => { try { const page = location.hash.slice(1); return LEGAL_PAGES.includes(page) ? page : null; } catch (e) { return null; } };
 const loadLeads = () => { try { return JSON.parse(localStorage.getItem(LEADS_STORE_KEY) || "[]") || []; } catch (e) { return []; } };
 const saveLead = (lead) => { try { const a = loadLeads(); a.unshift(lead); localStorage.setItem(LEADS_STORE_KEY, JSON.stringify(a.slice(0, 1000))); } catch (e) {} };
 
@@ -1426,7 +1430,7 @@ function LeadCapture({ he, dk }) {
         <input value={email} onChange={e => setEmail(e.target.value)} placeholder={he ? "המייל שלך…" : "Your email…"} dir="ltr" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: 14, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
         <button className="gb" onClick={submit} style={{ width: "auto", padding: "12px 18px", fontSize: 13 }}>{he ? "הצטרפו" : "Join"}</button>
       </div>}
-    <p style={{ fontSize: 10, color: ts, opacity: .55, marginTop: 10 }}>{he ? "* כרגע נשלח לוואטסאפ; ניתן לחבר לרשימת תפוצה אמיתית" : "* Currently sent to WhatsApp; can connect a real mailing list"}</p>
+    <p style={{ fontSize: 10, color: ts, opacity: .55, marginTop: 10 }}>{he ? "* ההרשמה נשלחת בהודעת וואטסאפ" : "* Signing up sends a WhatsApp message"}</p>
   </div></SR>);
 }
 
@@ -1553,6 +1557,10 @@ export default function App(){
   const[streak,setStreak]=useState(0);
   const[owner,setOwner]=useState(()=>{try{const h=location.hash+location.search;if(/customer/i.test(h))return false;if(/owner|studio|admin/i.test(h))return true;return localStorage.getItem(OWNER_STORE_KEY)!=="customer";}catch(e){return true;}});const[previewCustomer,setPreviewCustomer]=useState(false);
   const[leadDone,setLeadDone]=useState(()=>{try{return localStorage.getItem(LEAD_DONE_KEY)==="1";}catch(e){return false;}});
+  // the terms, privacy and refund pages (the footer's links): shown in place of everything else, before any sign-in
+  const[legalDoc,setLegalDoc]=useState(legalFromHash);
+  useEffect(()=>{const follow=()=>setLegalDoc(legalFromHash());window.addEventListener("hashchange",follow);return()=>window.removeEventListener("hashchange",follow);},[]);
+  const closeLegal=()=>{try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}setLegalDoc(null);};
 
   const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
   // Shani's interpretation content, shared with the client workspace (src/workspace)
@@ -1624,7 +1632,7 @@ export default function App(){
   ]:[];
 
   const showOwnerUI = owner && !previewCustomer; // owner console vs. public customer landing
-  useEffect(()=>{if(showOwnerUI)account.activate();},[showOwnerUI]); // the account machinery loads only for the Studio
+  useEffect(()=>{if(showOwnerUI&&!legalDoc)account.activate();},[showOwnerUI,legalDoc]); // the account machinery loads only for the Studio, not under a legal page
   // the Studio's look: its theme tokens follow the dark/light switch, and its buttons answer a press with the gold ripple
   useEffect(()=>{document.documentElement.dataset.stTheme=dk?"dark":"light";},[dk]);
   useEffect(()=>(showOwnerUI?attachRipple(document,RIPPLE_TARGETS):undefined),[showOwnerUI]);
@@ -1753,7 +1761,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     </div>
 
     <div className={showOwnerUI?"st-root":undefined} style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?1240:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
-      {showOwnerUI&&!studioReady?<AccountGate he={he} dk={dk} onLeave={exitOwner}/>:(<>
+      {legalDoc?<LegalPage doc={legalDoc} he={he} dk={dk} onBack={closeLegal}/>:showOwnerUI&&!studioReady?<AccountGate he={he} dk={dk} onLeave={exitOwner}/>:(<>
 
       {/* Header (owner) / Hero (customer) */}
       {showOwnerUI?(
