@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createAccountService, AccountError } from "../service.js";
 import { SessionError } from "../../data/serverBackend.js";
 
-function fakeClient({ signInError = null, rpcResults = {}, rpcErrors = {}, invokeResult = { data: { userId: "u9" }, error: null } } = {}) {
+function fakeClient({ signInError = null, updateUserError = null, rpcResults = {}, rpcErrors = {}, invokeResult = { data: { userId: "u9" }, error: null } } = {}) {
   const calls = [];
   const client = {
     calls,
@@ -22,7 +22,7 @@ function fakeClient({ signInError = null, rpcResults = {}, rpcErrors = {}, invok
       getSession: async () => ({ data: { session: { access_token: "jwt" } }, error: null }),
       updateUser: async (attrs) => {
         calls.push(["updateUser", attrs]);
-        return { data: {}, error: null };
+        return { data: {}, error: updateUserError };
       },
     },
     rpc: async (fn, args) => {
@@ -105,9 +105,16 @@ describe("account service", () => {
     await expect(make(down).admin.createAccount({})).rejects.toEqual(new AccountError("unavailable"));
   });
 
-  it("changes the password through Auth", async () => {
-    await make(client).changePassword("a-new-password");
-    expect(client.calls[0]).toEqual(["updateUser", { password: "a-new-password" }]);
+  it("changes the password through Auth, sending the current one for Auth to check", async () => {
+    await make(client).changePassword("a-new-password", "the-old-password");
+    expect(client.calls[0]).toEqual(["updateUser", { password: "a-new-password", current_password: "the-old-password" }]);
+    // a reset session (an emailed code) has no current password to give, and Auth asks it for none
+    const reset = fakeClient();
+    await make(reset).changePassword("a-new-password");
+    expect(reset.calls[0]).toEqual(["updateUser", { password: "a-new-password" }]);
+    const wrong = fakeClient({ updateUserError: { status: 400, code: "current_password_invalid", message: "Current password required when setting new password." } });
+    await expect(make(wrong).changePassword("a-new-password", "a-wrong-one")).rejects.toEqual(new AccountError("current_password_invalid"));
+    expect(wrong.calls.some(([name]) => name === "signOut")).toBe(false); // nothing changed, so nobody is signed out
   });
 
   it("tells whoever watches when the server no longer accepts this login", async () => {

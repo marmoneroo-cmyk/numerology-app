@@ -87,7 +87,7 @@ describe("the account screens in English", () => {
   it("my account: details, a password that is too short, two-step setup and a failed start", async () => {
     const service = {
       updateProfile: vi.fn(async () => { throw new Error("offline"); }),
-      changePassword: vi.fn(async () => { throw new AccountError("weak_password"); }),
+      changePassword: vi.fn(async () => { throw new AccountError("unavailable"); }),
       myDevices: vi.fn(async () => [{ id: "d1", label: "Firefox · Linux", status: "approved", createdAt: "2026-10-01T10:00:00Z", lastSeenAt: "2026-10-05T10:00:00Z", current: true }]),
       revokeMyDevice: vi.fn(),
       mfaState: vi.fn(async () => ({ level: "aal1", needsCode: false, factorId: null })),
@@ -98,6 +98,9 @@ describe("the account screens in English", () => {
     expect(await screen.findByText(/Plan: Basic · up to 1 device/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Save details" }));
     expect(await screen.findByText("Saving failed. Try again.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Change password" }));
+    expect(await screen.findByText("Type the current password")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Current password"), { target: { value: "the-old-password" } });
     fireEvent.change(screen.getByLabelText("New password"), { target: { value: "short" } });
     fireEvent.click(screen.getByRole("button", { name: "Change password" }));
     expect(await screen.findByText("At least 10 characters")).toBeTruthy();

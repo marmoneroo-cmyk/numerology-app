@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, Field, ScreenTitle, colors, btnPrimary, btnGhost } from "../workspace/ui.jsx";
 import PasswordInput from "./PasswordInput.jsx";
-import { isEmail, MIN_PASSWORD, MAX_PASSWORD } from "./labels.js";
+import { isEmail, MIN_PASSWORD, MAX_PASSWORD, NEW_PASSWORD_PROBLEMS } from "./labels.js";
 
 const narrow = { maxWidth: 440, margin: "24px auto" };
 const SIGN_IN_ERRORS = {
@@ -148,8 +148,7 @@ export function ResetScreen({ he, dk, account }) {
 }
 
 const NEW_PASSWORD_ERRORS = {
-  same_password: ["זו הסיסמה הנוכחית. בחרו סיסמה אחרת.", "That is the current password. Choose another one."],
-  weak_password: ["הסיסמה חלשה מדי. נסו סיסמה ארוכה יותר.", "The password is too weak. Try a longer one."],
+  ...NEW_PASSWORD_PROBLEMS,
   unavailable: ["השמירה נכשלה. נסו שוב.", "Saving failed. Try again."],
 };
 

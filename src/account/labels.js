@@ -62,6 +62,12 @@ export function generatePassword(length = 14) {
 export const MIN_PASSWORD = 10;
 export const MAX_PASSWORD = 72;
 
+/** What Auth's refusals of a new password mean, as [Hebrew, English]. */
+export const NEW_PASSWORD_PROBLEMS = {
+  same_password: ["זו הסיסמה הנוכחית. בחרו סיסמה אחרת.", "That is the current password. Choose another one."],
+  weak_password: ["הסיסמה חלשה מדי. נסו סיסמה ארוכה יותר.", "The password is too weak. Try a longer one."],
+};
+
 const EMAIL = /^[A-Za-z0-9_%+'-]+([.][A-Za-z0-9_%+'-]+)*@[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?([.][A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*[.][A-Za-z]{2,}$/;
 
 /**

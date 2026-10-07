@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import { Card, Field, SectionTitle, ScreenTitle, ConfirmAction, Loading, ErrorCard, useLoad, colors, btnPrimary, btnGhost } from "../workspace/ui.jsx";
 import { countLabel } from "../workspace/format.js";
-import { planLabel, dateTime, MIN_PASSWORD } from "./labels.js";
+import { planLabel, dateTime, MIN_PASSWORD, NEW_PASSWORD_PROBLEMS } from "./labels.js";
 import { QrCode, qrMatrix } from "./qr.jsx";
 import PasswordInput from "./PasswordInput.jsx";
 
@@ -66,34 +66,54 @@ function Details({ account, he, c }) {
 }
 
 function Password({ account, he, c }) {
+  const [current, setCurrent] = useState("");
   const [first, setFirst] = useState("");
   const [second, setSecond] = useState("");
+  const [currentError, setCurrentError] = useState(null);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(false);
+  /** One message at a time, under the field it is about ("current" or the new password). */
+  const show = (field, text) => {
+    setCurrentError(field === "current" ? text : null);
+    setError(field === "current" ? null : text);
+  };
+  const clear = () => {
+    setCurrent("");
+    setFirst("");
+    setSecond("");
+  };
   const change = async (e) => {
     e.preventDefault();
     setDone(false);
-    if (first.length < MIN_PASSWORD) return setError(he ? `לפחות ${MIN_PASSWORD} תווים` : `At least ${MIN_PASSWORD} characters`);
-    if (first !== second) return setError(he ? "הסיסמאות לא זהות" : "The passwords differ");
-    setError(null);
+    if (!current) return show("current", he ? "הקלידו את הסיסמה הנוכחית" : "Type the current password");
+    if (first.length < MIN_PASSWORD) return show("new", he ? `לפחות ${MIN_PASSWORD} תווים` : `At least ${MIN_PASSWORD} characters`);
+    if (first !== second) return show("new", he ? "הסיסמאות לא זהות" : "The passwords differ");
+    show("new", null);
     try {
-      await account.service.changePassword(first);
-      setFirst("");
-      setSecond("");
+      await account.service.changePassword(first, current);
+      clear();
       setDone(true);
     } catch (err) {
-      if (err?.code !== "sessions_not_ended") return setError(he ? "ההחלפה נכשלה. נסו שוב." : "Changing failed. Try again.");
+      const code = err?.code;
+      if (code === "current_password_invalid" || code === "current_password_required") {
+        setCurrent("");
+        return show("current", he ? "הסיסמה הנוכחית שגויה" : "The current password is wrong");
+      }
+      if (NEW_PASSWORD_PROBLEMS[code]) return show("new", NEW_PASSWORD_PROBLEMS[code][he ? 0 : 1]);
+      if (code !== "sessions_not_ended") return show("new", he ? "ההחלפה נכשלה. נסו שוב." : "Changing failed. Try again.");
       // the password did change; signing in again signs every other device out (the database does it on each sign-in)
-      setFirst("");
-      setSecond("");
+      clear();
       setDone(true);
-      setError(he ? "הסיסמה הוחלפה, אבל לא הצלחנו לנתק את המכשירים האחרים. כדאי להתנתק ולהתחבר מחדש." : "The password changed, but the other devices could not be signed out. Sign out and in again.");
+      show("new", he ? "הסיסמה הוחלפה, אבל לא הצלחנו לנתק את המכשירים האחרים. כדאי להתנתק ולהתחבר מחדש." : "The password changed, but the other devices could not be signed out. Sign out and in again.");
     }
   };
   return (
     <Card>
       <SectionTitle c={c}>{he ? "סיסמה" : "Password"}</SectionTitle>
       <form onSubmit={change} noValidate>
+        <Field label={he ? "סיסמה נוכחית" : "Current password"} error={currentError} c={c}>
+          {(id) => <PasswordInput id={id} he={he} c={c} autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />}
+        </Field>
         <Field label={he ? "סיסמה חדשה" : "New password"} error={error} c={c}>
           {(id) => <PasswordInput id={id} he={he} c={c} autoComplete="new-password" value={first} onChange={(e) => setFirst(e.target.value)} />}
         </Field>

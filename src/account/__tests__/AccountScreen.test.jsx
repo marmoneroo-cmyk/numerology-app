@@ -43,22 +43,45 @@ describe("my account", () => {
     expect(account.updateProfile).toHaveBeenCalledWith({ fullName: "דנה לוי-כהן", phone: "052-1234567" });
   });
 
-  it("changes the password only when it is long enough and typed twice the same", async () => {
+  it("changes the password only with the current one, and a new one long enough and typed twice the same", async () => {
     const { service } = setup();
-    const change = (a, b) => {
+    const change = (now, a, b) => {
+      fireEvent.change(screen.getByLabelText("סיסמה נוכחית"), { target: { value: now } });
       fireEvent.change(screen.getByLabelText("סיסמה חדשה"), { target: { value: a } });
       fireEvent.change(screen.getByLabelText("הסיסמה החדשה שוב"), { target: { value: b } });
       fireEvent.click(screen.getByRole("button", { name: "החלפת סיסמה" }));
     };
-    await screen.findByLabelText("סיסמה חדשה");
-    change("short", "short");
+    await screen.findByLabelText("סיסמה נוכחית");
+    change("", "a-long-password", "a-long-password");
+    expect(await screen.findByText("הקלידו את הסיסמה הנוכחית")).toBeTruthy();
+    change("the-old-password", "short", "short");
     expect(await screen.findByText("לפחות 10 תווים")).toBeTruthy();
-    change("a-long-password", "a-long-passw0rd");
+    change("the-old-password", "a-long-password", "a-long-passw0rd");
     expect(await screen.findByText("הסיסמאות לא זהות")).toBeTruthy();
     expect(service.changePassword).not.toHaveBeenCalled();
-    change("a-long-password", "a-long-password");
+    change("the-old-password", "a-long-password", "a-long-password");
     expect(await screen.findByText("הסיסמה הוחלפה")).toBeTruthy();
-    expect(service.changePassword).toHaveBeenCalledWith("a-long-password");
+    expect(service.changePassword).toHaveBeenCalledWith("a-long-password", "the-old-password");
+    for (const label of ["סיסמה נוכחית", "סיסמה חדשה", "הסיסמה החדשה שוב"]) expect(screen.getByLabelText(label).value).toBe("");
+  });
+
+  it("says on its own field when the current password is wrong, and when the new one is the same as it", async () => {
+    const changePassword = vi.fn().mockRejectedValueOnce(new AccountError("current_password_invalid")).mockRejectedValueOnce(new AccountError("same_password"));
+    setup({ service: { changePassword } });
+    fireEvent.change(await screen.findByLabelText("סיסמה נוכחית"), { target: { value: "a-wrong-password" } });
+    fireEvent.change(screen.getByLabelText("סיסמה חדשה"), { target: { value: "a-long-password" } });
+    fireEvent.change(screen.getByLabelText("הסיסמה החדשה שוב"), { target: { value: "a-long-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "החלפת סיסמה" }));
+    expect(await screen.findByText("הסיסמה הנוכחית שגויה")).toBeTruthy();
+    expect(screen.getByLabelText("סיסמה נוכחית").getAttribute("aria-invalid")).toBe("true");
+    // the wrong one is cleared for a new try; the new password stays typed
+    expect(screen.getByLabelText("סיסמה נוכחית").value).toBe("");
+    expect(screen.getByLabelText("סיסמה חדשה").value).toBe("a-long-password");
+    fireEvent.change(screen.getByLabelText("סיסמה נוכחית"), { target: { value: "a-long-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "החלפת סיסמה" }));
+    expect(await screen.findByText("זו הסיסמה הנוכחית. בחרו סיסמה אחרת.")).toBeTruthy();
+    expect(screen.queryByText("הסיסמה הנוכחית שגויה")).toBeNull();
+    expect(screen.queryByText("הסיסמה הוחלפה")).toBeNull();
   });
 
   it("lists the devices, marks this one, and removes another after a confirmation", async () => {
@@ -88,10 +111,11 @@ describe("my account", () => {
 
   it("changes the password with Enter as well", async () => {
     const { service } = setup();
-    fireEvent.change(await screen.findByLabelText("סיסמה חדשה"), { target: { value: "a-long-password" } });
+    fireEvent.change(await screen.findByLabelText("סיסמה נוכחית"), { target: { value: "the-old-password" } });
+    fireEvent.change(screen.getByLabelText("סיסמה חדשה"), { target: { value: "a-long-password" } });
     fireEvent.change(screen.getByLabelText("הסיסמה החדשה שוב"), { target: { value: "a-long-password" } });
     fireEvent.submit(screen.getByLabelText("הסיסמה החדשה שוב").closest("form"));
-    await waitFor(() => expect(service.changePassword).toHaveBeenCalledWith("a-long-password"));
+    await waitFor(() => expect(service.changePassword).toHaveBeenCalledWith("a-long-password", "the-old-password"));
   });
 
   it("sets up two-step verification: a sparse QR code, the key and the phone link, then a code from the app, and this session counts as verified", async () => {

@@ -146,11 +146,13 @@ export function createAccountService({ client, deviceKey, deviceLabel }) {
     },
     /**
      * A new password, then every other login of the account is signed out: one made with the old
-     * password, or a copied one, must not go on working. "sessions_not_ended" means the password
+     * password, or a copied one, must not go on working. Auth checks `currentPassword`, so a
+     * login left open on a shared device cannot lock its owner out; a reset session (an emailed
+     * code) has none to give, and Auth asks it for none. "sessions_not_ended" means the password
      * changed but the others may still be signed in.
      */
-    async changePassword(password) {
-      const { error } = await client.auth.updateUser({ password });
+    async changePassword(password, currentPassword) {
+      const { error } = await client.auth.updateUser(currentPassword ? { password, current_password: currentPassword } : { password });
       if (error) throw new AccountError(error.code || "unavailable");
       const { error: others } = await client.auth.signOut({ scope: "others" });
       if (others) throw new AccountError("sessions_not_ended");
