@@ -293,7 +293,7 @@ function privacy(name) {
             `בכל חשבון יכול להיות חיבור פעיל אחד בלבד, ומספר המכשירים מוגבל. כל מכשיר נשמר עם תיאור קצר של הדפדפן ומערכת ההפעלה (למשל Chrome ו-Windows).`,
             `אירועי כניסה ואבטחה נשמרים ביומן ביקורת לכ-400 ימים.`,
             `המטרה: לנהל את החשבונות, לאבטח אותם ולמנוע שימוש בלי רשות. אין חובה חוקית למסור את הפרטים, אבל בלעדיהם אי אפשר לפתוח חשבון.`,
-            `המערכת אינה שולחת כרגע הודעות דוא"ל: הודעות הדוא"ל המובנות של מערכת הכניסה כבויות.`,
+            `המערכת שולחת דוא"ל רק בענייני אבטחת החשבון, למשל קוד לבחירת סיסמה חדשה. ההודעות נשלחות דרך שירות הדואר של Google (Gmail).`,
           ],
         },
         {
@@ -314,6 +314,7 @@ function privacy(name) {
             `Vercel: אחסון האתר וסטטיסטיקת הביקורים.`,
             `Google Fonts: הגופנים באתר.`,
             `Unsplash: תמונת הרקע בראש האתר.`,
+            `Google (Gmail): משלוח הודעות הדוא"ל של החשבונות.`,
             `WhatsApp: הודעות שתבחרו לשלוח אלינו.`,
           ],
         },
@@ -415,7 +416,7 @@ function privacy(name) {
             `Each account can have one active session at a time and a limited number of devices. Each device is recorded with a short label naming the browser and operating system (for example, Chrome on Windows).`,
             `Sign-in and security events are kept in an audit log for about 400 days.`,
             `Purpose: to manage the accounts, secure them and prevent unauthorised use. There is no legal duty to provide these details, but an account cannot be opened without them.`,
-            `The system sends no email at present: the built-in sign-in emails are turned off.`,
+            `The system sends email only about account security, such as a code for choosing a new password. These emails go out through Google's email service (Gmail).`,
           ],
         },
         {
@@ -436,6 +437,7 @@ function privacy(name) {
             `Vercel: website hosting and visit statistics.`,
             `Google Fonts: the website's fonts.`,
             `Unsplash: the background image at the top of the website.`,
+            `Google (Gmail): sending the account emails.`,
             `WhatsApp: messages you choose to send us.`,
           ],
         },
@@ -511,13 +513,17 @@ function refunds(name) {
         {
           title: "ביטול בתוך 14 ימים",
           paragraphs: [
-            `לפי חוק הגנת הצרכן, התשמ"א-1981, אפשר לבטל עסקת מכר מרחוק בתוך 14 ימים מיום העסקה או מיום קבלת המסמך עם פרטי העסקה, לפי המאוחר מביניהם.`,
-            `זכות הביטול חלה בתנאים ובחריגים שקובע החוק.`,
+            `אפשר לבטל את המנוי בתוך 14 ימים מיום העסקה או מיום קבלת המסמך עם פרטי העסקה, לפי המאוחר מביניהם.`,
+            `הזכות הזאת ניתנת לכל המנויים, גם למי שרוכשים את המנוי לעסק שלהם ואינם "צרכנים" לפי חוק הגנת הצרכן, התשמ"א-1981.`,
+            `מנויים שהם צרכנים זכאים גם לכל זכות נוספת שהחוק מקנה להם.`,
           ],
         },
         {
           title: "דמי ביטול",
-          paragraphs: [`כאשר החוק מתיר זאת, אנחנו רשאים לגבות דמי ביטול של עד 5% ממחיר העסקה או 100 ש"ח, לפי הנמוך מביניהם.`],
+          paragraphs: [
+            `בביטול בתוך 14 הימים אנחנו רשאים לגבות דמי ביטול של עד 5% ממחיר העסקה או 100 ש"ח, לפי הנמוך מביניהם.`,
+            `ממנויים שהם צרכנים נגבה דמי ביטול רק כאשר החוק מתיר זאת.`,
+          ],
         },
         {
           title: "איך מבטלים",
@@ -529,7 +535,7 @@ function refunds(name) {
         },
         {
           title: "החזר כספי",
-          paragraphs: [`לאחר ביטול כדין נחזיר את הסכום ששולם, בניכוי דמי ביטול אם החוק מתיר אותם, בתוך הזמן שקובע החוק.`],
+          paragraphs: [`לאחר ביטול בתוך 14 הימים נחזיר את הסכום ששולם, בניכוי דמי הביטול, בתוך 14 ימים מיום קבלת הודעת הביטול.`],
         },
         {
           title: "הפסקת המנוי",
@@ -566,13 +572,17 @@ function refunds(name) {
         {
           title: "Cancelling within 14 days",
           paragraphs: [
-            `Under the Consumer Protection Law, 5741-1981, a distance transaction may be cancelled within 14 days of the transaction, or of receiving the document with its details, whichever is later.`,
-            `The right to cancel applies on the terms, and with the exceptions, that the law sets.`,
+            `A subscription may be cancelled within 14 days of the transaction, or of receiving the document with its details, whichever is later.`,
+            `This right is given to every subscriber, including those who buy the subscription for their business and are not "consumers" under the Consumer Protection Law, 5741-1981.`,
+            `Subscribers who are consumers also have every further right the law gives them.`,
           ],
         },
         {
           title: "Cancellation fee",
-          paragraphs: [`Where the law allows it, we may charge a cancellation fee of up to 5% of the price or 100 NIS, whichever is lower.`],
+          paragraphs: [
+            `On a cancellation within the 14 days we may charge a cancellation fee of up to 5% of the price or 100 NIS, whichever is lower.`,
+            `From subscribers who are consumers we charge a cancellation fee only where the law allows it.`,
+          ],
         },
         {
           title: "How to cancel",
@@ -584,7 +594,7 @@ function refunds(name) {
         },
         {
           title: "Refunds",
-          paragraphs: [`After a lawful cancellation we will refund the amount paid, less any cancellation fee the law allows, within the time the law sets.`],
+          paragraphs: [`After a cancellation within the 14 days we will refund the amount paid, less the cancellation fee, within 14 days of receiving the cancellation notice.`],
         },
         {
           title: "Ending the subscription",

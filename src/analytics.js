@@ -18,11 +18,11 @@ export function scrubbed(event) {
 }
 
 /**
- * On once Web Analytics is enabled for the project in Vercel (Analytics, then Enable, then a new
- * deployment). Before that the site answers the script's address with its own page, which the
- * browser refuses to run, logging an error on every visit.
+ * Web Analytics is enabled for the project in Vercel (2026-10-07). Turning it off there needs this
+ * off too: the site would answer the script's address with its own page, which the browser refuses
+ * to run, logging an error on every visit.
  */
-const VERCEL_ANALYTICS_ENABLED = false;
+const VERCEL_ANALYTICS_ENABLED = true;
 
 /**
  * Starts counting page views in the live build; local runs and tests count nothing. The mode is

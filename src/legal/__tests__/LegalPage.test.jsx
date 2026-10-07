@@ -116,14 +116,15 @@ describe("legal pages", () => {
 
   it("names on the privacy page the providers, where the data is kept, and the right to inspect and correct it", () => {
     const he = render(<LegalPage doc="privacy" />).container.textContent;
-    for (const name of ["Supabase", "Vercel", "WhatsApp", "Google Fonts", "Unsplash", "פרנקפורט", "סעיף 13", "סעיף 14", "התחזית החודשית"]) expect(he).toContain(name);
+    for (const name of ["Supabase", "Vercel", "WhatsApp", "Google Fonts", "Unsplash", "Gmail", "פרנקפורט", "סעיף 13", "סעיף 14", "התחזית החודשית"]) expect(he).toContain(name);
+    expect(he).not.toContain("אינה שולחת"); // the account emails go out now (custom SMTP)
     // any form of the name: after a prefix such as ב the article ה drops ("באיחוד האירופי", in the EU)
     expect(he).toMatch(/איחוד האירופי|אירופה/);
     expect(he).toContain("לעיין במידע");
     expect(he).toContain("לתקן אותו");
     cleanup();
     const en = render(<LegalPage doc="privacy" he={false} />).container.textContent;
-    for (const name of ["Supabase", "Vercel", "WhatsApp", "Google Fonts", "Unsplash", "Frankfurt", "European Union", "monthly forecast"]) expect(en).toContain(name);
+    for (const name of ["Supabase", "Vercel", "WhatsApp", "Google Fonts", "Unsplash", "Gmail", "Frankfurt", "European Union", "monthly forecast"]) expect(en).toContain(name);
     expect(en).toContain("inspect");
     expect(en).toContain("corrected");
   });
@@ -132,10 +133,15 @@ describe("legal pages", () => {
     const he = render(<LegalPage doc="refunds" />).container.textContent;
     expect(he).toContain("14 ימים");
     expect(he).toContain('5% ממחיר העסקה או 100 ש"ח');
+    // the owner's choice: every subscriber may cancel, also one buying for a business, whom the law may not cover
+    expect(he).toContain("לכל המנויים");
+    expect(he).toContain("בתוך 14 ימים מיום קבלת הודעת הביטול");
     cleanup();
     const en = render(<LegalPage doc="refunds" he={false} />).container.textContent;
     expect(en).toContain("14 days");
     expect(en).toContain("5% of the price or 100 NIS");
+    expect(en).toContain("every subscriber");
+    expect(en).toContain("within 14 days of receiving the cancellation notice");
   });
 
   it("shows the operator's legal name after מפעיל השירות once it is set, and nothing in its place while it is not", () => {

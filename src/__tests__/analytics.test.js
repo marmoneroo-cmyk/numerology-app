@@ -25,10 +25,9 @@ describe("analytics", () => {
     expect(load).toHaveBeenCalledWith({ mode: "production", beforeSend: scrubbed });
   });
 
-  it("stays off until Web Analytics is enabled for the project in Vercel", () => {
-    // until then the site answers the script's address with its own page, and the browser logs an error on every visit
+  it("is on in the live build, now that Web Analytics is enabled for the project in Vercel", () => {
     const load = vi.fn();
     startAnalytics({ production: true, load });
-    expect(load).not.toHaveBeenCalled();
+    expect(load).toHaveBeenCalledWith({ mode: "production", beforeSend: scrubbed });
   });
 });
