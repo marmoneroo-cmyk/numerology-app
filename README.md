@@ -1,80 +1,15 @@
-# 🔮 Numerology Oracle — Railway Deployment Guide
+# Numerology Oracle
 
-## מדריך העלאה ל-Railway (בעברית)
+A Hebrew-first numerology site with the practitioner's Studio. Vite + React; static files on Vercel; subscriber accounts on Supabase (database rules in `supabase/migrations`, the admin Edge Function in `supabase/functions/admin-accounts`).
 
-### שלב 1: העלאה ל-GitHub
-```bash
-# צור ריפו חדש ב-GitHub (דרך github.com → New Repository)
-# אח"כ בטרמינל:
-
-cd numerology-app
-git init
-git add .
-git commit -m "Numerology Oracle v7"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/numerology-app.git
-git push -u origin main
+## Run it locally
+```
+npm install
+npm run dev
 ```
 
-### שלב 2: חיבור ל-Railway
-1. היכנס ל-**[railway.app](https://railway.app)** (עם חשבון ה-GitHub שלך)
-2. לחץ **"New Project"**
-3. בחר **"Deploy from GitHub Repo"**
-4. בחר את ה-repo **numerology-app**
-5. **זהו!** Railway יזהה אוטומטית שזה Node.js ויריץ:
-   - `npm install`
-   - `npm run build`
-   - `npm start`
-
-### שלב 3: קבלת כתובת URL
-1. לחץ על הפרויקט ב-Railway
-2. לחץ **"Settings"** → **"Generate Domain"**
-3. תקבל כתובת כמו: `numerology-app-production.up.railway.app`
-4. **זה הכל — האפליקציה שלך באוויר!** 🎉
-
----
-
-### שינויים עתידיים
-כשאתה עושה `git push` — Railway עושה deploy אוטומטי תוך ~30 שניות.
-
-```bash
-# אחרי שינוי בקוד:
-git add .
-git commit -m "עדכון"
-git push
-# Railway יעדכן אוטומטית
-```
-
----
-
-## English Guide
-
-### Step 1: Push to GitHub
-```bash
-cd numerology-app
-git init
-git add .
-git commit -m "Numerology Oracle v7"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/numerology-app.git
-git push -u origin main
-```
-
-### Step 2: Connect to Railway
-1. Go to **[railway.app](https://railway.app)**
-2. Click **"New Project"** → **"Deploy from GitHub Repo"**
-3. Select **numerology-app**
-4. Railway auto-detects Node.js and runs build + start
-
-### Step 3: Get your URL
-1. In Railway dashboard, click your project
-2. Go to **Settings** → **Generate Domain**
-3. You'll get something like: `numerology-app-production.up.railway.app`
-
-### Updates
-Every `git push` triggers automatic redeployment.
-
----
+## Deploy
+Every push to `main` deploys to Vercel. Its build runs `npm test && npm run build`, so a failing test stops the deploy. Other branches get a preview, which only the project's Vercel login can open. Security headers and the CSP come from `vercel.json`; nothing else serves `dist/`.
 
 ## Project Structure
 ```

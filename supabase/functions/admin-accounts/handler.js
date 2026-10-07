@@ -70,8 +70,10 @@ export async function handleRequest(req, { url, publishableKey, secretKey, allow
   const noSession = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } };
   const asCaller = createClient(url, publishableKey, { ...noSession, global: { headers: { Authorization: authorization } } });
   const { data: isAdmin, error: checkError } = await asCaller.rpc("am_i_admin");
-  // a database that answered "no" (or refused the token) is a refusal; one that did not answer is an outage
-  if (checkError && !/^[0-9A-Z]{5}$/.test(checkError.code || "") && !/JWT|token/i.test(checkError.message || "")) return reply(503, { error: "unavailable" });
+  // a database that answered "no" (or refused the token, PGRST30x) is a refusal; one that did not answer is an outage
+  const code = checkError?.code || "";
+  const refused = /^[0-9A-Z]{5}$/.test(code) || /^PGRST30[0-9]$/.test(code) || /JWT|token/i.test(checkError?.message || "");
+  if (checkError && !refused) return reply(503, { error: "unavailable" });
   if (checkError || isAdmin !== true) return reply(403, { error: "admins only" });
 
   let body;
@@ -110,11 +112,12 @@ export async function handleRequest(req, { url, publishableKey, secretKey, allow
     return reply(200, { userId, warnings });
   }
 
-  // set_password, then every session of the account ends (whatever Supabase does by itself)
+  // set_password, then every session of the account ends (whatever Supabase does by itself). The log
+  // entry comes first: an admin resetting their own password ends this very session with the second call.
   const userId = text(body.userId);
   const { error } = await admin.auth.admin.updateUserById(userId, { password: body.password });
   if (error) return reply(400, { error: /password/i.test(error.message || "") ? "invalid_password" : "update_failed" });
-  await asAdmin("admin_end_sessions", { p_user: userId }, "sessions_not_ended");
   await asAdmin("admin_log", { p_user: userId, p_action: "password_set" }, "not_logged");
+  await asAdmin("admin_end_sessions", { p_user: userId }, "sessions_not_ended");
   return reply(200, { status: "ok", warnings });
 }

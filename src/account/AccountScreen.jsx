@@ -81,8 +81,13 @@ function Password({ account, he, c }) {
       setFirst("");
       setSecond("");
       setDone(true);
-    } catch {
-      setError(he ? "ההחלפה נכשלה. נסו שוב." : "Changing failed. Try again.");
+    } catch (err) {
+      if (err?.code !== "sessions_not_ended") return setError(he ? "ההחלפה נכשלה. נסו שוב." : "Changing failed. Try again.");
+      // the password did change; signing in again signs every other device out (the database does it on each sign-in)
+      setFirst("");
+      setSecond("");
+      setDone(true);
+      setError(he ? "הסיסמה הוחלפה, אבל לא הצלחנו לנתק את המכשירים האחרים. כדאי להתנתק ולהתחבר מחדש." : "The password changed, but the other devices could not be signed out. Sign out and in again.");
     }
   };
   return (

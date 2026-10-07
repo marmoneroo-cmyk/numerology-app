@@ -129,12 +129,13 @@ describe("admin-accounts", () => {
     expect(await call(weak, request(create))).toMatchObject({ status: 400, body: { error: "invalid_password" } });
   });
 
-  it("sets a new password, then signs every session of that account out, and logs it", async () => {
+  it("sets a new password, logs it, then signs every session of that account out", async () => {
     expect(await call(fake, request({ action: "set_password", userId: USER, password: "another-good-one" }))).toMatchObject({ status: 200, body: { status: "ok", warnings: [] } });
     expect(fake.calls.find((c) => c.fn === "updateUserById")).toEqual({ as: "key sb_secret_test", fn: "updateUserById", args: { id: USER, password: "another-good-one" } });
+    // logged first: for an admin's own password, ending the sessions ends this request's session too
     expect(asCaller(fake).slice(1)).toEqual([
-      ["admin_end_sessions", { p_user: USER }],
       ["admin_log", { p_user: USER, p_action: "password_set" }],
+      ["admin_end_sessions", { p_user: USER }],
     ]);
   });
 });

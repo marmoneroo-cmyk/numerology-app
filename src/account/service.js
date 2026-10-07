@@ -117,10 +117,16 @@ export function createAccountService({ client, deviceKey, deviceLabel }) {
       const { error } = await mfa().unenroll({ factorId });
       if (error) throw new AccountError("unavailable");
     },
-    /** Makes this the account's only working session; then every other session is signed out. */
+    /**
+     * Makes this the account's only working session. The database signs the account's other
+     * logins out; this asks Auth to as well, and a failure there is not passed off as "ok".
+     */
     async claim() {
       const result = await rpc("claim_session", { p_device_key: deviceKey, p_label: deviceLabel });
-      if (result.status === "ok") await client.auth.signOut({ scope: "others" });
+      if (result.status === "ok") {
+        const { error } = await client.auth.signOut({ scope: "others" });
+        if (error) throw new AccountError("unavailable");
+      }
       return result;
     },
     status: () => rpc("session_status", { p_device_key: deviceKey }),
@@ -138,9 +144,16 @@ export function createAccountService({ client, deviceKey, deviceLabel }) {
       });
       return () => data.subscription.unsubscribe();
     },
+    /**
+     * A new password, then every other login of the account is signed out: one made with the old
+     * password, or a copied one, must not go on working. "sessions_not_ended" means the password
+     * changed but the others may still be signed in.
+     */
     async changePassword(password) {
       const { error } = await client.auth.updateUser({ password });
       if (error) throw new AccountError(error.code || "unavailable");
+      const { error: others } = await client.auth.signOut({ scope: "others" });
+      if (others) throw new AccountError("sessions_not_ended");
     },
     updateProfile: (fullName, phone) => rpc("update_my_profile", { p_full_name: fullName, p_phone: phone }),
     myDevices: () => rpc("my_devices"),

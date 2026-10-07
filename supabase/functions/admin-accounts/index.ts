@@ -15,7 +15,13 @@ const deps = {
   url: Deno.env.get("SUPABASE_URL") ?? "",
   publishableKey: keys("SUPABASE_PUBLISHABLE_KEYS", "SUPABASE_ANON_KEY"),
   secretKey: keys("SUPABASE_SECRET_KEYS", "SUPABASE_SERVICE_ROLE_KEY"),
-  allowedOrigins: ["https://numerology-app-orcin.vercel.app", "http://localhost:5273"],
+  // the live site and the redesign's preview (which only the project's Vercel login can open);
+  // the local dev server only where the function runs with ALLOW_LOCALHOST=1
+  allowedOrigins: [
+    "https://numerology-app-orcin.vercel.app",
+    "https://numerology-app-git-feat-stu-396328-shlomicohen44-9108s-projects.vercel.app",
+    ...(Deno.env.get("ALLOW_LOCALHOST") === "1" ? ["http://localhost:5273"] : []),
+  ],
   createClient,
 };
 

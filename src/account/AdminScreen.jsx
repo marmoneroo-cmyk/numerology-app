@@ -110,8 +110,15 @@ const CREATE_ERRORS = {
 };
 const errorText = (e, he) => (CREATE_ERRORS[e instanceof AccountError ? e.code : ""] || ["הפעולה נכשלה. נסו שוב.", "That failed. Try again."])[he ? 0 : 1];
 
-/** Email and password to give the subscriber, with a copy button. */
-function Handover({ email, password, he, c }) {
+/** What the admin function could not finish after the main step, in plain words. */
+const WARNINGS = {
+  sessions_not_ended: ["הסיסמה נקבעה, אבל המכשירים של החשבון לא נותקו. כדאי לקבוע סיסמה חדשה שוב.", "The password was set, but the account's devices were not signed out. Set a new password again."],
+  plan_not_set: ["החשבון נפתח, אבל המסלול לא נשמר. אפשר לקבוע אותו בפרטי החשבון.", "The account was opened, but its plan was not saved. Set it in the account's details."],
+  not_logged: ["הפעולה לא נרשמה ביומן.", "The action was not written to the log."],
+};
+
+/** Email and password to give the subscriber, with a copy button, and anything that did not go through. */
+function Handover({ email, password, warnings = [], he, c }) {
   const [copied, setCopied] = useState(false);
   const text = he ? `כניסה לסטודיו\nאימייל: ${email}\nסיסמה: ${password}` : `Studio sign-in\nEmail: ${email}\nPassword: ${password}`;
   const copy = async () => {
@@ -124,7 +131,16 @@ function Handover({ email, password, he, c }) {
   };
   return (
     <div data-testid="handover" style={{ border: `1px solid ${c.line}`, borderRadius: 14, padding: 14, margin: "12px 0" }}>
-      <p style={{ margin: "0 0 8px", fontSize: 13, color: c.ts }}>{he ? "העבירו את הפרטים למנוי/ה (למשל בוואטסאפ). הסיסמה לא תוצג שוב." : "Send these to the subscriber (e.g. on WhatsApp). The password is not shown again."}</p>
+      {warnings.length > 0 && (
+        <p role="alert" style={{ margin: "0 0 10px", fontSize: 13, color: c.danger, lineHeight: 1.6 }}>
+          {warnings.map((w) => (WARNINGS[w] || [w, w])[he ? 0 : 1]).join(" ")}
+        </p>
+      )}
+      <p style={{ margin: "0 0 8px", fontSize: 13, color: c.ts }}>
+        {he
+          ? "העבירו את הפרטים למנוי/ה (למשל בוואטסאפ), ובקשו להחליף את הסיסמה ולהפעיל אימות דו-שלבי בכניסה הראשונה. הסיסמה לא תוצג שוב."
+          : "Send these to the subscriber (e.g. on WhatsApp), and ask them to change the password and turn on two-step verification at the first sign-in. The password is not shown again."}
+      </p>
       <p dir="ltr" style={{ margin: 0, fontFamily: "monospace", fontSize: 14, textAlign: he ? "right" : "left" }}>{email}<br />{password}</p>
       <button className="ghost" style={{ ...btnGhost, marginTop: 10 }} onClick={copy}>{he ? "העתקת פרטי הכניסה" : "Copy sign-in details"}</button>
       {copied && <span role="status" style={{ fontSize: 12, color: c.ok, marginInlineStart: 8 }}>{he ? "הועתק" : "Copied"}</span>}
@@ -174,8 +190,8 @@ function CreateAccount({ admin, he, c, go, onChanged }) {
     setBusy(true);
     setError(null);
     try {
-      await admin.createAccount({ email, fullName: form.fullName.trim(), phone: form.phone.trim(), plan: form.plan, password: form.password });
-      setCreated({ email, password: form.password });
+      const result = await admin.createAccount({ email, fullName: form.fullName.trim(), phone: form.phone.trim(), plan: form.plan, password: form.password });
+      setCreated({ email, password: form.password, warnings: result?.warnings ?? [] });
       onChanged?.();
     } catch (e) {
       setError(errorText(e, he));
@@ -187,7 +203,7 @@ function CreateAccount({ admin, he, c, go, onChanged }) {
     return (
       <Card>
         <ScreenTitle c={c} size={24}>{he ? "החשבון נפתח" : "Account opened"}</ScreenTitle>
-        <Handover email={created.email} password={created.password} he={he} c={c} />
+        <Handover email={created.email} password={created.password} warnings={created.warnings} he={he} c={c} />
         <button className="ghost" style={btnGhost} onClick={() => go({ name: "list" })}>{he ? "חזרה לחשבונות" : "Back to accounts"}</button>
       </Card>
     );
@@ -243,8 +259,8 @@ function AccountDetails({ admin, he, c, me, go, userId, onChanged }) {
   };
   const newPassword = () => act(async () => {
     const password = generatePassword();
-    await admin.setPassword(a.id, password);
-    setHandover({ email: a.email, password });
+    const result = await admin.setPassword(a.id, password);
+    setHandover({ email: a.email, password, warnings: result?.warnings ?? [] });
   });
   return (
     <>
@@ -270,7 +286,7 @@ function AccountDetails({ admin, he, c, me, go, userId, onChanged }) {
             <button className="ghost" style={btnGhost} onClick={() => act(() => admin.updateAccount(a.id, { status: "active" }))}>{he ? "הפעלת החשבון מחדש" : "Activate the account again"}</button>
           )}
         </div>
-        {handover && <Handover email={handover.email} password={handover.password} he={he} c={c} />}
+        {handover && <Handover email={handover.email} password={handover.password} warnings={handover.warnings} he={he} c={c} />}
       </Card>
       <DeviceList devices={devices} he={he} c={c} onRevoke={(d) => act(() => admin.revokeDevice(d.id))} />
       <Card style={{ padding: "16px 14px" }}>

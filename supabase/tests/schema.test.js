@@ -211,9 +211,12 @@ describe("the workspace data", () => {
     const a = await signedIn();
     const b = await signedIn();
     const direct = (sql, args) => as(db, a, (tx) => tx.query(sql, args));
-    expect(await failure(direct("insert into public.ws_clients (owner_id, id, doc) values ($1, 'x', '{\"id\":\"x\"}')", [b.id]))).toMatch(/row-level security/);
+    // the tables take no writes of their own: everything goes through ws_batch, which names the caller's rows itself
+    expect(await failure(direct("insert into public.ws_clients (owner_id, id, doc) values ($1, 'x', jsonb_build_object('id', 'x'))", [b.id]))).toMatch(/permission denied/);
+    expect(await failure(direct("insert into public.ws_clients (id, doc) values ('x', jsonb_build_object('id', 'x'))"))).toMatch(/permission denied/);
     expect(await failure(rpc(db, a, "ws_batch", { p_ops: [put("clients", { id: "" })] }))).toMatch(/needs a value with an id/);
-    expect(await failure(direct("insert into public.ws_clients (id, doc) values ('x', '{\"id\":\"y\"}')"))).toMatch(/check constraint/);
+    // and the table itself still refuses a document whose id is not its row's
+    expect(await failure(db.query("insert into public.ws_clients (owner_id, id, doc) values ($1, 'x', jsonb_build_object('id', 'y'))", [a.id]))).toMatch(/check constraint/);
   });
 
   it("reads all three collections as one snapshot", async () => {

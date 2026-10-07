@@ -101,8 +101,14 @@ export function AccountProvider({ active, loadService = loadAccountService, self
     try {
       const result = await svc.claim();
       if (result.status === "ok") {
-        const { level } = await svc.mfaState().catch(() => ({ level: "aal1" }));
+        const { level } = await svc.mfaState().catch(() => ({ level: "aal1" })); // only what the screens show
         setState({ name: "ready", profile: result.profile, deviceId: result.deviceId, aal: level });
+        return;
+      }
+      // the account has an authenticator and this login has not passed it: the database insists on the code
+      if (result.status === "mfa_required") {
+        const { factorId } = await svc.mfaState();
+        setState({ name: "code", factorId });
         return;
       }
       await svc.forget(); // this device's login can do nothing now
@@ -114,9 +120,12 @@ export function AccountProvider({ active, loadService = loadAccountService, self
     }
   }, [settle]);
 
-  /** After the password: the code from the authenticator app when the account has one; then the claim. */
+  /**
+   * After the password: the code from the authenticator app when the account has one; then the claim.
+   * No answer about the second step is not "no second step": that failure reaches the retry screen.
+   */
   const proceed = useCallback(async (svc) => {
-    const mfa = await svc.mfaState().catch(() => ({ needsCode: false }));
+    const mfa = await svc.mfaState();
     if (mfa.needsCode) setState({ name: "code", factorId: mfa.factorId });
     else await claim(svc);
   }, [claim]);
@@ -169,7 +178,11 @@ export function AccountProvider({ active, loadService = loadAccountService, self
       const svc = await service();
       const result = await svc.signIn(email, password);
       if (result.error) return result.error;
-      await proceed(svc);
+      try {
+        await proceed(svc);
+      } catch {
+        setState({ name: "problem", retry: "start" });
+      }
       return null;
     },
     /** The authenticator code (second step). @returns {Promise<string|null>} an error code, or null */
@@ -205,7 +218,12 @@ export function AccountProvider({ active, loadService = loadAccountService, self
       } catch (e) {
         return e.code || "unavailable";
       }
-      const mfa = await svc.mfaState().catch(() => ({ needsCode: false }));
+      let mfa;
+      try {
+        mfa = await svc.mfaState();
+      } catch {
+        return "unavailable"; // not knowing whether a code is needed is not "no code needed"
+      }
       setState(mfa.needsCode ? { name: "code", factorId: mfa.factorId, next: "new_password" } : { name: "new_password" });
       return null;
     },
@@ -215,7 +233,8 @@ export function AccountProvider({ active, loadService = loadAccountService, self
       try {
         await svc.changePassword(password);
       } catch (e) {
-        return e.code || "unavailable";
+        // the password changed; the claim below signs the other logins out in the database anyway
+        if (e.code !== "sessions_not_ended") return e.code || "unavailable";
       }
       await claim(svc);
       return null;

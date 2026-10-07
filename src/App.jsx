@@ -1139,7 +1139,18 @@ function CalculatorsWidget({he,dk}){
 // └─────────────────────────────────────────────────────────────┘
 const WHATSAPP_PHONE = "972547640203"; // שני כהן אזולאי — 054-764-0203
 const CONTACT_URL = `https://wa.me/${WHATSAPP_PHONE}`;
-const BUSINESS_EMAIL = "shani@example.com"; // 👈 החליפי לאימייל שלך
+const BUSINESS_EMAIL = null; // 👈 the business's real address, e.g. "name@domain.co.il"; while null, no email link shows
+/** A lead's phone as the gate keeps it: digits, +, (, ), - and spaces, 6 to 25 characters. */
+const PHONE_SHAPE = /^[+]?[-0-9() ]{6,25}$/;
+/** A CSV cell. One that starts with = + - @, a tab or a carriage return gets a ' first, so a spreadsheet shows it as text instead of running it. */
+const FORMULA_START = ["=", "+", "-", "@", String.fromCharCode(9), String.fromCharCode(13)];
+const csvCell = (value) => {
+  const text = String(value ?? "");
+  const safe = FORMULA_START.includes(text.charAt(0)) ? `'${text}` : text;
+  return `"${safe.replace(/"/g, '""')}"`;
+};
+/** A cart quantity the shop accepts: a whole number of items from 1 to 20. */
+const validQty = (q) => Number.isInteger(q) && q > 0 && q <= 20;
 const OWNER_STORE_KEY = "numerology_owner_mode";
 const CART_STORE_KEY = "numerology_cart_v1";
 const LEADS_STORE_KEY = "numerology_leads_v1";
@@ -1172,7 +1183,7 @@ const SHOP = [
     cat: { he: "חבילות משתלמות", en: "Value Bundles" },
     sub: { he: "המסלול המלא במחיר מיוחד", en: "The full path at a special price" },
     items: [
-      { id:"bundle", icon:"sparkles", featured:true, badge:{he:"חיסכון ₪99",en:"Save ₪99"}, priceNum:449,
+      { id:"bundle", icon:"sparkles", featured:true, badge:{he:"חיסכון ₪49",en:"Save ₪49"}, priceNum:449,
         name:{he:"חבילת המסע המלא — מפה + שיחה מעמיקה",en:"Full Journey — Map + Deep Call"},
         desc:{he:"מפה נומרולוגית אישית מלאה + ייעוץ מעמיק 75 דק׳ עם שני. הדרך השלמה להבין את עצמך ולקבל כיוון. (₪498 בנפרד)",en:"Full personal map + 75-min deep consultation with Shani. (₪498 separately)"},
         price:{he:"₪449",en:"$135"}, link:"" },
@@ -1241,10 +1252,16 @@ const SHOP = [
 // ── checkout + cart helpers ──
 const allProducts = () => SHOP.flatMap((g) => g.items);
 const findProduct = (id) => allProducts().find((p) => p.id === id);
-const productLink = (p) => (p && p.link && p.link.trim() && p.link.trim() !== "#") ? p.link.trim() : CONTACT_URL;
+/** A product's payment page: only an https:// link counts (a javascript: or http: one never opens); otherwise WhatsApp. */
+const productLink = (p) => {
+  const link = String(p?.link || "").trim();
+  return link.startsWith("https://") ? link : CONTACT_URL;
+};
+/** Whether any product has a real payment page yet (until then, orders go by WhatsApp). */
+const paymentPagesLive = () => allProducts().some((p) => productLink(p) !== CONTACT_URL);
 const goToCheckout = (p) => { AU.init(); AU.p("reveal"); window.open(productLink(p), "_blank", "noopener,noreferrer"); };
-const cartEntries = (cart) => Object.entries(cart || {}).filter(([, q]) => q > 0).map(([id, qty]) => ({ product: findProduct(id), qty })).filter((x) => x.product);
-const cartCount = (cart) => Object.values(cart || {}).reduce((a, q) => a + (q > 0 ? q : 0), 0);
+const cartEntries = (cart) => Object.entries(cart || {}).filter(([, q]) => validQty(q)).map(([id, qty]) => ({ product: findProduct(id), qty })).filter((x) => x.product);
+const cartCount = (cart) => Object.values(cart || {}).reduce((a, q) => a + (validQty(q) ? q : 0), 0);
 const cartTotal = (cart) => cartEntries(cart).reduce((a, { product, qty }) => a + (product.priceNum || 0) * qty, 0);
 function waOrderLink(cart, he) {
   const entries = cartEntries(cart);
@@ -1489,7 +1506,7 @@ function LandingFooter({ he, dk, onOwner }) {
       <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginTop: 16 }}>
         <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" style={{ ...link, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="whatsapp" size={15}/>{he ? "וואטסאפ" : "WhatsApp"}</a>
         <a href="https://www.instagram.com/shani_cohen_8/" target="_blank" rel="noopener noreferrer" style={{ ...link, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="instagram" size={15}/>{he ? "אינסטגרם" : "Instagram"}</a>
-        <a href={`mailto:${BUSINESS_EMAIL}`} style={{ ...link, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="mail" size={15}/>{he ? "אימייל" : "Email"}</a>
+        {BUSINESS_EMAIL && <a href={`mailto:${BUSINESS_EMAIL}`} style={{ ...link, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="mail" size={15}/>{he ? "אימייל" : "Email"}</a>}
       </div>
 
       <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap", marginTop: 14, fontSize: 11.5 }}>
@@ -1695,14 +1712,14 @@ function ProductModal({ product, he, dk, onClose, onAdd }) {
   const kind = product.recurring ? "sub" : (["intro-call", "deep-consult", "mentoring"].includes(product.id) ? "call" : product.id === "gift" ? "gift" : product.id === "vip" ? "vip" : product.id === "bundle" ? "bundle" : "report");
   const incl = (he ? {
     report: ["קובץ PDF מעוצב ואישי", "פרשנות כתובה ומפורטת", "אספקה תוך 48 שעות", "אפשרות לשאלות המשך"],
-    bundle: ["מפה אישית מלאה (PDF)", "שיחת ייעוץ 75 דקות", "הקלטה של השיחה", "חיסכון של ₪99"],
+    bundle: ["מפה אישית מלאה (PDF)", "שיחת ייעוץ 75 דקות", "הקלטה של השיחה", "חיסכון של ₪49"],
     vip: ["מפה אישית מלאה", "תחזית שנתית 12 חודשים", "שיחת עומק 90 דקות + הקלטה", "דוח PDF מורחב", "חודש ליווי אישי בוואטסאפ"],
     call: ["פגישת זום או טלפון", "תיאום גמיש לפי הזמן שלך", "ליווי אישי וחם", "סיכום וכיווני פעולה"],
     gift: ["שובר מתנה אלגנטי", "נשלח אליך או למקבל/ת", "הוראות מימוש פשוטות", "ללא תאריך תפוגה"],
     sub: ["מסר חודשי מותאם אישית", "ישירות למייל בכל ראש חודש", "ביטול בכל עת", "ללא התחייבות"],
   } : {
     report: ["Designed personal PDF", "Detailed written interpretation", "Delivery within 48h", "Follow-up questions"],
-    bundle: ["Full personal map (PDF)", "75-min consultation", "Call recording", "Save ₪99"],
+    bundle: ["Full personal map (PDF)", "75-min consultation", "Call recording", "Save ₪49"],
     vip: ["Full personal map", "12-month forecast", "90-min deep call + recording", "Extended PDF report", "A month of WhatsApp guidance"],
     call: ["Zoom or phone session", "Flexible scheduling", "Warm personal guidance", "Summary & next steps"],
     gift: ["Elegant gift voucher", "Sent to you or recipient", "Simple redemption", "No expiry"],
@@ -1759,7 +1776,7 @@ function ShopSection({ he, dk, onAdd, cart }) {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(238px,1fr))", gap: 14 }}>
             {group.items.map((p, pi) => {
-              const qty = customer ? (cart?.[p.id] || 0) : 0;
+              const qty = customer && validQty(cart?.[p.id]) ? cart[p.id] : 0;
               return (
                 <SR key={p.id} delay={pi * 80}>
                   <div className="pcard" style={p.featured ? { borderColor: `${ac}55`, boxShadow: `0 0 30px ${ac}1a`, transformStyle: "preserve-3d" } : { transformStyle: "preserve-3d" }}
@@ -1799,7 +1816,9 @@ function ShopSection({ he, dk, onAdd, cart }) {
       ))}
 
       <p style={{ textAlign: "center", fontSize: 11, color: ts, marginTop: 4, lineHeight: 1.8 }}>
-        <Icon name="lock" size={11} style={{ verticalAlign: "-1px", marginInlineEnd: 4 }}/>{he ? "התשלום מתבצע בעמוד מאובטח של Grow (משולם). יש שאלה לפני רכישה? " : "Payment via a secure Grow checkout page. Questions before buying? "}
+        <Icon name="lock" size={11} style={{ verticalAlign: "-1px", marginInlineEnd: 4 }}/>{paymentPagesLive()
+          ? (he ? "התשלום מתבצע בעמוד מאובטח של Grow (משולם). יש שאלה לפני רכישה? " : "Payment via a secure Grow checkout page. Questions before buying? ")
+          : (he ? "ההזמנה נשלחת בוואטסאפ, וקישור לתשלום מאובטח מגיע משם. יש שאלה לפני רכישה? " : "Orders go by WhatsApp, and a secure payment link comes from there. Questions before buying? ")}
         <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" style={{ color: ac, fontWeight: 600 }}>{he ? "דברו איתי" : "Contact me"}</a>
       </p>
       {modal && <ProductModal product={modal} he={he} dk={dk} onClose={() => setModal(null)} onAdd={onAdd}/>}
@@ -1813,11 +1832,13 @@ function LeadGate({ he, dk, results, name, onUnlock }) {
   const [phone, setPhone] = useState("");
   const N = 60 + R(results.lp) * 4 + results.nv + results.su + results.ex + (results.kd?.length || 0) * 7 + (results.ls?.miss?.length || 0) * 3;
   const submit = () => {
+    const cleanPhone = phone.trim();
+    if (!PHONE_SHAPE.test(cleanPhone)) return; // only a phone-shaped value is kept, and later exported
     if (phone.trim().replace(/\D/g, "").length < 6) return;
     AU.init(); AU.p("reveal");
-    saveLead({ name: name || "", phone: phone.trim(), lp: results.lp, nv: results.nv, su: results.su, py: results.py, kd: (results.kd || []).join(","), date: new Date().toLocaleDateString("he-IL"), ts: Date.now() });
+    saveLead({ name: name || "", phone: cleanPhone, lp: results.lp, nv: results.nv, su: results.su, py: results.py, kd: (results.kd || []).join(","), date: new Date().toLocaleDateString("he-IL"), ts: Date.now() });
     try { localStorage.setItem(LEAD_DONE_KEY, "1"); } catch (e) {}
-    const msg = he ? `היי שני! קיבלתי קריאה חינמית. שם: ${name || "-"} · טלפון: ${phone} · שביל גורל: ${results.lp}` : `Hi Shani! Free reading. Name: ${name || "-"} · phone: ${phone} · life path: ${results.lp}`;
+    const msg = he ? `היי שני! קיבלתי קריאה חינמית. שם: ${name || "-"} · טלפון: ${cleanPhone} · שביל גורל: ${results.lp}` : `Hi Shani! Free reading. Name: ${name || "-"} · phone: ${cleanPhone} · life path: ${results.lp}`;
     window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
     onUnlock();
   };
@@ -1841,7 +1862,7 @@ function LeadsWidget({ he, dk }) {
   const toast = useToast();
   const onPhone = useLayout() === "phone"; // a card per lead instead of a table too wide for the screen
   const clearAll = () => { if (window.confirm(he ? "למחוק את כל הלידים?" : "Delete all leads?")) { try { localStorage.removeItem(LEADS_STORE_KEY); } catch (e) {} setLeads([]); } };
-  const exportCsv = () => { const rows = [["שם", "טלפון", "שביל גורל", "ערך שם", "קול נשמה", "שנה אישית", "חוב קארמי", "תאריך"], ...leads.map(l => [l.name, l.phone, l.lp, l.nv, l.su, l.py, l.kd, l.date])]; const csv = "﻿" + rows.map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "leads.csv"; a.click(); toast(he ? "קובץ הלידים נשמר בתיקיית ההורדות." : "The leads file is in your downloads."); };
+  const exportCsv = () => { const rows = [["שם", "טלפון", "שביל גורל", "ערך שם", "קול נשמה", "שנה אישית", "חוב קארמי", "תאריך"], ...leads.map(l => [l.name, l.phone, l.lp, l.nv, l.su, l.py, l.kd, l.date])]; const csv = "﻿" + rows.map(r => r.map(csvCell).join(",")).join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "leads.csv"; a.click(); toast(he ? "קובץ הלידים נשמר בתיקיית ההורדות." : "The leads file is in your downloads."); };
   const th = { textAlign: he ? "right" : "left", fontSize: 11, color: ac, fontWeight: 700, padding: "8px 6px", borderBottom: `1px solid ${ac}22`, whiteSpace: "nowrap" };
   const td = { fontSize: 12.5, color: tm, padding: "9px 6px", borderBottom: `1px solid ${ac}0e`, whiteSpace: "nowrap" };
   return (<div style={{ animation: "fadeInUp .5s ease-out" }}>
@@ -1922,8 +1943,9 @@ export default function App(){
   useEffect(()=>{try{localStorage.setItem(CART_STORE_KEY,JSON.stringify(cart));}catch(e){}},[cart]);
   const enterOwner=()=>{AU.init();AU.p("reveal");setOwner(true);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"owner");}catch(e){}};
   const exitOwner=()=>{AU.init();AU.p("click");setOwner(false);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"customer");}catch(e){}};
-  const addToCart=(id)=>{AU.init();AU.p("card");setCart(c=>({...c,[id]:(c[id]||0)+1}));};
-  const setQty=(id,delta)=>setCart(c=>{const q=(c[id]||0)+delta;const n={...c};if(q<=0)delete n[id];else n[id]=q;return n;});
+  // quantities stay whole, from 1 to 20, whatever storage held before
+  const addToCart=(id)=>{AU.init();AU.p("card");setCart(c=>({...c,[id]:Math.min(20,(validQty(c[id])?c[id]:0)+1)}));};
+  const setQty=(id,delta)=>setCart(c=>{const q=Math.min(20,(validQty(c[id])?c[id]:0)+delta);const n={...c};if(q<=0)delete n[id];else n[id]=q;return n;});
   const removeFromCart=(id)=>setCart(c=>{const n={...c};delete n[id];return n;});
   const clearCart=()=>setCart({});
   const scrollToId=(id)=>{try{document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"});}catch(e){}};
