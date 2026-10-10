@@ -397,6 +397,24 @@ describe("workspace", () => {
     expect(await screen.findByRole("button", { name: /שני כהן אזולאי/ })).toBeTruthy();
   });
 
+  it("remembers a backup's date for the reminder, except in the demo, where the date is the real subscriber's", async () => {
+    captureDownloads();
+    const KEY = "numerology_workspace_last_backup";
+    localStorage.removeItem(KEY);
+    const store = createStore(memoryBackend(), { now: () => NOW, newId: () => "id-1" });
+    await store.clients.create(SHANI);
+    const { unmount } = render(<ContentContext.Provider value={CONTENT}><WorkspaceApp he dk store={store} now={() => NOW} remembersBackups={false} /></ContentContext.Provider>);
+    await screen.findByRole("button", { name: /שני כהן אזולאי/ });
+    click("גיבוי");
+    await screen.findByText(/הגיבוי נשמר|נשמר/);
+    expect(localStorage.getItem(KEY)).toBeNull();
+    unmount();
+    render(<ContentContext.Provider value={CONTENT}><WorkspaceApp he dk store={store} now={() => NOW} /></ContentContext.Provider>);
+    await screen.findByRole("button", { name: /שני כהן אזולאי/ });
+    click("גיבוי");
+    await waitFor(() => expect(localStorage.getItem(KEY)).toBe(NOW.toISOString()));
+  });
+
   it("reports backups and restores, for the account's log", async () => {
     captureDownloads();
     const onEvent = vi.fn();

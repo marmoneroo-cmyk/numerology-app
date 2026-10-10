@@ -45,7 +45,7 @@ function restoreError(err, he) {
  * `selectedId` marks the client open beside the list (on a computer), and a
  * new `refreshKey` reloads the list and summary after a change made there.
  */
-export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {}, selectedId = null, refreshKey = 0 }) {
+export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {}, selectedId = null, refreshKey = 0, remembersBackups = true }) {
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState(null);
   const [followMsg, setFollowMsg] = useState(null);
@@ -68,7 +68,8 @@ export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {
       const data = await store.exportAll();
       saveJson(`numerology-backup-${toYmd(now())}.json`, data);
       onEvent("backup_exported");
-      rememberBackup(now());
+      // the demo backs up sample clients: the reminder belongs to the real subscriber on this browser
+      if (remembersBackups) rememberBackup(now());
       setMsg({
         ok: true,
         text:

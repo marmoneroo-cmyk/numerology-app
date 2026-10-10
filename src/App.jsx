@@ -1732,7 +1732,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {showOwnerUI&&tab==="clients"&&workspaceStore&&<ContentContext.Provider value={workspaceContent}>
           {!demo&&<LocalDataOffer store={workspaceStore} userId={account.profile.id} he={he} dk={dk} logEvent={account.service.logEvent} onUploaded={()=>setWorkspaceKey(k=>k+1)}/>}
-          <WorkspaceApp key={workspaceKey} he={he} dk={dk} store={workspaceStore} openRequest={openRequest} onOpenHandled={()=>setOpenRequest(null)} onEvent={(action)=>{account.service.logEvent(action).catch(()=>{});}}/>
+          <WorkspaceApp key={workspaceKey} he={he} dk={dk} store={workspaceStore} remembersBackups={!demo} openRequest={openRequest} onOpenHandled={()=>setOpenRequest(null)} onEvent={(action)=>{account.service.logEvent(action).catch(()=>{});}}/>
         </ContentContext.Provider>}
 
 

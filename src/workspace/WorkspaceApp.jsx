@@ -28,7 +28,7 @@ const fileInputCss = (ac) =>
  *   a new `openRequest.nonce` opens `openRequest.view` (other screens open a client this way), then
  *   `onOpenHandled()` lets the asker drop the request, so the next visit starts at the list.
  */
-export default function WorkspaceApp({ he = true, dk = true, store: injected = null, now = () => new Date(), onEvent = () => {}, openRequest = null, onOpenHandled = () => {} }) {
+export default function WorkspaceApp({ he = true, dk = true, store: injected = null, now = () => new Date(), onEvent = () => {}, openRequest = null, onOpenHandled = () => {}, remembersBackups = true }) {
   const [store, setStore] = useState(injected);
   const [failed, setFailed] = useState(false);
   // every move counts, so the screen (and its error boundary) starts fresh even when it is the same screen again
@@ -67,7 +67,7 @@ export default function WorkspaceApp({ he = true, dk = true, store: injected = n
   if (!store) return <Card style={{ textAlign: "center", color: c.ts }}>{he ? "טוען…" : "Loading…"}</Card>;
 
   const { view } = nav;
-  const props = { store, go, he, c, now, onEvent };
+  const props = { store, go, he, c, now, onEvent, remembersBackups };
   const crashed = (
     <ErrorCard
       he={he}
