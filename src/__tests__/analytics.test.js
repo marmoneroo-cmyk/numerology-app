@@ -20,6 +20,18 @@ describe("analytics", () => {
     expect(at("https://studio.shani-cohen.com/#__proto__")).toBe("https://studio.shani-cohen.com/");
   });
 
+  it("counts a view that only the hash changed (a link to #demo), and only once analytics runs", async () => {
+    vi.resetModules(); // a fresh module: whether analytics started is the module's own state
+    const fresh = await import("../analytics.js");
+    const send = vi.fn();
+    const where = { pathname: "/", hash: "#demo" };
+    fresh.countView({ send, where });
+    expect(send).not.toHaveBeenCalled(); // not started: the tests, the local server
+    fresh.startAnalytics({ production: true, enabled: true, load: vi.fn() });
+    fresh.countView({ send, where });
+    expect(send).toHaveBeenCalledWith({ path: "/#demo" });
+  });
+
   it("drops an event whose address cannot be read, rather than sending it whole", () => {
     expect(scrubbed({ type: "pageview", url: "not a url" })).toBeNull();
   });

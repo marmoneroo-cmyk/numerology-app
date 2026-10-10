@@ -4,6 +4,7 @@
  */
 import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { nextRoute, hasSavedLogin, hashFor } from "./routes.js";
+import { countView } from "./analytics.js";
 import SalesPage from "./sales/SalesPage.jsx";
 import LegalPage from "./legal/LegalPage.jsx";
 
@@ -60,6 +61,7 @@ export default function Root({ storage = browserStorage() }) {
       if (next.world !== current.world || next.view !== current.view) window.scrollTo(0, 0);
       routeRef.current = next;
       setRoute(next);
+      countView(); // analytics counts loads and history pushes by itself, not a link to #demo or #privacy
     };
     window.addEventListener("hashchange", follow);
     return () => window.removeEventListener("hashchange", follow);

@@ -2,7 +2,7 @@
  * Vercel Web Analytics: page views, no cookies. The script and its reports stay on this site's
  * own address, so the Content-Security-Policy needs nothing added.
  */
-import { inject } from "@vercel/analytics";
+import { inject, pageview } from "@vercel/analytics";
 import { ROUTE_HASHES } from "./routes.js";
 
 /**
@@ -33,5 +33,17 @@ const VERCEL_ANALYTICS_ENABLED = true;
  * set rather than guessed, so the live site never loads the debug script from Vercel's own host.
  */
 export function startAnalytics({ production = import.meta.env.PROD, enabled = VERCEL_ANALYTICS_ENABLED, load = inject } = {}) {
-  if (production && enabled) load({ mode: "production", beforeSend: scrubbed });
+  if (!production || !enabled) return;
+  load({ mode: "production", beforeSend: scrubbed });
+  counting = true;
+}
+
+let counting = false;
+
+/**
+ * A page view for a change that only the hash made (a link to #demo or #privacy): the script counts page loads and
+ * history pushes by itself, not hash changes. Root calls it; nothing is sent until analytics runs.
+ */
+export function countView({ send = pageview, where = window.location } = {}) {
+  if (counting) send({ path: `${where.pathname}${where.hash}` });
 }
