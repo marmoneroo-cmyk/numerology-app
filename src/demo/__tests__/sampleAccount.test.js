@@ -1,4 +1,5 @@
 /* The demo's account: a signed-in subscriber over sample clients, in memory. The lab keeps its admin. */
+import { toYmd } from "../../data/store.js";
 import { describe, it, expect } from "vitest";
 import { demoService, DEMO_PROFILE } from "../sampleAccount.js";
 import { labService, LAB_PROFILE } from "../../lab/labAccount.js";
@@ -28,11 +29,14 @@ describe("the demo account", () => {
     expect((await client.rpc("ws_get", { p_store: "clients", p_id: "c4" })).data).toMatchObject({ fullName: "דנה שמיר", tags: ["VIP"] });
     expect((await client.rpc("ws_get", { p_store: "clients", p_id: "nobody" })).data).toBeNull();
     const snapshot = (await client.rpc("ws_snapshot")).data;
-    expect(snapshot.clients).toHaveLength(6);
-    expect(snapshot.readings).toEqual([]);
+    expect(snapshot.clients).toHaveLength(8);
+    // one saved map whose follow-up date has come (yesterday), so the demo's Today shows a follow-up
+    expect(snapshot.readings).toHaveLength(1);
+    expect(snapshot.readings[0]).toMatchObject({ id: "r1", clientId: "c4", type: "map", title: "פגישה ראשונה" });
+    expect(snapshot.readings[0].followUp < toYmd(new Date())).toBe(true); // local dates, as the store keeps them
     expect((await client.rpc("admin_list_accounts")).error).toMatchObject({ code: "PGRST202" });
-    await client.rpc("ws_batch", { p_ops: [{ type: "put", store: "readings", value: { id: "r1", clientId: "c1" } }] });
-    expect((await client.rpc("ws_all", { p_store: "readings" })).data).toEqual([{ id: "r1", clientId: "c1" }]);
+    await client.rpc("ws_batch", { p_ops: [{ type: "put", store: "readings", value: { id: "r2", clientId: "c1" } }] });
+    expect((await client.rpc("ws_all", { p_store: "readings" })).data).toContainEqual({ id: "r2", clientId: "c1" });
   });
 
   it("keeps files in memory: up, down and away", async () => {

@@ -3,6 +3,10 @@
  * file bucket), for the public demo and the developer lab. Nothing leaves the page.
  */
 import { toYmd } from "../data/store.js";
+import { validateReading } from "../data/validation.js";
+import { ENGINE_VERSION, fullCalc, getRecommendations } from "../engine/index.js";
+
+const DAY_MS = 86400000;
 
 /** This year's date `days` from today, in `year`: a birthday that falls this week. */
 const birthdayIn = (days, year) => {
@@ -24,13 +28,39 @@ function sampleClients() {
     client("c4", "דנה שמיר", "1992-03-03", "050-5550123", 30, { tags: ["VIP"] }),
     client("c5", "אורי בן דוד", "1987-07-21", "", 60),
     client("c6", "נועה פרץ", "1995-11-30", "053-5550199", 90, { archived: true }),
+    // quiet for months: the Today screen suggests a word to them
+    client("c7", "שירה גולן", "1983-05-14", "052-5550177", 230),
+    client("c8", "אבי מזרחי", "1979-09-02", "054-5550133", 410),
   ];
+}
+
+/** One saved map, three weeks old, whose follow-up date has come: the Today screen lists it. */
+function sampleReadings() {
+  const at = new Date(Date.now() - 21 * DAY_MS);
+  const name = "דנה שמיר";
+  const calc = fullCalc(3, 3, 1992, name, undefined, at);
+  const value = validateReading(
+    {
+      clientId: "c4",
+      type: "map",
+      title: "פגישה ראשונה",
+      input: { name, birthDate: "1992-03-03", add: calc.py !== fullCalc(3, 3, 1992, name, false, at).py },
+      result: { ...calc, insights: { he: getRecommendations(calc, "he"), en: getRecommendations(calc, "en") } },
+      engineVersion: ENGINE_VERSION,
+      computedFor: at.toISOString(),
+      notes: "שיחה על החלפת עבודה בשנה הקרובה.",
+      followUp: toYmd(new Date(Date.now() - DAY_MS)),
+    },
+    { today: new Date() },
+  );
+  return [{ id: "r1", ...value, createdAt: at.toISOString(), updatedAt: at.toISOString() }];
 }
 
 /** A stand-in for the supabase-js client: the workspace RPCs and the file bucket, in memory. */
 export function memoryClient() {
   const tables = { clients: new Map(), readings: new Map(), attachments: new Map() };
   sampleClients().forEach((c) => tables.clients.set(c.id, c));
+  sampleReadings().forEach((r) => tables.readings.set(r.id, r));
   const files = new Map();
   const ok = (data) => ({ data, error: null });
   const rpc = async (fn, args = {}) => {
