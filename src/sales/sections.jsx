@@ -3,7 +3,7 @@ import Icon from "../ui/Icon.jsx";
 import { PRICE_MONTHLY, TRIAL_DAYS } from "./config.js";
 
 /** The hero's screenshot: the demo's "Today" screen (public/sales), sample data only. */
-const SHOT = { src: "/sales/studio-today.webp", width: 1280, height: 800 };
+const SHOT = { src: "/sales/studio-today.webp", width: 1030, height: 554 };
 
 /** A link to the owner: WhatsApp (in a new tab) or an email. Nothing without a contact. */
 export function ContactButton({ contact, label, className = "sales-btn sales-btn-ghost" }) {
