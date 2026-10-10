@@ -15,14 +15,14 @@ import CommandPalette, { useCommandShortcut } from "./studio/CommandPalette.jsx"
 import Card from "./studio/cards/Card.jsx";
 import Deck from "./studio/cards/Deck.jsx";
 import { useToast } from "./studio/Toasts.jsx";
-import { personOf } from "./workspace/format.js";
+import { personOf, parseBirthDate } from "./workspace/format.js";
 import { whatsappLink } from "./studio/today.js";
 import AdminScreen from "./account/AdminScreen.jsx";
 import LocalDataOffer from "./account/LocalDataOffer.jsx";
 import { accountStore } from "./account/workspaceStore.js";
 import {
-  R, NV, SU, EX, LP, LPm, CA, PY, personalYearOn, loShu, fullCalc, liveNum, getRecommendations,
-  yearCycle, masterBase, dailyRitualNumber, compatKey, matchReading, coupleReading, parentChildReading,
+  LV, R, NV, SU, EX, LP, LPm, CA, PY, personalYearOn, loShu, fullCalc, liveNum, getRecommendations,
+  yearCycle, cycleSpans, cycleAt, masterBase, dailyRitualNumber, compatKey, matchReading, coupleReading, parentChildReading,
 } from "./engine";
 import Icon from "./ui/Icon.jsx";
 import { BUSINESS_EMAIL } from "./business.js";
@@ -31,6 +31,8 @@ import PlusOneNote from "./ui/PlusOneNote.jsx";
 import ReadingSummary from "./reading/ReadingSummary.jsx";
 import Locked from "./demo/DemoLock.jsx";
 import HowButton from "./reading/HowButton.jsx";
+import { nameIdeas } from "./reading/nameIdeas.js";
+import { agesText } from "./reading/ages.js";
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
@@ -486,11 +488,6 @@ const NUM_LIB={
 };
 
 // Name generator by target number
-function genNames(target,he){
-  const hNames={1:["אורי","אילן","אדם","עדי"],2:["נועה","מיכל","דניאל","רוני"],3:["יובל","שיר","אלה","ליאור"],4:["עומר","תמר","דוד","רות"],5:["גיל","ניר","הדר","רון"],6:["אהבה","שלום","נעמי","חנה"],7:["אור","עדן","יונתן","מורן"],8:["שגב","עוז","אמיר","גבריאל"],9:["נתן","חיים","רחל","שרה"]};
-  const eNames={1:["Adam","Ava","Ian","Una"],2:["Beth","Dana","Noah","Ruth"],3:["Joy","Leo","Maya","Sky"],4:["Dean","Kate","Mark","Sara"],5:["Alex","Iris","Noel","Vera"],6:["Anna","Emma","Luke","Rosa"],7:["Alan","Gaia","Seth","Zara"],8:["Brock","Diana","Hugo","Stella"],9:["Grace","Ira","Luna","Sage"]};
-  return(he?hNames:eNames)[target]||[];
-}
 
 // ═══════════════════ TABLES WIDGET ═══════════════════
 function TablesWidget({he,dk}){
@@ -507,7 +504,7 @@ function TablesWidget({he,dk}){
   const[animIn,setAnimIn]=useState(false);
   const[showExtra,setShowExtra]=useState(false);
   const doCalc=()=>{
-    try{setError("");const parts=dob.split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,fullName,undefined,at);setHowCtx({d,m,y,name:fullName,now:at});setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
+    try{setError("");const b=parseBirthDate(dob);if(!b)throw 0;const{d,m,y}=b;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,fullName,undefined,at);setHowCtx({d,m,y,name:fullName,now:at});setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
   };
   const thStyle={padding:"11px 14px",fontSize:12,fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`,letterSpacing:.3};
   const tdStyle={padding:"11px 14px",fontSize:14,fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
@@ -542,8 +539,8 @@ function TablesWidget({he,dk}){
         <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזורי חיים | פסגות ואתגרים":"Life Cycles | Peaks & Challenges"}</h4></div>
         <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
           <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}>{[["exit",he?"מחזור חיים":"Life Cycle"],["pk",he?"פסגה":"Peak"],["ch",he?"אתגר":"Challenge"],["hp",he?"פסגה נסתרת":"Hidden Peak"],["hc",he?"אתגר נסתר":"Hidden Chal."]].map(([k,l])=>(<th key={k} style={{...thStyle,fontSize:11}}>{l}{howCtx&&<HowButton k={k} ctx={howCtx} he={he} label={l}/>}</th>))}</tr></thead>
-          <tbody>{cycleLabels.map((label,i)=>{const sa=results.exit+i*9;const active=results.age>=sa&&results.age<sa+9;return(
-            <tr key={i} style={{background:active?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)"))}}><td style={{...tdStyle,fontWeight:600,color:active?ac:ts,fontSize:12,whiteSpace:"nowrap"}}><div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>{active&&<span style={{display:"inline-block",width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,flexShrink:0}}/>}<span>{label}</span><span style={{fontSize:9,color:ts,opacity:.5}}>{sa}-{sa+9}</span></div></td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88bb":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hc[i]}</td></tr>
+          <tbody>{cycleLabels.map((label,i)=>{const span=cycleSpans(results.exit)[i];const active=cycleAt(results.age,results.exit)===i;return(
+            <tr key={i} style={{background:active?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)"))}}><td style={{...tdStyle,fontWeight:600,color:active?ac:ts,fontSize:12,whiteSpace:"nowrap"}}><div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>{active&&<span style={{display:"inline-block",width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,flexShrink:0}}/>}<span>{label}</span><span style={{fontSize:9,color:ts,opacity:.5}}>{agesText(span)}</span></div></td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88bb":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hc[i]}</td></tr>
           );})}</tbody>
         </table></div>
       </div>
@@ -611,7 +608,7 @@ function CalculatorsWidget({he,dk}){
   // Name generator
   const[genTarget,setGenTarget]=useState(1);
 
-  const parseDob=(s)=>{const p=s.split(".");if(p.length!==3)return null;const[d,m,y]=p.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)return null;return{d,m,y};};
+  const parseDob=(s)=>parseBirthDate(s);
 
   const labelSt={display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500};
   const thSt={padding:"10px 12px",fontSize:11,fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`};
@@ -800,9 +797,9 @@ function CalculatorsWidget({he,dk}){
             </tr></thead>
             <tbody>
               {(he?["חיפוש","מציאה","יתד","שיא"]:["Search","Discovery","Anchor","Summit"]).map((lb,i)=>{
-                const sa=results.exit+i*9,active=results.age>=sa&&results.age<sa+9;
+                const span=cycleSpans(results.exit)[i],active=cycleAt(results.age,results.exit)===i;
                 return(<tr key={i} style={{background:active?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2?"rgba(200,169,106,.015)":"transparent")}}>
-                  <td style={{...tdSt,fontWeight:600,color:active?ac:ts,fontSize:11}}><div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"center"}}>{active&&<span style={{width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,display:"inline-block"}}/>}{lb}<span style={{fontSize:8,color:ts,opacity:.5,marginRight:2,marginLeft:2}}>{sa}-{sa+9}</span></div></td>
+                  <td style={{...tdSt,fontWeight:600,color:active?ac:ts,fontSize:11}}><div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"center"}}>{active&&<span style={{width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,display:"inline-block"}}/>}{lb}<span style={{fontSize:8,color:ts,opacity:.5,marginRight:2,marginLeft:2}}>{agesText(span)}</span></div></td>
                   <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td>
                   <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td>
                   <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td>
@@ -880,7 +877,7 @@ function CalculatorsWidget({he,dk}){
     {/* ═══════ CATEGORY 2: Compatibility ═══════ */}
     {cat===1&&!calc&&(
       <div className="st-tiles">
-        <CalcTile icon="heart" title={he?"התאמה זוגית":"Love Match"} desc={he?"שבילי גורל + נשמה + ביטוי":"Life paths + soul + expression"} onClick={()=>setCalc("love")}/>
+        <CalcTile icon="heart" title={he?"התאמה זוגית":"Love Match"} desc={he?"שבילי גורל + נשמה + שם":"Life paths + soul + name"} onClick={()=>setCalc("love")}/>
         <CalcTile icon="flame" title={he?"להבה תאומה":"Twin Flame"} desc={he?"חיבור נשמתי עמוק":"Deep soul connection"} onClick={()=>setCalc("twin")}/>
         <CalcTile icon="briefcase" title={he?"שותפות עסקית":"Business Match"} desc={he?"התאמה מקצועית":"Professional compatibility"} onClick={()=>setCalc("biz")}/>
         <CalcTile icon="users" title={he?"הורה-ילד":"Parent-Child"} desc={he?"החיבור הנשמתי":"The soul connection"} onClick={()=>setCalc("parent")}/>
@@ -1035,10 +1032,10 @@ function CalculatorsWidget({he,dk}){
         <div style={{padding:16,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",borderRadius:14,border:`1px solid ${ac}0a`}}>
           <div style={{textAlign:"center",marginBottom:10}}><div style={{fontSize:14,fontWeight:600,color:D[genTarget]?.c||ac}}>{he?D[genTarget]?.t:D[genTarget]?.te} — {genTarget}</div></div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            {genNames(genTarget,he).map((name,i)=>(
-              <div key={i} style={{textAlign:"center",padding:"12px",background:`${ac}06`,borderRadius:10}}>
+            {nameIdeas(genTarget,he).map(({name,value})=>(
+              <div key={name} style={{textAlign:"center",padding:"12px",background:`${ac}06`,borderRadius:10}}>
                 <div style={{fontSize:16,fontWeight:600,color:ac}}>{name}</div>
-                <div style={{fontSize:10,color:ts}}>{he?"ערך: ":"Value: "}{NV(name)}</div>
+                <div style={{fontSize:10,color:ts}}>{he?"ערך: ":"Value: "}{value>9?`${value} (${R(value)})`:value}</div>
               </div>
             ))}
           </div>
@@ -1106,10 +1103,11 @@ function Hero({ he, dk, onStart, onUseName, onReveal }) {
   const ts = dk ? "rgba(232,224,208,.62)" : "rgba(42,37,32,.6)";
   const [nm, setNm] = useState("");
   const [dob, setDob] = useState("");
-  const num = nm.trim() ? liveNum(nm) : 0;
-  const dP = dob.split(".");
-  const dValid = dP.length === 3 && +dP[0] > 0 && +dP[0] <= 31 && +dP[1] > 0 && +dP[1] <= 12 && +dP[2] >= 1900;
-  const lp = dValid ? LPm(+dP[0], +dP[1], +dP[2]) : 0;
+  // a Hebrew name gets the reading's own name number (masters kept); a Latin one, its letter positions
+  const num = !nm.trim() ? 0 : [...nm].some((ch) => LV[ch]) ? NV(nm) : liveNum(nm);
+  const born = parseBirthDate(dob);
+  const dValid = Boolean(born);
+  const lp = born ? LPm(born.d, born.m, born.y) : 0;
   const bothReady = nm.trim() && dValid;
   const inputSt = { flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none" };
   const circleSt = (v) => ({ width: 64, height: 64, flexShrink: 0, borderRadius: "50%", border: `1.5px solid ${ac}55`, display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(circle at 35% 30%,${ac}26,transparent 70%)`, boxShadow: v ? `0 0 24px ${ac}55` : "none", transition: "box-shadow .5s" });
@@ -1537,7 +1535,7 @@ export default function App({ view, navigate } = {}){
   const revealChapter=(i)=>{AU.init();AU.p("chapter");const next=[...chapters];next[i]=true;setChapters(next);};
 
   const runReading=useCallback((nm,dobStr)=>{
-    try{setError("");const parts=String(dobStr).split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;
+    try{setError("");const b=parseBirthDate(String(dobStr));if(!b)throw 0;const{d,m,y}=b;
       AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,nm,undefined,at);setResults(r);setReadingName(nm);setReadingAt(at);setShowRes(true);
       setChapters([false,false,false,false,false,false]);
       setTimeout(()=>{setChapters(c=>{const n=[...c];n[0]=true;return n;});AU.p("chapter");},800);saveStreak();
@@ -1857,7 +1855,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           <YearWave proj={results.proj} dk={dk} he={he}/>
           <div className="divider"/>
           <div style={{textAlign:"center",marginBottom:14}}><h4 style={{fontSize:17,fontWeight:isRtl?600:400,color:ac}}>{he?"מחזורי חיים":"Life Cycles"}</h4></div>
-          {[he?"חיפוש":"Search",he?"מציאה":"Discovery",he?"יתד":"Anchor",he?"שיא":"Summit"].map((label,i)=>{const sa=results.exit+i*9;const active=results.age>=sa&&results.age<sa+9;return(<div key={i} style={{padding:"14px 16px",background:active?`${ac}0a`:"transparent",border:`1px solid ${active?ac+"33":ac+"08"}`,borderRadius:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all .3s"}}><div><div style={{fontSize:15,fontWeight:600,color:active?ac:tm}}>{label}</div><div style={{fontSize:10,color:ts}}>{he?"גילאים":"Ages"} {sa}–{sa+9}</div></div><div style={{display:"flex",gap:8}}><div style={{textAlign:"center"}}><div style={{fontSize:8,color:ts}}>{he?"פסגה":"Peak"}</div><div style={{fontSize:20,fontWeight:700,color:ac}}>{results.pk[i]}</div></div><div style={{textAlign:"center"}}><div style={{fontSize:8,color:ts}}>{he?"אתגר":"Chal."}</div><div style={{fontSize:20,fontWeight:700,color:ts}}>{results.ch[i]}</div></div></div>{active&&<div style={{padding:"2px 8px",background:`${ac}15`,border:`1px solid ${ac}33`,borderRadius:8,fontSize:8,color:ac,letterSpacing:1,textTransform:"uppercase"}}>{he?"עכשיו":"NOW"}</div>}</div>);})}
+          {[he?"חיפוש":"Search",he?"מציאה":"Discovery",he?"יתד":"Anchor",he?"שיא":"Summit"].map((label,i)=>{const span=cycleSpans(results.exit)[i];const active=cycleAt(results.age,results.exit)===i;return(<div key={i} style={{padding:"14px 16px",background:active?`${ac}0a`:"transparent",border:`1px solid ${active?ac+"33":ac+"08"}`,borderRadius:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all .3s"}}><div><div style={{fontSize:15,fontWeight:600,color:active?ac:tm}}>{label}</div><div style={{fontSize:10,color:ts}}>{he?"גילאים":"Ages"} {agesText(span)}</div></div><div style={{display:"flex",gap:8}}><div style={{textAlign:"center"}}><div style={{fontSize:8,color:ts}}>{he?"פסגה":"Peak"}</div><div style={{fontSize:20,fontWeight:700,color:ac}}>{results.pk[i]}</div></div><div style={{textAlign:"center"}}><div style={{fontSize:8,color:ts}}>{he?"אתגר":"Chal."}</div><div style={{fontSize:20,fontWeight:700,color:ts}}>{results.ch[i]}</div></div></div>{active&&<div style={{padding:"2px 8px",background:`${ac}15`,border:`1px solid ${ac}33`,borderRadius:8,fontSize:8,color:ac,letterSpacing:1,textTransform:"uppercase"}}>{he?"עכשיו":"NOW"}</div>}</div>);})}
           <div className="divider"/><div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?600:400,color:ac}}>Lo Shu Grid</h4></div><LoShu ls={results.ls} dk={dk} he={he}/>
         </Chapter>
 
@@ -2006,7 +2004,7 @@ function CompatWidget({he,dk}){
 
   const[error,setError]=useState("");
 
-  const parseDob=(s)=>{const p=s.split(".");if(p.length!==3)return null;const[d,m,y]=p.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)return null;return{d,m,y};};
+  const parseDob=(s)=>parseBirthDate(s);
 
   const calcCouple=()=>{
     setError("");

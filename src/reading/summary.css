@@ -28,6 +28,16 @@
   color: var(--st-ink-soft);
   font-size: 14px;
 }
+.rs-note {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 10px;
+  background: var(--st-gold-wash);
+  color: var(--st-ink);
+  font-size: 13px;
+  line-height: 1.6;
+}
 .rs-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

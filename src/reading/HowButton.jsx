@@ -66,7 +66,7 @@ function HowDialog({ how, he, onClose }) {
         </ol>
         <p className="how-result">
           {he ? "התוצאה: " : "Result: "}
-          <b>{shown(how.result, he)}</b>
+          <b>{how.shown ?? shown(how.result, he)}</b>
         </p>
       </div>
     </div>

@@ -4,7 +4,8 @@
  * `result`, which the tests compare with the engine's answer, so an explanation cannot drift
  * from the number beside it.
  */
-import { LV, VOW, R, LP, LPm, CA, addsOne, CH, karmicDebt, loShu, dailyRitualNumber } from "../engine/index.js";
+import { LV, VOW, R, LP, LPm, CA, addsOne, CH, cycleSpans, karmicDebt, loShu, dailyRitualNumber } from "../engine/index.js";
+import { agesText } from "./ages.js";
 
 const MASTERS = [11, 22, 33];
 const KARMIC = [13, 14, 16, 19];
@@ -206,16 +207,20 @@ function hiddenChallenges(ctx, he) {
   };
 }
 
-/** The age the cycles are counted from: 27 minus the life path in one digit; each cycle is 9 years. */
+/** The ages of the four cycles: the first ends at 36 minus the life path, the next two last 9 years, the last never ends. */
 function cycles({ d, m, y }, he) {
   const lp = LPm(d, m, y);
   const one = R(lp);
-  const start = 27 - one;
+  const exit = 27 - one;
+  const spans = cycleSpans(exit);
   const steps = [];
   if (one !== lp) steps.push(step(he ? "שביל הגורל בספרה אחת" : "The life path in one digit", `${lp} → ${one}`));
-  steps.push(step(he ? "המחזור הראשון מתחיל בגיל 27 פחות שביל הגורל" : "The first cycle starts at 27 minus the life path", `27−${one} = ${start}`));
-  steps.push(step(he ? "כל מחזור נמשך 9 שנים" : "Each cycle lasts 9 years", [0, 1, 2, 3].map((i) => `${start + 9 * i}–${start + 9 * (i + 1)}`).join(", ")));
-  return { steps, result: start };
+  steps.push(
+    step(he ? "המחזור הראשון: מהלידה עד גיל 36 פחות שביל הגורל" : "The first cycle: from birth to 36 minus the life path", `36−${one} = ${spans[0].to}`),
+    step(he ? "השני והשלישי: 9 שנים כל אחד" : "The second and third: 9 years each", `${agesText(spans[1])}, ${agesText(spans[2])}`),
+    step(he ? `הרביעי: מגיל ${spans[3].from} והלאה` : `The fourth: from ${spans[3].from} on`, agesText(spans[3])),
+  );
+  return { steps, result: exit, shown: spans.map(agesText).join(" · ") };
 }
 
 function karmic({ d, m, y, name }, he) {

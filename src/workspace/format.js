@@ -11,6 +11,18 @@ export function parseDmy(text, maxYear = new Date().getFullYear() + 1) {
   return isIsoDate(iso, maxYear) ? iso : null;
 }
 
+/**
+ * A typed birth date ("15.08.1990", or with / or -) as numbers; null when it is not a real date
+ * from 1900 up to today (the calculators took 31.02 and future years before the audit of 2026-10-11).
+ * @returns {{d: number, m: number, y: number} | null}
+ */
+export function parseBirthDate(text, now = new Date()) {
+  const iso = parseDmy(text, now.getFullYear());
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d) > now ? null : { d, m, y };
+}
+
 /** "1990-08-15" -> "15.08.1990"; "" for nothing. */
 export const formatDmy = (iso) => (iso ? `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}` : "");
 

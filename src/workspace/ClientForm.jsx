@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { ValidationError, validateClient } from "../data/validation.js";
 import { Card, Field, Loading, ErrorCard, ScreenTitle, BackButton, ConfirmAction, useLoad, btnPrimary, btnGhost } from "./ui.jsx";
-import { parseDmy, formatDmy, errorText } from "./format.js";
+import { parseBirthDate, formatDmy, errorText } from "./format.js";
 
 const EMPTY = { fullName: "", birthName: "", birthDate: "", phone: "", email: "", tags: "", notes: "", consent: false };
 
@@ -28,7 +28,9 @@ export default function ClientForm({ store, go, he, c, now, clientId }) {
   const save = async () => {
     const found = {};
     const dateText = form.birthDate.trim();
-    const birthDate = dateText ? parseDmy(dateText, now().getFullYear() + 1) : null;
+    // a birth date is a real date up to today: next year's made the age -1 (the audit of 2026-10-11)
+    const born = dateText ? parseBirthDate(dateText, now()) : null;
+    const birthDate = born ? `${born.y}-${String(born.m).padStart(2, "0")}-${String(born.d).padStart(2, "0")}` : null;
     if (dateText && !birthDate) found.birthDate = errorText("birthDate", "invalid", he);
     const payload = {
       fullName: form.fullName, birthName: form.birthName, birthDate, phone: form.phone, email: form.email,

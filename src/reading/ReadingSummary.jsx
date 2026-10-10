@@ -5,6 +5,8 @@
  */
 import { useId } from "react";
 import { useContent, numberTitle } from "../workspace/content.js";
+import { LV, cycleAt, cycleSpans } from "../engine/index.js";
+import { agesText } from "./ages.js";
 import HowButton from "./HowButton.jsx";
 import "./summary.css";
 
@@ -72,12 +74,11 @@ function Cycles({ r, ctx, he }) {
           </thead>
           <tbody>
             {names.map((name, i) => {
-              const from = r.exit + 9 * i;
-              const now = r.age >= from && r.age < from + 9;
+              const now = cycleAt(r.age, r.exit) === i;
               return (
                 <tr key={name} className={now ? "rs-now" : undefined} aria-current={now ? "true" : undefined}>
                   <th scope="row">
-                    {name} <span className="rs-ages">{`${from}–${from + 9}`}</span>
+                    {name} <span className="rs-ages">{agesText(cycleSpans(r.exit)[i])}</span>
                     {now && <span className="rs-badge">{he ? "עכשיו" : "Now"}</span>}
                   </th>
                   {[r.pk[i], r.ch[i], r.hp[i], r.hc[i]].map((v, j) => (
@@ -107,6 +108,8 @@ export default function ReadingSummary({ r, name, now, add, he }) {
   const year = content.YEAR_ENERGY?.[r.py];
   const none = he ? "אין" : "None";
   const planes = r.ls.planes.map((p) => (PLANES[p] || [p, p])[he ? 0 : 1]);
+  // the name numbers count Hebrew letters only: a name typed in Latin letters makes them 0
+  const hebrewName = [...String(name ?? "")].some((ch) => LV[ch]);
   return (
     <section className="rs" aria-labelledby={titleId} dir={he ? "rtl" : "ltr"}>
       <header className="rs-head">
@@ -115,6 +118,13 @@ export default function ReadingSummary({ r, name, now, add, he }) {
           {name} · <bdi>{`${pad2(r.d)}.${pad2(r.m)}.${r.y}`}</bdi> · {he ? `גיל ${r.age}` : `Age ${r.age}`}
         </p>
       </header>
+      {!hebrewName && (
+        <p className="rs-note" role="note">
+          {he
+            ? "בשם אין אותיות עבריות, ולכן ערך השם, קול הנשמה והביטוי יוצאים 0: הם נספרים לפי ערכי האותיות העבריות. כדאי לכתוב את השם בעברית."
+            : "The name has no Hebrew letters, so the name number, soul and expression come out 0: they count Hebrew letter values. Write the name in Hebrew."}
+        </p>
+      )}
       <div className="rs-grid">
         <Group title={he ? "המספרים המרכזיים" : "Core numbers"}>
           <Row k="lp" label={he ? "שביל הגורל" : "Life path"} value={r.lp} meaning={title(r.lp)} ctx={ctx} he={he} testId="rs-lp" />

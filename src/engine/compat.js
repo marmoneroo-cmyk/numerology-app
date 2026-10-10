@@ -46,10 +46,18 @@ const gauges = ({ lp1, lp2, su1, su2 }, score) => ({
   growth: Math.min(10, Math.round(Math.abs(lp1 - lp2) + Math.abs(su1 - su2) / 2 + 2)),
 });
 
-/** Studio match. `type` is "twin", "biz" or anything else for a love match. Score 20-99. */
+/**
+ * Studio match. `type` is "twin", "biz", "parent" (`a` the parent, `b` the child) or anything else for
+ * a love match. Score 20-99; a parent and child score as parentChildReading does (25-99).
+ */
 export function matchReading(a, b, type) {
   const p = pair(a, b);
   const lpm1 = LPm(a.d, a.m, a.y), lpm2 = LPm(b.d, b.m, b.y);
+  if (type === "parent") {
+    // the shipped code scored this as a love match (the audit of 2026-10-11)
+    const score = parentChildReading(a, b).score;
+    return { ...p, lpm1, lpm2, score, type, ...gauges(p, score) };
+  }
   let score = baseScore(p);
   if (p.nv1 === p.nv2) score += 10;
   if (complementary(p.lp1, p.lp2)) score += 12;

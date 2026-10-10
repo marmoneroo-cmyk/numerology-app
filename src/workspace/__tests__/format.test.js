@@ -1,5 +1,25 @@
 import { describe, it, expect } from "vitest";
-import { parseDmy, formatDmy, formatStamp, personOf, personName, summarizeReading, formatBytes, errorText, countLabel } from "../format.js";
+import { parseDmy, parseBirthDate, formatDmy, formatStamp, personOf, personName, summarizeReading, formatBytes, errorText, countLabel } from "../format.js";
+
+describe("a typed birth date", () => {
+  const NOW = new Date(2026, 9, 11, 9);
+
+  it("becomes day, month and year in any common spelling", () => {
+    expect(["15.08.1990", "5.8.1990", "05/08/1990", "5-8-1990"].map((s) => parseBirthDate(s, NOW))).toEqual([
+      { d: 15, m: 8, y: 1990 }, { d: 5, m: 8, y: 1990 }, { d: 5, m: 8, y: 1990 }, { d: 5, m: 8, y: 1990 },
+    ]);
+  });
+
+  it("must be a real date: no 31 February, no 29 February outside a leap year (the audit of 2026-10-11)", () => {
+    for (const s of ["31.02.1990", "30.02.2000", "29.02.2001", "31.04.1990", "0.1.1990", "1.13.1990", "-1.1.1990", "1.-5.1990"]) expect(parseBirthDate(s, NOW)).toBeNull();
+    expect(parseBirthDate("29.02.2000", NOW)).toEqual({ d: 29, m: 2, y: 2000 });
+  });
+
+  it("is not after today, nor before 1900", () => {
+    expect(parseBirthDate("11.10.2026", NOW)).toEqual({ d: 11, m: 10, y: 2026 }); // born today
+    for (const s of ["12.10.2026", "1.1.2030", "31.12.1899", "15.08.90", "", null, undefined]) expect(parseBirthDate(s, NOW)).toBeNull();
+  });
+});
 
 describe("workspace format helpers", () => {
   it("parses day.month.year in its common spellings and rejects impossible dates", () => {

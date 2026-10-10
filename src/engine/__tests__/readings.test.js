@@ -37,11 +37,29 @@ function compareAllPairs(run) {
 }
 
 describe("compatibility readings match the shipped handlers for every pair of 300 people", () => {
-  it.each([["love", "love"], ["twin", "twin"], ["biz", "biz"], ["parent", "parent"], ["no type", undefined]])("studio match: %s", (_, type) => {
+  it.each([["love", "love"], ["twin", "twin"], ["biz", "biz"], ["no type", undefined]])("studio match: %s", (_, type) => {
     const res = compareAllPairs((a, b) => {
       const want = handlers.doMatchCalc(a, b, a.name, b.name, type);
       const got = engine.matchReading(a, b, type);
       return [{ res: got, key: engine.compatKey(got.lp1, got.lp2) }, { res: want.res, key: want.k1 }];
+    });
+    expect(res.mismatches).toEqual([]);
+    expect(res.checked).toBe(90000);
+  });
+
+  // the shipped code scored a parent and child match as a love match (the audit of 2026-10-11);
+  // it now scores as the parent-and-child reading does, the first person being the parent
+  it("studio match: parent, scored as parent and child", () => {
+    const res = compareAllPairs((a, b) => {
+      const want = handlers.doMatchCalc(a, b, a.name, b.name, "parent").res;
+      const got = engine.matchReading(a, b, "parent");
+      const score = engine.parentChildReading(a, b).score;
+      const gauges = {
+        harmony: Math.min(10, Math.round(score / 10)),
+        tension: Math.min(10, Math.round((100 - score) / 12)),
+        growth: want.growth, // from the numbers, not the score
+      };
+      return [got, { ...want, score, ...gauges }];
     });
     expect(res.mismatches).toEqual([]);
     expect(res.checked).toBe(90000);

@@ -23,6 +23,8 @@ export {
   karmicDebt,
   loShu,
   yearCycle,
+  cycleSpans,
+  cycleAt,
   masterBase,
   dailyRitualNumber,
   fullCalc,

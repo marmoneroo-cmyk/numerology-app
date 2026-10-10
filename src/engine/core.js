@@ -12,7 +12,8 @@
 
 /** Bump whenever any result can change, so a saved reading knows which rules made it. */
 // 1.1.0: the +1 follows the date (July 1 - December 31) when a reading does not choose it
-export const ENGINE_VERSION = "1.1.0";
+// 1.2.0: a studio match of a parent and child scores as the parent-and-child reading
+export const ENGINE_VERSION = "1.2.0";
 
 /** Hebrew letter values, final forms included. Any other character counts 0. Frozen: shared by every reading. */
 export const LV = Object.freeze({
@@ -137,6 +138,19 @@ export function loShu(d, m, y) {
   return { g, miss, planes };
 }
 
+/**
+ * The four life cycles (pinnacles) by age, from a map's `exit` (27 minus the life path in one digit):
+ * the first from birth until `exit` + 9 (36 minus the life path), the next two 9 years each, the last
+ * from then on (`to` null).
+ * @returns {{from: number, to: number | null}[]}
+ */
+export function cycleSpans(exit) {
+  return [0, 1, 2, 3].map((i) => ({ from: i === 0 ? 0 : exit + 9 * i, to: i === 3 ? null : exit + 9 * (i + 1) }));
+}
+
+/** The life cycle (0-3) a person of `age` is in; -1 only for a negative age. */
+export const cycleAt = (age, exit) => cycleSpans(exit).findIndex(({ from, to }) => age >= from && (to === null || age < to));
+
 /** The psychological map: six traits on 0-10, with a deterministic floor of 2-4. */
 function psychMap({ nv, lp, su, ex, py, d, m, y }) {
   const psych = {
@@ -167,8 +181,9 @@ function psychMap({ nv, lp, su, ex, py, d, m, y }) {
  *   ls:{g:Object<number,number>, miss:number[], planes:string[]},
  *   proj:{year:number, py:number, isCurrent:boolean}[], psych:Object<string,number>, d:number, m:number, y:number}}
  *   name, life path (masters kept), age, personal/hidden year, soul, consonants, personal month/day,
- *   pinnacles, challenges, hidden pinnacles/challenges, age the first pinnacle ends, karmic debts,
- *   Lo Shu, the personal-year cycle, the psychological map, and the birth date echoed back
+ *   pinnacles, challenges, hidden pinnacles/challenges, `exit` (27 minus the life path in one digit:
+ *   the first cycle ends 9 years later, see cycleSpans), karmic debts, Lo Shu, the personal-year
+ *   cycle, the psychological map, and the birth date echoed back
  */
 export function fullCalc(d, m, y, nm, add, now = new Date()) {
   const plus = add ?? addsOne(now);

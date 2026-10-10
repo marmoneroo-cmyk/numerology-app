@@ -57,6 +57,17 @@ describe("the map summary", () => {
     expect(current.textContent).toContain("30–39");
   });
 
+  it("starts the first cycle at birth and leaves the last open, so a young person is in one", () => {
+    // life path 33 -> 6: the cycles turn at 30, 39 and 48
+    const young = fullCalc(15, 8, 2016, NAME, undefined, NOW); // 10 years old
+    show({ r: young });
+    const rows = screen.getAllByRole("row").filter((row) => row.querySelector(".rs-ages"));
+    expect(rows.map((row) => row.querySelector(".rs-ages").textContent)).toEqual([`0–${young.exit + 9}`, `${young.exit + 9}–${young.exit + 18}`, `${young.exit + 18}–${young.exit + 27}`, `${young.exit + 27}+`]);
+    expect(rows[0].getAttribute("aria-current")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "איך זה חושב: גילי המחזורים" }));
+    expect(within(screen.getByRole("dialog")).getByText(`${young.exit + 27}+`, { selector: "bdi" })).toBeTruthy();
+  });
+
   it("explains a number in a window, and closes it with Escape, back to its button", () => {
     show();
     const how = screen.getByRole("button", { name: "איך זה חושב: שנה אישית" });
@@ -102,6 +113,15 @@ describe("the map summary", () => {
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).queryByText("מה-1.7 ועד ה-31.12 מוסיפים 1")).toBeNull();
     expect(cell("rs-py")).toBe("6");
+  });
+
+  it("says why a name in Latin letters gets 0 for its name numbers, and only then", () => {
+    show();
+    expect(screen.queryByRole("note")).toBeNull();
+    cleanup();
+    show({ r: fullCalc(15, 8, 1990, "John Smith", undefined, NOW), name: "John Smith" });
+    expect(screen.getByRole("note").textContent).toContain("בשם אין אותיות עבריות");
+    expect(cell("rs-nv")).toBe("0");
   });
 
   it("speaks English", () => {
