@@ -112,7 +112,8 @@ Inputs still missing, each a single constant in `src/sales/config.js`:
   - the demo provider's `loadService` returns the demo service, so supabase-js and `service.js` are never loaded;
   - the workspace runs on the in-memory client;
   - files go to an in-memory bucket.
-- **Nothing persists:** the data is rebuilt on every visit and gone on leaving. The demo uses no IndexedDB workspace: App's local-copy offer needs a real profile id and server, and it does not appear for the demo profile.
+- **Nothing persists:** changes live in memory only, and a reload starts over. Within one page load, the Studio's workspace cache, kept per user id, keeps the demo's changes between visits to `#demo`.
+- **No IndexedDB:** the demo opens none. App hides the local-copy offer, which reads the browser's own local workspace, when `view` is `demo`.
 - **A subscriber, so no admin screen.** "My account" works on no-ops.
 - **A banner across the top:** "זו הדגמה עם לקוחות לדוגמה. שום דבר לא נשמר." with "לדבר איתנו" and "חזרה לעמוד".
 - **Analytics:** a page view of `#demo` keeps its hash. See below.
