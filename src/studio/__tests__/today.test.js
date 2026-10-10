@@ -197,6 +197,35 @@ describe("greetingText", () => {
     expect(greetingText("", true)).toBe("יום הולדת שמח! מאחלים לך שנה של אור, צמיחה והגשמה.");
     expect(greetingText(undefined, false)).toBe("Happy birthday! Wishing you a year of light, growth and fulfilment.");
   });
+
+  it("with the numbers: names the personal year and what it brings, and signs with the studio's name", () => {
+    expect(greetingText("רחל כהן", true, { personalYear: 7, signature: "שני כהן" })).toBe(
+      "יום הולדת שמח, רחל!\nבנומרולוגיה, השנה האישית שלך היא 7 — שנה של העמקה, חוכמה פנימית ושקט.\nמאחלים לך שנה מלאה באור ובהגשמה.\nשני כהן",
+    );
+    expect(greetingText("Rachel Cohen", false, { personalYear: 1, signature: "Shani Cohen" })).toBe(
+      "Happy birthday, Rachel!\nIn numerology, your personal year is 1 — a year of new beginnings and the courage to act.\nWishing you a year full of light and fulfilment.\nShani Cohen",
+    );
+  });
+
+  it("has words for every personal year 1 to 9, in both languages", () => {
+    for (let n = 1; n <= 9; n++) {
+      for (const he of [true, false]) {
+        const text = greetingText("רחל", he, { personalYear: n });
+        expect(text).toContain(`${n} — `);
+        expect(text.split("\n")).toHaveLength(3); // no signature line without a signature
+      }
+    }
+  });
+
+  it("falls back to the plain greeting when the personal year is not 1 to 9", () => {
+    for (const personalYear of [0, 10, 11, NaN, undefined, null, "5"]) {
+      expect(greetingText("רחל כהן", true, { personalYear, signature: "שני" })).toBe("יום הולדת שמח, רחל! מאחלים לך שנה של אור, צמיחה והגשמה.\nשני");
+    }
+  });
+
+  it("leaves out a blank signature", () => {
+    expect(greetingText("רחל כהן", true, { personalYear: 5, signature: "   " }).endsWith("באור ובהגשמה.")).toBe(true);
+  });
 });
 
 describe("initialsOf", () => {

@@ -138,9 +138,10 @@ function whenText(inDays, he) {
   return `In ${inDays} days`;
 }
 
-function BirthdayRow({ he, birthday, lifePath, personalYear, greetAnyone }) {
+function BirthdayRow({ he, birthday, lifePath, personalYear, greetAnyone, signature }) {
   const { client, date, age, inDays } = birthday;
-  const text = greetingText(client.fullName, he);
+  const year = personalYear(client.birthDate, date); // the one the client enters on the birthday
+  const text = greetingText(client.fullName, he, { personalYear: year, signature });
   // the demo has a phone for show only: the greeting opens with no one chosen
   const link = client.phone && greetAnyone ? shareLink(text) : greetingLink(client.phone, text);
   const about = [whenText(inDays, he), `${date.getDate()}.${date.getMonth() + 1}`, he ? `יום הולדת ${age}` : `Turning ${age}`].join(" · ");
@@ -152,11 +153,12 @@ function BirthdayRow({ he, birthday, lifePath, personalYear, greetAnyone }) {
         <span className="st-today-sub">{about}</span>
         <span className="st-today-chips">
           <span className="st-today-chip st-today-chip-gold">{`${he ? "מסלול" : "Life path"} ${lifePath(client.birthDate)}`}</span>
-          <span className="st-today-chip">{`${he ? "שנה אישית" : "Personal year"} ${personalYear(client.birthDate, date)}`}</span>
+          <span className="st-today-chip">{`${he ? "שנה אישית" : "Personal year"} ${year}`}</span>
         </span>
+        {!link && <span className="st-today-sub">{he ? "אין טלפון בתיק, אז אין ברכה בוואטסאפ" : "No phone on file, so no WhatsApp greeting"}</span>}
       </div>
       {link && (
-        <a className="st-today-btn st-today-small fx" href={link} target="_blank" rel="noopener noreferrer">
+        <a className="st-today-btn st-today-small fx" href={link} target="_blank" rel="noopener noreferrer" title={text}>
           <Icon name="gift" />
           {he ? "ברכה" : "Greeting"}
           <span className="st-sr">{he ? ` ל${client.fullName}` : ` for ${client.fullName}`}</span>
@@ -166,13 +168,13 @@ function BirthdayRow({ he, birthday, lifePath, personalYear, greetAnyone }) {
   );
 }
 
-function Birthdays({ he, clients, today, lifePath, personalYear, greetAnyone }) {
+function Birthdays({ he, clients, today, lifePath, personalYear, greetAnyone, signature }) {
   const birthdays = upcomingBirthdays(clients, today);
   if (!birthdays.length) return <p className="st-today-quiet">{he ? "אין ימי הולדת השבוע." : "No birthdays this week."}</p>;
   return (
     <ul className="st-today-rows">
       {birthdays.map((b) => (
-        <BirthdayRow key={b.client.id} he={he} birthday={b} lifePath={lifePath} personalYear={personalYear} greetAnyone={greetAnyone} />
+        <BirthdayRow key={b.client.id} he={he} birthday={b} lifePath={lifePath} personalYear={personalYear} greetAnyone={greetAnyone} signature={signature} />
       ))}
     </ul>
   );
@@ -229,9 +231,10 @@ function QuickActions({ he, onNewClient, onMeeting, onSearch }) {
  *   lifePath: (isoDate: string) => number, personalYear: (isoDate: string, at: Date) => number,
  *   deck: import("react").ReactNode, onOpenClient: (id: string) => void, onNewReading: () => void,
  *   onNewClient?: () => void, onMeeting?: () => void, onSearch?: () => void,
- * }} props
+ *   greetAnyone?: boolean, signature?: string,
+ * }} props `signature` ends each birthday greeting (the studio's name)
  */
-export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, deck, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch, greetAnyone = false }) {
+export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, deck, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch, greetAnyone = false, signature = "" }) {
   const load = useLoad(() => store.clients.list(), [store]);
   const firstTitle = useRef(null);
   const retry = useRetry(load, firstTitle);
@@ -243,7 +246,7 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
       <div className="st-cols-3">
         <Panel title={he ? "ימי הולדת השבוע" : "Birthdays this week"} titleRef={firstTitle}>
           <WithClients he={he} load={load} onRetry={retry} announce>
-            {(clients) => <Birthdays he={he} clients={clients} today={today} lifePath={lifePath} personalYear={personalYear} greetAnyone={greetAnyone} />}
+            {(clients) => <Birthdays he={he} clients={clients} today={today} lifePath={lifePath} personalYear={personalYear} greetAnyone={greetAnyone} signature={signature} />}
           </WithClients>
         </Panel>
         <Panel title={he ? "לקוחות אחרונים" : "Recent clients"}>

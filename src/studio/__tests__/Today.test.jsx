@@ -18,6 +18,10 @@ const URI = { fullName: "אורי בן דוד", birthDate: "1987-10-08", phone: 
 const NOA = { fullName: "נועה ברק", phone: "054-9998877" }; // no birth date
 const ALL = [RACHEL, YOSSI, MICHAL, DANA, URI, NOA]; // ids id-1 to id-6, NOA the most recent
 
+// every personal year is 5 in these tests (see renderToday)
+const RACHEL_GREETING_HE = "יום הולדת שמח, רחל!\nבנומרולוגיה, השנה האישית שלך היא 5 — שנה של שינוי, חופש והרפתקאות.\nמאחלים לך שנה מלאה באור ובהגשמה.";
+const RACHEL_GREETING_EN = "Happy birthday, רחל!\nIn numerology, your personal year is 5 — a year of change, freedom and adventure.\nWishing you a year full of light and fulfilment.";
+
 const EMPTY_HE = "עוד אין לקוחות. מוסיפים את הראשון ב׳לקוח חדש׳.";
 const FAILED_HE = "לא הצלחנו לטעון את הלקוחות.";
 
@@ -82,9 +86,15 @@ describe("Today", () => {
     renderToday(await storeWith(ALL), { greetAnyone: true });
     const [yossi, rachel] = await within(panel("ימי הולדת השבוע")).findAllByRole("listitem");
     const greeting = within(rachel).getByRole("link", { name: "ברכה לרחל כהן" });
-    const text = encodeURIComponent("יום הולדת שמח, רחל! מאחלים לך שנה של אור, צמיחה והגשמה.");
+    const text = encodeURIComponent(RACHEL_GREETING_HE);
     expect(greeting.getAttribute("href")).toBe(`https://wa.me/?text=${text}`);
     expect(within(yossi).queryByRole("link")).toBeNull(); // still only where the client has a phone
+  });
+
+  it("signs the greeting with the studio's name", async () => {
+    renderToday(await storeWith([RACHEL]), { signature: "שני כהן · נומרולוגיה" });
+    const greeting = await screen.findByRole("link", { name: "ברכה לרחל כהן" });
+    expect(greeting.getAttribute("href")).toBe(`https://wa.me/972521234567?text=${encodeURIComponent(`${RACHEL_GREETING_HE}\nשני כהן · נומרולוגיה`)}`);
   });
 
   it("lists this week's birthdays, soonest first, with the age and numbers, and a greeting only where there is a phone", async () => {
@@ -96,13 +106,15 @@ describe("Today", () => {
     expect(within(yossi).getByText("היום · 6.10 · יום הולדת 36")).toBeTruthy();
     expect(within(yossi).getByText("מסלול 6")).toBeTruthy();
     expect(within(yossi).queryByRole("link")).toBeNull();
+    expect(within(yossi).getByText("אין טלפון בתיק, אז אין ברכה בוואטסאפ")).toBeTruthy();
 
     expect(within(rachel).getByText("מחר · 7.10 · יום הולדת 41")).toBeTruthy();
     expect(within(rachel).getByText("מסלול 7")).toBeTruthy();
     expect(within(rachel).getByText("שנה אישית 5")).toBeTruthy();
     const greeting = within(rachel).getByRole("link", { name: "ברכה לרחל כהן" });
-    const text = encodeURIComponent("יום הולדת שמח, רחל! מאחלים לך שנה של אור, צמיחה והגשמה.");
+    const text = encodeURIComponent(RACHEL_GREETING_HE);
     expect(greeting.getAttribute("href")).toBe(`https://wa.me/972521234567?text=${text}`);
+    expect(greeting.getAttribute("title")).toBe(RACHEL_GREETING_HE); // the message, before it is sent
     expect(greeting.getAttribute("target")).toBe("_blank");
     expect(greeting.getAttribute("rel")).toBe("noopener noreferrer");
     // the personal year is the one the client enters on the birthday
@@ -226,7 +238,7 @@ describe("Today", () => {
     expect(within(rachel).getByText("Life path 7")).toBeTruthy();
     expect(within(rachel).getByText("Personal year 5")).toBeTruthy();
     const greeting = within(rachel).getByRole("link", { name: "Greeting for רחל כהן" });
-    const text = encodeURIComponent("Happy birthday, רחל! Wishing you a year of light, growth and fulfilment.");
+    const text = encodeURIComponent(RACHEL_GREETING_EN);
     expect(greeting.getAttribute("href")).toBe(`https://wa.me/972521234567?text=${text}`);
     expect(within(michal).getByText("In 5 days · 11.10 · Turning 48")).toBeTruthy();
 

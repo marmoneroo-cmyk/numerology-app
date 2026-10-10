@@ -98,13 +98,39 @@ export function shareLink(text) {
 
 const wordsOf = (name) => String(name ?? "").split(" ").filter(Boolean);
 
-/** The birthday greeting, by first name. */
-export function greetingText(fullName, he) {
+/** What each personal year brings, for the birthday greeting (the themes of App's YEAR_ENERGY, in plain words). */
+const YEAR_WISH = {
+  1: { he: "שנה של התחלות חדשות ואומץ לפעול", en: "a year of new beginnings and the courage to act" },
+  2: { he: "שנה של שיתוף, קשרים וסבלנות שמשתלמת", en: "a year of partnership, connection and patience that pays off" },
+  3: { he: "שנה של ביטוי, יצירה ושמחה", en: "a year of expression, creativity and joy" },
+  4: { he: "שנה של בנייה ויסודות יציבים", en: "a year of building and steady foundations" },
+  5: { he: "שנה של שינוי, חופש והרפתקאות", en: "a year of change, freedom and adventure" },
+  6: { he: "שנה של אהבה, משפחה ובית", en: "a year of love, family and home" },
+  7: { he: "שנה של העמקה, חוכמה פנימית ושקט", en: "a year of depth, inner wisdom and calm" },
+  8: { he: "שנה של כוח, הצלחה והגשמה", en: "a year of strength, success and achievement" },
+  9: { he: "שנה של סיום מעגל, שחרור ופינוי מקום לחדש", en: "a year of closing a circle, letting go and making room for the new" },
+};
+
+/**
+ * The birthday greeting, by first name. Given the personal year the client enters on the birthday,
+ * it says what that year brings; given a signature (the studio's name), it ends with it.
+ */
+export function greetingText(fullName, he, { personalYear, signature } = {}) {
   const first = wordsOf(fullName)[0];
   const to = first ? `, ${first}` : "";
-  return he
-    ? `יום הולדת שמח${to}! מאחלים לך שנה של אור, צמיחה והגשמה.`
-    : `Happy birthday${to}! Wishing you a year of light, growth and fulfilment.`;
+  const wish = typeof personalYear === "number" && Object.hasOwn(YEAR_WISH, personalYear) ? YEAR_WISH[personalYear] : null;
+  const sign = String(signature ?? "").trim();
+  let text;
+  if (!wish) {
+    text = he
+      ? `יום הולדת שמח${to}! מאחלים לך שנה של אור, צמיחה והגשמה.`
+      : `Happy birthday${to}! Wishing you a year of light, growth and fulfilment.`;
+  } else if (he) {
+    text = `יום הולדת שמח${to}!\nבנומרולוגיה, השנה האישית שלך היא ${personalYear} — ${wish.he}.\nמאחלים לך שנה מלאה באור ובהגשמה.`;
+  } else {
+    text = `Happy birthday${to}!\nIn numerology, your personal year is ${personalYear} — ${wish.en}.\nWishing you a year full of light and fulfilment.`;
+  }
+  return sign ? `${text}\n${sign}` : text;
 }
 
 /** Up to two initials: the first letters of the first and the last name. */
