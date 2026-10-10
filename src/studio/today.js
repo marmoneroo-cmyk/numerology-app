@@ -91,6 +91,11 @@ export function greetingLink(phone, text) {
   return chat && `${chat}?text=${encodeURIComponent(wellFormed(text))}`;
 }
 
+/** A WhatsApp link with `text` typed and no one chosen: WhatsApp asks whom to send it to (the demo's sample clients). */
+export function shareLink(text) {
+  return `https://wa.me/?text=${encodeURIComponent(wellFormed(text))}`;
+}
+
 const wordsOf = (name) => String(name ?? "").split(" ").filter(Boolean);
 
 /** The birthday greeting, by first name. */

@@ -78,6 +78,15 @@ describe("Today", () => {
     await screen.findAllByText(EMPTY_HE);
   });
 
+  it("in the demo, opens the greeting with no one chosen: the sample numbers may be someone's real ones", async () => {
+    renderToday(await storeWith(ALL), { greetAnyone: true });
+    const [yossi, rachel] = await within(panel("ימי הולדת השבוע")).findAllByRole("listitem");
+    const greeting = within(rachel).getByRole("link", { name: "ברכה לרחל כהן" });
+    const text = encodeURIComponent("יום הולדת שמח, רחל! מאחלים לך שנה של אור, צמיחה והגשמה.");
+    expect(greeting.getAttribute("href")).toBe(`https://wa.me/?text=${text}`);
+    expect(within(yossi).queryByRole("link")).toBeNull(); // still only where the client has a phone
+  });
+
   it("lists this week's birthdays, soonest first, with the age and numbers, and a greeting only where there is a phone", async () => {
     const h = renderToday(await storeWith(ALL));
     const rows = await within(panel("ימי הולדת השבוע")).findAllByRole("listitem");

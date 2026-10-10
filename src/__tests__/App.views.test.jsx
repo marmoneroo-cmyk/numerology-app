@@ -74,6 +74,8 @@ describe("App inside Root", { timeout: 20000 }, () => {
     const banner = await screen.findByRole("note", {}, LONG);
     expect(banner.textContent).toContain("זו הדגמה");
     expect((await screen.findAllByText(/רחל כהן/, {}, LONG)).length).toBeGreaterThan(0);
+    // the sample clients' phones are for show: a greeting opens WhatsApp with no one chosen
+    for (const greeting of screen.getAllByRole("link", { name: /^ברכה/ })) expect(greeting.getAttribute("href").startsWith("https://wa.me/?text=")).toBe(true);
     const nav = screen.getByRole("navigation", { name: "כלי הסטודיו" });
     expect(within(nav).queryByRole("button", { name: /חשבונות/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "תצוגת לקוח" })).toBeNull();

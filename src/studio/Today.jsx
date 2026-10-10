@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef } from "react";
 import { useLoad } from "../workspace/ui.jsx";
-import { greetingLink, greetingText, initialsOf, recentClients, upcomingBirthdays } from "./today.js";
+import { greetingLink, greetingText, initialsOf, recentClients, shareLink, upcomingBirthdays } from "./today.js";
 import "./today.css";
 
 const DATE_FORMAT = { weekday: "long", day: "numeric", month: "long", year: "numeric" };
@@ -138,9 +138,11 @@ function whenText(inDays, he) {
   return `In ${inDays} days`;
 }
 
-function BirthdayRow({ he, birthday, lifePath, personalYear }) {
+function BirthdayRow({ he, birthday, lifePath, personalYear, greetAnyone }) {
   const { client, date, age, inDays } = birthday;
-  const link = greetingLink(client.phone, greetingText(client.fullName, he));
+  const text = greetingText(client.fullName, he);
+  // the demo has a phone for show only: the greeting opens with no one chosen
+  const link = client.phone && greetAnyone ? shareLink(text) : greetingLink(client.phone, text);
   const about = [whenText(inDays, he), `${date.getDate()}.${date.getMonth() + 1}`, he ? `יום הולדת ${age}` : `Turning ${age}`].join(" · ");
   return (
     <li className="st-today-row">
@@ -164,13 +166,13 @@ function BirthdayRow({ he, birthday, lifePath, personalYear }) {
   );
 }
 
-function Birthdays({ he, clients, today, lifePath, personalYear }) {
+function Birthdays({ he, clients, today, lifePath, personalYear, greetAnyone }) {
   const birthdays = upcomingBirthdays(clients, today);
   if (!birthdays.length) return <p className="st-today-quiet">{he ? "אין ימי הולדת השבוע." : "No birthdays this week."}</p>;
   return (
     <ul className="st-today-rows">
       {birthdays.map((b) => (
-        <BirthdayRow key={b.client.id} he={he} birthday={b} lifePath={lifePath} personalYear={personalYear} />
+        <BirthdayRow key={b.client.id} he={he} birthday={b} lifePath={lifePath} personalYear={personalYear} greetAnyone={greetAnyone} />
       ))}
     </ul>
   );
@@ -229,7 +231,7 @@ function QuickActions({ he, onNewClient, onMeeting, onSearch }) {
  *   onNewClient?: () => void, onMeeting?: () => void, onSearch?: () => void,
  * }} props
  */
-export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, deck, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch }) {
+export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, deck, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch, greetAnyone = false }) {
   const load = useLoad(() => store.clients.list(), [store]);
   const firstTitle = useRef(null);
   const retry = useRetry(load, firstTitle);
@@ -241,7 +243,7 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
       <div className="st-cols-3">
         <Panel title={he ? "ימי הולדת השבוע" : "Birthdays this week"} titleRef={firstTitle}>
           <WithClients he={he} load={load} onRetry={retry} announce>
-            {(clients) => <Birthdays he={he} clients={clients} today={today} lifePath={lifePath} personalYear={personalYear} />}
+            {(clients) => <Birthdays he={he} clients={clients} today={today} lifePath={lifePath} personalYear={personalYear} greetAnyone={greetAnyone} />}
           </WithClients>
         </Panel>
         <Panel title={he ? "לקוחות אחרונים" : "Recent clients"}>

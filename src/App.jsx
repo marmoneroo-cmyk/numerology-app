@@ -1719,7 +1719,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       {!showRes&&(<>
         {/* Studio nav rendered above (always visible in owner mode) */}
 
-        {showOwnerUI&&tab==="today"&&workspaceStore&&<Today he={he} store={workspaceStore} now={()=>new Date()}
+        {showOwnerUI&&tab==="today"&&workspaceStore&&<Today he={he} store={workspaceStore} now={()=>new Date()} greetAnyone={demo}
           day={{number:dayNum,title:he?D[dayNum].t:D[dayNum].te,text:he?D[dayNum].s:D[dayNum].se}}
           lifePath={(iso)=>{const p=personOf("",iso);return LPm(p.d,p.m,p.y);}}
           personalYear={(iso,at)=>{const p=personOf("",iso);return PY(p.d,p.m,at.getFullYear());}}
