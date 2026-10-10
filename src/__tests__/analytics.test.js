@@ -12,6 +12,14 @@ describe("analytics", () => {
     expect(event.url).toContain("#access_token"); // the event it was given is left as it was
   });
 
+  it("keeps the app's own route names, and drops any other fragment", () => {
+    const at = (url) => scrubbed({ type: "pageview", url }).url;
+    expect(at("https://studio.shani-cohen.com/#demo")).toBe("https://studio.shani-cohen.com/#demo");
+    expect(at("https://studio.shani-cohen.com/?ref=x#privacy")).toBe("https://studio.shani-cohen.com/#privacy");
+    expect(at("https://studio.shani-cohen.com/#access_token=abc")).toBe("https://studio.shani-cohen.com/");
+    expect(at("https://studio.shani-cohen.com/#__proto__")).toBe("https://studio.shani-cohen.com/");
+  });
+
   it("drops an event whose address cannot be read, rather than sending it whole", () => {
     expect(scrubbed({ type: "pageview", url: "not a url" })).toBeNull();
   });
