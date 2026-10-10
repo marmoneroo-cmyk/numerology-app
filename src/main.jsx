@@ -2,9 +2,11 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import Root from './Root.jsx'
 import { startAnalytics } from './analytics.js'
+import { reloadOnStaleChunks } from './staleChunks.js'
 import './studio/studio.css'
 
 startAnalytics()
+reloadOnStaleChunks()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

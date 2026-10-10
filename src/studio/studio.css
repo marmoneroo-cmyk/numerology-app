@@ -363,7 +363,8 @@
   cursor: pointer;
 }
 
-/* Root's own messages: the app on its way, or failing to load (src/Root.jsx) */
+/* Root's own messages: the app on its way, or failing to load (src/Root.jsx). Fixed colours: they show on the
+   page's dark body whatever theme the Studio last used. */
 .root-message {
   min-height: 60vh;
   display: flex;
@@ -371,16 +372,16 @@
   align-items: center;
   justify-content: center;
   gap: 14px;
-  color: var(--st-ink);
+  color: #ece4d4;
   font-family: var(--st-body);
 }
 .root-message button {
   min-height: 44px;
   padding: 8px 20px;
   border-radius: 12px;
-  border: 1px solid var(--st-line-strong);
+  border: 1px solid rgba(200, 169, 106, 0.42);
   background: transparent;
-  color: var(--st-gold-text);
+  color: #c8a96a;
   font: inherit;
   font-weight: 700;
   cursor: pointer;

@@ -8,10 +8,12 @@ export default defineConfig({
     env: { TZ: 'Asia/Jerusalem' },
     // a global a test fakes (jsdom has no matchMedia, for one) is put back after each test
     unstubGlobals: true,
+    // the database tests (PGlite) and the engine's equivalence runs take about 5 s under coverage: room to spare
+    testTimeout: 15000,
     // `npm run test:coverage`: the engine, the data layer, the workspace, the accounts and the Studio's units must stay at 80% or more
     coverage: {
       provider: 'v8',
-      include: ['src/engine/**', 'src/data/**', 'src/workspace/**', 'src/account/**', 'src/studio/**', 'src/sales/**', 'src/demo/**', 'src/legal/**', 'src/routes.js', 'src/Root.jsx', 'src/AppWorld.jsx', 'src/analytics.js'],
+      include: ['src/engine/**', 'src/data/**', 'src/workspace/**', 'src/account/**', 'src/studio/**', 'src/sales/**', 'src/demo/**', 'src/legal/**', 'src/routes.js', 'src/Root.jsx', 'src/AppWorld.jsx', 'src/analytics.js', 'src/staleChunks.js'],
       exclude: ['**/__tests__/**'],
       thresholds: { statements: 80, branches: 80, functions: 80, lines: 80 },
     },
