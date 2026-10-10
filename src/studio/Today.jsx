@@ -6,7 +6,11 @@
  */
 import { useEffect, useRef } from "react";
 import { useLoad } from "../workspace/ui.jsx";
-import { greetingLink, greetingText, initialsOf, recentClients, shareLink, upcomingBirthdays } from "./today.js";
+import {
+  checkInText, followUpText, greetingLink, greetingText, initialsOf, isNewYearMonth, newYearText, quietClients,
+  recentClients, shareLink, upcomingBirthdays,
+} from "./today.js";
+import { formatDmy } from "../workspace/format.js";
 import HowButton from "../reading/HowButton.jsx";
 import "./today.css";
 
@@ -142,13 +146,25 @@ function whenText(inDays, he) {
   return `In ${inDays} days`;
 }
 
+/** A WhatsApp link with `text` to the client's own number; in the demo (a phone for show only) to no one chosen. */
+const messageLink = (client, text, greetAnyone) => (client.phone && greetAnyone ? shareLink(text) : greetingLink(client.phone, text));
+
+/** A message button: opens WhatsApp with the message typed, and shows it on hover first. */
+function MessageButton({ he, href, text, client, label }) {
+  return (
+    <a className="st-today-btn st-today-small fx" href={href} target="_blank" rel="noopener noreferrer" title={text}>
+      {label}
+      <span className="st-sr">{he ? ` ל${client.fullName}` : ` for ${client.fullName}`}</span>
+    </a>
+  );
+}
+
 function BirthdayRow({ he, birthday, lifePath, personalYear, greetAnyone, signature }) {
   const { client, date, age, inDays } = birthday;
   const year = personalYear(client.birthDate, date); // the one the client enters on the birthday
   const [y, m, d] = String(client.birthDate).split("-").map(Number); // upcomingBirthdays keeps valid dates only
   const text = greetingText(client.fullName, he, { personalYear: year, signature });
-  // the demo has a phone for show only: the greeting opens with no one chosen
-  const link = client.phone && greetAnyone ? shareLink(text) : greetingLink(client.phone, text);
+  const link = messageLink(client, text, greetAnyone);
   const about = [whenText(inDays, he), `${date.getDate()}.${date.getMonth() + 1}`, he ? `יום הולדת ${age}` : `Turning ${age}`].join(" · ");
   return (
     <li className="st-today-row">
@@ -187,6 +203,76 @@ function Birthdays({ he, clients, today, lifePath, personalYear, greetAnyone, si
       {birthdays.map((b) => (
         <BirthdayRow key={b.client.id} he={he} birthday={b} lifePath={lifePath} personalYear={personalYear} greetAnyone={greetAnyone} signature={signature} />
       ))}
+    </ul>
+  );
+}
+
+/** The readings whose follow-up date has come: open the reading, or ask the client how they are. */
+function FollowUps({ he, due, clients, onOpenReading, greetAnyone, signature }) {
+  if (!due.length) return <p className="st-today-quiet">{he ? "אין מעקבים שהגיע זמנם." : "No follow-ups due."}</p>;
+  const byId = new Map(clients.map((c) => [c.id, c]));
+  return (
+    <ul className="st-today-rows">
+      {due.map((f) => {
+        const client = byId.get(f.clientId) || { fullName: f.clientName };
+        const text = followUpText(client.fullName, he, { signature });
+        const link = messageLink(client, text, greetAnyone);
+        return (
+          <li key={f.readingId} className="st-today-row">
+            <Initials name={client.fullName} />
+            <div className="st-today-who">
+              <b className="st-today-name">{client.fullName}</b>
+              <span className="st-today-sub">{he ? `מעקב מ-${formatDmy(f.followUp)}` : `Follow-up from ${formatDmy(f.followUp)}`}</span>
+            </div>
+            <span className="st-today-actions">
+              {onOpenReading && (
+                <button type="button" className="st-today-btn st-today-small fx" onClick={() => onOpenReading(f.readingId)}>
+                  {he ? "לבדיקה" : "Open"}
+                  <span className="st-sr">{he ? ` של ${client.fullName}` : ` for ${client.fullName}`}</span>
+                </button>
+              )}
+              {link && <MessageButton he={he} href={link} text={text} client={client} label={he ? "הודעה" : "Message"} />}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/**
+ * Clients worth a word: the ones quiet for half a year, with their personal year now; in July, when the +1
+ * moves every personal year on, the most recent clients with their new year.
+ */
+function Reconnect({ he, clients, now, personalYear, greetAnyone, signature }) {
+  const newYear = isNewYearMonth(now);
+  const list = newYear ? recentClients(clients, 8).map((client) => ({ client, months: null })) : quietClients(clients, now);
+  if (!list.length) return <p className="st-today-quiet">{he ? "כל הלקוחות היו בקשר בחצי השנה האחרונה." : "Every client was in touch in the last half year."}</p>;
+  return (
+    <ul className="st-today-rows">
+      {list.map(({ client, months }) => {
+        const year = client.birthDate ? personalYear(client.birthDate, now) : undefined;
+        const make = newYear ? newYearText : checkInText;
+        const text = make(client.fullName, he, { personalYear: year, signature });
+        const link = messageLink(client, text, greetAnyone);
+        const about = newYear
+          ? year && (he ? `שנה אישית חדשה: ${year}` : `New personal year: ${year}`)
+          : he ? `פעילות אחרונה לפני ${months} חודשים` : `Last activity ${months} months ago`;
+        return (
+          <li key={client.id} className="st-today-row">
+            <Initials name={client.fullName} />
+            <div className="st-today-who">
+              <b className="st-today-name">{client.fullName}</b>
+              {about && <span className="st-today-sub">{about}</span>}
+            </div>
+            {link ? (
+              <MessageButton he={he} href={link} text={text} client={client} label={he ? "הודעה" : "Message"} />
+            ) : (
+              <span className="st-today-sub">{he ? "אין טלפון" : "No phone"}</span>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -242,14 +328,16 @@ function QuickActions({ he, onNewClient, onMeeting, onSearch }) {
  *   lifePath: (isoDate: string) => number, personalYear: (isoDate: string, at: Date) => number,
  *   deck: import("react").ReactNode, onOpenClient: (id: string) => void, onNewReading: () => void,
  *   onNewClient?: () => void, onMeeting?: () => void, onSearch?: () => void,
- *   greetAnyone?: boolean, signature?: string,
- * }} props `signature` ends each birthday greeting (the studio's name)
+ *   greetAnyone?: boolean, signature?: string, onOpenReading?: (id: string) => void,
+ * }} props `signature` ends each message to a client (the studio's name)
  */
-export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, deck, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch, greetAnyone = false, signature = "" }) {
+export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, deck, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch, onOpenReading, greetAnyone = false, signature = "" }) {
   const load = useLoad(() => store.clients.list(), [store]);
+  const due = useLoad(() => store.summary(now()), [store]);
   const firstTitle = useRef(null);
   const retry = useRetry(load, firstTitle);
   const today = now();
+  const messages = { he, greetAnyone, signature };
   return (
     <div className="st-today">
       <h2 className="st-sr">{he ? "היום" : "Today"}</h2>
@@ -269,6 +357,17 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
           <QuickActions he={he} onNewClient={onNewClient} onMeeting={onMeeting} onSearch={onSearch} />
         </Panel>
       </div>
+      {/* once there are clients: the ones to follow up, and the ones worth a word */}
+      {load.data?.length > 0 && (
+        <div className="st-cols-2">
+          <Panel title={he ? "מעקבים שהגיע זמנם" : "Follow-ups due"}>
+            {due.data && <FollowUps {...messages} due={due.data.followUps} clients={load.data} onOpenReading={onOpenReading} />}
+          </Panel>
+          <Panel title={isNewYearMonth(today) ? (he ? "השנה האישית החדשה" : "The new personal year") : he ? "כדאי לחזור אליהם" : "Worth getting back to"}>
+            <Reconnect {...messages} clients={load.data} now={today} personalYear={personalYear} />
+          </Panel>
+        </div>
+      )}
       <Panel title={he ? "קלף היום" : "Today's card"}>{deck}</Panel>
     </div>
   );

@@ -1,0 +1,106 @@
+/* The Studio's newer calculators (practical numbers, name comparison). Colours from studio.css. */
+.calc-card {
+  margin-bottom: 16px;
+}
+.calc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.calc-chip {
+  padding: 6px 14px;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--st-ink-soft);
+  font: 500 13px/1.4 var(--st-body);
+  cursor: pointer;
+}
+.calc-chip[aria-pressed="true"] {
+  border-color: var(--st-gold);
+  background: var(--st-gold-wash);
+  color: var(--st-gold-text);
+}
+.calc-chip:focus-visible {
+  outline: 2px solid var(--st-gold);
+  outline-offset: 2px;
+}
+.calc-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--st-gold-text);
+  font-size: 12px;
+  font-weight: 500;
+}
+.calc-note {
+  margin: 8px 0 0;
+  color: var(--st-ink-faint);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.calc-result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.calc-big {
+  color: var(--st-gold-text);
+  font-family: var(--st-display);
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 1;
+}
+.calc-title {
+  display: block;
+  color: var(--st-ink-soft);
+  font-size: 12px;
+}
+.calc-result .calc-title {
+  display: inline;
+  font-size: 15px;
+}
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.calc-scroll {
+  margin-top: 16px;
+  overflow-x: auto;
+}
+.calc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.calc-table th,
+.calc-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--st-line);
+  text-align: center;
+  vertical-align: middle;
+}
+.calc-table tbody th {
+  color: var(--st-ink-soft);
+  font-weight: 500;
+  text-align: start;
+  white-space: nowrap;
+}
+.calc-table thead th {
+  color: var(--st-gold-text);
+  font-weight: 600;
+}
+.calc-value {
+  color: var(--st-gold-text);
+  font-family: var(--st-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+.calc-differs {
+  background: var(--st-gold-wash);
+  box-shadow: inset 0 0 0 1px var(--st-line-strong);
+}

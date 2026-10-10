@@ -184,6 +184,12 @@
   font-size: 13px;
   font-weight: 500;
 }
+.st-today-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
 .st-today-who {
   flex: 1;
   min-width: 0;

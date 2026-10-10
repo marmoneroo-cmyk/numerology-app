@@ -5,7 +5,7 @@
  */
 import { useId } from "react";
 import { useContent, numberTitle } from "../workspace/content.js";
-import { LV, cycleAt, cycleSpans } from "../engine/index.js";
+import { LV, cycleAt, cycleSpans, maturity, birthdayNumber, dominantNumbers, missingNumbers } from "../engine/index.js";
 import { agesText } from "./ages.js";
 import HowButton from "./HowButton.jsx";
 import "./summary.css";
@@ -96,6 +96,21 @@ function Cycles({ r, ctx, he }) {
   );
 }
 
+/** Maturity, the birthday number, and the numbers the name's letters carry most and never (added 2026-10). */
+function NameStructure({ r, name, ctx, he, title, none }) {
+  const mat = maturity(r.d, r.m, r.y, name);
+  const bday = birthdayNumber(r.d);
+  const list = (ns) => (ns.length ? ns.join(" · ") : none);
+  return (
+    <Group title={he ? "הבגרות ומבנה השם" : "Maturity and the name's make-up"}>
+      <Row k="mat" label={he ? "מספר הבגרות" : "Maturity"} value={mat} meaning={title(mat)} ctx={ctx} he={he} testId="rs-mat" />
+      <Row k="bday" label={he ? "מספר יום הלידה" : "Birthday number"} value={bday} meaning={title(bday)} ctx={ctx} he={he} testId="rs-bday" />
+      <Row k="dom" label={he ? "דומיננטיים בשם" : "Dominant in the name"} value={list(dominantNumbers(name))} ctx={ctx} he={he} testId="rs-dom" />
+      <Row k="miss" label={he ? "חסרים בשם" : "Missing in the name"} value={list(missingNumbers(name))} ctx={ctx} he={he} testId="rs-name-miss" />
+    </Group>
+  );
+}
+
 /**
  * @param {{ r: object, name: string, now: Date, add?: boolean, he: boolean }} props
  *   `r` is a full map (engine fullCalc), made for `name` on `now`; `add` is the +1 a saved reading recorded
@@ -152,6 +167,7 @@ export default function ReadingSummary({ r, name, now, add, he }) {
             </tr>
           )}
         </Group>
+        <NameStructure r={r} name={name} ctx={ctx} he={he} title={title} none={none} />
       </div>
     </section>
   );

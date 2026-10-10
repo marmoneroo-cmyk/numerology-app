@@ -103,7 +103,14 @@ describe("the map summary", () => {
       "שנה אישית", "חודש אישי", "יום אישי", "שנה נסתרת", "גיל",
       "גילי המחזורים", "פסגה", "אתגר", "פסגה נסתרת", "אתגר נסתר",
       "חובות קארמתיים", "חסרים בלו שו",
+      "מספר הבגרות", "מספר יום הלידה", "דומיננטיים בשם", "חסרים בשם",
     ]);
+  });
+
+  it("adds maturity, the birthday number, and the name's dominant and missing numbers", () => {
+    show();
+    // maturity 33 + 4 = 37 -> 1; day 15 -> 6; the name carries 1 most, and never 4, 8, 9
+    expect([cell("rs-mat"), cell("rs-bday"), cell("rs-dom"), cell("rs-name-miss")]).toEqual(["1", "6", "1", "4 · 8 · 9"]);
   });
 
   it("follows a saved reading's own +1 rather than the date", () => {

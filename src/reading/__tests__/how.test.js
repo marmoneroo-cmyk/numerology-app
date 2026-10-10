@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { isDeepStrictEqual } from "node:util";
 import { howFor, reduction, HOW_KEYS } from "../how.js";
-import { fullCalc, PY, dailyRitualNumber } from "../../engine/index.js";
+import { fullCalc, PY, dailyRitualNumber, maturity, birthdayNumber, dominantNumbers, missingNumbers, textNumber } from "../../engine/index.js";
 
 const CLOCKS = [
   new Date(2026, 9, 5, 12), // autumn: the +1 season
@@ -45,6 +45,18 @@ describe("every explanation ends in the engine's number", () => {
         if (!isDeepStrictEqual(how.result, map[key])) mismatches.push({ key, c, got: how.result, want: map[key] });
       }
       if (howFor("daily", c, he).result !== dailyRitualNumber(c.now)) mismatches.push({ key: "daily", c });
+      const extras = {
+        mat: maturity(c.d, c.m, c.y, c.name),
+        bday: birthdayNumber(c.d),
+        dom: dominantNumbers(c.name),
+        miss: missingNumbers(c.name),
+      };
+      for (const [key, want] of Object.entries(extras)) {
+        const got = howFor(key, c, he).result;
+        if (!isDeepStrictEqual(got, want)) mismatches.push({ key, c, got, want });
+      }
+      const text = `${c.name} ${c.d}${c.m}${c.y}`;
+      if (howFor("text", { text }, he).result !== textNumber(text)) mismatches.push({ key: "text", text });
     }
     expect(mismatches.slice(0, 5)).toEqual([]);
   });
@@ -96,6 +108,23 @@ describe("the explanations read as worked examples", () => {
   it("the age says when the birthday has not come yet", () => {
     const how = howFor("age", { ...SHANI, now: new Date(2026, 7, 14) }, true);
     expect(how.steps.map((s) => s.math)).toEqual(["2026−1990 = 36", "36−1 = 35"]);
+  });
+
+  it("the dominant and missing numbers count the name's letters", () => {
+    const dom = howFor("dom", SHANI, true);
+    expect(dom.steps[1].math).toBe("1×4 2×1 3×2 4×0 5×3 6×1 7×1 8×0 9×0");
+    expect(dom.steps[2]).toEqual({ text: "הכי הרבה פעמים (4)", math: "1" });
+    expect(howFor("miss", SHANI, true).steps[2]).toEqual({ text: "לא מופיעים אף פעם", math: "4, 8, 9" });
+  });
+
+  it("maturity adds the life path and the name number", () => {
+    expect(howFor("mat", SHANI, true).steps.map((s) => s.math)).toEqual(["33+4 = 37", "3+7 = 10", "1+0 = 1"]);
+  });
+
+  it("a practical number shows every digit's value", () => {
+    const how = howFor("text", { text: "052-1234567" }, true);
+    expect(how.steps[1].math).toBe("0+5+2+1+2+3+4+5+6+7 = 35");
+    expect(how.result).toBe(8);
   });
 
   it("an empty name counts 0, and says why", () => {

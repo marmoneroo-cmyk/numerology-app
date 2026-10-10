@@ -30,5 +30,6 @@ export {
   fullCalc,
   liveNum,
 } from "./core.js";
+export { nameCounts, dominantNumbers, missingNumbers, maturity, birthdayNumber, charValue, textNumber } from "./extras.js";
 export { getRecommendations } from "./recommendations.js";
 export { compatKey, matchReading, coupleReading, parentChildReading } from "./compat.js";

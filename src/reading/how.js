@@ -4,7 +4,10 @@
  * `result`, which the tests compare with the engine's answer, so an explanation cannot drift
  * from the number beside it.
  */
-import { LV, VOW, R, LP, LPm, CA, addsOne, CH, cycleSpans, karmicDebt, loShu, dailyRitualNumber } from "../engine/index.js";
+import {
+  LV, VOW, R, LP, LPm, NV, CA, addsOne, CH, cycleSpans, karmicDebt, loShu, dailyRitualNumber,
+  nameCounts, dominantNumbers, missingNumbers, charValue,
+} from "../engine/index.js";
 import { agesText } from "./ages.js";
 
 const MASTERS = [11, 22, 33];
@@ -36,6 +39,11 @@ const TITLES = {
   kd: ["חובות קארמתיים", "Karmic debts"],
   ls: ["לו שו", "Lo Shu"],
   daily: ["המספר של היום", "Today's number"],
+  mat: ["מספר הבגרות", "Maturity"],
+  bday: ["מספר יום הלידה", "Birthday number"],
+  dom: ["דומיננטיים בשם", "Dominant in the name"],
+  miss: ["חסרים בשם", "Missing in the name"],
+  text: ["המספר", "The number"],
 };
 
 /** The name of a number's explanation ("" for an unknown key). */
@@ -264,6 +272,53 @@ function daily({ now }, he) {
   return { steps, result: dailyRitualNumber(now) };
 }
 
+function maturityNumber({ d, m, y, name }, he) {
+  const lp = LPm(d, m, y);
+  const nv = NV(name);
+  const reduced = reduceSteps(lp + nv, true, he);
+  return { steps: [step(he ? "שביל הגורל ועוד ערך השם" : "Life path plus name number", `${lp}+${nv} = ${lp + nv}`), ...reduced.steps], result: reduced.result };
+}
+
+function birthday({ d }, he) {
+  const reduced = reduceSteps(d, true, he);
+  return { steps: [step(he ? "יום הלידה" : "The day of birth", `${d}`), ...reduced.steps], result: reduced.result };
+}
+
+/** The dominant (`most`) or missing numbers in the name, from how often each value appears. */
+function nameSpread({ name }, he, most) {
+  const letters = lettersOf(name, () => true);
+  const result = most ? dominantNumbers(name) : missingNumbers(name);
+  if (!letters.length) return { steps: [step(he ? "אין בשם אותיות עבריות, אז אין מה לספור" : "The name has no Hebrew letters to count")], result };
+  const counts = nameCounts(name);
+  const list = result.length ? result.join(", ") : he ? "אין" : "none";
+  return {
+    steps: [
+      step(he ? "ערך כל אות בשם" : "The value of every letter", letters.map((ch) => `${ch}=${LV[ch]}`).join(" ")),
+      step(he ? "כמה פעמים מופיע כל מספר" : "How often each number appears", Object.entries(counts).map(([n, k]) => `${n}×${k}`).join(" ")),
+      most
+        ? step(he ? `הכי הרבה פעמים (${Math.max(...Object.values(counts))})` : `Most often (${Math.max(...Object.values(counts))} times)`, list)
+        : step(he ? "לא מופיעים אף פעם" : "Never appear", list),
+    ],
+    result,
+  };
+}
+
+/** A practical number: every digit and letter of the text, added and reduced, masters kept. */
+function practical({ text }, he) {
+  const chars = [...String(text ?? "")].filter((ch) => charValue(ch) > 0 || ch === "0");
+  const values = chars.map(charValue);
+  if (!values.some(Boolean)) return { steps: [step(he ? "אין ספרות או אותיות לספור, ולכן 0" : "No digits or letters to count, so 0", "0")], result: 0 };
+  const reduced = reduceSteps(sum(values), true, he);
+  return {
+    steps: [
+      step(he ? "ערך כל ספרה ואות (ספרה כמו שהיא, אות עברית לפי ערכה, אות לועזית לפי מקומה)" : "Each digit and letter (a digit as it is, a Hebrew letter by value, a Latin one by position)", chars.map((ch, i) => `${ch}=${values[i]}`).join(" ")),
+      step(he ? "סוכמים" : "Add them up", addition(values)),
+      ...reduced.steps,
+    ],
+    result: reduced.result,
+  };
+}
+
 const BUILDERS = {
   nv: (ctx, he) => nameNumber("nv", ctx.name, he),
   su: (ctx, he) => nameNumber("su", ctx.name, he),
@@ -282,6 +337,11 @@ const BUILDERS = {
   kd: karmic,
   ls: loShuGrid,
   daily,
+  mat: maturityNumber,
+  bday: birthday,
+  dom: (ctx, he) => nameSpread(ctx, he, true),
+  miss: (ctx, he) => nameSpread(ctx, he, false),
+  text: practical,
 };
 
 /** The numbers that have an explanation. */

@@ -2,7 +2,7 @@
  * Pure helpers for the "היום" home: the birthdays coming up this week, the
  * most recently active clients, and a ready WhatsApp birthday greeting.
  */
-import { byActivity } from "../data/store.js";
+import { byActivity, lastActive } from "../data/store.js";
 import { isIsoDate } from "../data/validation.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -111,6 +111,68 @@ const YEAR_WISH = {
   9: { he: "שנה של סיום מעגל, שחרור ופינוי מקום לחדש", en: "a year of closing a circle, letting go and making room for the new" },
 };
 
+const withSignature = (text, signature) => {
+  const sign = String(signature ?? "").trim();
+  return sign ? `${text}\n${sign}` : text;
+};
+const wishFor = (personalYear) => (typeof personalYear === "number" && Object.hasOwn(YEAR_WISH, personalYear) ? YEAR_WISH[personalYear] : null);
+const hiTo = (fullName, he) => {
+  const first = wordsOf(fullName)[0];
+  return he ? `היי${first ? ` ${first}` : ""}` : `Hi${first ? ` ${first}` : ""}`;
+};
+
+/** After a session: asks how the client is, and offers a follow-up meeting. */
+export function followUpText(fullName, he, { signature } = {}) {
+  const text = he
+    ? `${hiTo(fullName, true)}, רציתי לשאול מה שלומך מאז הפגישה שלנו. אם מתאים, אפשר לקבוע פגישת המשך.`
+    : `${hiTo(fullName, false)}, I wanted to ask how you are since our session. If it suits you, we can book a follow-up.`;
+  return withSignature(text, signature);
+}
+
+/** To a client not heard from in a long while: their personal year now, and an offer to meet. */
+export function checkInText(fullName, he, { personalYear, signature } = {}) {
+  const wish = wishFor(personalYear);
+  let text;
+  if (he) {
+    const year = wish ? ` בנומרולוגיה, השנה האישית שלך עכשיו היא ${personalYear} — ${wish.he}.` : "";
+    text = `${hiTo(fullName, true)}, מזמן לא דיברנו!${year} אם מתאים, אפשר לקבוע פגישה ולראות יחד מה מחכה לך.`;
+  } else {
+    const year = wish ? ` In numerology, your personal year now is ${personalYear} — ${wish.en}.` : "";
+    text = `${hiTo(fullName, false)}, it has been a while!${year} If it suits you, we can meet and see what is ahead.`;
+  }
+  return withSignature(text, signature);
+}
+
+/** In July, when the +1 moves every personal year on: the client's new year, and an offer to meet. */
+export function newYearText(fullName, he, { personalYear, signature } = {}) {
+  const wish = wishFor(personalYear);
+  if (!wish) return checkInText(fullName, he, { signature });
+  const text = he
+    ? `${hiTo(fullName, true)}, השנה האישית החדשה שלך התחילה: ${personalYear} — ${wish.he}. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.`
+    : `${hiTo(fullName, false)}, your new personal year has begun: ${personalYear} — ${wish.en}. If it suits you, we can meet and see what it brings.`;
+  return withSignature(text, signature);
+}
+
+/** July: the month the +1 (July 1 - December 31) moves every client's personal year on. */
+export const isNewYearMonth = (now) => now.getMonth() === 6;
+
+/** Half a year, in days: a client quiet this long is worth a word. */
+export const QUIET_DAYS = 182;
+
+/**
+ * The clients not heard from in `days` days or more (no edit and no reading), the longest quiet
+ * first, with whole months since; archived ones are left out.
+ * @returns {{client: object, months: number}[]}
+ */
+export function quietClients(clients, now, { days = QUIET_DAYS, count = 5 } = {}) {
+  const limit = now.getTime() - days * DAY_MS;
+  return clients
+    .filter((c) => !c.archived && Date.parse(lastActive(c)) <= limit)
+    .sort((a, b) => byActivity(b, a))
+    .slice(0, count)
+    .map((client) => ({ client, months: Math.floor((now.getTime() - Date.parse(lastActive(client))) / (30.44 * DAY_MS)) }));
+}
+
 /**
  * The birthday greeting, by first name. Given the personal year the client enters on the birthday,
  * it says what that year brings; given a signature (the studio's name), it ends with it.
@@ -118,8 +180,7 @@ const YEAR_WISH = {
 export function greetingText(fullName, he, { personalYear, signature } = {}) {
   const first = wordsOf(fullName)[0];
   const to = first ? `, ${first}` : "";
-  const wish = typeof personalYear === "number" && Object.hasOwn(YEAR_WISH, personalYear) ? YEAR_WISH[personalYear] : null;
-  const sign = String(signature ?? "").trim();
+  const wish = wishFor(personalYear);
   let text;
   if (!wish) {
     text = he
@@ -130,7 +191,7 @@ export function greetingText(fullName, he, { personalYear, signature } = {}) {
   } else {
     text = `Happy birthday${to}!\nIn numerology, your personal year is ${personalYear} — ${wish.en}.\nWishing you a year full of light and fulfilment.`;
   }
-  return sign ? `${text}\n${sign}` : text;
+  return withSignature(text, signature);
 }
 
 /** Up to two initials: the first letters of the first and the last name. */

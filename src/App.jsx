@@ -33,6 +33,8 @@ import Locked from "./demo/DemoLock.jsx";
 import HowButton from "./reading/HowButton.jsx";
 import { nameIdeas } from "./reading/nameIdeas.js";
 import { agesText } from "./reading/ages.js";
+import PracticalNumbers from "./studio/calcs/PracticalNumbers.jsx";
+import NameCompare from "./studio/calcs/NameCompare.jsx";
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
@@ -659,6 +661,8 @@ function CalculatorsWidget({he,dk}){
 
   // ── BACK BUTTON ──
   const BackBtn=()=>(<button className="ghost" onClick={resetCalc} style={{marginBottom:14,fontSize:12,padding:"8px 16px"}}>← {he?"חזרה":"Back"}</button>);
+  /** A number's archetype title, master numbers included. */
+  const numberTitleOf=(n)=>{const e=n>9?MASTER[n]:D[n];return e?(he?e.t:e.te):"";};
 
   // ══════ RENDER ══════
   return(<div style={{animation:"fadeInUp .5s ease-out"}}>
@@ -681,6 +685,7 @@ function CalculatorsWidget({he,dk}){
         <CalcTile icon="chart" title={he?"Lo Shu Grid":"Lo Shu Grid"} desc={he?"רשת האיזון האנרגטי":"Energy balance grid"} onClick={()=>setCalc("loshu")}/>
         <CalcTile icon="bolt" title={he?"חובות קארמיים":"Karmic Debts"} desc={he?"מה הנשמה באה לתקן":"What the soul came to fix"} onClick={()=>setCalc("karma")}/>
         <CalcTile icon="trending" title={he?"מחזור שנים":"Year Cycle"} desc={he?"13 שנים קדימה":"13 years ahead"} onClick={()=>setCalc("yearcycle")}/>
+        <CalcTile icon="users" title={he?"השוואת שמות":"Compare Names"} desc={he?"שם נוכחי מול שם מוצע":"Current name against a proposed one"} onClick={()=>setCalc("namecompare")}/>
       </div>
     )}
 
@@ -1009,12 +1014,16 @@ function CalculatorsWidget({he,dk}){
     {/* ═══════ CATEGORY 5: Tools ═══════ */}
     {cat===4&&!calc&&(
       <div className="st-tiles">
+        <CalcTile icon="calculator" title={he?"מספרים מעשיים":"Practical Numbers"} desc={he?"טלפון, כתובת, רכב, חשבון, שם עסק":"Phone, address, car, account, business name"} onClick={()=>setCalc("practical")}/>
         <CalcTile icon="sparkle" title={he?"מחולל שמות":"Name Generator"} desc={he?"שמות לפי מספר נומרולוגי":"Names by numerology number"} onClick={()=>setCalc("namegen")}/>
         <CalcTile icon="share" title={he?"ייצוא תוצאות":"Export Results"} desc={he?"שמור את הקריאה שלך":"Save your reading"} onClick={()=>setCalc("export")}/>
       </div>
     )}
 
     {/* ── NAME GENERATOR ── */}
+    {cat===0&&calc==="namecompare"&&(<div><BackBtn/><NameCompare he={he} numberTitle={numberTitleOf}/></div>)}
+    {cat===4&&calc==="practical"&&(<div><BackBtn/><PracticalNumbers he={he} numberTitle={numberTitleOf}/></div>)}
+
     {cat===4&&calc==="namegen"&&(<div>
       <BackBtn/>
       <div className="gc">
@@ -1725,6 +1734,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           personalYear={(iso,at)=>{const p=personOf("",iso);return personalYearOn(p.d,p.m,at);}}
           deck={<Deck key={deckDeal} pool={deckPool} he={he} shuffleOnMount={deckDeal>0} onPick={()=>chimeOnOpen(true)}/>}
           onOpenClient={(id)=>openClient({name:"client",clientId:id})}
+          onOpenReading={(id)=>openClient({name:"reading",readingId:id})}
           onNewReading={newReading}
           onNewClient={()=>openClient({name:"clientForm"})}
           onMeeting={openMeeting}

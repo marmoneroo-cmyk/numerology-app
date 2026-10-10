@@ -43,7 +43,7 @@ function failingOnce(store) {
 
 /** Renders Today over `store`; the life path is the last digit of the date, every personal year is 5. */
 function renderToday(store, props = {}) {
-  const handlers = { onOpenClient: vi.fn(), onNewReading: vi.fn(), onNewClient: vi.fn(), onMeeting: vi.fn(), onSearch: vi.fn() };
+  const handlers = { onOpenClient: vi.fn(), onNewReading: vi.fn(), onNewClient: vi.fn(), onMeeting: vi.fn(), onSearch: vi.fn(), onOpenReading: vi.fn() };
   const personalYear = vi.fn(() => 5);
   render(
     <Today
@@ -89,6 +89,49 @@ describe("Today", () => {
     const text = encodeURIComponent(RACHEL_GREETING_HE);
     expect(greeting.getAttribute("href")).toBe(`https://wa.me/?text=${text}`);
     expect(within(yossi).queryByRole("link")).toBeNull(); // still only where the client has a phone
+  });
+
+  describe("bringing clients back", () => {
+    const DAY = 24 * 60 * 60 * 1000;
+    const ago = (days, from = NOW) => new Date(from.getTime() - days * DAY).toISOString();
+    /** A store over plain records: the clients, and the follow-ups due. */
+    const fakeStore = (clients, followUps = []) => ({
+      clients: { list: async () => clients },
+      summary: async () => ({ clients: clients.length, readings: 0, followUps, birthdays: [] }),
+    });
+    const RACHEL_OLD = { id: "r", fullName: "רחל כהן", birthDate: "1985-03-07", phone: "052-1234567", updatedAt: ago(300), lastActivityAt: ago(300) };
+    const YOSSI_NOW = { id: "y", fullName: "יוסי לוי", birthDate: "1990-03-06", updatedAt: ago(2), lastActivityAt: ago(2) };
+
+    it("lists the follow-ups that are due: open the reading, or ask how the client is", async () => {
+      const h = renderToday(fakeStore([RACHEL_OLD, YOSSI_NOW], [{ readingId: "rd1", clientId: "r", clientName: "רחל כהן", followUp: "2026-10-01", type: "map" }]));
+      const due = await screen.findByRole("heading", { name: "מעקבים שהגיע זמנם" });
+      const row = within(due.closest("section")).getByRole("listitem");
+      expect(within(row).getByText("מעקב מ-01.10.2026")).toBeTruthy();
+      fireEvent.click(within(row).getByRole("button", { name: "לבדיקה של רחל כהן" }));
+      expect(h.onOpenReading).toHaveBeenCalledWith("rd1");
+      const message = within(row).getByRole("link", { name: "הודעה לרחל כהן" });
+      expect(message.getAttribute("href")).toBe(`https://wa.me/972521234567?text=${encodeURIComponent("היי רחל, רציתי לשאול מה שלומך מאז הפגישה שלנו. אם מתאים, אפשר לקבוע פגישת המשך.")}`);
+    });
+
+    it("lists the clients quiet for half a year, with a message naming their personal year now", async () => {
+      renderToday(fakeStore([RACHEL_OLD, YOSSI_NOW]));
+      const panel = (await screen.findByRole("heading", { name: "כדאי לחזור אליהם" })).closest("section");
+      const [row] = within(panel).getAllByRole("listitem");
+      expect(within(row).getByText("פעילות אחרונה לפני 9 חודשים")).toBeTruthy();
+      expect(within(panel).queryByText("יוסי לוי")).toBeNull(); // in touch two days ago
+      const href = within(row).getByRole("link", { name: "הודעה לרחל כהן" }).getAttribute("href");
+      expect(decodeURIComponent(href.split("?text=")[1])).toContain("השנה האישית שלך עכשיו היא 5");
+      expect(within(screen.getByRole("heading", { name: "מעקבים שהגיע זמנם" }).closest("section")).getByText("אין מעקבים שהגיע זמנם.")).toBeTruthy();
+    });
+
+    it("in July, offers every recent client their new personal year", async () => {
+      const JULY = new Date(2026, 6, 3, 10);
+      renderToday(fakeStore([{ ...YOSSI_NOW, phone: "050-7654321", updatedAt: ago(2, JULY), lastActivityAt: ago(2, JULY) }]), { now: () => JULY });
+      const panel = (await screen.findByRole("heading", { name: "השנה האישית החדשה" })).closest("section");
+      expect(within(panel).getByText("שנה אישית חדשה: 5")).toBeTruthy();
+      const href = within(panel).getByRole("link", { name: "הודעה ליוסי לוי" }).getAttribute("href");
+      expect(decodeURIComponent(href.split("?text=")[1])).toContain("השנה האישית החדשה שלך התחילה: 5");
+    });
   });
 
   it("explains today's number and a client's personal year", async () => {
