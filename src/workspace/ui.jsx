@@ -149,12 +149,15 @@ export function ScreenTitle({ children, c, size = 26, style }) {
   );
 }
 
-/** A number tile: label, the number, and its archetype title. */
-export function Num({ label, value, title, testId, c }) {
+/** A number tile: label, the number, and its archetype title; `how` is its "how was this calculated" button. */
+export function Num({ label, value, title, testId, c, how }) {
   return (
-    <div data-testid={testId} style={{ textAlign: "center", padding: "12px 8px", background: c.soft, border: `1px solid ${c.line}`, borderRadius: 14, minWidth: 0 }}>
+    <div style={{ textAlign: "center", padding: "12px 8px", background: c.soft, border: `1px solid ${c.line}`, borderRadius: 14, minWidth: 0 }}>
       <div style={{ fontSize: 11, color: c.ts }}>{label}</div>
-      <div style={{ fontSize: 30, fontFamily: display, color: c.ac, lineHeight: 1.15 }}>{value}</div>
+      <div style={{ fontSize: 30, fontFamily: display, color: c.ac, lineHeight: 1.15 }}>
+        <span data-testid={testId}>{value}</span>
+        {how}
+      </div>
       {title && <div style={{ fontSize: 11, color: c.tm, opacity: 0.8 }}>{title}</div>}
     </div>
   );

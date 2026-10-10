@@ -6,6 +6,7 @@ import { useContent, numberTitle } from "./content.js";
 import { Card, Num, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, rowButton, tilesGrid, btnPrimary, btnGhost } from "./ui.jsx";
 import { formatDmy, formatStamp, formatBytes, personOf, readingTypeLabel, summarizeReading, errorText } from "./format.js";
 import { readFileBytes, saveFile } from "./files.js";
+import HowButton from "../reading/HowButton.jsx";
 
 export default function ClientFile({ store, go, he, c, now, clientId }) {
   const content = useContent();
@@ -31,6 +32,7 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
     py: personalYearOn(p.d, p.m, today),
     age: CA(p.d, p.m, p.y, today),
   };
+  const howCtx = p && { d: p.d, m: p.m, y: p.y, name: client.fullName, now: today };
 
   const upload = async (e) => {
     const chosen = [...(e.target.files || [])];
@@ -104,10 +106,10 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
 
         {nums && (
           <div style={{ ...tilesGrid, marginTop: 16 }}>
-            <Num testId="num-lp" label={he ? "שביל הגורל" : "Life path"} value={nums.lp} title={numberTitle(content, nums.lp, he)} c={c} />
-            <Num testId="num-nv" label={he ? "ערך השם" : "Name number"} value={nums.nv} title={numberTitle(content, nums.nv, he)} c={c} />
-            <Num testId="num-su" label={he ? "קול הנשמה" : "Soul"} value={nums.su} title={numberTitle(content, nums.su, he)} c={c} />
-            <Num testId="num-py" label={he ? `שנה אישית ${today.getFullYear()}` : `Personal year ${today.getFullYear()}`} value={nums.py} title={numberTitle(content, nums.py, he)} c={c} />
+            <Num testId="num-lp" label={he ? "שביל הגורל" : "Life path"} value={nums.lp} title={numberTitle(content, nums.lp, he)} c={c} how={<HowButton k="lp" ctx={howCtx} he={he} />} />
+            <Num testId="num-nv" label={he ? "ערך השם" : "Name number"} value={nums.nv} title={numberTitle(content, nums.nv, he)} c={c} how={<HowButton k="nv" ctx={howCtx} he={he} />} />
+            <Num testId="num-su" label={he ? "קול הנשמה" : "Soul"} value={nums.su} title={numberTitle(content, nums.su, he)} c={c} how={<HowButton k="su" ctx={howCtx} he={he} />} />
+            <Num testId="num-py" label={he ? `שנה אישית ${today.getFullYear()}` : `Personal year ${today.getFullYear()}`} value={nums.py} title={numberTitle(content, nums.py, he)} c={c} how={<HowButton k="py" ctx={howCtx} he={he} />} />
           </div>
         )}
 

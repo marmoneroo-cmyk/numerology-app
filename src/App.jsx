@@ -30,6 +30,7 @@ import DemoBanner from "./demo/DemoBanner.jsx";
 import PlusOneNote from "./ui/PlusOneNote.jsx";
 import ReadingSummary from "./reading/ReadingSummary.jsx";
 import Locked from "./demo/DemoLock.jsx";
+import HowButton from "./reading/HowButton.jsx";
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
@@ -501,11 +502,12 @@ function TablesWidget({he,dk}){
   const[lastName,setLastName]=useState("");
   const[dob,setDob]=useState("");
   const[results,setResults]=useState(null);
+  const[howCtx,setHowCtx]=useState(null); // what `results` were made from, for "how was this calculated"
   const[error,setError]=useState("");
   const[animIn,setAnimIn]=useState(false);
   const[showExtra,setShowExtra]=useState(false);
   const doCalc=()=>{
-    try{setError("");const parts=dob.split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const r=fullCalc(d,m,y,fullName);setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
+    try{setError("");const parts=dob.split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,fullName,undefined,at);setHowCtx({d,m,y,name:fullName,now:at});setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
   };
   const thStyle={padding:"11px 14px",fontSize:12,fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`,letterSpacing:.3};
   const tdStyle={padding:"11px 14px",fontSize:14,fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
@@ -531,15 +533,15 @@ function TablesWidget({he,dk}){
         <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"תוצאות כלליות":"General Results"}</h4></div>
         <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
           <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}><th style={{...thStyle,textAlign:isRtl?"right":"left",paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{he?"קטגוריה":"Category"}</th><th style={thStyle}>{he?"ערך":"Value"}</th></tr></thead>
-          <tbody>{[{l:he?"ערך השם":"Name Value",v:results.nv},{l:he?"שביל הגורל":"Life Path",v:results.lp},{l:he?"שנה אישית":"Personal Year",v:results.py},{l:he?"שנה נסתרת":"Hidden Year",v:results.hy},{l:he?"גיל נוכחי":"Current Age",v:results.age}].map((row,i)=>(
-            <tr key={i} style={{background:i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)")}}><td style={{...tdLabel,paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{row.l}</td><td style={tdValue}>{row.v}</td></tr>
+          <tbody>{[{k:"nv",l:he?"ערך השם":"Name Value",v:results.nv},{k:"lp",l:he?"שביל הגורל":"Life Path",v:results.lp},{k:"py",l:he?"שנה אישית":"Personal Year",v:results.py},{k:"hy",l:he?"שנה נסתרת":"Hidden Year",v:results.hy},{k:"age",l:he?"גיל נוכחי":"Current Age",v:results.age}].map((row,i)=>(
+            <tr key={i} style={{background:i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)")}}><td style={{...tdLabel,paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{row.l}</td><td style={tdValue}>{row.v}{howCtx&&<HowButton k={row.k} ctx={howCtx} he={he} label={row.l}/>}</td></tr>
           ))}</tbody>
         </table></div>
       </div>
       <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
         <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזורי חיים | פסגות ואתגרים":"Life Cycles | Peaks & Challenges"}</h4></div>
         <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
-          <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}><th style={{...thStyle,fontSize:11}}>{he?"מחזור חיים":"Life Cycle"}</th><th style={{...thStyle,fontSize:11}}>{he?"פסגה":"Peak"}</th><th style={{...thStyle,fontSize:11}}>{he?"אתגר":"Challenge"}</th><th style={{...thStyle,fontSize:11}}>{he?"פסגה נסתרת":"Hidden Peak"}</th><th style={{...thStyle,fontSize:11}}>{he?"אתגר נסתר":"Hidden Chal."}</th></tr></thead>
+          <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}>{[["exit",he?"מחזור חיים":"Life Cycle"],["pk",he?"פסגה":"Peak"],["ch",he?"אתגר":"Challenge"],["hp",he?"פסגה נסתרת":"Hidden Peak"],["hc",he?"אתגר נסתר":"Hidden Chal."]].map(([k,l])=>(<th key={k} style={{...thStyle,fontSize:11}}>{l}{howCtx&&<HowButton k={k} ctx={howCtx} he={he} label={l}/>}</th>))}</tr></thead>
           <tbody>{cycleLabels.map((label,i)=>{const sa=results.exit+i*9;const active=results.age>=sa&&results.age<sa+9;return(
             <tr key={i} style={{background:active?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)"))}}><td style={{...tdStyle,fontWeight:600,color:active?ac:ts,fontSize:12,whiteSpace:"nowrap"}}><div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>{active&&<span style={{display:"inline-block",width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,flexShrink:0}}/>}<span>{label}</span><span style={{fontSize:9,color:ts,opacity:.5}}>{sa}-{sa+9}</span></div></td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88bb":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hc[i]}</td></tr>
           );})}</tbody>
@@ -551,17 +553,17 @@ function TablesWidget({he,dk}){
           <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"נשמה וביטוי":"Soul & Expression"}</h4></div>
           <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}><th style={{...thStyle,textAlign:isRtl?"right":"left",paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{he?"קטגוריה":"Category"}</th><th style={thStyle}>{he?"ערך":"Value"}</th><th style={thStyle}>{he?"ארכיטיפ":"Archetype"}</th></tr></thead>
-            <tbody>{[{l:he?"קול הנשמה":"Soul Urge",v:results.su},{l:he?"מספר הביטוי":"Expression",v:results.ex},{l:he?"חודש אישי":"Personal Month",v:results.pm},{l:he?"יום אישי":"Personal Day",v:results.pd}].map((row,i)=>(
-              <tr key={i} style={{background:i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)")}}><td style={{...tdLabel,paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{row.l}</td><td style={tdValue}>{row.v}</td><td style={{...tdStyle,fontSize:12,color:D[row.v]?.c||ac,opacity:.8}}>{row.v>0&&row.v<=9?(he?D[row.v]?.t:D[row.v]?.te):""}</td></tr>
+            <tbody>{[{k:"su",l:he?"קול הנשמה":"Soul Urge",v:results.su},{k:"ex",l:he?"מספר הביטוי":"Expression",v:results.ex},{k:"pm",l:he?"חודש אישי":"Personal Month",v:results.pm},{k:"pd",l:he?"יום אישי":"Personal Day",v:results.pd}].map((row,i)=>(
+              <tr key={i} style={{background:i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)")}}><td style={{...tdLabel,paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{row.l}</td><td style={tdValue}>{row.v}{howCtx&&<HowButton k={row.k} ctx={howCtx} he={he} label={row.l}/>}</td><td style={{...tdStyle,fontSize:12,color:D[row.v]?.c||ac,opacity:.8}}>{row.v>0&&row.v<=9?(he?D[row.v]?.t:D[row.v]?.te):""}</td></tr>
             ))}</tbody>
           </table></div>
         </div>
         <div className="gc" style={{marginBottom:16}}>
-          <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"חובות קארמיים":"Karmic Debts"}</h4></div>
+          <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"חובות קארמיים":"Karmic Debts"}{howCtx&&<HowButton k="kd" ctx={howCtx} he={he}/>}</h4></div>
           {results.kd.length===0?(<div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={16}/></span><span style={{fontSize:13,color:ts,marginRight:8,marginLeft:8}}>{he?"אין חוב קארמי":"No karmic debt"}</span></div>):(<div style={{display:"flex",flexDirection:"column",gap:8}}>{results.kd.map(k=>(<div key={k} style={{padding:"12px 14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:20,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span><span style={{fontSize:12,lineHeight:1.7,color:ts}}><Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></span></div>))}</div>)}
         </div>
         <div className="gc" style={{marginBottom:16}}>
-          <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid</h4>{results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
+          <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid{howCtx&&<HowButton k="ls" ctx={howCtx} he={he}/>}</h4>{results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
           <LoShu ls={results.ls} dk={dk} he={he}/>
         </div>
         <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
@@ -569,7 +571,7 @@ function TablesWidget({he,dk}){
           <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}><th style={thStyle}>{he?"שנה":"Year"}</th><th style={thStyle}>{he?"שנה אישית":"P. Year"}</th><th style={thStyle}>{he?"אנרגיה":"Energy"}</th></tr></thead>
             <tbody>{results.proj.map((p,i)=>(
-              <tr key={i} style={{background:p.isCurrent?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)"))}}><td style={{...tdStyle,fontWeight:p.isCurrent?700:400,color:p.isCurrent?ac:ts,fontSize:13}}>{p.year}{p.isCurrent&&<span style={{fontSize:8,color:ac,opacity:.6,marginRight:4,marginLeft:4}}>◀</span>}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}</td><td style={{...tdStyle,fontSize:11,color:p.isCurrent?ac:ts}}>{he?D[p.py]?.t:D[p.py]?.te}</td></tr>
+              <tr key={i} style={{background:p.isCurrent?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)"))}}><td style={{...tdStyle,fontWeight:p.isCurrent?700:400,color:p.isCurrent?ac:ts,fontSize:13}}>{p.year}{p.isCurrent&&<span style={{fontSize:8,color:ac,opacity:.6,marginRight:4,marginLeft:4}}>◀</span>}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}{howCtx&&<HowButton k="py" ctx={{...howCtx,year:p.year}} he={he} label={he?`שנה אישית ${p.year}`:`Personal year ${p.year}`}/>}</td><td style={{...tdStyle,fontSize:11,color:p.isCurrent?ac:ts}}>{he?D[p.py]?.t:D[p.py]?.te}</td></tr>
             ))}</tbody>
           </table></div>
         </div>
@@ -595,6 +597,7 @@ function CalculatorsWidget({he,dk}){
   const[lastName,setLastName]=useState("");
   const[dob,setDob]=useState("");
   const[results,setResults]=useState(null);
+  const[howCtx,setHowCtx]=useState(null); // what `results` were made from, for "how was this calculated"
   const[animIn,setAnimIn]=useState(false);
 
   // Match inputs
@@ -630,8 +633,10 @@ function CalculatorsWidget({he,dk}){
     if(!d||!firstName.trim()){setError(he?"מלא שם ותאריך לידה":"Enter name and date of birth");return;}
     AU.init();AU.p("reveal");
     const nm=(firstName+" "+lastName).trim();
-    const r=fullCalc(d.d,d.m,d.y,nm);
+    const at=new Date();
+    const r=fullCalc(d.d,d.m,d.y,nm,undefined,at);
     r.lpm=LPm(d.d,d.m,d.y); // master-aware LP
+    setHowCtx({d:d.d,m:d.m,y:d.y,name:nm,now:at});
     setResults(r);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);
   };
 
@@ -718,11 +723,12 @@ function CalculatorsWidget({he,dk}){
               <th style={thSt}>{he?"ארכיטיפ":"Archetype"}</th>
             </tr></thead>
             <tbody>
-              {[{l:he?"שביל הגורל":"Life Path",v:results.lp},{l:he?"ערך השם":"Name Value",v:results.nv},{l:he?"קול הנשמה":"Soul Urge",v:results.su},{l:he?"מספר הביטוי":"Expression",v:results.ex},{l:he?"שנה אישית":"Personal Year",v:results.py},{l:he?"שנה נסתרת":"Hidden Year",v:results.hy},{l:he?"חודש אישי":"Personal Month",v:results.pm},{l:he?"יום אישי":"Personal Day",v:results.pd},{l:he?"גיל נוכחי":"Current Age",v:results.age}].map((r,i)=>(
+              {[{k:"lp",l:he?"שביל הגורל":"Life Path",v:results.lp},{k:"nv",l:he?"ערך השם":"Name Value",v:results.nv},{k:"su",l:he?"קול הנשמה":"Soul Urge",v:results.su},{k:"ex",l:he?"מספר הביטוי":"Expression",v:results.ex},{k:"py",l:he?"שנה אישית":"Personal Year",v:results.py},{k:"hy",l:he?"שנה נסתרת":"Hidden Year",v:results.hy},{k:"pm",l:he?"חודש אישי":"Personal Month",v:results.pm},{k:"pd",l:he?"יום אישי":"Personal Day",v:results.pd},{k:"age",l:he?"גיל נוכחי":"Current Age",v:results.age}].map((r,i)=>(
                 <tr key={i} style={{background:i%2?(dk?"rgba(200,169,106,.015)":"rgba(0,0,0,.01)"):"transparent"}}>
                   <td style={{...tdLb,paddingRight:isRtl?18:12,paddingLeft:isRtl?12:18}}>{r.l}</td>
-                  <td style={tdVl}>{r.v}</td>
-                  <td style={{...tdSt,fontSize:11,color:D[r.v]?.c||ac,opacity:.8}}>{r.v>0&&r.v<=9?(he?D[r.v]?.t:D[r.v]?.te):""}</td>
+                  <td style={tdVl}>{r.v}{howCtx&&<HowButton k={r.k} ctx={howCtx} he={he} label={r.l}/>}</td>
+                  {/* an age is not a number with an archetype */}
+                  <td style={{...tdSt,fontSize:11,color:D[r.v]?.c||ac,opacity:.8}}>{r.k!=="age"&&r.v>0&&r.v<=9?(he?D[r.v]?.t:D[r.v]?.te):""}</td>
                 </tr>
               ))}
             </tbody>
@@ -760,13 +766,14 @@ function CalculatorsWidget({he,dk}){
       </div>
       {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
-          {[{l:he?"יום":"Day",v:results.pd,desc:he?"האנרגיה של היום":"Today's energy"},{l:he?"חודש":"Month",v:results.pm,desc:he?"האנרגיה החודשית":"Monthly energy"},{l:he?"שנה":"Year",v:results.py,desc:he?"האנרגיה השנתית":"Yearly energy"}].map((it,i)=>(
+          {[{k:"pd",l:he?"יום":"Day",v:results.pd,desc:he?"האנרגיה של היום":"Today's energy"},{k:"pm",l:he?"חודש":"Month",v:results.pm,desc:he?"האנרגיה החודשית":"Monthly energy"},{k:"py",l:he?"שנה":"Year",v:results.py,desc:he?"האנרגיה השנתית":"Yearly energy"}].map((it,i)=>(
             <div key={i} className="gc" style={{textAlign:"center",padding:16}}>
               <div style={{fontSize:9,color:ts,letterSpacing:1}}>{it.l}</div>
-              <div style={{fontSize:36,fontWeight:700,color:D[it.v]?.c||ac,fontFamily:"'Cormorant Garamond',serif",margin:"4px 0"}}>{it.v}</div>
+              <div style={{fontSize:36,fontWeight:700,color:D[it.v]?.c||ac,fontFamily:"'Cormorant Garamond',serif",margin:"4px 0"}}>{it.v}{howCtx&&<HowButton k={it.k} ctx={howCtx} he={he}/>}</div>
               <div style={{fontSize:12,fontWeight:600,color:D[it.v]?.c||ac}}>{he?D[it.v]?.t:D[it.v]?.te}</div>
               <div style={{fontSize:10,color:ts,marginTop:4}}>{it.desc}</div>
-              <div style={{marginTop:8,padding:"8px",background:`${ac}06`,borderRadius:8}}><p style={{fontSize:11,lineHeight:1.7,color:ts}}><Locked he={he}>{YEAR_ENERGY[it.v]?.[he?"he":"en"]}</Locked></p></div>
+              {/* the year card reads the year's energy; a day or a month reads the number's own meaning */}
+              <div style={{marginTop:8,padding:"8px",background:`${ac}06`,borderRadius:8}}><p style={{fontSize:11,lineHeight:1.7,color:ts}}><Locked he={he}>{it.k==="py"?YEAR_ENERGY[it.v]?.[he?"he":"en"]:(he?D[it.v]?.s:D[it.v]?.se)}</Locked></p></div>
             </div>
           ))}
         </div>
@@ -789,7 +796,7 @@ function CalculatorsWidget({he,dk}){
           <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"פסגות ואתגרים":"Peaks & Challenges"}</h4></div>
           <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(0,0,0,.015)"}}>
-              <th style={{...thSt,fontSize:10}}>{he?"מחזור":"Cycle"}</th><th style={{...thSt,fontSize:10}}>{he?"פסגה":"Peak"}</th><th style={{...thSt,fontSize:10}}>{he?"אתגר":"Chal."}</th><th style={{...thSt,fontSize:10}}>{he?"פ.נסתרת":"H.Peak"}</th><th style={{...thSt,fontSize:10}}>{he?"א.נסתר":"H.Chal."}</th>
+              {[["exit",he?"מחזור":"Cycle",he?"גילי המחזורים":"Cycle ages"],["pk",he?"פסגה":"Peak",he?"פסגה":"Peak"],["ch",he?"אתגר":"Chal.",he?"אתגר":"Challenge"],["hp",he?"פ.נסתרת":"H.Peak",he?"פסגה נסתרת":"Hidden pinnacle"],["hc",he?"א.נסתר":"H.Chal.",he?"אתגר נסתר":"Hidden challenge"]].map(([k,l,full])=>(<th key={k} style={{...thSt,fontSize:10}}>{l}{howCtx&&<HowButton k={k} ctx={howCtx} he={he} label={full}/>}</th>))}
             </tr></thead>
             <tbody>
               {(he?["חיפוש","מציאה","יתד","שיא"]:["Search","Discovery","Anchor","Summit"]).map((lb,i)=>{
@@ -814,10 +821,10 @@ function CalculatorsWidget({he,dk}){
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="chart" size={26} stroke={1.3}/></div></div>
         <div style={{marginBottom:12}}><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
-        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const ls=loShu(d.d,d.m,d.y);setResults({ls,lp:LP(d.d,d.m,d.y)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
+        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const ls=loShu(d.d,d.m,d.y);setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:new Date()});setResults({ls,lp:LP(d.d,d.m,d.y)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
       </div>
       {results&&animIn&&results.ls&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc">
-        <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:16,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid</h4>{results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
+        <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:16,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid{howCtx&&<HowButton k="ls" ctx={howCtx} he={he}/>}</h4>{results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
         <LoShu ls={results.ls} dk={dk} he={he}/>
       </div></div>)}
     </div>)}
@@ -834,6 +841,7 @@ function CalculatorsWidget({he,dk}){
         <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
       </div>
       {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc">
+        {howCtx&&<div style={{textAlign:"center",marginBottom:10,fontSize:12,color:ts}}>{he?"איך נבדק חוב קארמתי":"How karmic debt is checked"}<HowButton k="kd" ctx={howCtx} he={he}/></div>}
         {results.kd?.length===0?(<div style={{textAlign:"center",padding:16,background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={20}/></span><div style={{fontSize:14,color:ts,marginTop:6}}>{he?"אין חוב קארמי — הנשמה שלך נקייה!":"No karmic debt — your soul is clear!"}</div></div>):(
           <div>{results.kd?.map(k=>(<div key={k} style={{padding:14,background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:24,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span>
@@ -852,7 +860,7 @@ function CalculatorsWidget({he,dk}){
           <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
           <PlusOneNote he={he} color={ts}/>
         </div>
-        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");setResults({proj:yearCycle(d.d,d.m)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
+        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const at=new Date();setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:at});setResults({proj:yearCycle(d.d,d.m,undefined,at)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
       </div>
       {results&&animIn&&results.proj&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc" style={{padding:0,overflow:"hidden"}}>
         <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
@@ -861,7 +869,7 @@ function CalculatorsWidget({he,dk}){
           <tbody>{results.proj.map((p,i)=>(
             <tr key={i} style={{background:p.isCurrent?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2?"rgba(200,169,106,.015)":"transparent")}}>
               <td style={{...tdSt,fontWeight:p.isCurrent?700:400,color:p.isCurrent?ac:ts,fontSize:12}}>{p.year}{p.isCurrent&&<span style={{fontSize:8,color:ac,marginRight:3,marginLeft:3}}>◀</span>}</td>
-              <td style={{...tdSt,fontSize:18,fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}</td>
+              <td style={{...tdSt,fontSize:18,fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}{howCtx&&<HowButton k="py" ctx={{...howCtx,year:p.year}} he={he} label={he?`שנה אישית ${p.year}`:`Personal year ${p.year}`}/>}</td>
               <td style={{...tdSt,fontSize:11,color:p.isCurrent?ac:ts}}>{he?D[p.py]?.t:D[p.py]?.te}</td>
             </tr>
           ))}</tbody>

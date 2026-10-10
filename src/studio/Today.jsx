@@ -7,6 +7,7 @@
 import { useEffect, useRef } from "react";
 import { useLoad } from "../workspace/ui.jsx";
 import { greetingLink, greetingText, initialsOf, recentClients, shareLink, upcomingBirthdays } from "./today.js";
+import HowButton from "../reading/HowButton.jsx";
 import "./today.css";
 
 const DATE_FORMAT = { weekday: "long", day: "numeric", month: "long", year: "numeric" };
@@ -89,7 +90,10 @@ function DayBand({ he, today, day, onNewReading }) {
   return (
     <section className="st-today-band">
       <div className="st-today-day">
-        <small>{he ? "המספר של היום" : "Today’s number"}</small>
+        <small>
+          {he ? "המספר של היום" : "Today’s number"}
+          <HowButton k="daily" ctx={{ now: today }} he={he} />
+        </small>
         <span className="st-today-num">{day.number}</span>
       </div>
       <div>
@@ -141,6 +145,7 @@ function whenText(inDays, he) {
 function BirthdayRow({ he, birthday, lifePath, personalYear, greetAnyone, signature }) {
   const { client, date, age, inDays } = birthday;
   const year = personalYear(client.birthDate, date); // the one the client enters on the birthday
+  const [y, m, d] = String(client.birthDate).split("-").map(Number); // upcomingBirthdays keeps valid dates only
   const text = greetingText(client.fullName, he, { personalYear: year, signature });
   // the demo has a phone for show only: the greeting opens with no one chosen
   const link = client.phone && greetAnyone ? shareLink(text) : greetingLink(client.phone, text);
@@ -152,8 +157,14 @@ function BirthdayRow({ he, birthday, lifePath, personalYear, greetAnyone, signat
         <b className="st-today-name">{client.fullName}</b>
         <span className="st-today-sub">{about}</span>
         <span className="st-today-chips">
-          <span className="st-today-chip st-today-chip-gold">{`${he ? "מסלול" : "Life path"} ${lifePath(client.birthDate)}`}</span>
-          <span className="st-today-chip">{`${he ? "שנה אישית" : "Personal year"} ${year}`}</span>
+          <span className="st-today-chip st-today-chip-gold">
+            {`${he ? "מסלול" : "Life path"} ${lifePath(client.birthDate)}`}
+            <HowButton k="lp" ctx={{ d, m, y }} he={he} label={he ? `שביל הגורל של ${client.fullName}` : `${client.fullName}'s life path`} />
+          </span>
+          <span className="st-today-chip">
+            {`${he ? "שנה אישית" : "Personal year"} ${year}`}
+            <HowButton k="py" ctx={{ d, m, y, now: date }} he={he} label={he ? `השנה האישית של ${client.fullName}` : `${client.fullName}'s personal year`} />
+          </span>
         </span>
         {!link && <span className="st-today-sub">{he ? "אין טלפון בתיק, אז אין ברכה בוואטסאפ" : "No phone on file, so no WhatsApp greeting"}</span>}
       </div>

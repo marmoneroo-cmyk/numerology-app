@@ -91,6 +91,16 @@ describe("Today", () => {
     expect(within(yossi).queryByRole("link")).toBeNull(); // still only where the client has a phone
   });
 
+  it("explains today's number and a client's personal year", async () => {
+    renderToday(await storeWith([RACHEL]));
+    fireEvent.click(screen.getByRole("button", { name: "איך זה חושב: המספר של היום" }));
+    expect(within(screen.getByRole("dialog")).getByText("6 mod 9 = 6")).toBeTruthy(); // 6 October
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "סגירה" }));
+    fireEvent.click(await screen.findByRole("button", { name: "איך זה חושב: השנה האישית של רחל כהן" }));
+    // her birthday, 7.10.2026, is in the +1 season
+    expect(within(screen.getByRole("dialog")).getByText("מה-1.7 ועד ה-31.12 מוסיפים 1")).toBeTruthy();
+  });
+
   it("signs the greeting with the studio's name", async () => {
     renderToday(await storeWith([RACHEL]), { signature: "שני כהן · נומרולוגיה" });
     const greeting = await screen.findByRole("link", { name: "ברכה לרחל כהן" });
