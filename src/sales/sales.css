@@ -1,0 +1,365 @@
+/*
+ * The sales page: dark, like the Studio. Its colours live on .sales itself, so the Studio's light theme
+ * (data-st-theme on the root) never repaints it. Text keeps 4.5:1 or more on the page and the cards
+ * (src/sales/__tests__/content.test.js reads these tokens).
+ */
+@import url("https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Heebo:wght@400;500;700&family=Cormorant+Garamond:wght@600;700&display=swap");
+
+.sales {
+  --s-bg: #080812;
+  --s-panel: #10102a;
+  --s-line: rgba(200, 169, 106, 0.22);
+  --s-line-strong: rgba(200, 169, 106, 0.55);
+  --s-gold: #c8a96a;
+  --s-gold-hi: #f1dfb4;
+  --s-ink: #ece4d4;
+  --s-ink-soft: rgba(236, 228, 212, 0.78);
+  --s-on-gold: #14110a;
+  --s-display: "Frank Ruhl Libre", "Cormorant Garamond", Georgia, serif;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 55% at 75% -5%, rgba(91, 63, 166, 0.45) 0%, rgba(8, 8, 18, 0) 70%),
+    radial-gradient(ellipse 60% 40% at 10% 35%, rgba(31, 94, 140, 0.18) 0%, rgba(8, 8, 18, 0) 70%),
+    var(--s-bg);
+  color: var(--s-ink);
+  font-family: "Heebo", "Noto Sans Hebrew", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.sales[lang="en"] {
+  --s-display: "Cormorant Garamond", Georgia, serif;
+}
+.sales *,
+.sales *::before,
+.sales *::after {
+  box-sizing: border-box;
+}
+
+/* the top bar */
+.sales-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  background: rgba(8, 8, 18, 0.88);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--s-line);
+}
+.sales-brand {
+  font-family: var(--s-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--s-gold);
+}
+.sales-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sales-lang {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: var(--s-ink-soft);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* buttons */
+.sales-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 22px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.sales-btn-small {
+  min-height: 44px;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+.sales-btn-gold {
+  background: var(--s-gold);
+  color: var(--s-on-gold);
+}
+.sales-btn-ghost {
+  border: 1px solid var(--s-line-strong);
+  color: var(--s-gold);
+}
+.sales-btn-icon {
+  display: inline-flex;
+}
+.sales a:focus-visible,
+.sales button:focus-visible,
+.sales summary:focus-visible {
+  outline: 2px solid var(--s-gold-hi);
+  outline-offset: 3px;
+}
+
+/* the hero */
+.sales main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.sales-hero {
+  padding: 56px 0 16px;
+  text-align: center;
+}
+.sales-kicker {
+  margin: 0;
+  color: var(--s-gold);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+.sales-hero h1 {
+  max-width: 820px;
+  margin: 10px auto 0;
+  font-family: var(--s-display);
+  font-size: clamp(34px, 6vw, 58px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--s-gold-hi);
+}
+.sales-lead {
+  max-width: 640px;
+  margin: 16px auto 0;
+  color: var(--s-ink-soft);
+  font-size: clamp(17px, 2.2vw, 20px);
+}
+.sales-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 26px;
+}
+.sales-note {
+  margin: 12px 0 0;
+  color: var(--s-ink-soft);
+  font-size: 14px;
+}
+.sales-shot {
+  max-width: 980px;
+  margin: 34px auto 0;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--s-line-strong);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 60px rgba(200, 169, 106, 0.08);
+  background: var(--s-panel);
+}
+.sales-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* the sections */
+.sales-section {
+  padding: 56px 0 8px;
+}
+.sales-section h2 {
+  margin: 0 0 26px;
+  font-family: var(--s-display);
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 700;
+  color: var(--s-gold);
+  text-align: center;
+}
+.sales-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.sales-card {
+  padding: 22px;
+  background: var(--s-panel);
+  border: 1px solid var(--s-line);
+  border-radius: 16px;
+}
+.sales-card h3 {
+  margin: 10px 0 6px;
+  font-size: 19px;
+  color: var(--s-ink);
+}
+.sales-card p {
+  margin: 0;
+  color: var(--s-ink-soft);
+  font-size: 15.5px;
+}
+.sales-card-icon {
+  display: inline-flex;
+  color: var(--s-gold);
+}
+.sales-step-number {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(200, 169, 106, 0.16);
+  color: var(--s-gold);
+  font-weight: 700;
+}
+.sales-checks {
+  list-style: none;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.sales-checks li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 13px 18px;
+  background: var(--s-panel);
+  border: 1px solid var(--s-line);
+  border-radius: 12px;
+}
+.sales-checks li span {
+  display: inline-flex;
+  flex: none;
+  margin-top: 4px;
+  color: var(--s-gold);
+}
+.sales-more {
+  margin: 16px 0 0;
+  text-align: center;
+}
+.sales-more a {
+  color: var(--s-gold);
+}
+
+/* the price */
+.sales-price-card {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 30px 26px;
+  text-align: center;
+  background: var(--s-panel);
+  border: 1px solid var(--s-line-strong);
+  border-radius: 20px;
+  box-shadow: 0 0 50px rgba(200, 169, 106, 0.08);
+}
+.sales-price-card h3 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--s-gold);
+}
+.sales-price {
+  margin: 10px 0 0;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--s-gold-hi);
+}
+.sales-per {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--s-ink-soft);
+}
+.sales-trial {
+  margin: 4px 0 0;
+  color: var(--s-ink-soft);
+}
+.sales-price-card ul {
+  list-style: none;
+  margin: 18px 0 24px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+/* the questions */
+.sales-faq {
+  max-width: 740px;
+  margin: 0 auto;
+  display: grid;
+  gap: 10px;
+}
+.sales-faq details {
+  padding: 14px 18px;
+  background: var(--s-panel);
+  border: 1px solid var(--s-line);
+  border-radius: 12px;
+}
+.sales-faq summary {
+  min-height: 28px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sales-faq p {
+  margin: 10px 0 0;
+  color: var(--s-ink-soft);
+}
+
+/* the footer */
+.sales-footer {
+  margin-top: 64px;
+  padding: 28px 20px 40px;
+  border-top: 1px solid var(--s-line);
+  text-align: center;
+  font-size: 14px;
+  color: var(--s-ink-soft);
+}
+.sales-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  margin-bottom: 10px;
+}
+.sales-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--s-ink-soft);
+}
+.sales-footer p {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sales-btn {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .sales-btn-gold:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(200, 169, 106, 0.3);
+  }
+}
+
+@media (max-width: 520px) {
+  .sales-bar {
+    padding: 8px 14px;
+  }
+  .sales-brand {
+    font-size: 20px;
+  }
+  .sales-hero {
+    padding-top: 36px;
+  }
+  .sales-actions .sales-btn {
+    width: 100%;
+  }
+}
