@@ -26,6 +26,7 @@ import {
 } from "./engine";
 import Icon from "./ui/Icon.jsx";
 import { BUSINESS_EMAIL } from "./business.js";
+import DemoBanner from "./demo/DemoBanner.jsx";
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
@@ -1459,7 +1460,12 @@ function LeadsWidget({ he, dk }) {
 }
 
 // ═══════════════════ MAIN APP ═══════════════════
-export default function App(){
+/**
+ * @param {{ view?: "studio" | "customer" | "demo", navigate?: (view: string) => void }} props
+ *   From Root: the view the address names, and how to go to another. Without them (the tests, the lab)
+ *   App picks its view from the address and the stored preference, as it always did.
+ */
+export default function App({ view, navigate } = {}){
   const[lang,setLang]=useState("he");const[dk,setDk]=useState(true);const[snd,setSnd]=useState(true);const[intro,setIntro]=useState(true);
   const[step,setStep]=useState(1);const[tab,setTab]=useState("today");const[name,setName]=useState("");const[dob,setDob]=useState("");const[addOne,setAddOne]=useState(false);
   const[results,setResults]=useState(null);const[showRes,setShowRes]=useState(false);const[error,setError]=useState("");
@@ -1468,7 +1474,7 @@ export default function App(){
   /** Back to an empty reading form, the last reading gone. */
   const clearReading=()=>{setShowRes(false);setResults(null);setReadingName("");setStep(1);setName("");setDob("");setAddOne(false);setError("");setChapters([false,false,false,false,false,false]);};
   const[streak,setStreak]=useState(0);
-  const[owner,setOwner]=useState(()=>{try{const h=location.hash+location.search;if(/customer/i.test(h))return false;if(/owner|studio|admin/i.test(h))return true;return localStorage.getItem(OWNER_STORE_KEY)!=="customer";}catch(e){return true;}});const[previewCustomer,setPreviewCustomer]=useState(false);
+  const[owner,setOwner]=useState(()=>{if(view)return view!=="customer";try{const h=location.hash+location.search;if(/customer/i.test(h))return false;if(/owner|studio|admin/i.test(h))return true;return localStorage.getItem(OWNER_STORE_KEY)!=="customer";}catch(e){return true;}});const[previewCustomer,setPreviewCustomer]=useState(false);
   const[leadDone,setLeadDone]=useState(()=>{try{return localStorage.getItem(LEAD_DONE_KEY)==="1";}catch(e){return false;}});
   // the terms, privacy and refund pages (the footer's links): shown in place of everything else, before any sign-in
   const[legalDoc,setLegalDoc]=useState(legalFromHash);
@@ -1510,8 +1516,12 @@ export default function App(){
 
   // the shop is gone: a cart kept in this browser from before is forgotten (the owner/customer view preference is read in the useState initializer above)
   useEffect(()=>{try{localStorage.removeItem("numerology_cart_v1");}catch(e){}},[]);
-  const enterOwner=()=>{AU.init();AU.p("reveal");setOwner(true);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"owner");}catch(e){}};
-  const exitOwner=()=>{AU.init();AU.p("click");setOwner(false);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"customer");}catch(e){}};
+  // the Studio on sample data, in memory (Root's #demo): no customer preview, no copy from this device's own files
+  const demo=view==="demo";
+  // Root changed the view (the address): show it
+  useEffect(()=>{if(!view)return;setOwner(view!=="customer");setPreviewCustomer(false);},[view]);
+  const enterOwner=()=>{AU.init();AU.p("reveal");if(navigate)return navigate("studio");setOwner(true);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"owner");}catch(e){}};
+  const exitOwner=()=>{AU.init();AU.p("click");if(navigate)return navigate("home");setOwner(false);setPreviewCustomer(false);try{localStorage.setItem(OWNER_STORE_KEY,"customer");}catch(e){}};
   const scrollToId=(id)=>{try{document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"});}catch(e){}};
 
   useEffect(()=>{
@@ -1674,13 +1684,14 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <button className="tbtn" onClick={()=>{setLang(lang==="he"?"en":"he");AU.init();AU.p("click");}}>{he?"EN":"עב"}</button>
         <button className="tbtn" aria-label={dk?(he?"מצב בהיר":"Light mode"):(he?"מצב כהה":"Dark mode")} onClick={()=>{setDk(!dk);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{dk?<Icon name="sun" size={14}/>:<Icon name="moon" size={14}/>}</button>
         <button className={`tbtn ${snd?"act":""}`} aria-label={he?"צלילים":"Sounds"} aria-pressed={snd} onClick={()=>{AU.init();setSnd(!snd);AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{snd?<Icon name="soundOn" size={14}/>:<Icon name="soundOff" size={14}/>}</button>
-        {owner&&<button className="tbtn act" title={he?"מעבר בין סטודיו לתצוגת לקוח":"Toggle Studio / Customer"} onClick={()=>{const next=!previewCustomer;setPreviewCustomer(next);if(next){setTab("reading");setShowRes(false);}AU.init();AU.p("click");window.scrollTo({top:0,behavior:"smooth"});}} aria-label={previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={previewCustomer?"crown":"eye"} size={13}/><span className="tbtn-text" style={{fontSize:10.5,fontWeight:700}}>{previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")}</span></button>}
+        {owner&&!demo&&<button className="tbtn act" title={he?"מעבר בין סטודיו לתצוגת לקוח":"Toggle Studio / Customer"} onClick={()=>{const next=!previewCustomer;setPreviewCustomer(next);if(next){setTab("reading");setShowRes(false);}AU.init();AU.p("click");window.scrollTo({top:0,behavior:"smooth"});}} aria-label={previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={previewCustomer?"crown":"eye"} size={13}/><span className="tbtn-text" style={{fontSize:10.5,fontWeight:700}}>{previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")}</span></button>}
         <button className={`tbtn ${owner?"":"act"}`} title={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):(he?"כניסת בעל עסק":"Owner login")} onClick={()=>{AU.init();AU.p("click");owner?exitOwner():enterOwner();}} aria-label={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):undefined} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={owner?"door":"crown"} size={13}/><span className="tbtn-text" style={{fontSize:10.5,fontWeight:700}}>{owner?(he?"יציאה":"Exit"):(he?"סטודיו":"Studio")}</span></button>
       </div>
     </div>
 
     <div className={showOwnerUI?"st-root":undefined} style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?1240:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
       {legalDoc?<LegalPage doc={legalDoc} he={he} dk={dk} onBack={closeLegal}/>:showOwnerUI&&!studioReady?<><AccountGate he={he} dk={dk} onLeave={exitOwner}/><LegalLinks he={he} dk={dk}/></>:(<>
+      {demo&&<DemoBanner he={he} onExit={exitOwner}/>}
 
       {/* Header (owner) / Hero (customer) */}
       {showOwnerUI?(
@@ -1719,7 +1730,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           onSearch={openPalette}/>}
 
         {showOwnerUI&&tab==="clients"&&workspaceStore&&<ContentContext.Provider value={workspaceContent}>
-          <LocalDataOffer store={workspaceStore} userId={account.profile.id} he={he} dk={dk} logEvent={account.service.logEvent} onUploaded={()=>setWorkspaceKey(k=>k+1)}/>
+          {!demo&&<LocalDataOffer store={workspaceStore} userId={account.profile.id} he={he} dk={dk} logEvent={account.service.logEvent} onUploaded={()=>setWorkspaceKey(k=>k+1)}/>}
           <WorkspaceApp key={workspaceKey} he={he} dk={dk} store={workspaceStore} openRequest={openRequest} onOpenHandled={()=>setOpenRequest(null)} onEvent={(action)=>{account.service.logEvent(action).catch(()=>{});}}/>
         </ContentContext.Provider>}
 
