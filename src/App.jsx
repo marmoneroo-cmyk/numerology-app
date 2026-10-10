@@ -1698,8 +1698,8 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       {showOwnerUI?(
         <div style={{textAlign:"center",marginBottom:18,animation:"fadeInUp .6s ease-out"}}>
           <div style={{display:"inline-flex",alignItems:"center",gap:9,color:ac}}><Icon name="crown" size={20}/><h1 style={{fontSize:isRtl?28:32,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"הסטודיו שלי":"My Studio"}</h1></div>
-          <p style={{fontSize:12.5,color:ts,marginTop:5}}>{he?"כל הכלים שלך — בחרו מסך:":"All your tools — choose a screen:"}</p>
-          {licensee&&<p style={{fontSize:11,color:ts,marginTop:3}}>{he?`מחובר/ת: ${licensee.fullName}`:`Signed in: ${licensee.fullName}`}</p>}
+          <p style={{fontSize:12.5,color:ts,marginTop:5}}>{he?"כל הכלים שלכם — בחרו מסך:":"All your tools — choose a screen:"}</p>
+          {licensee&&<p style={{fontSize:11,color:ts,marginTop:3}}>{he?`בחשבון: ${licensee.fullName}`:`Signed in: ${licensee.fullName}`}</p>}
         </div>
       ):(
         <>

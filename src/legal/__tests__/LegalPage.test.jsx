@@ -118,6 +118,9 @@ describe("legal pages", () => {
     const he = render(<LegalPage doc="privacy" />).container.textContent;
     for (const name of ["Supabase", "Vercel", "WhatsApp", "Google Fonts", "Unsplash", "Gmail", "פרנקפורט", "סעיף 13", "סעיף 14", "התחזית החודשית"]) expect(he).toContain(name);
     expect(he).not.toContain("אינה שולחת"); // the account emails go out now (custom SMTP)
+    // analytics keeps the page's own name after # (#demo), and nothing else from the fragment
+    expect(he).toContain("רק שם העמוד");
+    expect(he).not.toContain("או הסולמית (#)");
     // any form of the name: after a prefix such as ב the article ה drops ("באיחוד האירופי", in the EU)
     expect(he).toMatch(/איחוד האירופי|אירופה/);
     expect(he).toContain("לעיין במידע");

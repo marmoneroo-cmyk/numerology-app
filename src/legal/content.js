@@ -280,7 +280,7 @@ function privacy(name) {
           title: "אחסון האתר, סטטיסטיקה, גופנים ותמונות",
           paragraphs: [
             `האתר מאוחסן ב-Vercel. כמו כל שירות אחסון, Vercel מקבלת נתונים טכניים, כמו כתובת IP, כדי להציג את האתר.`,
-            `לספירת ביקורים אנחנו משתמשים ב-Vercel Web Analytics. הכלי אינו משתמש בעוגיות (cookies), ומציג נתונים מצטברים בלבד, כמו מספר הצפיות בדפים. כתובת הדף נשלחת בלי החלק שאחרי סימן השאלה (?) או הסולמית (#).`,
+            `לספירת ביקורים אנחנו משתמשים ב-Vercel Web Analytics. הכלי אינו משתמש בעוגיות (cookies), ומציג נתונים מצטברים בלבד, כמו מספר הצפיות בדפים. כתובת הדף נשלחת בלי החלק שאחרי סימן השאלה (?). מהחלק שאחרי הסולמית (#) נשלח רק שם העמוד באתר, כמו #demo, ושום דבר אחר.`,
             `הגופנים באתר נטענים מ-Google Fonts. לכן הדפדפן פונה לשרתים של Google, ו-Google מקבלת את כתובת ה-IP של המבקרים.`,
             `תמונת הרקע בעמוד הקריאה החינמית נטענת מ-Unsplash. לכן בעמוד הזה הדפדפן פונה גם לשרתים של Unsplash, ו-Unsplash מקבלת את כתובת ה-IP של המבקרים.`,
           ],
@@ -403,7 +403,7 @@ function privacy(name) {
           title: "Hosting, statistics, fonts and images",
           paragraphs: [
             `The website is hosted on Vercel. Like any host, Vercel receives technical data, such as IP addresses, in order to serve the site.`,
-            `To count visits we use Vercel Web Analytics. It uses no cookies and shows only aggregate figures, such as page views. The page address is sent without its query or fragment (the part after ? or #).`,
+            `To count visits we use Vercel Web Analytics. It uses no cookies and shows only aggregate figures, such as page views. The page address is sent without its query (the part after ?). Of the part after #, only the name of a page on the site, such as #demo, is sent, and nothing else.`,
             `The fonts load from Google Fonts, so the browser contacts Google's servers and Google receives the visitor's IP address.`,
             `The background image on the free reading page loads from Unsplash, so on that page the browser also contacts Unsplash's servers and Unsplash receives the visitor's IP address.`,
           ],

@@ -33,7 +33,7 @@ export const SALES = {
       title: "איך מצטרפים",
       steps: [
         { title: "פונים אלינו", text: "שולחים לנו הודעה, ושואלים כל מה שרוצים לדעת." },
-        { title: "פותחים לכם חשבון", text: "עם תקופת ניסיון חינם. בכניסה הראשונה בוחרים סיסמה משלכם, ומומלץ להפעיל אימות דו-שלבי." },
+        { title: "פותחים לכם חשבון", text: "עם תקופת ניסיון חינם. מקבלים פרטי כניסה, ובמסך \"החשבון שלי\" מחליפים לסיסמה משלכם. מומלץ להפעיל גם אימות דו-שלבי." },
         { title: "עובדים מכל מקום", text: "במחשב ובטלפון, בדפדפן. הלקוחות והקריאות שמורים בחשבון." },
       ],
     },
@@ -41,7 +41,7 @@ export const SALES = {
       title: "המידע של הלקוחות שלכם בטוח",
       items: [
         "השרתים באיחוד האירופי, בפרנקפורט.",
-        "רק החשבון שלכם רואה את הלקוחות שלכם. מסכי הניהול שלנו מציגים רק מספרים, לא תוכן.",
+        "כללי הגישה במסד הנתונים מאפשרים רק לחשבון שלכם לקרוא את הלקוחות שלכם. מסכי הניהול שלנו מציגים רק מספרים, לא תוכן.",
         "כניסה בסיסמה, ואפשר להוסיף אימות דו-שלבי.",
         "חיבור פעיל אחד לכל חשבון, ורשימת מכשירים שבשליטתכם.",
         "גיבוי וייצוא של כל המידע בכל רגע.",
@@ -66,7 +66,7 @@ export const SALES = {
         { q: "של מי המידע?", a: "שלכם. אפשר לייצא את כל הלקוחות והקריאות לקובץ גיבוי בכל רגע, ולשמור עותק מקומי במכשיר." },
         { q: "מה קורה בסוף תקופת הניסיון?", a: "מחליטים אם להמשיך. ממשיכים: הכול נשאר כמו שהוא. לא ממשיכים: אפשר לייצא את המידע לפני שהחשבון נסגר." },
         { q: "יש גם אנגלית?", a: "כן. הסטודיו עובד בעברית ובאנגלית, ומחליפים שפה בלחיצה." },
-        { q: "איך מבטלים?", a: "בהודעה אלינו. בתוך 14 ימים מהעסקה מקבלים החזר, לפי מדיניות הביטולים." },
+        { q: "איך מבטלים?", a: "בהודעה אלינו. בתוך 14 ימים מהעסקה מקבלים החזר לפי מדיניות הביטולים (ייתכנו דמי ביטול של עד 5% או 100 ש\"ח, הנמוך מביניהם)." },
       ],
     },
     footer: {
@@ -108,7 +108,7 @@ export const SALES = {
       title: "How to join",
       steps: [
         { title: "Get in touch", text: "Send us a message, and ask anything you want to know." },
-        { title: "We open your account", text: "With a free trial. At the first sign-in you choose your own password, and two-step verification is recommended." },
+        { title: "We open your account", text: "With a free trial. You get sign-in details, then switch to a password of your own in My account. Two-step verification is recommended too." },
         { title: "Work from anywhere", text: "On computer and phone, in the browser. Your clients and readings are kept in your account." },
       ],
     },
@@ -116,7 +116,7 @@ export const SALES = {
       title: "Your clients' data is safe",
       items: [
         "The servers are in the European Union, in Frankfurt.",
-        "Only your account sees your clients. Our admin screens show counts only, never content.",
+        "The database's access rules let only your account read your clients. Our admin screens show counts only, never content.",
         "Sign-in with a password, and two-step verification can be added.",
         "One active session per account, and a device list you control.",
         "Back up and export all the data at any time.",
@@ -141,7 +141,7 @@ export const SALES = {
         { q: "Whose data is it?", a: "Yours. You can export all clients and readings to a backup file at any time, and keep a local copy on the device." },
         { q: "What happens when the trial ends?", a: "You decide whether to go on. Go on: everything stays as it is. Stop: export the data before the account is closed." },
         { q: "Is it in English too?", a: "Yes. The Studio works in Hebrew and English, and switching takes one click." },
-        { q: "How do I cancel?", a: "With a message to us. Within 14 days of the purchase you get a refund, under the cancellation policy." },
+        { q: "How do I cancel?", a: "With a message to us. Within 14 days of the purchase you get a refund under the cancellation policy (a fee of up to 5% or 100 NIS, the lower, may apply)." },
       ],
     },
     footer: {
