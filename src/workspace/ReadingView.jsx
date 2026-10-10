@@ -9,6 +9,7 @@ import { useContent, numberTitle } from "./content.js";
 import { Card, Field, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, btnPrimary, btnGhost, display } from "./ui.jsx";
 import { parseDmy, formatDmy, formatStamp, readingTypeLabel, matchTypeLabel, personName, errorText } from "./format.js";
 import ReadingSummary from "../reading/ReadingSummary.jsx";
+import Locked from "../demo/DemoLock.jsx";
 
 export default function ReadingView({ store, go, he, c, now, readingId }) {
   const content = useContent();
@@ -151,7 +152,7 @@ function MapResult({ reading, he, c, content }) {
           <SectionTitle c={c}>{he ? "חובות קארמתיים" : "Karmic debts"}</SectionTitle>
           {r.kd.map((k, i) => (
             <p key={i} style={{ margin: "0 0 6px", fontSize: 14, lineHeight: 1.6 }}>
-              <strong style={{ color: c.ac }}>{k}</strong> · {content.KARMA[k]?.[lang] || ""}
+              <strong style={{ color: c.ac }}>{k}</strong> · <Locked he={he}>{content.KARMA[k]?.[lang] || ""}</Locked>
             </p>
           ))}
         </Card>
@@ -163,7 +164,9 @@ function MapResult({ reading, he, c, content }) {
           {recs.map((x, i) => (
             <div key={i} style={{ marginBottom: 10 }}>
               <div style={{ fontSize: 14, color: c.ac }}>{x.t}</div>
-              <div style={{ fontSize: 13, color: c.tm, lineHeight: 1.6 }}>{x.d}</div>
+              <div style={{ fontSize: 13, color: c.tm, lineHeight: 1.6 }}>
+                <Locked he={he}>{x.d}</Locked>
+              </div>
             </div>
           ))}
         </Card>
@@ -183,7 +186,9 @@ function CycleTable({ proj, he, c, content }) {
         <div key={i} className="rrow" style={{ display: "flex", gap: 12, alignItems: "center", fontWeight: p.isCurrent ? 600 : 400 }}>
           <span style={{ width: 52, color: p.isCurrent ? c.ac : c.ts, fontVariantNumeric: "tabular-nums" }}>{p.year}</span>
           <span className="badge">{p.py}</span>
-          <span style={{ fontSize: 13, color: c.tm, flex: 1 }}>{content.YEAR_ENERGY[p.py]?.[lang] || numberTitle(content, p.py, he)}</span>
+          <span style={{ fontSize: 13, color: c.tm, flex: 1 }}>
+            <Locked he={he}>{content.YEAR_ENERGY[p.py]?.[lang] || numberTitle(content, p.py, he)}</Locked>
+          </span>
           {p.isCurrent && <span style={{ fontSize: 11, color: c.ac }}>{he ? "השנה" : "this year"}</span>}
         </div>
       ))}
@@ -209,7 +214,9 @@ function CompatText({ entry, he, c }) {
       {[[he ? "מה מחבר" : "What connects", t.con], [he ? "האתגר" : "The challenge", t.ch], [he ? "עצה" : "Advice", t.tip]].map(([h, v]) => v && (
         <div key={h} style={{ marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: c.ac }}>{h}</div>
-          <div style={{ fontSize: 14, lineHeight: 1.6 }}>{v}</div>
+          <div style={{ fontSize: 14, lineHeight: 1.6 }}>
+            <Locked he={he}>{v}</Locked>
+          </div>
         </div>
       ))}
     </div>

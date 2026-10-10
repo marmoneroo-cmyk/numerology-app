@@ -9,6 +9,7 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { prefersReducedMotion } from "./motion.js";
+import Locked from "../demo/DemoLock.jsx";
 import "./meeting.css";
 
 const COPY = {
@@ -94,7 +95,13 @@ export default function MeetingMode({ open, onClose, he = true, person, eyebrow,
             ))}
           </ul>
         )}
-        {text && <p className="st-meet-text">{text}</p>}
+        {text && (
+          <p className="st-meet-text">
+            <Locked he={he} chip>
+              {text}
+            </Locked>
+          </p>
+        )}
       </div>
     </div>,
     document.body,

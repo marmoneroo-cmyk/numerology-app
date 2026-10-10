@@ -1,0 +1,41 @@
+/* An interpretation in the demo: blurred, not selectable; a label says where the full one is. */
+.demo-lock {
+  position: relative;
+}
+.demo-locked {
+  filter: blur(4px);
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
+.demo-lock-note {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.demo-lock-chip {
+  display: block;
+}
+.demo-lock-chip .demo-lock-note {
+  inset: 50% auto auto 50%;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--st-gold-solid);
+  color: var(--st-on-gold);
+  font-family: var(--st-body);
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: 0 6px 20px var(--st-shadow);
+  transform: translate(-50%, -50%);
+}

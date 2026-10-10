@@ -6,7 +6,11 @@ export default function DemoBanner({ he, onExit }) {
   const external = contact?.kind === "whatsapp";
   return (
     <div role="note" className="demo-banner">
-      <span>{he ? "זו הדגמה עם לקוחות לדוגמה. שום דבר לא נשמר." : "This is a demo with sample clients. Nothing is saved."}</span>
+      <span>
+        {he
+          ? "זו הדגמה עם לקוחות לדוגמה. שום דבר לא נשמר, והפירושים המלאים מטושטשים: הם נפתחים במנוי."
+          : "This is a demo with sample clients. Nothing is saved, and the full interpretations are blurred: they open with a subscription."}
+      </span>
       <span className="demo-banner-actions">
         {contact && (
           <a href={contact.href} target={external ? "_blank" : undefined} rel={external ? "noopener noreferrer" : undefined}>

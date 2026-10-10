@@ -29,6 +29,7 @@ import { BUSINESS_EMAIL } from "./business.js";
 import DemoBanner from "./demo/DemoBanner.jsx";
 import PlusOneNote from "./ui/PlusOneNote.jsx";
 import ReadingSummary from "./reading/ReadingSummary.jsx";
+import Locked from "./demo/DemoLock.jsx";
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
@@ -557,7 +558,7 @@ function TablesWidget({he,dk}){
         </div>
         <div className="gc" style={{marginBottom:16}}>
           <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"חובות קארמיים":"Karmic Debts"}</h4></div>
-          {results.kd.length===0?(<div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={16}/></span><span style={{fontSize:13,color:ts,marginRight:8,marginLeft:8}}>{he?"אין חוב קארמי":"No karmic debt"}</span></div>):(<div style={{display:"flex",flexDirection:"column",gap:8}}>{results.kd.map(k=>(<div key={k} style={{padding:"12px 14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:20,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span><span style={{fontSize:12,lineHeight:1.7,color:ts}}>{KARMA[k]?.[he?"he":"en"]}</span></div>))}</div>)}
+          {results.kd.length===0?(<div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={16}/></span><span style={{fontSize:13,color:ts,marginRight:8,marginLeft:8}}>{he?"אין חוב קארמי":"No karmic debt"}</span></div>):(<div style={{display:"flex",flexDirection:"column",gap:8}}>{results.kd.map(k=>(<div key={k} style={{padding:"12px 14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:20,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span><span style={{fontSize:12,lineHeight:1.7,color:ts}}><Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></span></div>))}</div>)}
         </div>
         <div className="gc" style={{marginBottom:16}}>
           <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid</h4>{results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
@@ -702,7 +703,7 @@ function CalculatorsWidget({he,dk}){
         {[11,22,33].includes(results.lpm)&&(<div className="gc" style={{marginBottom:14,padding:14,textAlign:"center",background:`${MASTER[results.lpm].c}08`,border:`1px solid ${MASTER[results.lpm].c}33`}}>
           <div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="bolt" size={20} stroke={1.3}/></div>
           <div style={{fontSize:16,fontWeight:700,color:MASTER[results.lpm].c,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מספר מאסטר":"Master Number"} {results.lpm} — {he?MASTER[results.lpm].t:MASTER[results.lpm].te}</div>
-          <p style={{fontSize:12,color:ts,lineHeight:1.7,marginTop:6}}>{MASTER[results.lpm][he?"he":"en"]}</p>
+          <p style={{fontSize:12,color:ts,lineHeight:1.7,marginTop:6}}><Locked he={he}>{MASTER[results.lpm][he?"he":"en"]}</Locked></p>
         </div>)}
 
         {/* Core numbers */}
@@ -740,7 +741,7 @@ function CalculatorsWidget({he,dk}){
             ))}
           </div>
           <div style={{textAlign:"center",marginTop:14,padding:12,background:`${ac}06`,borderRadius:12}}>
-            <p style={{fontSize:13,lineHeight:1.9,color:ts,fontStyle:"italic"}}>{he?D[R(results.lp)]?.narrative:D[R(results.lp)]?.narrativeE}</p>
+            <p style={{fontSize:13,lineHeight:1.9,color:ts,fontStyle:"italic"}}><Locked he={he} chip>{he?D[R(results.lp)]?.narrative:D[R(results.lp)]?.narrativeE}</Locked></p>
           </div>
         </div>
       </div>)}
@@ -765,7 +766,7 @@ function CalculatorsWidget({he,dk}){
               <div style={{fontSize:36,fontWeight:700,color:D[it.v]?.c||ac,fontFamily:"'Cormorant Garamond',serif",margin:"4px 0"}}>{it.v}</div>
               <div style={{fontSize:12,fontWeight:600,color:D[it.v]?.c||ac}}>{he?D[it.v]?.t:D[it.v]?.te}</div>
               <div style={{fontSize:10,color:ts,marginTop:4}}>{it.desc}</div>
-              <div style={{marginTop:8,padding:"8px",background:`${ac}06`,borderRadius:8}}><p style={{fontSize:11,lineHeight:1.7,color:ts}}>{YEAR_ENERGY[it.v]?.[he?"he":"en"]}</p></div>
+              <div style={{marginTop:8,padding:"8px",background:`${ac}06`,borderRadius:8}}><p style={{fontSize:11,lineHeight:1.7,color:ts}}><Locked he={he}>{YEAR_ENERGY[it.v]?.[he?"he":"en"]}</Locked></p></div>
             </div>
           ))}
         </div>
@@ -836,7 +837,7 @@ function CalculatorsWidget({he,dk}){
         {results.kd?.length===0?(<div style={{textAlign:"center",padding:16,background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={20}/></span><div style={{fontSize:14,color:ts,marginTop:6}}>{he?"אין חוב קארמי — הנשמה שלך נקייה!":"No karmic debt — your soul is clear!"}</div></div>):(
           <div>{results.kd?.map(k=>(<div key={k} style={{padding:14,background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:24,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span>
-            <span style={{fontSize:12,lineHeight:1.8,color:ts}}>{KARMA[k]?.[he?"he":"en"]}</span>
+            <span style={{fontSize:12,lineHeight:1.8,color:ts}}><Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></span>
           </div>))}</div>
         )}
       </div></div>)}
@@ -927,15 +928,15 @@ function CalculatorsWidget({he,dk}){
           {matchRes.compat&&(<div style={{marginTop:14}}>
             <div style={{padding:12,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:12,marginBottom:8}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="heart" size={14}/></span><span style={{fontSize:12,fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר":"Connection"}</span></div>
-              <p style={{fontSize:12,lineHeight:1.8,color:ts}}>{matchRes.compat[he?"he":"en"].con}</p>
+              <p style={{fontSize:12,lineHeight:1.8,color:ts}}><Locked he={he}>{matchRes.compat[he?"he":"en"].con}</Locked></p>
             </div>
             <div style={{padding:12,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="bolt" size={14}/></span><span style={{fontSize:12,fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים":"Challenges"}</span></div>
-              <p style={{fontSize:12,lineHeight:1.8,color:ts}}>{matchRes.compat[he?"he":"en"].ch}</p>
+              <p style={{fontSize:12,lineHeight:1.8,color:ts}}><Locked he={he}>{matchRes.compat[he?"he":"en"].ch}</Locked></p>
             </div>
             <div style={{padding:12,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:12}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{color:ac,display:"inline-flex"}}><Icon name="bulb" size={14}/></span><span style={{fontSize:12,fontWeight:600,color:ac}}>{he?"עצה":"Advice"}</span></div>
-              <p style={{fontSize:12,lineHeight:1.8,color:ts}}>{matchRes.compat[he?"he":"en"].tip}</p>
+              <p style={{fontSize:12,lineHeight:1.8,color:ts}}><Locked he={he}>{matchRes.compat[he?"he":"en"].tip}</Locked></p>
             </div>
           </div>)}
 
@@ -980,10 +981,10 @@ function CalculatorsWidget({he,dk}){
             <div style={{fontSize:12,fontWeight:600,color:(libNum<=9?D[libNum]?.c:MASTER[libNum]?.c)||ac}}>{libNum<=9?(he?D[libNum]?.t:D[libNum]?.te):(he?MASTER[libNum]?.t:MASTER[libNum]?.te)}</div>
           </div>
           <div style={{fontSize:11,fontWeight:600,color:ac,marginBottom:6}}>{NUM_LIB[libNum][he?"he":"en"].k}</div>
-          <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{NUM_LIB[libNum][he?"he":"en"].p}</p>
+          <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he} chip>{NUM_LIB[libNum][he?"he":"en"].p}</Locked></p>
           {libNum<=9&&(<div style={{marginTop:12,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             {[{i:"gem",l:he?"אבן":"Stone",v:D[libNum]?.stone},{i:"palette",l:he?"צבע":"Color",v:D[libNum]?.color},{i:"flame",l:he?"יסוד":"Element",v:D[libNum]?.el},{i:"briefcase",l:he?"קריירה":"Career",v:D[libNum]?.career}].map((it,i)=>(
-              <div key={i} style={{padding:8,background:`${ac}05`,borderRadius:8,textAlign:"center"}}><span style={{color:ac,display:"inline-flex"}}><Icon name={it.i} size={14}/></span><div style={{fontSize:9,color:ts}}>{it.l}</div><div style={{fontSize:11,fontWeight:600,color:ac}}>{it.v}</div></div>
+              <div key={i} style={{padding:8,background:`${ac}05`,borderRadius:8,textAlign:"center"}}><span style={{color:ac,display:"inline-flex"}}><Icon name={it.i} size={14}/></span><div style={{fontSize:9,color:ts}}>{it.l}</div><div style={{fontSize:11,fontWeight:600,color:ac}}><Locked he={he}>{it.v}</Locked></div></div>
             ))}
           </div>)}
         </div>)}
@@ -1502,8 +1503,9 @@ export default function App({ view, navigate } = {}){
   useEffect(()=>{if(tab==="admin"&&account.profile?.role!=="admin")setTab("today");},[tab,account.profile?.role]);
   useEffect(()=>{if(tab!=="today")setDeckDeal(0);},[tab]); // the next visit to "היום" waits for a press again
   // a saved map opens in meeting mode too (meetingFor is defined below; it runs only on a press)
-  const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:(r,n,h,i)=>exportReport(r,n,h,i,licensee),
-    openMeeting:(r,n)=>setMeeting(meetingFor(r,n))}),[licensee?.fullName,licensee?.phone,he]);
+  // the demo's interpretations stay blurred, so it makes no reports
+  const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:view==="demo"?null:(r,n,h,i)=>exportReport(r,n,h,i,licensee),
+    openMeeting:(r,n)=>setMeeting(meetingFor(r,n))}),[licensee?.fullName,licensee?.phone,he,view]);
   useEffect(()=>{AU.on=snd;},[snd]);
 
   // the shop is gone: a cart kept in this browser from before is forgotten (the owner/customer view preference is read in the useState initializer above)
@@ -1806,8 +1808,8 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         {/* CHAPTER 1 */}
         <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk} he={he}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>{showOwnerUI?<RevealCard {...studioDeck(he)[(lpBase||1)-1]} he={he} size="lg"/>:<TarotCard number={lpBase||1} dk={dk} flipped={true} size="lg"/>}</div>
-          <p className="nar-line">{he?D[lpBase]?.narrative:D[lpBase]?.narrativeE}</p>
-          {results.lp>9&&MASTER[results.lp]&&<div style={{textAlign:"center",marginTop:-6,marginBottom:8}}><span className="badge" style={{borderColor:`${ac}55`}}>{he?`מספר מאסטר ${results.lp} · ${MASTER[results.lp].t}`:`Master ${results.lp} · ${MASTER[results.lp].te}`}</span><p style={{fontSize:12.5,lineHeight:1.8,color:ts,marginTop:8}}>{he?MASTER[results.lp].he:MASTER[results.lp].en}</p></div>}
+          <p className="nar-line"><Locked he={he} chip>{he?D[lpBase]?.narrative:D[lpBase]?.narrativeE}</Locked></p>
+          {results.lp>9&&MASTER[results.lp]&&<div style={{textAlign:"center",marginTop:-6,marginBottom:8}}><span className="badge" style={{borderColor:`${ac}55`}}>{he?`מספר מאסטר ${results.lp} · ${MASTER[results.lp].t}`:`Master ${results.lp} · ${MASTER[results.lp].te}`}</span><p style={{fontSize:12.5,lineHeight:1.8,color:ts,marginTop:8}}><Locked he={he}>{he?MASTER[results.lp].he:MASTER[results.lp].en}</Locked></p></div>}
           <div className="divider"/>
           <div className="st-num-rows">{[{l:he?"ערך השם":"Name Value",v:results.nv},{l:he?"שביל הגורל":"Life Path",v:results.lp},{l:he?"קול הנשמה":"Soul Urge",v:results.su},{l:he?"מספר הביטוי":"Expression",v:results.ex}].map((it,i)=>{const info=D[it.v]||MASTER[it.v];return(
             <div key={i} className="rrow"><div className="orb"><AN value={it.v} delay={i*200}/></div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:isRtl?600:500,color:tm}}>{it.l}</div>{it.v>0&&info&&<div className="badge">{he?info.t:info.te}</div>}</div></div>
@@ -1818,15 +1820,15 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <Chapter index={2} title={chapterDefs[1]?.title} subtitle={chapterDefs[1]?.sub} icon={chapterDefs[1]?.icon} isActive={nextUnrevealed===1} isRevealed={chapters[1]} onReveal={()=>revealChapter(1)} dk={dk} he={he}>
           <p className="nar-line">{he?"שביל הגורל שלך מספר "+results.lp+" חושף את הייעוד העמוק שלך":"Your Life Path "+results.lp+" reveals your deepest purpose"}</p>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,margin:"16px 0"}}>
-            <div style={{padding:"16px",background:dk?"rgba(180,50,50,.06)":"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.12)",borderRadius:14,textAlign:"center"}}><div style={{color:"#d98a8a",marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="moon" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:"#e88",marginBottom:4}}>{he?"צד צל":"Shadow"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}>{he?D[lpBase]?.shadow:D[lpBase]?.shadowE}</div></div>
-            <div style={{padding:"16px",background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,textAlign:"center"}}><div style={{color:ac,marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="seed" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:ac,marginBottom:4}}>{he?"צמיחה":"Growth"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}>{he?D[lpBase]?.growth:D[lpBase]?.growthE}</div></div>
+            <div style={{padding:"16px",background:dk?"rgba(180,50,50,.06)":"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.12)",borderRadius:14,textAlign:"center"}}><div style={{color:"#d98a8a",marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="moon" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:"#e88",marginBottom:4}}>{he?"צד צל":"Shadow"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}><Locked he={he}>{he?D[lpBase]?.shadow:D[lpBase]?.shadowE}</Locked></div></div>
+            <div style={{padding:"16px",background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,textAlign:"center"}}><div style={{color:ac,marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="seed" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:ac,marginBottom:4}}>{he?"צמיחה":"Growth"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}><Locked he={he}>{he?D[lpBase]?.growth:D[lpBase]?.growthE}</Locked></div></div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:14}}>
             {[{i:"gem",l:he?"אבן":"Stone",v:D[lpBase]?.stone},{i:"orb",l:he?"קריסטל":"Crystal",v:D[lpBase]?.crystal},{i:"palette",l:he?"צבע":"Color",v:D[lpBase]?.color},{i:"calendar",l:he?"יום מזל":"Lucky Day",v:D[lpBase]?.luck}].map((it,i)=>(
-              <div key={i} style={{padding:"12px",background:dk?"rgba(18,18,38,.35)":"rgba(255,255,255,.4)",border:`1px solid ${ac}0a`,borderRadius:11,textAlign:"center"}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:3}}><Icon name={it.i} size={18}/></div><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1,marginTop:2}}>{it.l}</div><div style={{fontSize:12,fontWeight:600,color:ac,marginTop:2}}>{it.v}</div></div>
+              <div key={i} style={{padding:"12px",background:dk?"rgba(18,18,38,.35)":"rgba(255,255,255,.4)",border:`1px solid ${ac}0a`,borderRadius:11,textAlign:"center"}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:3}}><Icon name={it.i} size={18}/></div><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1,marginTop:2}}>{it.l}</div><div style={{fontSize:12,fontWeight:600,color:ac,marginTop:2}}><Locked he={he}>{it.v}</Locked></div></div>
             ))}
           </div>
-          {results.kd.length>0&&(<div style={{marginTop:16}}><div className="divider"/><div style={{textAlign:"center",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{color:"#e88",display:"inline-flex"}}><Icon name="bolt" size={18}/></span><span style={{fontSize:15,fontWeight:600,color:"#e88"}}>{he?"חוב קארמי":"Karmic Debt"}</span></div>{results.kd.map(k=><div key={k} style={{padding:"14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8}}><div style={{fontSize:13,lineHeight:1.8,color:ts}}><strong style={{color:"#e88"}}>{k}</strong> — {KARMA[k]?.[he?"he":"en"]}</div></div>)}</div>)}
+          {results.kd.length>0&&(<div style={{marginTop:16}}><div className="divider"/><div style={{textAlign:"center",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{color:"#e88",display:"inline-flex"}}><Icon name="bolt" size={18}/></span><span style={{fontSize:15,fontWeight:600,color:"#e88"}}>{he?"חוב קארמי":"Karmic Debt"}</span></div>{results.kd.map(k=><div key={k} style={{padding:"14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8}}><div style={{fontSize:13,lineHeight:1.8,color:ts}}><strong style={{color:"#e88"}}>{k}</strong> — <Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></div></div>)}</div>)}
           {results.kd.length===0&&(<div style={{textAlign:"center",marginTop:14,padding:"14px",background:`${ac}06`,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={18}/></span><span style={{fontSize:13,color:ts}}>{he?"אין חוב קארמי":"No karmic debt"}</span></div>)}
         </Chapter>
 
@@ -1837,7 +1839,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
               <div key={i} style={{textAlign:"center",padding:"18px 8px",background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}0a`,borderRadius:14}}><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1}}>{it.l}</div><div style={{fontSize:32,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif",margin:"4px 0"}}><AN value={it.v} delay={i*200}/></div><div style={{fontSize:11,color:D[it.v]?.c||ac,opacity:.7}}>{he?D[it.v]?.t:D[it.v]?.te}</div></div>
             ))}
           </div>
-          <div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:14,marginBottom:16}}><p style={{fontSize:14,lineHeight:1.9,color:ts}}>{YEAR_ENERGY[results.py]?.[he?"he":"en"]}</p></div>
+          <div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:14,marginBottom:16}}><p style={{fontSize:14,lineHeight:1.9,color:ts}}><Locked he={he} chip>{YEAR_ENERGY[results.py]?.[he?"he":"en"]}</Locked></p></div>
           <div className="divider"/><RitualWidget number={results.pd} he={he} dk={dk}/>
         </Chapter>
 
@@ -1861,13 +1863,14 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         {/* CHAPTER 6 */}
         <Chapter index={6} title={chapterDefs[5]?.title} subtitle={chapterDefs[5]?.sub} icon={chapterDefs[5]?.icon} isActive={nextUnrevealed===5} isRevealed={chapters[5]} onReveal={()=>revealChapter(5)} dk={dk} he={he}>
           <p className="nar-line">{he?"תובנות מותאמות אישית":"Personalized insights"}</p>
-          {getRecommendations(results,lang).map((rec,i)=>(<div key={i} className="rec-card"><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name={rec.icon} size={20}/></span><span style={{fontSize:15,fontWeight:600,color:ac}}>{rec.t}</span></div><p style={{fontSize:13,lineHeight:1.8,color:ts}}>{rec.d}</p></div>))}
+          {getRecommendations(results,lang).map((rec,i)=>(<div key={i} className="rec-card"><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name={rec.icon} size={20}/></span><span style={{fontSize:15,fontWeight:600,color:ac}}>{rec.t}</span></div><p style={{fontSize:13,lineHeight:1.8,color:ts}}><Locked he={he}>{rec.d}</Locked></p></div>))}
           <div className="divider"/>
-          <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="target" size={22} stroke={1.3}/></div><div style={{fontSize:15,fontWeight:600,color:ac,marginTop:4}}>{he?"קריירות מתאימות":"Ideal Careers"}</div><div style={{fontSize:14,color:ts,marginTop:6,lineHeight:1.8}}>{D[lpBase]?.career}</div></div>
+          <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="target" size={22} stroke={1.3}/></div><div style={{fontSize:15,fontWeight:600,color:ac,marginTop:4}}>{he?"קריירות מתאימות":"Ideal Careers"}</div><div style={{fontSize:14,color:ts,marginTop:6,lineHeight:1.8}}><Locked he={he}>{D[lpBase]?.career}</Locked></div></div>
         </Chapter>
 
         {chapters[5]&&(<SR delay={250}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
-          <button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);if(showOwnerUI)toast(he?"הדו״ח נשמר בתיקיית ההורדות.":"The report is in your downloads.");}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמירת דו״ח PDF":"Save PDF"}</span></button>
+          {/* the demo keeps its interpretations blurred, so it makes no report */}
+          {!demo&&<button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);if(showOwnerUI)toast(he?"הדו״ח נשמר בתיקיית ההורדות.":"The report is in your downloads.");}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמירת דו״ח PDF":"Save PDF"}</span></button>}
           {showOwnerUI&&<button className="ghost" onClick={()=>setMeeting(meetingFor(results,readingName||name))} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="eye" size={15}/>{he?"מצב פגישה":"Meeting mode"}</span></button>}
           <button className="ghost" onClick={goHome}>{he?"קריאה חדשה":"New Reading"}</button>
         </div></SR>)}
@@ -2104,15 +2107,15 @@ function CompatWidget({he,dk}){
           {coupleRes.compat&&(<div style={{marginTop:16}}>
             <div style={{padding:14,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,marginBottom:10}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="heart" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר אתכם":"What connects you"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{coupleRes.compat[he?"he":"en"].con}</p>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{coupleRes.compat[he?"he":"en"].con}</Locked></p>
             </div>
             <div style={{padding:14,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:14,marginBottom:10}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="bolt" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:"#E74C3C"}}>{he?"האתגרים":"Challenges"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{coupleRes.compat[he?"he":"en"].ch}</p>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{coupleRes.compat[he?"he":"en"].ch}</Locked></p>
             </div>
             <div style={{padding:14,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name="bulb" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:ac}}>{he?"עצה":"Advice"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{coupleRes.compat[he?"he":"en"].tip}</p>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{coupleRes.compat[he?"he":"en"].tip}</Locked></p>
             </div>
           </div>)}
 
@@ -2172,20 +2175,20 @@ function CompatWidget({he,dk}){
           {/* Strengths */}
           <div style={{padding:14,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,marginBottom:10}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="star" size={16}/></span><span style={{fontSize:14,fontWeight:600,color:"#4ECDC4"}}>{he?"חוזקות":"Strengths"}</span></div>
-            {profileRes.traits?.[he?"he":"en"]?.str?.map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0"}}><span style={{color:"#4ECDC4",fontSize:10}}>✦</span><span style={{fontSize:13,color:ts}}>{s}</span></div>))}
+            {profileRes.traits?.[he?"he":"en"]?.str?.map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0"}}><span style={{color:"#4ECDC4",fontSize:10}}>✦</span><span style={{fontSize:13,color:ts}}><Locked he={he}>{s}</Locked></span></div>))}
           </div>
 
           {/* Challenges */}
           <div style={{padding:14,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:14,marginBottom:10}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="flame" size={16}/></span><span style={{fontSize:14,fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים":"Challenges"}</span></div>
-            {profileRes.traits?.[he?"he":"en"]?.ch?.map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0"}}><span style={{color:"#E74C3C",fontSize:10}}>✦</span><span style={{fontSize:13,color:ts}}>{s}</span></div>))}
+            {profileRes.traits?.[he?"he":"en"]?.ch?.map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0"}}><span style={{color:"#E74C3C",fontSize:10}}>✦</span><span style={{fontSize:13,color:ts}}><Locked he={he}>{s}</Locked></span></div>))}
           </div>
 
           {/* Soul Lesson */}
           <div style={{padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14,textAlign:"center"}}>
             <div style={{color:ac,marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="star" size={20} stroke={1.3}/></div>
             <div style={{fontSize:12,fontWeight:600,color:ac,marginBottom:6}}>{he?"שיעור הנשמה":"Soul Lesson"}</div>
-            <p style={{fontSize:14,lineHeight:1.9,color:ts,fontStyle:"italic"}}>{profileRes.traits?.[he?"he":"en"]?.soul}</p>
+            <p style={{fontSize:14,lineHeight:1.9,color:ts,fontStyle:"italic"}}><Locked he={he}>{profileRes.traits?.[he?"he":"en"]?.soul}</Locked></p>
           </div>
         </div>
       </div>)}
@@ -2235,15 +2238,15 @@ function CompatWidget({he,dk}){
           {pcRes.compat&&(<div>
             <div style={{padding:14,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,marginBottom:10}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="link" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר ביניכם":"What connects you"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{pcRes.compat[he?"he":"en"].con}</p>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{pcRes.compat[he?"he":"en"].con}</Locked></p>
             </div>
             <div style={{padding:14,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:14,marginBottom:10}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="bolt" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים בקשר":"Relationship challenges"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{pcRes.compat[he?"he":"en"].ch}</p>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{pcRes.compat[he?"he":"en"].ch}</Locked></p>
             </div>
             <div style={{padding:14,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name="bulb" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:ac}}>{he?"עצה להורה":"Advice for parent"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}>{pcRes.compat[he?"he":"en"].tip}</p>
+              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{pcRes.compat[he?"he":"en"].tip}</Locked></p>
             </div>
           </div>)}
 
@@ -2251,7 +2254,7 @@ function CompatWidget({he,dk}){
           <div style={{marginTop:14,padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14,textAlign:"center"}}>
             <div style={{color:ac,marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={20} stroke={1.3}/></div>
             <div style={{fontSize:12,fontWeight:600,color:ac,marginBottom:6}}>{he?"מה הילד בא ללמד אותך":"What the child comes to teach you"}</div>
-            <p style={{fontSize:14,lineHeight:1.9,color:ts,fontStyle:"italic"}}>{he?D[pcRes.lpC]?.growth:D[pcRes.lpC]?.growthE}</p>
+            <p style={{fontSize:14,lineHeight:1.9,color:ts,fontStyle:"italic"}}><Locked he={he}>{he?D[pcRes.lpC]?.growth:D[pcRes.lpC]?.growthE}</Locked></p>
           </div>
         </div>
       </div>)}
@@ -2278,7 +2281,7 @@ function RitualWidget({number,he,dk}){
   return(<div><div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:2}}><Icon name="candle" size={18}/></div><div style={{fontSize:14,fontWeight:600,color:ac,marginTop:4}}>{he?"טקס יומי":"Daily Ritual"}</div></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
       {[{i:"target",l:he?"מילת מפתח":"Focus Word",v:he?r.word:r.wordE},{i:"bolt",l:he?"פעולה":"Action",v:he?r.act:r.actE},{i:"mirror",l:he?"התבוננות":"Reflection",v:he?r.reflect:r.reflectE},{i:"candle",l:he?"מיקרו-טקס":"Micro Ritual",v:he?r.micro:r.microE}].map((it,i)=>(
-        <div key={i} className="ritual-item"><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:5}}><Icon name={it.i} size={16}/></div><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>{it.l}</div><div style={{fontSize:12,lineHeight:1.7,color:dk?"rgba(232,224,208,.55)":"rgba(0,0,0,.45)"}}>{it.v}</div></div>
+        <div key={i} className="ritual-item"><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:5}}><Icon name={it.i} size={16}/></div><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>{it.l}</div><div style={{fontSize:12,lineHeight:1.7,color:dk?"rgba(232,224,208,.55)":"rgba(0,0,0,.45)"}}><Locked he={he}>{it.v}</Locked></div></div>
       ))}
     </div>
   </div>);
