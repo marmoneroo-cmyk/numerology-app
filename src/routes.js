@@ -27,7 +27,8 @@ export function viewOf(hash) {
 /**
  * Where the page is after the address changed to `hash`.
  * - A legal page opens over the view the visitor came from.
- * - A fragment the app does not route changes nothing.
+ * - A fragment the app does not route changes nothing on the sales page. In the app it means the browser went
+ *   back to an address the app never set (a shared /#something), so the sales page shows.
  * - No hash is the sales page, except on the first load of a browser that keeps a login: that opens the Studio.
  * @returns {{ world: "sales" | "app", view: "home" | "studio" | "customer" | "demo", legal: string | null }}
  */
@@ -35,7 +36,7 @@ export function nextRoute(current, hash, { initial = false, signedIn = false } =
   const view = viewOf(hash);
   const here = current ?? { world: "sales", view: "home", legal: null };
   if (view === "legal") return { ...here, legal: String(hash).replace(/^#/, "") };
-  if (view === null) return here;
+  if (view === null) return here.world === "app" ? { world: "sales", view: "home", legal: null } : here;
   if (view === "home") return initial && signedIn ? { world: "app", view: "studio", legal: null } : { world: "sales", view: "home", legal: null };
   return { world: "app", view, legal: null };
 }

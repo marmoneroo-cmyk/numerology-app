@@ -34,10 +34,12 @@ describe("routes", () => {
     expect(nextRoute({ ...app("customer"), legal: "terms" }, "#customer")).toEqual(app("customer"));
   });
 
-  it("changes nothing for a fragment it does not route", () => {
-    const customer = app("customer");
-    expect(nextRoute(customer, "#reading-section")).toBe(customer);
+  it("changes nothing on the sales page for a fragment it does not route, and leaves the app for it", () => {
+    const sales = { ...HOME };
+    expect(nextRoute(sales, "#sales-features")).toBe(sales);
     expect(nextRoute(null, "#nothing", { initial: true })).toEqual(HOME);
+    // the app sets no such fragment itself: one arrives by the browser's back button, to a shared address
+    expect(nextRoute(app("demo"), "#pricing")).toEqual(HOME);
   });
 
   it("gives each view its address", () => {
