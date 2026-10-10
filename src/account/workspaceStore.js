@@ -18,14 +18,20 @@ export function watchSession(backend, onLost) {
   return Object.fromEntries(Object.entries(backend).map(([key, value]) => [key, typeof value === "function" ? watched(value) : value]));
 }
 
-let current = { userId: null, store: null };
+let current = { userId: null, client: null, store: null, account: null };
 
-/** One store per signed-in user for the life of the page. */
+/**
+ * One store per signed-in user and account service for the life of the page. A refused session is told to the
+ * account in use now: the Studio entered again gets a new provider over the same service. Another service under
+ * the same user id (a new visit to the demo) starts a new store.
+ */
 export function accountStore(account) {
   const userId = account.profile.id;
-  if (current.userId !== userId) {
-    const backend = watchSession(serverBackend(account.service.client, userId), () => account.check());
-    current = { userId, store: createStore(backend) };
+  const client = account.service.client;
+  if (current.userId !== userId || current.client !== client) {
+    const backend = watchSession(serverBackend(client, userId), () => current.account?.check());
+    current = { userId, client, store: createStore(backend), account };
   }
+  current.account = account;
   return current.store;
 }
