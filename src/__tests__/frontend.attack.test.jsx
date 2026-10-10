@@ -458,7 +458,7 @@ describe("lead capture gate", () => {
 });
 
 describe("contact details customers rely on", () => {
-  const app = read(join(ROOT, "src", "App.jsx"));
+  const app = read(join(ROOT, "src", "business.js"));
 
   // FIXED after the 2026-10-07 audit; was (LOW): src/App.jsx:1142. The footer's "Email" link opens mailto:shani@example.com,
   // a reserved domain nobody owns, so a customer's message (and birth date) goes nowhere.
