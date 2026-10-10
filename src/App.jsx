@@ -21,12 +21,13 @@ import AdminScreen from "./account/AdminScreen.jsx";
 import LocalDataOffer from "./account/LocalDataOffer.jsx";
 import { accountStore } from "./account/workspaceStore.js";
 import {
-  R, NV, SU, EX, LP, LPm, CA, PY, loShu, fullCalc, liveNum, getRecommendations,
+  R, NV, SU, EX, LP, LPm, CA, PY, personalYearOn, loShu, fullCalc, liveNum, getRecommendations,
   yearCycle, masterBase, dailyRitualNumber, compatKey, matchReading, coupleReading, parentChildReading,
 } from "./engine";
 import Icon from "./ui/Icon.jsx";
 import { BUSINESS_EMAIL } from "./business.js";
 import DemoBanner from "./demo/DemoBanner.jsx";
+import PlusOneNote from "./ui/PlusOneNote.jsx";
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
@@ -497,13 +498,12 @@ function TablesWidget({he,dk}){
   const[firstName,setFirstName]=useState("");
   const[lastName,setLastName]=useState("");
   const[dob,setDob]=useState("");
-  const[addOne,setAddOne]=useState(false);
   const[results,setResults]=useState(null);
   const[error,setError]=useState("");
   const[animIn,setAnimIn]=useState(false);
   const[showExtra,setShowExtra]=useState(false);
   const doCalc=()=>{
-    try{setError("");const parts=dob.split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const r=fullCalc(d,m,y,fullName,addOne);setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
+    try{setError("");const parts=dob.split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const r=fullCalc(d,m,y,fullName);setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
   };
   const thStyle={padding:"11px 14px",fontSize:12,fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`,letterSpacing:.3};
   const tdStyle={padding:"11px 14px",fontSize:14,fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
@@ -517,12 +517,9 @@ function TablesWidget({he,dk}){
         <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם פרטי":"First Name"}</label><input className="gi" placeholder={he?"שם פרטי...":"First name..."} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
         <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם משפחה":"Last Name"}</label><input className="gi" placeholder={he?"שם משפחה...":"Last name..."} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,alignItems:"end",marginBottom:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:14}}>
         <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doCalc();}}/></div>
-        <div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",paddingBottom:4,height:54,paddingTop:22}} onClick={()=>setAddOne(!addOne)}>
-          <div style={{width:20,height:20,borderRadius:6,border:`1.5px solid ${ac}44`,background:addOne?`${ac}1a`:dk?"rgba(8,8,18,.6)":"rgba(255,255,255,.7)",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .3s",flexShrink:0}}>{addOne&&<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 7L6 10L11 4" stroke={ac} strokeWidth="2" strokeLinecap="round"/></svg>}</div>
-          <span style={{fontSize:11,color:ts,whiteSpace:"nowrap"}}>{he?"הוסף 1":"Add 1"}</span>
-        </div>
+        <PlusOneNote he={he} color={ts}/>
       </div>
       {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:14,textAlign:"center"}}>{error}</div>}
       <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doCalc}>{he?"חשב":"Calculate"}</button>
@@ -575,7 +572,7 @@ function TablesWidget({he,dk}){
           </table></div>
         </div>
       </div>)}
-      <div style={{textAlign:"center",marginTop:8}}><button className="ghost" onClick={()=>{setResults(null);setFirstName("");setLastName("");setDob("");setAddOne(false);setShowExtra(false);AU.init();AU.p("click");}}>{he?"חישוב חדש":"New Calculation"}</button></div>
+      <div style={{textAlign:"center",marginTop:8}}><button className="ghost" onClick={()=>{setResults(null);setFirstName("");setLastName("");setDob("");setShowExtra(false);AU.init();AU.p("click");}}>{he?"חישוב חדש":"New Calculation"}</button></div>
     </div>)}
   </div>);
 }
@@ -595,7 +592,6 @@ function CalculatorsWidget({he,dk}){
   const[firstName,setFirstName]=useState("");
   const[lastName,setLastName]=useState("");
   const[dob,setDob]=useState("");
-  const[addOne,setAddOne]=useState(false);
   const[results,setResults]=useState(null);
   const[animIn,setAnimIn]=useState(false);
 
@@ -632,7 +628,7 @@ function CalculatorsWidget({he,dk}){
     if(!d||!firstName.trim()){setError(he?"מלא שם ותאריך לידה":"Enter name and date of birth");return;}
     AU.init();AU.p("reveal");
     const nm=(firstName+" "+lastName).trim();
-    const r=fullCalc(d.d,d.m,d.y,nm,addOne);
+    const r=fullCalc(d.d,d.m,d.y,nm);
     r.lpm=LPm(d.d,d.m,d.y); // master-aware LP
     setResults(r);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);
   };
@@ -693,12 +689,9 @@ function CalculatorsWidget({he,dk}){
           <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם פרטי...":"First name..."}/></div>
           <div><label style={labelSt}>{he?"שם משפחה":"Last Name"}</label><input className="gi" value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם משפחה...":"Last name..."}/></div>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:10,alignItems:"end",marginBottom:12}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:12}}>
           <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
-          <div style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",userSelect:"none",paddingBottom:4,height:54,paddingTop:22}} onClick={()=>setAddOne(!addOne)}>
-            <div style={{width:18,height:18,borderRadius:5,border:`1.5px solid ${ac}44`,background:addOne?`${ac}1a`:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .3s"}}>{addOne&&<span style={{color:ac,fontSize:12}}>✓</span>}</div>
-            <span style={{fontSize:10,color:ts}}>{he?"הוסף 1":"Add 1"}</span>
-          </div>
+          <PlusOneNote he={he} color={ts}/>
         </div>
         <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב מספרים":"Calculate Numbers"}</button>
       </div>
@@ -853,14 +846,11 @@ function CalculatorsWidget({he,dk}){
       <BackBtn/>
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="trending" size={26} stroke={1.3}/></div></div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:10,alignItems:"end",marginBottom:12}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:12}}>
           <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
-          <div style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",userSelect:"none",paddingBottom:4,height:54,paddingTop:22}} onClick={()=>setAddOne(!addOne)}>
-            <div style={{width:18,height:18,borderRadius:5,border:`1.5px solid ${ac}44`,background:addOne?`${ac}1a`:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>{addOne&&<span style={{color:ac,fontSize:12}}>✓</span>}</div>
-            <span style={{fontSize:10,color:ts}}>{he?"הוסף 1":"Add 1"}</span>
-          </div>
+          <PlusOneNote he={he} color={ts}/>
         </div>
-        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");setResults({proj:yearCycle(d.d,d.m,addOne)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
+        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");setResults({proj:yearCycle(d.d,d.m)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
       </div>
       {results&&animIn&&results.proj&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc" style={{padding:0,overflow:"hidden"}}>
         <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
@@ -1467,12 +1457,12 @@ function LeadsWidget({ he, dk }) {
  */
 export default function App({ view, navigate } = {}){
   const[lang,setLang]=useState("he");const[dk,setDk]=useState(true);const[snd,setSnd]=useState(true);const[intro,setIntro]=useState(true);
-  const[step,setStep]=useState(1);const[tab,setTab]=useState("today");const[name,setName]=useState("");const[dob,setDob]=useState("");const[addOne,setAddOne]=useState(false);
+  const[step,setStep]=useState(1);const[tab,setTab]=useState("today");const[name,setName]=useState("");const[dob,setDob]=useState("");
   const[results,setResults]=useState(null);const[showRes,setShowRes]=useState(false);const[error,setError]=useState("");
   const[readingName,setReadingName]=useState(""); // whom `results` were made for: the name field may change after
   const[chapters,setChapters]=useState([false,false,false,false,false,false]);
   /** Back to an empty reading form, the last reading gone. */
-  const clearReading=()=>{setShowRes(false);setResults(null);setReadingName("");setStep(1);setName("");setDob("");setAddOne(false);setError("");setChapters([false,false,false,false,false,false]);};
+  const clearReading=()=>{setShowRes(false);setResults(null);setReadingName("");setStep(1);setName("");setDob("");setError("");setChapters([false,false,false,false,false,false]);};
   const[streak,setStreak]=useState(0);
   const[owner,setOwner]=useState(()=>{if(view)return view!=="customer";try{const h=location.hash+location.search;if(/customer/i.test(h))return false;if(/owner|studio|admin/i.test(h))return true;return localStorage.getItem(OWNER_STORE_KEY)!=="customer";}catch(e){return true;}});const[previewCustomer,setPreviewCustomer]=useState(false);
   const[leadDone,setLeadDone]=useState(()=>{try{return localStorage.getItem(LEAD_DONE_KEY)==="1";}catch(e){return false;}});
@@ -1534,15 +1524,15 @@ export default function App({ view, navigate } = {}){
 
   const revealChapter=(i)=>{AU.init();AU.p("chapter");const next=[...chapters];next[i]=true;setChapters(next);};
 
-  const runReading=useCallback((nm,dobStr,add)=>{
+  const runReading=useCallback((nm,dobStr)=>{
     try{setError("");const parts=String(dobStr).split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;
-      AU.init();AU.p("reveal");const r=fullCalc(d,m,y,nm,add);setResults(r);setReadingName(nm);setShowRes(true);
+      AU.init();AU.p("reveal");const r=fullCalc(d,m,y,nm);setResults(r);setReadingName(nm);setShowRes(true);
       setChapters([false,false,false,false,false,false]);
       setTimeout(()=>{setChapters(c=>{const n=[...c];n[0]=true;return n;});AU.p("chapter");},800);saveStreak();
       return true;
     }catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check that all data is entered correctly");return false;}
   },[he,saveStreak]);
-  const doCalc=useCallback(()=>{runReading(name,dob,addOne);},[name,dob,addOne,runReading]);
+  const doCalc=useCallback(()=>{runReading(name,dob);},[name,dob,runReading]);
 
   const goHome=()=>{
     AU.init();AU.p("click");
@@ -1703,7 +1693,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </div>
       ):(
         <>
-          <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}} onReveal={(n,d)=>{setName(n);setDob(d);setStep(2);const ok=runReading(n,d,addOne);if(ok)setTimeout(()=>scrollToId("reading-section"),90);}}/>
+          <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}} onReveal={(n,d)=>{setName(n);setDob(d);setStep(2);const ok=runReading(n,d);if(ok)setTimeout(()=>scrollToId("reading-section"),90);}}/>
           <HowItWorks he={he} dk={dk}/>
           <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:11,color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · נסה עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
         </>
@@ -1722,7 +1712,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         {showOwnerUI&&tab==="today"&&workspaceStore&&<Today he={he} store={workspaceStore} now={()=>new Date()} greetAnyone={demo}
           day={{number:dayNum,title:he?D[dayNum].t:D[dayNum].te,text:he?D[dayNum].s:D[dayNum].se}}
           lifePath={(iso)=>{const p=personOf("",iso);return LPm(p.d,p.m,p.y);}}
-          personalYear={(iso,at)=>{const p=personOf("",iso);return PY(p.d,p.m,at.getFullYear());}}
+          personalYear={(iso,at)=>{const p=personOf("",iso);return personalYearOn(p.d,p.m,at);}}
           deck={<Deck key={deckDeal} pool={deckPool} he={he} shuffleOnMount={deckDeal>0} onPick={()=>chimeOnOpen(true)}/>}
           onOpenClient={(id)=>openClient({name:"client",clientId:id})}
           onNewReading={newReading}
@@ -1784,10 +1774,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
               </div>
               <label style={{display:"block",marginBottom:8,fontSize:12,color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
               <input className="gi" placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{marginBottom:18,textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter"&&dob.trim())doCalc();}}/>
-              <div style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",userSelect:"none",marginBottom:24}} onClick={()=>setAddOne(!addOne)}>
-                <div style={{width:20,height:20,borderRadius:6,border:`1.5px solid ${ac}44`,background:addOne?`${ac}1a`:dk?"rgba(8,8,18,.6)":"rgba(255,255,255,.7)",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .3s"}}>{addOne&&<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 7L6 10L11 4" stroke={ac} strokeWidth="2" strokeLinecap="round"/></svg>}</div>
-                <span style={{fontSize:13,color:ts}}>{he?"הוסף 1 לשנה אישית":"Add 1 to personal year"}</span>
-              </div>
+              <PlusOneNote he={he} color={ts} style={{marginTop:-6,marginBottom:24,textAlign:"center"}}/>
               {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:16,textAlign:"center"}}>{error}</div>}
               <div style={{display:"flex",gap:10}}>
                 <button className="ghost" onClick={()=>{setStep(1);AU.p("click");}}>{he?"→ חזרה":"← Back"}</button>

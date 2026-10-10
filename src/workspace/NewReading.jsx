@@ -6,7 +6,8 @@
  * was computed for.
  */
 import { useState } from "react";
-import { ENGINE_VERSION, fullCalc, yearCycle, matchReading, parentChildReading, getRecommendations } from "../engine/index.js";
+import { ENGINE_VERSION, addsOne, fullCalc, yearCycle, matchReading, parentChildReading, getRecommendations } from "../engine/index.js";
+import PlusOneNote from "../ui/PlusOneNote.jsx";
 import { Card, Field, Loading, ErrorCard, ScreenTitle, BackButton, useLoad, btnPrimary } from "./ui.jsx";
 import { parseDmy, formatDmy, personOf, readingTypeLabel, matchTypeLabel } from "./format.js";
 
@@ -20,7 +21,6 @@ export default function NewReading({ store, go, he, c, now, clientId }) {
     return { client, others };
   }, [store, clientId]);
   const [type, setType] = useState("map");
-  const [add, setAdd] = useState(false);
   const [useBirthName, setUseBirthName] = useState(false);
   const [matchType, setMatchType] = useState("love");
   const [role, setRole] = useState("parent");
@@ -50,6 +50,7 @@ export default function NewReading({ store, go, he, c, now, clientId }) {
   const run = async () => {
     setError(null);
     const t = now();
+    const add = addsOne(t); // the date decides the +1; the saved input records it
     const me = personOf(name, client.birthDate);
     const person = { name, birthDate: client.birthDate };
     let input;
@@ -113,12 +114,7 @@ export default function NewReading({ store, go, he, c, now, clientId }) {
           </div>
         )}
 
-        {(type === "map" || type === "yearCycle") && (
-          <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, marginBottom: 14, cursor: "pointer" }}>
-            <input type="checkbox" checked={add} onChange={(e) => setAdd(e.target.checked)} />
-            {he ? "הוסף 1 לשנה האישית" : "Add 1 to the personal year"}
-          </label>
-        )}
+        {(type === "map" || type === "yearCycle") && <PlusOneNote he={he} now={now()} color={c.ts} style={{ marginBottom: 14 }} />}
 
         {type === "match" && (
           <Field label={he ? "סוג ההתאמה" : "Kind of match"} c={c}>

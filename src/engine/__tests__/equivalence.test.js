@@ -128,7 +128,9 @@ describe.each(CLOCKS.map(([label, now], i) => [label, now, i]))("engine matches 
     ]);
     freeze(now);
     const wants = cases.map(([d, m, y, nm, add, lang]) => {
-      const map = legacy.fullCalc(d, m, y, nm, add);
+      // since 2026-10-10 a reading that leaves the +1 out lets the date decide it (July 1 - December 31);
+      // the shipped code had only the checkbox, so it gets the same +1 explicitly
+      const map = legacy.fullCalc(d, m, y, nm, add ?? engine.addsOne(now));
       return { map, recs: legacy.getRecommendations(map, lang) };
     });
     const defaults = cases.map(([d, m, y, nm, add]) => engine.fullCalc(d, m, y, nm, add));

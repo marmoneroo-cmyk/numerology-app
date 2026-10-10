@@ -1,6 +1,6 @@
 /** A client's file: details, core numbers, the readings history and attached files. */
 import { useId, useRef, useState } from "react";
-import { LPm, NV, SU, CA, PY } from "../engine/index.js";
+import { LPm, NV, SU, CA, personalYearOn } from "../engine/index.js";
 import { ValidationError, LIMITS } from "../data/validation.js";
 import { useContent, numberTitle } from "./content.js";
 import { Card, Num, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, rowButton, tilesGrid, btnPrimary, btnGhost } from "./ui.jsx";
@@ -28,7 +28,7 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
     lp: LPm(p.d, p.m, p.y),
     nv: NV(client.fullName),
     su: SU(client.fullName),
-    py: PY(p.d, p.m, today.getFullYear(), false),
+    py: personalYearOn(p.d, p.m, today),
     age: CA(p.d, p.m, p.y, today),
   };
 

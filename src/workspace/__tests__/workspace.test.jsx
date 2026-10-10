@@ -11,7 +11,7 @@ import { ContentContext } from "../content.js";
 import { createStore } from "../../data/store.js";
 import { memoryBackend } from "../../data/memoryBackend.js";
 import { LIMITS } from "../../data/validation.js";
-import { fullCalc, getRecommendations, matchReading } from "../../engine/index.js";
+import { ENGINE_VERSION, fullCalc, getRecommendations, matchReading } from "../../engine/index.js";
 import { personOf } from "../format.js";
 
 const NOW = new Date(2026, 9, 5, 12);
@@ -135,16 +135,18 @@ describe("workspace", () => {
     });
     await openClient("שני כהן אזולאי");
     await tap("בדיקה חדשה");
+    // October: the +1 season (July 1 - December 31), so the personal year 6 becomes 7, by itself
+    expect((await screen.findByRole("note")).textContent).toMatch(/^נוסף 1 לשנה האישית/);
     await tap("חשב ושמור");
-    expect(await screen.findByText("גרסת מנוע 1.0.0")).toBeTruthy();
+    expect(await screen.findByText(`גרסת מנוע ${ENGINE_VERSION}`)).toBeTruthy();
     expect(screen.getByTestId("num-lp").textContent).toContain("33");
-    expect(screen.getByTestId("num-py").textContent).toContain("6");
+    expect(screen.getByTestId("num-py").textContent).toContain("7");
     const [saved] = await store.readings.listByClient(client.id);
-    expect(saved).toMatchObject({ type: "map", engineVersion: "1.0.0", computedFor: NOW.toISOString(), result: { lp: 33, nv: 4, py: 6 } });
-    const calc = fullCalc(15, 8, 1990, SHANI.fullName, false, NOW);
+    expect(saved).toMatchObject({ type: "map", input: { add: true }, engineVersion: ENGINE_VERSION, computedFor: NOW.toISOString(), result: { lp: 33, nv: 4, py: 7 } });
+    const calc = fullCalc(15, 8, 1990, SHANI.fullName, true, NOW);
     expect(saved.result.insights).toEqual({ he: getRecommendations(calc, "he"), en: getRecommendations(calc, "en") });
     click("חזרה לתיק");
-    expect(await screen.findByText("שביל הגורל 33 · ערך השם 4 · שנה אישית 6")).toBeTruthy();
+    expect(await screen.findByText("שביל הגורל 33 · ערך השם 4 · שנה אישית 7")).toBeTruthy();
   });
 
   it("shows the insights saved with a map, not a fresh calculation", async () => {
