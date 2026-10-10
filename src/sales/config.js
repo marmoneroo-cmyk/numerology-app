@@ -6,10 +6,10 @@ import { BUSINESS_EMAIL } from "../business.js";
 
 /** The owner's WhatsApp number for questions about the Studio: digits only, with the country code (972...). */
 export const SALES_WHATSAPP = null;
-/** The monthly price, in shekels. */
-export const PRICE_MONTHLY = null;
-/** Days of free trial. */
-export const TRIAL_DAYS = null;
+/** The monthly price, in shekels (the owner, 2026-10-10). */
+export const PRICE_MONTHLY = 149;
+/** Days of free trial (the owner, 2026-10-10). */
+export const TRIAL_DAYS = 7;
 
 /**
  * How to reach the owner: WhatsApp when there is a well-formed number, else an email, else nothing.

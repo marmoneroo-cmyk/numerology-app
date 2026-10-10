@@ -5,6 +5,7 @@ import { render, screen, fireEvent, cleanup, within } from "@testing-library/rea
 import SalesPage from "../SalesPage.jsx";
 import { Price } from "../sections.jsx";
 import { SALES } from "../content.js";
+import { PRICE_MONTHLY, TRIAL_DAYS } from "../config.js";
 
 afterEach(cleanup);
 
@@ -37,6 +38,15 @@ describe("the sales page", () => {
     const questions = container.querySelectorAll("details");
     expect(questions).toHaveLength(SALES.he.faq.items.length);
     expect(questions[0].querySelector("summary").textContent).toBe(SALES.he.faq.items[0].q);
+  });
+
+  it("shows the owner's price and trial from the settings", () => {
+    expect(PRICE_MONTHLY).toBeGreaterThan(0);
+    expect(TRIAL_DAYS).toBeGreaterThan(0);
+    render(<SalesPage he onLanguage={() => {}} />);
+    expect(screen.getByText(`₪${PRICE_MONTHLY}`)).toBeTruthy();
+    expect(screen.getByText(`${TRIAL_DAYS} ${SALES.he.price.trialDays}`)).toBeTruthy();
+    expect(screen.queryByText(SALES.he.price.onRequest)).toBeNull();
   });
 
   it("shows a price and trial once they are set, and words for them until then", () => {
