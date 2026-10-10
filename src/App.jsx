@@ -28,6 +28,7 @@ import Icon from "./ui/Icon.jsx";
 import { BUSINESS_EMAIL } from "./business.js";
 import DemoBanner from "./demo/DemoBanner.jsx";
 import PlusOneNote from "./ui/PlusOneNote.jsx";
+import ReadingSummary from "./reading/ReadingSummary.jsx";
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
@@ -1460,6 +1461,7 @@ export default function App({ view, navigate } = {}){
   const[step,setStep]=useState(1);const[tab,setTab]=useState("today");const[name,setName]=useState("");const[dob,setDob]=useState("");
   const[results,setResults]=useState(null);const[showRes,setShowRes]=useState(false);const[error,setError]=useState("");
   const[readingName,setReadingName]=useState(""); // whom `results` were made for: the name field may change after
+  const[readingAt,setReadingAt]=useState(null); // and the date they were made for (the summary explains its numbers by it)
   const[chapters,setChapters]=useState([false,false,false,false,false,false]);
   /** Back to an empty reading form, the last reading gone. */
   const clearReading=()=>{setShowRes(false);setResults(null);setReadingName("");setStep(1);setName("");setDob("");setError("");setChapters([false,false,false,false,false,false]);};
@@ -1526,7 +1528,7 @@ export default function App({ view, navigate } = {}){
 
   const runReading=useCallback((nm,dobStr)=>{
     try{setError("");const parts=String(dobStr).split(".");if(parts.length!==3)throw 0;const[d,m,y]=parts.map(Number);if(!d||!m||!y||d>31||m>12||y<1900)throw 0;
-      AU.init();AU.p("reveal");const r=fullCalc(d,m,y,nm);setResults(r);setReadingName(nm);setShowRes(true);
+      AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,nm,undefined,at);setResults(r);setReadingName(nm);setReadingAt(at);setShowRes(true);
       setChapters([false,false,false,false,false,false]);
       setTimeout(()=>{setChapters(c=>{const n=[...c];n[0]=true;return n;});AU.p("chapter");},800);saveStreak();
       return true;
@@ -1797,6 +1799,9 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <SR><div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:28}}>
           {chapterDefs.map((_,i)=>(<div key={i} style={{width:chapters[i]?28:10,height:4,borderRadius:2,background:chapters[i]?ac:`${ac}1a`,transition:"all .5s ease"}}/>))}
         </div></SR>
+
+        {/* the Studio opens the reading on its summary: every number on one screen, to read to the client */}
+        {showOwnerUI&&readingAt&&<ContentContext.Provider value={workspaceContent}><ReadingSummary r={results} name={readingName} now={readingAt} he={he}/></ContentContext.Provider>}
 
         {/* CHAPTER 1 */}
         <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk} he={he}>

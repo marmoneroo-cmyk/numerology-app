@@ -139,8 +139,10 @@ describe("workspace", () => {
     expect((await screen.findByRole("note")).textContent).toMatch(/^נוסף 1 לשנה האישית/);
     await tap("חשב ושמור");
     expect(await screen.findByText(`גרסת מנוע ${ENGINE_VERSION}`)).toBeTruthy();
-    expect(screen.getByTestId("num-lp").textContent).toContain("33");
-    expect(screen.getByTestId("num-py").textContent).toContain("7");
+    // the saved map opens on its summary: every number on one screen
+    expect(screen.getByRole("heading", { name: "סיכום המפה" })).toBeTruthy();
+    expect(screen.getByTestId("rs-lp").textContent).toBe("33");
+    expect(screen.getByTestId("rs-py").textContent).toBe("7");
     const [saved] = await store.readings.listByClient(client.id);
     expect(saved).toMatchObject({ type: "map", input: { add: true }, engineVersion: ENGINE_VERSION, computedFor: NOW.toISOString(), result: { lp: 33, nv: 4, py: 7 } });
     const calc = fullCalc(15, 8, 1990, SHANI.fullName, true, NOW);

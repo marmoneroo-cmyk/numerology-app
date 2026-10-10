@@ -1,0 +1,106 @@
+/* The "?" beside a number and the window that shows how it was calculated. Colours from studio.css. */
+.how-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  margin-inline-start: 6px;
+  padding: 0;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--st-gold-text);
+  font: 600 12px/1 var(--st-body);
+  vertical-align: middle;
+  cursor: pointer;
+}
+.how-btn:hover {
+  background: var(--st-gold-wash);
+}
+.how-btn:focus-visible {
+  outline: 2px solid var(--st-gold);
+  outline-offset: 2px;
+}
+
+.how-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 700; /* above meeting mode (600) and quick search (650) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+}
+.how-dialog {
+  width: 100%;
+  max-width: 520px;
+  max-height: 82vh;
+  overflow: auto;
+  padding: 18px 18px 14px;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 14px;
+  background: var(--st-panel);
+  color: var(--st-ink);
+  font-family: var(--st-body);
+  box-shadow: 0 20px 60px var(--st-shadow);
+}
+.how-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.how-head h3 {
+  margin: 0;
+  color: var(--st-gold-text);
+  font-size: 16px;
+  font-weight: 600;
+}
+.how-close {
+  padding: 2px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--st-ink-soft);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.how-close:focus-visible {
+  outline: 2px solid var(--st-gold);
+}
+.how-steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-inline-start: 22px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.how-steps li span {
+  display: block;
+}
+.how-math {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--st-gold-wash);
+  color: var(--st-ink);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.how-result {
+  margin: 14px 0 0;
+  color: var(--st-ink-soft);
+  font-size: 14px;
+}
+.how-result b {
+  color: var(--st-gold-text);
+  font-size: 18px;
+}

@@ -6,10 +6,9 @@ import { useEffect, useRef, useState } from "react";
 import { compatKey, getRecommendations } from "../engine/index.js";
 import { ValidationError } from "../data/validation.js";
 import { useContent, numberTitle } from "./content.js";
-import { Card, Field, Num, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, tilesGrid, btnPrimary, btnGhost, display } from "./ui.jsx";
+import { Card, Field, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, btnPrimary, btnGhost, display } from "./ui.jsx";
 import { parseDmy, formatDmy, formatStamp, readingTypeLabel, matchTypeLabel, personName, errorText } from "./format.js";
-
-const CYCLE_NAMES = { he: ["חיפוש", "מציאה", "יתד", "שיא"], en: ["Search", "Discovery", "Anchor", "Peak"] };
+import ReadingSummary from "../reading/ReadingSummary.jsx";
 
 export default function ReadingView({ store, go, he, c, now, readingId }) {
   const content = useContent();
@@ -139,77 +138,22 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
 
 function MapResult({ reading, he, c, content }) {
   const r = reading.result;
-  const t = (n) => numberTitle(content, n, he);
   const lang = he ? "he" : "en";
-  const tiles = [
-    ["nv", he ? "ערך השם" : "Name number", r.nv],
-    ["lp", he ? "שביל הגורל" : "Life path", r.lp],
-    ["su", he ? "קול הנשמה" : "Soul", r.su],
-    ["ex", he ? "ביטוי" : "Expression", r.ex],
-    ["py", he ? "שנה אישית" : "Personal year", r.py],
-    ["pm", he ? "חודש אישי" : "Personal month", r.pm],
-    ["pd", he ? "יום אישי" : "Personal day", r.pd],
-    ["hy", he ? "שנה נסתרת" : "Hidden year", r.hy],
-  ];
   // the insights saved with the reading; a reading saved before they were kept gets today's
   const recs = r.insights ? r.insights[lang] : getRecommendations(r, lang);
   return (
     <>
-      <Card>
-        <div style={tilesGrid}>
-          {tiles.map(([key, label, value]) => <Num key={key} testId={`num-${key}`} label={label} value={value} title={t(value)} c={c} />)}
-          <Num testId="num-age" label={he ? "גיל" : "Age"} value={r.age} c={c} />
-        </div>
-      </Card>
+      {/* every number on one screen, as saved: made for its own date, with the +1 it recorded */}
+      <ReadingSummary r={r} name={reading.input.name} now={new Date(reading.computedFor)} add={reading.input.add} he={he} />
 
-      <Card style={{ padding: "16px 14px" }}>
-        <SectionTitle c={c}>{he ? "מחזורי חיים" : "Life cycles"}</SectionTitle>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, fontVariantNumeric: "tabular-nums" }}>
-            <thead>
-              <tr style={{ color: c.ac }}>
-                {[he ? "מחזור" : "Cycle", he ? "פסגה" : "Pinnacle", he ? "אתגר" : "Challenge", he ? "פסגה נסתרת" : "Hidden pinnacle", he ? "אתגר נסתר" : "Hidden challenge"].map((h) => (
-                  <th key={h} style={{ padding: "8px 6px", textAlign: "center", borderBottom: `1px solid ${c.line}`, fontWeight: 600 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[0, 1, 2, 3].map((i) => (
-                <tr key={i}>
-                  <td style={{ padding: "8px 6px", borderBottom: `1px solid ${c.line}` }}>
-                    {CYCLE_NAMES[lang][i]} <span style={{ color: c.ts }}>{`${r.exit + 9 * i}–${r.exit + 9 * (i + 1)}`}</span>
-                  </td>
-                  {[r.pk[i], r.ch[i], r.hp[i], r.hc[i]].map((v, j) => (
-                    <td key={j} style={{ padding: "8px 6px", textAlign: "center", borderBottom: `1px solid ${c.line}` }}>{v}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      {(r.kd.length > 0 || r.ls.miss.length > 0) && (
+      {r.kd.length > 0 && (
         <Card>
-          {r.kd.length > 0 && (
-            <div style={{ marginBottom: r.ls.miss.length ? 14 : 0 }}>
-              <SectionTitle c={c}>{he ? "חובות קארמתיים" : "Karmic debts"}</SectionTitle>
-              {r.kd.map((k, i) => (
-                <p key={i} style={{ margin: "0 0 6px", fontSize: 14, lineHeight: 1.6 }}>
-                  <strong style={{ color: c.ac }}>{k}</strong> · {content.KARMA[k]?.[lang] || ""}
-                </p>
-              ))}
-            </div>
-          )}
-          {r.ls.miss.length > 0 && (
-            <div>
-              <SectionTitle c={c}>{he ? "לו שו" : "Lo Shu"}</SectionTitle>
-              <p style={{ margin: 0, fontSize: 14 }}>
-                {he ? `מספרים חסרים: ${r.ls.miss.join(", ")}` : `Missing numbers: ${r.ls.miss.join(", ")}`}
-                {r.ls.planes.length > 0 && ` · ${he ? "מישורים שלמים" : "complete planes"}: ${r.ls.planes.map((p) => planeName(p, he)).join(", ")}`}
-              </p>
-            </div>
-          )}
+          <SectionTitle c={c}>{he ? "חובות קארמתיים" : "Karmic debts"}</SectionTitle>
+          {r.kd.map((k, i) => (
+            <p key={i} style={{ margin: "0 0 6px", fontSize: 14, lineHeight: 1.6 }}>
+              <strong style={{ color: c.ac }}>{k}</strong> · {content.KARMA[k]?.[lang] || ""}
+            </p>
+          ))}
         </Card>
       )}
 
@@ -228,11 +172,6 @@ function MapResult({ reading, he, c, content }) {
       <CycleTable proj={r.proj} he={he} c={c} content={content} />
     </>
   );
-}
-
-function planeName(p, he) {
-  const names = { mind: ["מחשבה", "mind"], emotional: ["רגש", "emotion"], practical: ["מעשה", "practice"] };
-  return (names[p] || [p, p])[he ? 0 : 1];
 }
 
 function CycleTable({ proj, he, c, content }) {

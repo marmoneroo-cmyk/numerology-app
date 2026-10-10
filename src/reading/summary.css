@@ -1,0 +1,131 @@
+/* The map summary: every number of a reading on one screen. Colours from studio.css. */
+.rs {
+  margin: 0 0 24px;
+  padding: 18px;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 16px;
+  background: var(--st-panel);
+  color: var(--st-ink);
+  font-family: var(--st-body);
+}
+.rs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 14px;
+}
+.rs-head h2 {
+  margin: 0;
+  color: var(--st-gold-text);
+  font-family: var(--st-display);
+  font-size: 24px;
+  font-weight: 600;
+}
+.rs-head p {
+  margin: 0;
+  color: var(--st-ink-soft);
+  font-size: 14px;
+}
+.rs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.rs-group {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--st-line);
+  border-radius: 12px;
+  background: var(--st-panel-2);
+}
+.rs-wide {
+  grid-column: 1 / -1;
+}
+.rs-group h3 {
+  margin: 0 0 8px;
+  color: var(--st-gold-text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.rs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.rs-table th,
+.rs-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--st-line);
+  text-align: start;
+  vertical-align: middle;
+}
+.rs-table tr:last-child > * {
+  border-bottom: 0;
+}
+.rs-table th {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.rs-num {
+  color: var(--st-gold-text);
+  font-family: var(--st-display);
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center !important;
+  white-space: nowrap;
+}
+.rs-meaning {
+  color: var(--st-ink-soft);
+  font-size: 13px;
+}
+.rs-how {
+  width: 28px;
+  text-align: end !important;
+}
+.rs-scroll {
+  overflow-x: auto;
+}
+.rs-cycles thead th {
+  color: var(--st-gold-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+}
+.rs-cycles thead th:first-child {
+  text-align: start;
+}
+.rs-ages {
+  color: var(--st-ink-faint);
+  font-size: 12.5px;
+}
+.rs-now > * {
+  background: var(--st-gold-wash);
+}
+.rs-badge {
+  margin-inline-start: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--st-gold-solid);
+  color: var(--st-on-gold);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .rs {
+    padding: 14px 12px;
+  }
+  .rs-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media print {
+  .rs .how-btn {
+    display: none;
+  }
+}

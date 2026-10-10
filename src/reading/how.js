@@ -1,0 +1,297 @@
+/**
+ * "How was this calculated?" for the numbers the Studio shows: each step in words, with its
+ * arithmetic. Every explanation is rebuilt from the engine's own building blocks and ends in
+ * `result`, which the tests compare with the engine's answer, so an explanation cannot drift
+ * from the number beside it.
+ */
+import { LV, VOW, R, LP, LPm, CA, addsOne, CH, karmicDebt, loShu, dailyRitualNumber } from "../engine/index.js";
+
+const MASTERS = [11, 22, 33];
+const KARMIC = [13, 14, 16, 19];
+const sum = (ns) => ns.reduce((a, b) => a + b, 0);
+const digitsOf = (value) => [...String(value)].filter((c) => c >= "0" && c <= "9").map(Number);
+const pad2 = (n) => String(n).padStart(2, "0");
+/** "1+4+0+3 = 8"; a single number stays as it is. */
+const addition = (ns) => (ns.length > 1 ? `${ns.join("+")} = ${sum(ns)}` : `${sum(ns)}`);
+const step = (text, math = "") => ({ text, math });
+const lettersOf = (name, keep) => [...String(name ?? "")].filter((ch) => LV[ch] && keep(ch));
+
+/** The name of each number, as the Studio labels it. */
+const TITLES = {
+  nv: ["ערך השם", "Name number"],
+  su: ["קול הנשמה", "Soul"],
+  ex: ["ביטוי", "Expression"],
+  lp: ["שביל הגורל", "Life path"],
+  age: ["גיל", "Age"],
+  py: ["שנה אישית", "Personal year"],
+  pm: ["חודש אישי", "Personal month"],
+  pd: ["יום אישי", "Personal day"],
+  hy: ["שנה נסתרת", "Hidden year"],
+  pk: ["פסגות", "Pinnacles"],
+  ch: ["אתגרים", "Challenges"],
+  hp: ["פסגות נסתרות", "Hidden pinnacles"],
+  hc: ["אתגרים נסתרים", "Hidden challenges"],
+  exit: ["גילי המחזורים", "Cycle ages"],
+  kd: ["חובות קארמתיים", "Karmic debts"],
+  ls: ["לו שו", "Lo Shu"],
+  daily: ["המספר של היום", "Today's number"],
+};
+
+/** The name of a number's explanation ("" for an unknown key). */
+export const howTitle = (key, he) => (Object.hasOwn(TITLES, key) ? TITLES[key][he ? 0 : 1] : "");
+
+/**
+ * The steps from `n` down to one digit, e.g. 31 -> ["3+1 = 4"]. With `keepMasters` it stops at 11, 22
+ * and 33, as the engine's Rm does; without, it goes on, as R does.
+ * @returns {{ steps: string[], result: number, master: boolean }}
+ */
+export function reduction(n, keepMasters = false) {
+  const steps = [];
+  let x = n;
+  if (keepMasters && MASTERS.includes(x)) return { steps, result: x, master: true };
+  while (x >= 10) {
+    const ds = digitsOf(x);
+    x = sum(ds);
+    steps.push(addition(ds));
+    if (keepMasters && MASTERS.includes(x)) return { steps, result: x, master: true };
+  }
+  return { steps, result: x, master: false };
+}
+
+/** The reduction as steps, with the master-number note when it stopped at one. */
+function reduceSteps(n, keepMasters, he) {
+  const red = reduction(n, keepMasters);
+  const out = red.steps.map((m) => step(he ? "מצמצמים" : "Reduce", m));
+  if (red.master) out.push(step(he ? `${red.result} הוא מספר מאסטר, ולכן נשאר כמו שהוא` : `${red.result} is a master number, so it stays`));
+  return { steps: out, result: red.result };
+}
+
+/** Adds two numbers and reduces: "5+5 = 10 → 1". */
+function addReduce(a, b) {
+  const red = reduction(a + b);
+  return { math: [`${a}+${b} = ${a + b}`, ...red.steps.map((s) => s.split(" = ")[1])].join(" → "), result: red.result };
+}
+
+/** The challenge between two numbers: their difference, 0 when they are equal. */
+const diff = (a, b) => ({ math: `|${a}−${b}| = ${Math.abs(a - b)}`, result: CH(a, b) });
+
+const LETTER_KINDS = {
+  nv: { keep: () => true, he: "ערך כל אות בשם", en: "The value of every letter" },
+  su: { keep: (ch) => VOW.has(ch), he: "רק האותיות א, ו, י, ע", en: "Only the letters א ו י ע" },
+  ex: { keep: (ch) => !VOW.has(ch), he: "כל האותיות חוץ מ-א, ו, י, ע", en: "Every letter except א ו י ע" },
+};
+
+/** A name number: nv (every letter), su (the vowels א ו י ע) or ex (the other letters). */
+function nameNumber(kind, name, he) {
+  const k = LETTER_KINDS[kind];
+  const which = he ? k.he : k.en;
+  const letters = lettersOf(name, k.keep);
+  const values = letters.map((ch) => LV[ch]);
+  if (!letters.length) return { steps: [step(which), step(he ? "אין אותיות כאלה בשם, ולכן 0" : "The name has none, so 0", "0")], result: 0 };
+  const reduced = reduceSteps(sum(values), true, he);
+  return {
+    steps: [step(which, letters.map((ch) => `${ch}=${LV[ch]}`).join(" ")), step(he ? "סוכמים" : "Add them up", addition(values)), ...reduced.steps],
+    result: reduced.result,
+  };
+}
+
+/** The life path: every digit of the date (dd.mm.yyyy), masters kept. */
+function lifePath({ d, m, y }, he) {
+  const date = `${pad2(d)}.${pad2(m)}.${y}`;
+  const ds = digitsOf(date);
+  const reduced = reduceSteps(sum(ds), true, he);
+  return {
+    steps: [step(he ? `סוכמים את כל ספרות תאריך הלידה ${date}` : `Add every digit of the birth date ${date}`, addition(ds)), ...reduced.steps],
+    result: reduced.result,
+  };
+}
+
+function age({ d, m, y, now }, he) {
+  const years = now.getFullYear() - y;
+  const result = CA(d, m, y, now);
+  const steps = [step(he ? "השנה פחות שנת הלידה" : "This year minus the birth year", `${now.getFullYear()}−${y} = ${years}`)];
+  if (result !== years) steps.push(step(he ? "יום ההולדת של השנה עוד לא הגיע, אז פחות 1" : "This year's birthday has not come yet, so minus 1", `${years}−1 = ${result}`));
+  return { steps, result };
+}
+
+/** The personal year of calendar year `year`; `plus` is the +1 (the date decides it, July 1 - December 31). */
+function personalYear({ d, m, year, plus }, he) {
+  const ds = digitsOf(`${pad2(d)}${pad2(m)}${year}`);
+  const base = reduceSteps(sum(ds), false, he);
+  const steps = [step(he ? `ספרות יום וחודש הלידה, ועוד ספרות השנה ${year}` : `The digits of the birth day and month, plus those of ${year}`, addition(ds)), ...base.steps];
+  if (!plus) return { steps, result: base.result };
+  const after = reduceSteps(base.result + 1, false, he);
+  steps.push(step(he ? "מה-1.7 ועד ה-31.12 מוסיפים 1" : "From July 1 to December 31, add 1", `${base.result}+1 = ${base.result + 1}`), ...after.steps);
+  return { steps, result: after.result };
+}
+
+function personalMonth({ d, m, now }, he) {
+  const month = now.getMonth() + 1;
+  const ds = digitsOf(`${pad2(d)}${pad2(m)}${month}`);
+  const reduced = reduceSteps(sum(ds), false, he);
+  return {
+    steps: [step(he ? `ספרות יום וחודש הלידה, ועוד ספרות החודש הנוכחי (${month})` : `The digits of the birth day and month, plus the current month (${month})`, addition(ds)), ...reduced.steps],
+    result: reduced.result,
+  };
+}
+
+function personalDay({ d, m, now }, he) {
+  const today = `${now.getDate()}.${now.getMonth() + 1}.${now.getFullYear()}`;
+  const ds = digitsOf(`${pad2(d)}${pad2(m)}${now.getDate()}${now.getMonth() + 1}${now.getFullYear()}`);
+  const reduced = reduceSteps(sum(ds), false, he);
+  return {
+    steps: [step(he ? `ספרות יום וחודש הלידה, ועוד ספרות התאריך ${today}` : `The digits of the birth day and month, plus those of ${today}`, addition(ds)), ...reduced.steps],
+    result: reduced.result,
+  };
+}
+
+function hiddenYear({ d, m, y, now }, he) {
+  const lp = LPm(d, m, y);
+  const a = CA(d, m, y, now);
+  const reduced = reduceSteps(lp + a, false, he);
+  return { steps: [step(he ? "שביל הגורל ועוד הגיל" : "Life path plus age", `${lp}+${a} = ${lp + a}`), ...reduced.steps], result: reduced.result };
+}
+
+/** Day, month and year of birth, each reduced to one digit: the parts of the pinnacles and challenges. */
+function parts({ d, m, y }, he) {
+  const named = [
+    [d, he ? "יום הלידה בספרה אחת" : "The birth day in one digit"],
+    [m, he ? "חודש הלידה בספרה אחת" : "The birth month in one digit"],
+    [y, he ? "שנת הלידה בספרה אחת" : "The birth year in one digit"],
+  ];
+  return { steps: named.map(([value, text]) => step(text, [value, ...reduction(value).steps].join(" → "))), rd: R(d), rm: R(m), ry: R(y) };
+}
+
+function pinnacles(ctx, he) {
+  const { steps, rd, rm, ry } = parts(ctx, he);
+  const p1 = addReduce(rd, rm);
+  const p2 = addReduce(rd, ry);
+  const p3 = addReduce(p1.result, p2.result);
+  const p4 = addReduce(rm, ry);
+  const words = he ? ["יום ועוד חודש", "יום ועוד שנה", "פסגה 1 ועוד פסגה 2", "חודש ועוד שנה"] : ["day plus month", "day plus year", "pinnacle 1 plus pinnacle 2", "month plus year"];
+  const all = [p1, p2, p3, p4];
+  return { steps: [...steps, ...all.map((p, i) => step(he ? `פסגה ${i + 1}: ${words[i]}` : `Pinnacle ${i + 1}: ${words[i]}`, p.math))], result: all.map((p) => p.result) };
+}
+
+function challenges(ctx, he) {
+  const { steps, rd, rm, ry } = parts(ctx, he);
+  const c1 = diff(rd, rm);
+  const c2 = diff(rd, ry);
+  const c3 = diff(c1.result, c2.result);
+  const c4 = diff(rm, ry);
+  const words = he
+    ? ["ההפרש בין היום לחודש", "ההפרש בין היום לשנה", "ההפרש בין אתגר 1 לאתגר 2", "ההפרש בין החודש לשנה"]
+    : ["day minus month", "day minus year", "challenge 1 minus challenge 2", "month minus year"];
+  const all = [c1, c2, c3, c4];
+  return { steps: [...steps, ...all.map((c, i) => step(he ? `אתגר ${i + 1}: ${words[i]}` : `Challenge ${i + 1}: ${words[i]}`, c.math))], result: all.map((c) => c.result) };
+}
+
+function hiddenPinnacles(ctx, he) {
+  const pk = pinnacles(ctx, he).result;
+  const ch = challenges(ctx, he).result;
+  const all = pk.map((p, i) => addReduce(p, ch[i]));
+  return {
+    steps: all.map((h, i) => step(he ? `פסגה ${i + 1} ועוד אתגר ${i + 1}` : `Pinnacle ${i + 1} plus challenge ${i + 1}`, h.math)),
+    result: all.map((h) => h.result),
+  };
+}
+
+function hiddenChallenges(ctx, he) {
+  const hp = hiddenPinnacles(ctx, he).result;
+  const lp = LPm(ctx.d, ctx.m, ctx.y);
+  const all = hp.map((h) => addReduce(h, lp));
+  return {
+    steps: all.map((h, i) => step(he ? `פסגה נסתרת ${i + 1} ועוד שביל הגורל` : `Hidden pinnacle ${i + 1} plus the life path`, h.math)),
+    result: all.map((h) => h.result),
+  };
+}
+
+/** The age the cycles are counted from: 27 minus the life path in one digit; each cycle is 9 years. */
+function cycles({ d, m, y }, he) {
+  const lp = LPm(d, m, y);
+  const one = R(lp);
+  const start = 27 - one;
+  const steps = [];
+  if (one !== lp) steps.push(step(he ? "שביל הגורל בספרה אחת" : "The life path in one digit", `${lp} → ${one}`));
+  steps.push(step(he ? "המחזור הראשון מתחיל בגיל 27 פחות שביל הגורל" : "The first cycle starts at 27 minus the life path", `27−${one} = ${start}`));
+  steps.push(step(he ? "כל מחזור נמשך 9 שנים" : "Each cycle lasts 9 years", [0, 1, 2, 3].map((i) => `${start + 9 * i}–${start + 9 * (i + 1)}`).join(", ")));
+  return { steps, result: start };
+}
+
+function karmic({ d, m, y, name }, he) {
+  const dateDigits = digitsOf(`${d}${m}${y}`);
+  const values = lettersOf(name, () => true).map((ch) => LV[ch]);
+  const flag = (n) => (KARMIC.includes(n) ? (he ? " ← חוב קארמתי" : " ← karmic debt") : "");
+  return {
+    steps: [
+      step(he ? "חוב קארמתי הוא 13, 14, 16 או 19 באחד משלושה מקומות" : "A karmic debt is 13, 14, 16 or 19 in one of three places"),
+      step(he ? "סכום ספרות תאריך הלידה" : "The sum of the birth date's digits", `${addition(dateDigits)}${flag(sum(dateDigits))}`),
+      step(he ? "סכום ערכי האותיות בשם" : "The sum of the name's letter values", `${values.length ? addition(values) : "0"}${flag(sum(values))}`),
+      step(he ? "יום הלידה" : "The birth day", `${d}${flag(d)}`),
+    ],
+    result: karmicDebt(d, m, y, name),
+  };
+}
+
+const PLANE_WORDS = {
+  mind: { he: "מחשבה (4, 9, 2)", en: "mind (4, 9, 2)" },
+  emotional: { he: "רגש (3, 5, 7)", en: "emotion (3, 5, 7)" },
+  practical: { he: "מעשה (8, 1, 6)", en: "practice (8, 1, 6)" },
+};
+
+function loShuGrid({ d, m, y }, he) {
+  const ls = loShu(d, m, y);
+  const list = (ns) => (ns.length ? ns.join(", ") : he ? "אין" : "none");
+  const steps = [
+    step(he ? "ספרות תאריך הלידה, בלי אפסים" : "The birth date's digits, without zeros", digitsOf(`${d}${m}${y}`).filter((n) => n !== 0).join(", ")),
+    step(he ? "ועוד שביל הגורל בספרה אחת, ויום הלידה בספרה אחת" : "Plus the life path in one digit and the birth day in one digit", `${LP(d, m, y)}, ${R(d)}`),
+    step(he ? "המספרים שאינם בטבלה" : "The numbers missing from the grid", list(ls.miss)),
+  ];
+  if (ls.planes.length) steps.push(step(he ? "שורה שלמה" : "Complete rows", ls.planes.map((p) => PLANE_WORDS[p][he ? "he" : "en"]).join(", ")));
+  return { steps, result: ls };
+}
+
+function daily({ now }, he) {
+  const day = now.getDate();
+  const rest = day % 9;
+  const steps = [step(he ? `היום ה-${day} בחודש: השארית בחלוקה ב-9` : `Day ${day} of the month: the remainder after dividing by 9`, `${day} mod 9 = ${rest}`)];
+  if (rest === 0) steps.push(step(he ? "שארית 0 נחשבת 9" : "A remainder of 0 counts as 9", "0 → 9"));
+  return { steps, result: dailyRitualNumber(now) };
+}
+
+const BUILDERS = {
+  nv: (ctx, he) => nameNumber("nv", ctx.name, he),
+  su: (ctx, he) => nameNumber("su", ctx.name, he),
+  ex: (ctx, he) => nameNumber("ex", ctx.name, he),
+  lp: lifePath,
+  age,
+  py: (ctx, he) => personalYear({ d: ctx.d, m: ctx.m, year: ctx.year ?? ctx.now.getFullYear(), plus: ctx.add ?? addsOne(ctx.now) }, he),
+  pm: personalMonth,
+  pd: personalDay,
+  hy: hiddenYear,
+  pk: pinnacles,
+  ch: challenges,
+  hp: hiddenPinnacles,
+  hc: hiddenChallenges,
+  exit: cycles,
+  kd: karmic,
+  ls: loShuGrid,
+  daily,
+};
+
+/** The numbers that have an explanation. */
+export const HOW_KEYS = Object.freeze(Object.keys(BUILDERS));
+
+/**
+ * How a number was calculated.
+ * @param {string} key one of HOW_KEYS ("lp", "py", "pk" ...)
+ * @param {{d?: number, m?: number, y?: number, name?: string, now?: Date, add?: boolean, year?: number}} ctx
+ *   the birth date and name the number was made from, and the date it was made for (`add` and `year`
+ *   pin a personal year that a reading saved, or a year in the cycle table)
+ * @param {boolean} he Hebrew or English
+ * @returns {{title: string, steps: {text: string, math: string}[], result: *} | null} null for an unknown key
+ */
+export function howFor(key, ctx, he) {
+  if (!Object.hasOwn(BUILDERS, key)) return null;
+  return { title: howTitle(key, he), ...BUILDERS[key]({ ...ctx, now: ctx.now ?? new Date() }, he) };
+}
