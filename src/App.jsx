@@ -1580,7 +1580,8 @@ export default function App({ view, navigate } = {}){
   const openClient=(view)=>{setTab("clients");setOpenRequest({view,nonce:Date.now()});};
   const dayNum=dailyRitualNumber(); // the owner's daily number, the same one "יומי" uses
   const deckPool=useMemo(()=>studioDeck(he),[he]);
-  const studioTools=account.profile?.role==="admin"?[...STUDIO_TOOLS,ADMIN_TOOL]:STUDIO_TOOLS;
+  // the demo has no Leads: they are this browser's real ones (Shani's page saves them here)
+  const studioTools=account.profile?.role==="admin"?[...STUDIO_TOOLS,ADMIN_TOOL]:demo?STUDIO_TOOLS.filter(tb=>tb.k!=="leads"):STUDIO_TOOLS;
   /** When the focused element went away with the screen it was on, the keyboard focus goes to the current tool's button. */
   const keepFocus=()=>{const a=document.activeElement;if(!a||a===document.body)document.querySelector('.snav [aria-current="page"]')?.focus({preventScroll:true});};
   // the screens cross-fade where the browser can (view transitions), and simply change elsewhere or under reduced motion
@@ -1735,7 +1736,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </ContentContext.Provider>}
 
 
-        {showOwnerUI&&tab==="leads"&&<div className="st-tool-wide"><LeadsWidget he={he} dk={dk}/></div>}
+        {showOwnerUI&&!demo&&tab==="leads"&&<div className="st-tool-wide"><LeadsWidget he={he} dk={dk}/></div>}
 
         {showOwnerUI&&tab==="account"&&<AccountScreen account={account} he={he} dk={dk}/>}
 

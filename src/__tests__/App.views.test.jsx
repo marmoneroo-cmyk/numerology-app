@@ -77,6 +77,13 @@ describe("App inside Root", { timeout: 20000 }, () => {
     const nav = screen.getByRole("navigation", { name: "כלי הסטודיו" });
     expect(within(nav).queryByRole("button", { name: /חשבונות/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "תצוגת לקוח" })).toBeNull();
+    // the leads are this browser's real ones (Shani's page saves them here): never in the demo, not even by quick search
+    expect(within(nav).queryByRole("button", { name: /לידים/ })).toBeNull();
+    fireEvent.click(screen.getAllByRole("button", { name: "חיפוש מהיר" })[0]); // the top bar's (Today has one too)
+    const search = await screen.findByRole("dialog");
+    expect(within(search).queryAllByRole("option").length).toBeGreaterThan(0);
+    expect(within(search).queryByRole("option", { name: /לידים/ })).toBeNull();
+    fireEvent.keyDown(search, { key: "Escape" });
     fireEvent.click(within(nav).getByRole("button", { name: /לקוחות/ }));
     await screen.findAllByText(/דנה שמיר/, {}, LONG); // the clients tab is open, with its list
     expect(open).not.toHaveBeenCalled();
