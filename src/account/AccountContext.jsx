@@ -61,6 +61,15 @@ export function AccountProvider({ active, loadService = loadAccountService, self
   const [activated, setActivated] = useState(false);
   const isActive = active ?? activated;
   const serviceRef = useRef(null);
+  // the service lives for the whole page; this provider's listeners on it end with the provider
+  const stopListening = useRef([]);
+  useEffect(
+    () => () => {
+      stopListening.current.forEach((stop) => stop());
+      stopListening.current = [];
+    },
+    [],
+  );
 
   /**
    * Acts on the server's word about this session. Anything but "ok" closes the
@@ -90,8 +99,10 @@ export function AccountProvider({ active, loadService = loadAccountService, self
     const svc = await loadService();
     if (!serviceRef.current) {
       serviceRef.current = svc;
-      svc.watch?.(() => check()); // the workspace or a screen was refused: ask why at once
-      svc.onSignedOut?.(() => setState((s) => (s.name === "ready" ? { name: "signed_out" } : s)));
+      stopListening.current = [
+        svc.watch?.(() => check()), // the workspace or a screen was refused: ask why at once
+        svc.onSignedOut?.(() => setState((s) => (s.name === "ready" ? { name: "signed_out" } : s))),
+      ].filter((stop) => typeof stop === "function");
     }
     return serviceRef.current;
   };

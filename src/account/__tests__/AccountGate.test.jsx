@@ -385,3 +385,26 @@ describe("a forgotten password", () => {
     expect(service.forget).toHaveBeenCalled();
   });
 });
+
+describe("the provider and the account service, which lives for the whole page", () => {
+  it("stops listening to the service when it goes away, so entering the Studio again adds no second listener", async () => {
+    const service = fakeService();
+    const stopWatching = vi.fn();
+    const stopSignedOut = vi.fn();
+    service.watch.mockImplementation(() => stopWatching);
+    service.onSignedOut.mockImplementation(() => stopSignedOut);
+    const view = render(
+      <AccountProvider active loadService={async () => service}>
+        <AccountGate he dk onLeave={() => {}}>
+          <Studio />
+        </AccountGate>
+      </AccountProvider>,
+    );
+    expect(await screen.findByLabelText("אימייל")).toBeTruthy(); // signed out: the service is loaded and listened to
+    expect(service.watch).toHaveBeenCalledTimes(1);
+    expect(service.onSignedOut).toHaveBeenCalledTimes(1);
+    view.unmount();
+    expect(stopWatching).toHaveBeenCalledTimes(1);
+    expect(stopSignedOut).toHaveBeenCalledTimes(1);
+  });
+});
