@@ -57,6 +57,21 @@ describe("the map summary", () => {
     expect(current.textContent).toContain("30–39");
   });
 
+  it("lists the four periods in order, the first at the top and the fourth last, each with its own numbers", () => {
+    // מאיה לוי, 19.04.1986 (made up), on 11.10.2026: life path 11 → 2, so the periods are 0–34, 34–43, 43–52, 52+
+    const at = new Date(2026, 9, 11, 10);
+    show({ r: fullCalc(19, 4, 1986, "מאיה לוי", undefined, at), name: "מאיה לוי", now: at, today: at });
+    const values = (key) => [0, 1, 2, 3].map((i) => cell(`rs-${key}-${i}`));
+    expect([values("pk"), values("ch"), values("hp"), values("hc")]).toEqual([
+      ["5", "7", "3", "1"], ["3", "5", "2", "2"], ["8", "3", "5", "3"], ["1", "5", "7", "5"],
+    ]);
+    const rows = [0, 1, 2, 3].map((i) => screen.getByTestId(`rs-pk-${i}`).closest("tr"));
+    expect(rows.map((tr) => tr.querySelector(".rs-ages").textContent)).toEqual(["0–34", "34–43", "43–52", "52+"]);
+    // the rows follow each other in the page: no period comes out of order
+    for (let i = 1; i < 4; i++) expect(rows[i - 1].compareDocumentPosition(rows[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText("עכשיו").closest("tr")).toBe(rows[1]); // at 40, the second
+  });
+
   it("starts the first cycle at birth and leaves the last open, so a young person is in one", () => {
     // life path 33 -> 6: the cycles turn at 30, 39 and 48
     const young = fullCalc(15, 8, 2016, NAME, undefined, NOW); // 10 years old

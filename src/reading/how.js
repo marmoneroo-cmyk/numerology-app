@@ -5,12 +5,11 @@
  * from the number beside it.
  */
 import {
-  LV, VOW, R, LP, LPm, NV, CA, addsOne, CH, cycleSpans, karmicDebt, reductionChain, loShu, dailyRitualNumber,
+  LV, VOW, R, reduce, isMaster, LP, LPm, NV, CA, addsOne, CH, cycleSpans, karmicDebt, reductionChain, loShu,
   nameCounts, dominantNumbers, missingNumbers, charValue,
 } from "../engine/index.js";
 import { agesText } from "./ages.js";
 
-const MASTERS = [11, 22, 33];
 const KARMIC = [13, 14, 16, 19];
 const sum = (ns) => ns.reduce((a, b) => a + b, 0);
 const digitsOf = (value) => [...String(value)].filter((c) => c >= "0" && c <= "9").map(Number);
@@ -38,7 +37,8 @@ const TITLES = {
   exit: ["גילי המחזורים", "Cycle ages"],
   kd: ["חובות קארמיים", "Karmic debts"],
   ls: ["לו שו", "Lo Shu"],
-  daily: ["המספר של היום", "Today's number"],
+  daily: ["מספר היום בחודש", "Day-of-month number"],
+  universal: ["היום האוניברסלי", "Universal day"],
   mat: ["מספר הבגרות", "Maturity"],
   bday: ["מספר יום הלידה", "Birthday number"],
   dom: ["דומיננטיים בשם", "Dominant in the name"],
@@ -50,21 +50,19 @@ const TITLES = {
 export const howTitle = (key, he) => (Object.hasOwn(TITLES, key) ? TITLES[key][he ? 0 : 1] : "");
 
 /**
- * The steps from `n` down to one digit, e.g. 31 -> ["3+1 = 4"]. With `keepMasters` it stops at 11, 22
- * and 33, as the engine's Rm does; without, it goes on, as R does.
+ * The steps from `n` down to one digit, e.g. 31 -> ["3+1 = 4"]. Where it stops is the engine's own
+ * reduction (`reduce`): with `keepMasters` at 11, 22 or 33, as Rm does; without, at one digit, as R does.
  * @returns {{ steps: string[], result: number, master: boolean }}
  */
 export function reduction(n, keepMasters = false) {
+  const result = reduce(n, { keepMasters });
   const steps = [];
-  let x = n;
-  if (keepMasters && MASTERS.includes(x)) return { steps, result: x, master: true };
-  while (x >= 10) {
+  for (let x = n; x !== result && x >= 10; ) {
     const ds = digitsOf(x);
     x = sum(ds);
     steps.push(addition(ds));
-    if (keepMasters && MASTERS.includes(x)) return { steps, result: x, master: true };
   }
-  return { steps, result: x, master: false };
+  return { steps, result, master: keepMasters && isMaster(result) };
 }
 
 /** The reduction as steps, with the master-number note when it stopped at one. */
@@ -214,7 +212,10 @@ function hiddenPinnacles(ctx, he) {
   const ch = challenges(ctx, he).result;
   const all = pk.map((p, i) => addReduce(p, ch[i]));
   return {
-    steps: all.map((h, i) => step(he ? `פסגה ${i + 1} ועוד אתגר ${i + 1}` : `Pinnacle ${i + 1} plus challenge ${i + 1}`, h.math)),
+    steps: [
+      step(he ? "כלל של שיטת הסטודיו" : "A rule of the Studio's method"),
+      ...all.map((h, i) => step(he ? `פסגה ${i + 1} ועוד אתגר ${i + 1}` : `Pinnacle ${i + 1} plus challenge ${i + 1}`, h.math)),
+    ],
     result: all.map((h) => h.result),
   };
 }
@@ -224,7 +225,10 @@ function hiddenChallenges(ctx, he) {
   const lp = LPm(ctx.d, ctx.m, ctx.y);
   const all = hp.map((h) => addReduce(h, lp));
   return {
-    steps: all.map((h, i) => step(he ? `פסגה נסתרת ${i + 1} ועוד שביל הגורל` : `Hidden pinnacle ${i + 1} plus the life path`, h.math)),
+    steps: [
+      step(he ? "כלל של שיטת הסטודיו" : "A rule of the Studio's method"),
+      ...all.map((h, i) => step(he ? `פסגה נסתרת ${i + 1} ועוד שביל הגורל` : `Hidden pinnacle ${i + 1} plus the life path`, h.math)),
+    ],
     result: all.map((h) => h.result),
   };
 }
@@ -293,7 +297,18 @@ function daily({ now }, he) {
   const rest = day % 9;
   const steps = [step(he ? `היום ה-${day} בחודש: השארית בחלוקה ב-9` : `Day ${day} of the month: the remainder after dividing by 9`, `${day} mod 9 = ${rest}`)];
   if (rest === 0) steps.push(step(he ? "שארית 0 נחשבת 9" : "A remainder of 0 counts as 9", "0 → 9"));
-  return { steps, result: dailyRitualNumber(now) };
+  return { steps, result: rest || 9 };
+}
+/** The universal day: every digit of the date, reduced to one digit. */
+function universal({ now }, he) {
+  const d = now.getDate(), m = now.getMonth() + 1, y = now.getFullYear();
+  const shown = `${pad2(d)}.${pad2(m)}.${y}`;
+  const digits = digitsOf(`${pad2(d)}${pad2(m)}${y}`);
+  const reduced = reduceSteps(sum(digits), false, he);
+  return {
+    steps: [step(he ? `סוכמים את כל ספרות התאריך ${shown}` : `Add up every digit of the date ${shown}`, addition(digits)), ...reduced.steps],
+    result: reduced.result,
+  };
 }
 
 function maturityNumber({ d, m, y, name }, he) {
@@ -361,6 +376,7 @@ const BUILDERS = {
   kd: karmic,
   ls: loShuGrid,
   daily,
+  universal,
   mat: maturityNumber,
   bday: birthday,
   dom: (ctx, he) => nameSpread(ctx, he, true),

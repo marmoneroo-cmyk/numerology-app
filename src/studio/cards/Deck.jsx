@@ -23,7 +23,8 @@ const TEXT = {
     invite: "לוחצים על ׳ערבוב וחלוקה׳, ושלושה קלפים יוצאים מהחפיסה.",
     shuffling: "מערבבים…",
     choose: "בחרו קלף אחד.",
-    yours: "הקלף שלך היום:",
+    yours: "הקלף שנבחר היום:",
+    random: "הקלפים יוצאים מהחפיסה באקראי, ולא לפי אחד ממספרי היום.",
   },
   en: {
     deal: "Shuffle and deal",
@@ -32,6 +33,7 @@ const TEXT = {
     shuffling: "Shuffling…",
     choose: "Choose one card.",
     yours: "Your card today:",
+    random: "The cards come out of the deck at random, not from any of the day's numbers.",
   },
 };
 
@@ -213,6 +215,8 @@ export default function Deck({ pool = [], he = true, random = Math.random, onPic
       <p className="st-deck-status" role="status">
         {statusFor(t, phase, hand[picked])}
       </p>
+      {/* the owner, 2026-10-11: the draw stays random, and says so */}
+      <p className="st-deck-note">{t.random}</p>
     </div>
   );
 }

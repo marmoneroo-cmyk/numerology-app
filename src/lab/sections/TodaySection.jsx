@@ -9,6 +9,8 @@ import { useMemo, useState } from "react";
 import Today from "../../studio/Today.jsx";
 import { createStore } from "../../data/store.js";
 import { memoryBackend } from "../../data/memoryBackend.js";
+import { LPm, personalYearOn } from "../../engine/index.js";
+import { personOf } from "../../workspace/format.js";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -31,11 +33,15 @@ const CLIENTS = [
 
 const DAY = { number: 8, title: "עוצמה", text: "הישגים, שפע וסמכות. יום טוב לפגישות שמתאימות לאנרגיה הזאת." };
 
-const digitSum = (value) => [...String(value)].filter((ch) => ch >= "0" && ch <= "9").reduce((sum, ch) => sum + Number(ch), 0);
-/** Adds the digits until one is left (11, 22 and 33 stay): a stand-in for the engine. */
-const reduceNumber = (n) => (n > 9 && n !== 11 && n !== 22 && n !== 33 ? reduceNumber(digitSum(n)) : n);
-const lifePath = (iso) => reduceNumber(digitSum(iso));
-const personalYear = (iso, at) => reduceNumber(digitSum(iso.slice(5)) + digitSum(at.getFullYear()));
+// the engine's own numbers, as the App passes them to Today
+const lifePath = (iso) => {
+  const p = personOf("", iso);
+  return LPm(p.d, p.m, p.y);
+};
+const personalYear = (iso, at) => {
+  const p = personOf("", iso);
+  return personalYearOn(p.d, p.m, at);
+};
 const now = () => new Date();
 
 /** A fresh in-memory store; its list waits until the sample clients are in. */

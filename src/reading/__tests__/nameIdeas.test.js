@@ -24,6 +24,18 @@ describe("name ideas", () => {
     for (const { value } of masters) expect([11, 22, 33]).toContain(value);
   });
 
+  it("finds names of 11, 22 and 33 before the reduction, in Hebrew and in Latin letters (the owner, 2026-10-11)", () => {
+    const has = (target, he, name, value) => expect(nameIdeas(target, he, 200)).toContainEqual({ name, value });
+    has(2, true, "הדר", 11); // 5+4+2
+    has(4, true, "נועם", 22); // 5+6+7+4
+    // Latin letters by position, masters kept since the live calculator keeps them
+    has(2, false, "Dana", 11); // 4+1+5+1
+    has(4, false, "Ruth", 22); // 9+3+2+8
+    has(6, false, "Victor", 33); // 4+9+3+2+6+9
+    // and the first eight offered for 2 show the masters too
+    expect(nameIdeas(2, true).slice(0, 3)).toEqual([{ name: "הדר", value: 11 }, { name: "עוז", value: 2 }, { name: "יעל", value: 11 }]);
+  });
+
   it("gives no names for numbers outside 1-9, and at most `count`", () => {
     expect(nameIdeas(0, true)).toEqual([]);
     expect(nameIdeas(12, true)).toEqual([]);

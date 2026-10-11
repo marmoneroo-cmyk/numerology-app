@@ -210,6 +210,37 @@ describe("workspace", () => {
     expect(screen.getByText("אהבה, יופי ויצירה")).toBeTruthy();
   });
 
+  it("scores a couple as the התאמה tab and the calculators do: one formula everywhere (the owner, 2026-10-11)", async () => {
+    await setup(async (s) => {
+      await s.clients.create({ fullName: "רחל כהן", birthDate: "1985-10-07" });
+      await s.clients.create({ fullName: "יוסי לוי", birthDate: "1990-10-06" });
+    });
+    await openClient("יוסי לוי");
+    await tap("בדיקה חדשה");
+    await tapTab("התאמה");
+    const picker = await screen.findByLabelText("בחירה מהלקוחות");
+    fireEvent.change(picker, { target: { value: within(picker).getByRole("option", { name: /רחל כהן/ }).value } });
+    click("חשב ושמור");
+    // 50; life paths 8 and 4, 4 apart: nothing; souls 6 and 5, 1 apart: +8 → 58 (App.decisions.test.jsx: the same on the tab)
+    expect(await screen.findByText("58%")).toBeTruthy();
+  });
+
+  it("shows a master life path in a saved match beside the digit it was compared in: 11/2", async () => {
+    await setup(async (s) => {
+      await s.clients.create({ fullName: "יוסי לוי", birthDate: "1990-10-06" });
+      await s.clients.create({ fullName: "מאיה לוי", birthDate: "1986-04-19" });
+    });
+    await openClient("מאיה לוי");
+    await tap("בדיקה חדשה");
+    await tapTab("התאמה");
+    const picker = await screen.findByLabelText("בחירה מהלקוחות");
+    fireEvent.change(picker, { target: { value: within(picker).getByRole("option", { name: /יוסי לוי/ }).value } });
+    click("חשב ושמור");
+    // 1+9+0+4+1+9+8+6 = 38 → 11, compared as 2: 50, 2 and 8 (6 apart) −5, souls 5 and 6 +8 = 53
+    expect(await screen.findByText("53%")).toBeTruthy();
+    expect(screen.getByText("11/2")).toBeTruthy();
+  });
+
   it("runs a parent-child reading against a person typed in by hand", async () => {
     await setup(async (s) => {
       await s.clients.create(SHANI);

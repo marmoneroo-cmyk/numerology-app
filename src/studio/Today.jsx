@@ -92,14 +92,14 @@ function useRetry(load, target) {
   };
 }
 
-/** The band: today's number, the date, the day's meaning and a new reading. */
+/** The band: the universal day, the date, the day's meaning and a new reading. */
 function DayBand({ he, today, day, onNewReading }) {
   return (
     <section className="st-today-band">
       <div className="st-today-day">
         <small>
-          {he ? "המספר של היום" : "Today’s number"}
-          <HowButton k="daily" ctx={{ now: today }} he={he} />
+          {he ? "היום האוניברסלי" : "Universal day"}
+          <HowButton k="universal" ctx={{ now: today }} he={he} />
         </small>
         <span className="st-today-num">{day.number}</span>
       </div>

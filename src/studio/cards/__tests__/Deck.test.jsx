@@ -50,6 +50,14 @@ describe("Deck", () => {
     expect(status()).toBe(INVITE);
   });
 
+  it("says the cards come out at random, not from a number (the owner, 2026-10-11)", () => {
+    const { container } = render(<Deck pool={POOL} he />);
+    expect(container.querySelector(".st-deck-note").textContent).toBe("הקלפים יוצאים מהחפיסה באקראי, ולא לפי אחד ממספרי היום.");
+    cleanup();
+    render(<Deck pool={POOL} he={false} />);
+    expect(screen.getByText("The cards come out of the deck at random, not from any of the day's numbers.")).toBeTruthy();
+  });
+
   it("shuffles for 900ms, then deals three different cards face down", () => {
     vi.useFakeTimers();
     const { container } = render(<Deck pool={POOL} he random={seeded(7)} />);
@@ -103,7 +111,7 @@ describe("Deck", () => {
     // the two left behind are announced as unavailable, not as cards still waiting for a press
     expect(cards[0].disabled && cards[2].disabled).toBe(true);
     expect(open.disabled).toBe(false);
-    expect(status()).toBe(`הקלף שלך היום: ${chosen.number} · ${chosen.title}`);
+    expect(status()).toBe(`הקלף שנבחר היום: ${chosen.number} · ${chosen.title}`);
     // the choice is made: the others stay shut and the open one stays open until a new shuffle
     fireEvent.click(cards[0]);
     fireEvent.click(cards[2]);

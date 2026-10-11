@@ -117,6 +117,14 @@
   color: var(--st-gold-text);
   font-weight: 500;
 }
+/* how the cards are drawn: at random */
+.st-deck-note {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--st-ink-faint);
+  text-wrap: balance;
+}
 
 @media (max-width: 639.98px) {
   .st-deck-table {

@@ -15,14 +15,14 @@ import CommandPalette, { useCommandShortcut } from "./studio/CommandPalette.jsx"
 import Card from "./studio/cards/Card.jsx";
 import Deck from "./studio/cards/Deck.jsx";
 import { useToast } from "./studio/Toasts.jsx";
-import { personOf, parseBirthDate } from "./workspace/format.js";
+import { personOf, parseBirthDate, lifePathText } from "./workspace/format.js";
 import { whatsappLink } from "./studio/today.js";
 import AdminScreen from "./account/AdminScreen.jsx";
 import LocalDataOffer from "./account/LocalDataOffer.jsx";
 import { accountStore } from "./account/workspaceStore.js";
 import {
-  LV, R, NV, SU, EX, LP, LPm, CA, personalYearOn, loShu, fullCalc, liveNum, getRecommendations,
-  yearCycle, cycleSpans, cycleAt, masterBase, dailyRitualNumber, compatKey, matchReading, coupleReading, parentChildReading,
+  LV, R, NV, SU, EX, LP, LPm, CA, personalYearOn, loShu, fullCalc, liveNum, getRecommendations, MASTER_NUMBERS, isMaster,
+  yearCycle, cycleSpans, cycleAt, masterBase, dailyRitualNumber, universalDay, compatKey, matchReading, coupleReading, parentChildReading,
 } from "./engine";
 import Icon from "./ui/Icon.jsx";
 import { BUSINESS_EMAIL } from "./business.js";
@@ -360,13 +360,16 @@ function PsychRadar({psych,dk,he}){
   const cols=["#FFD700","#9B59B6","#FF6B6B","#4ECDC4","#E67E22","#45B7D1"];
   const pts=keys.map((k,i)=>{const a=Math.PI*2/6*i-Math.PI/2;const v=psych[k]/10;return{x:cx+r*v*Math.cos(a),y:cy+r*v*Math.sin(a),ax:cx+r*Math.cos(a),ay:cy+r*Math.sin(a),lx:cx+(r+20)*Math.cos(a),ly:cy+(r+20)*Math.sin(a),v:psych[k],col:cols[i]};});
   const poly=pts.map(p=>`${p.x},${p.y}`).join(" ");
-  return(<svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{display:"block",margin:"0 auto"}}>
+  // a 0 is the numbers' own answer (the owner, 2026-10-11: no filler), and the chart says so
+  const note=he?"תכונה שאף מספר לא נותן לה נקודות מוצגת 0.":"A trait no number gives points to shows 0.";
+  return(<><svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{display:"block",margin:"0 auto"}}>
     {[.25,.5,.75,1].map(f=><polygon key={f} points={keys.map((_,i)=>{const a=Math.PI*2/6*i-Math.PI/2;return`${cx+r*f*Math.cos(a)},${cy+r*f*Math.sin(a)}`;}).join(" ")} fill="none" stroke={ac} strokeWidth=".4" opacity={f===1?.2:.1}/>)}
     {pts.map((p,i)=><line key={i} x1={cx} y1={cy} x2={p.ax} y2={p.ay} stroke={ac} strokeWidth=".3" opacity=".15"/>)}
     <polygon points={poly} fill={ac} fillOpacity=".08" stroke={ac} strokeWidth="1.5" strokeOpacity=".5"><animate attributeName="opacity" values=".7;1;.7" dur="4s" repeatCount="indefinite"/></polygon>
     {pts.map((p,i)=><g key={i}><circle cx={p.x} cy={p.y} r={4} fill={p.col} opacity=".7"><animate attributeName="r" values="3;5;3" dur={`${3+i*.5}s`} repeatCount="indefinite"/></circle></g>)}
     {pts.map((p,i)=><text key={`l${i}`} x={p.lx} y={p.ly} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill={p.col} opacity=".7" fontFamily="sans-serif">{axes[i]}<tspan x={p.lx} dy="13" fontSize="12" fontWeight="700" fill={p.col}>{p.v}/10</tspan></text>)}
-  </svg>);
+  </svg>
+  <p data-testid="psych-note" style={{fontSize:11,textAlign:"center",color:dk?"rgba(232,224,208,.55)":"rgba(42,37,32,.6)",margin:"6px 0 0"}}>{note}</p></>);
 }
 
 // ═══════════════════ YEARLY WAVE TIMELINE ═══════════════════
@@ -398,14 +401,17 @@ function LoShu({ls,dk,he}){
   const ac=dk?"#c8a96a":"#937640";
   const layout=[[4,9,2],[3,5,7],[8,1,6]];
   const meanings={1:he?"קריירה":"Career",2:he?"יחסים":"Relationships",3:he?"ידע":"Knowledge",4:he?"יציבות":"Stability",5:he?"בריאות":"Health",6:he?"אחריות":"Responsibility",7:he?"רוחניות":"Spirituality",8:he?"כוח":"Power",9:he?"חכמה":"Wisdom"};
-  return(<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,maxWidth:260,margin:"0 auto"}}>
+  // what goes into the grid, said where the grid is (the owner, 2026-10-11)
+  const sources=he?"נכנסים לרשת: ספרות תאריך הלידה בלי 0, שביל הגורל בספרה אחת ויום הלידה בספרה אחת.":"In the grid: the birth date's digits without 0, the life path in one digit and the birth day in one digit.";
+  return(<><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,maxWidth:260,margin:"0 auto"}}>
     {layout.flat().map((num,i)=>{const ct=ls.g[num];const miss=ct===0;return(
       <div key={i} style={{aspectRatio:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",borderRadius:12,border:`1.5px solid ${miss?`${ac}12`:ac+"44"}`,background:miss?(dk?"rgba(10,10,20,.3)":"rgba(200,200,200,.15)"):`${ac}${ct>1?"18":"08"}`,position:"relative",transition:"all .3s"}}>
         {ct>1&&<div style={{position:"absolute",top:3,right:5,fontSize:8,color:ac,opacity:.5}}>×{ct}</div>}
         <div style={{fontSize:26,fontWeight:700,color:miss?(dk?"rgba(232,224,208,.12)":"rgba(0,0,0,.08)"):ac,fontFamily:"'Cormorant Garamond',serif"}}>{num}</div>
         <div style={{fontSize:7.5,color:dk?"rgba(232,224,208,.25)":"rgba(0,0,0,.2)",textAlign:"center"}}>{meanings[num]}</div>
       </div>);})}
-  </div>);
+  </div>
+  <p data-testid="loshu-sources" style={{maxWidth:300,margin:"10px auto 0",fontSize:11,lineHeight:1.6,textAlign:"center",color:dk?"rgba(232,224,208,.55)":"rgba(42,37,32,.6)"}}>{sources}</p></>);
 }
 
 // ═══════════════════ CHAPTER SYSTEM ═══════════════════
@@ -711,7 +717,7 @@ function CalculatorsWidget({he,dk}){
 
       {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}>
         {/* Master number alert */}
-        {[11,22,33].includes(results.lpm)&&(<div className="gc" style={{marginBottom:14,padding:14,textAlign:"center",background:`${MASTER[results.lpm].c}08`,border:`1px solid ${MASTER[results.lpm].c}33`}}>
+        {isMaster(results.lpm)&&(<div className="gc" style={{marginBottom:14,padding:14,textAlign:"center",background:`${MASTER[results.lpm].c}08`,border:`1px solid ${MASTER[results.lpm].c}33`}}>
           <div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="bolt" size={20} stroke={1.3}/></div>
           <div style={{fontSize:16,fontWeight:700,color:MASTER[results.lpm].c,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מספר מאסטר":"Master Number"} {results.lpm} — {he?MASTER[results.lpm].t:MASTER[results.lpm].te}</div>
           <p style={{fontSize:12,color:ts,lineHeight:1.7,marginTop:6}}><Locked he={he}>{MASTER[results.lpm][he?"he":"en"]}</Locked></p>
@@ -925,13 +931,13 @@ function CalculatorsWidget({he,dk}){
 
           {/* LP comparison */}
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,marginBottom:14,alignItems:"center"}}>
-            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m1name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{matchRes.lp1}</div><div style={{fontSize:10,color:D[matchRes.lp1]?.c||ac,opacity:.7}}>{he?D[matchRes.lp1]?.t:D[matchRes.lp1]?.te}</div></div>
+            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m1name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(matchRes.lpm1,matchRes.lp1)}</div><div style={{fontSize:10,color:D[matchRes.lp1]?.c||ac,opacity:.7}}>{he?D[matchRes.lp1]?.t:D[matchRes.lp1]?.te}</div></div>
             <div style={{fontSize:18,color:`${ac}66`,display:"flex",justifyContent:"center"}}>{calc==="parent"?<Icon name="heart" size={16}/>:"⟷"}</div>
-            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m2name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{matchRes.lp2}</div><div style={{fontSize:10,color:D[matchRes.lp2]?.c||ac,opacity:.7}}>{he?D[matchRes.lp2]?.t:D[matchRes.lp2]?.te}</div></div>
+            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m2name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(matchRes.lpm2,matchRes.lp2)}</div><div style={{fontSize:10,color:D[matchRes.lp2]?.c||ac,opacity:.7}}>{he?D[matchRes.lp2]?.t:D[matchRes.lp2]?.te}</div></div>
           </div>
 
           {/* Twin flame badge */}
-          {calc==="twin"&&matchRes.lpm1===matchRes.lpm2&&[11,22,33].includes(matchRes.lpm1)&&(<div style={{textAlign:"center",padding:12,background:`${MASTER[matchRes.lpm1].c}08`,border:`1px solid ${MASTER[matchRes.lpm1].c}33`,borderRadius:12,marginBottom:12}}><div style={{color:MASTER[matchRes.lpm1].c,display:"flex",justifyContent:"center",marginBottom:4}}><Icon name="flame" size={18}/></div><div style={{fontSize:13,fontWeight:700,color:MASTER[matchRes.lpm1].c}}>{he?"מספר מאסטר משותף!":"Shared Master Number!"} {matchRes.lpm1}</div></div>)}
+          {calc==="twin"&&matchRes.lpm1===matchRes.lpm2&&isMaster(matchRes.lpm1)&&(<div style={{textAlign:"center",padding:12,background:`${MASTER[matchRes.lpm1].c}08`,border:`1px solid ${MASTER[matchRes.lpm1].c}33`,borderRadius:12,marginBottom:12}}><div style={{color:MASTER[matchRes.lpm1].c,display:"flex",justifyContent:"center",marginBottom:4}}><Icon name="flame" size={18}/></div><div style={{fontSize:13,fontWeight:700,color:MASTER[matchRes.lpm1].c}}>{he?"מספר מאסטר משותף!":"Shared Master Number!"} {matchRes.lpm1}</div></div>)}
 
           {/* Bars */}
           {[{l:he?"הרמוניה":"Harmony",v:matchRes.harmony,c:"#4ECDC4"},{l:he?"מתח":"Tension",v:matchRes.tension,c:"#E74C3C"},{l:he?"צמיחה":"Growth",v:matchRes.growth,c:"#FFD700"}].map((it,i)=>(
@@ -956,7 +962,7 @@ function CalculatorsWidget({he,dk}){
 
           {/* Numbers table */}
           <div style={{marginTop:14,overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(0,0,0,.015)"}}><th style={{...thSt,fontSize:10}}></th><th style={{...thSt,fontSize:10}}>{m1name.split(" ")[0]}</th><th style={{...thSt,fontSize:10}}>{m2name.split(" ")[0]}</th></tr></thead><tbody>
-            {[{l:he?"שביל":"Path",a:matchRes.lp1,b:matchRes.lp2},{l:he?"שם":"Name",a:matchRes.nv1,b:matchRes.nv2},{l:he?"נשמה":"Soul",a:matchRes.su1,b:matchRes.su2},{l:he?"ביטוי":"Expr.",a:matchRes.ex1,b:matchRes.ex2}].map((r,i)=>(
+            {[{l:he?"שביל":"Path",a:lifePathText(matchRes.lpm1,matchRes.lp1),b:lifePathText(matchRes.lpm2,matchRes.lp2)},{l:he?"שם":"Name",a:matchRes.nv1,b:matchRes.nv2},{l:he?"נשמה":"Soul",a:matchRes.su1,b:matchRes.su2},{l:he?"ביטוי":"Expr.",a:matchRes.ex1,b:matchRes.ex2}].map((r,i)=>(
               <tr key={i} style={{borderBottom:`1px solid ${ac}08`}}><td style={{...tdSt,fontSize:11,color:ts,fontWeight:600}}>{r.l}</td><td style={{...tdSt,fontSize:17,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>{r.a}</td><td style={{...tdSt,fontSize:17,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>{r.b}</td></tr>
             ))}
           </tbody></table></div>
@@ -978,7 +984,7 @@ function CalculatorsWidget({he,dk}){
         </div>
         {/* Master numbers */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-          {[11,22,33].map(n=>(
+          {MASTER_NUMBERS.map(n=>(
             <div key={n} onClick={()=>{setLibNum(libNum===n?null:n);AU.init();AU.p("click");}} style={{textAlign:"center",padding:"12px 6px",borderRadius:12,cursor:"pointer",border:`1.5px solid ${libNum===n?(MASTER[n]?.c||ac)+"66":ac+"0a"}`,background:libNum===n?`${MASTER[n]?.c||ac}0a`:"transparent",transition:"all .3s"}}>
               <div style={{fontSize:9,color:MASTER[n]?.c,letterSpacing:1}}>{he?"מאסטר":"MASTER"}</div>
               <div style={{fontSize:22,fontWeight:700,color:MASTER[n]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{n}</div>
@@ -1591,7 +1597,7 @@ export default function App({ view, navigate } = {}){
   };
   /** Opens a view of the workspace (a client, the new-client form) from another screen. */
   const openClient=(view)=>{setTab("clients");setOpenRequest({view,nonce:Date.now()});};
-  const dayNum=dailyRitualNumber(); // the owner's daily number, the same one "יומי" uses
+  const dayNum=universalDay(); // "היום" shows the universal day (the owner, 2026-10-11); "יומי" keeps the day-of-month number
   const deckPool=useMemo(()=>studioDeck(he),[he]);
   // the demo has no Leads: they are this browser's real ones (Shani's page saves them here)
   const studioTools=account.profile?.role==="admin"?[...STUDIO_TOOLS,ADMIN_TOOL]:demo?STUDIO_TOOLS.filter(tb=>tb.k!=="leads"):STUDIO_TOOLS;
@@ -1766,7 +1772,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           <div className="gc st-tool-wide st-daily" style={{animation:"fadeInUp .5s ease-out"}}>
             <AffirmWidget he={he} dk={dk}/>
             <div className="divider"/>
-            <RitualWidget number={dailyRitualNumber()} he={he} dk={dk}/>
+            <RitualWidget number={dailyRitualNumber()} basis={he?"לפי מספר היום בחודש":"By the day-of-month number"} how={<HowButton k="daily" ctx={{now:new Date()}} he={he}/>} he={he} dk={dk}/>
           </div>
         )}
 
@@ -1860,7 +1866,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
             ))}
           </div>
           <div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:14,marginBottom:16}}><p style={{fontSize:14,lineHeight:1.9,color:ts}}><Locked he={he} chip>{YEAR_ENERGY[results.py]?.[he?"he":"en"]}</Locked></p></div>
-          <div className="divider"/><RitualWidget number={results.pd} he={he} dk={dk}/>
+          <div className="divider"/><RitualWidget number={results.pd} basis={he?"לפי היום האישי":"By the personal day"} he={he} dk={dk}/>
         </Chapter>
 
         {/* CHAPTER 4 */}
@@ -2038,10 +2044,11 @@ function CompatWidget({he,dk}){
     if(!d||!pName.trim()){setError(he?"אנא מלא את כל השדות":"Please fill all fields");return;}
     AU.init();AU.p("reveal");setAnim(true);setProfileRes(null);
     setTimeout(()=>{
-      const lp=LP(d.d,d.m,d.y),nv=NV(pName),su=SU(pName),ex=EX(pName);
+      // the life path in one digit for the traits, its original (masters kept) shown beside it: 11/2
+      const lp=LP(d.d,d.m,d.y),lpm=LPm(d.d,d.m,d.y),nv=NV(pName),su=SU(pName),ex=EX(pName);
       const age=CA(d.d,d.m,d.y);
       const traits=TRAITS[lp];
-      setProfileRes({lp,nv,su,ex,age,traits});
+      setProfileRes({lp,lpm,nv,su,ex,age,traits});
       setAnim(false);AU.p("chapter");
     },1000);
   };
@@ -2107,13 +2114,13 @@ function CompatWidget({he,dk}){
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,marginBottom:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:10,color:ts}}>{c1name.split(" ")[0]}</div>
-              <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{coupleRes.lp1}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(coupleRes.lpm1,coupleRes.lp1)}</div>
               <div style={{fontSize:11,color:D[coupleRes.lp1]?.c||ac,opacity:.7}}>{he?D[coupleRes.lp1]?.t:D[coupleRes.lp1]?.te}</div>
             </div>
             <div style={{fontSize:20,color:`${ac}44`}}>⟷</div>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:10,color:ts}}>{c2name.split(" ")[0]}</div>
-              <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{coupleRes.lp2}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(coupleRes.lpm2,coupleRes.lp2)}</div>
               <div style={{fontSize:11,color:D[coupleRes.lp2]?.c||ac,opacity:.7}}>{he?D[coupleRes.lp2]?.t:D[coupleRes.lp2]?.te}</div>
             </div>
           </div>
@@ -2148,7 +2155,7 @@ function CompatWidget({he,dk}){
                 <th style={{padding:"8px 10px",fontSize:11,fontWeight:700,color:ac,textAlign:"center"}}>{c2name.split(" ")[0]||"2"}</th>
               </tr></thead>
               <tbody>
-                {[{l:he?"שביל הגורל":"Life Path",a:coupleRes.lp1,b:coupleRes.lp2},{l:he?"ערך השם":"Name",a:coupleRes.nv1,b:coupleRes.nv2},{l:he?"קול הנשמה":"Soul",a:coupleRes.su1,b:coupleRes.su2},{l:he?"ביטוי":"Expression",a:coupleRes.ex1,b:coupleRes.ex2}].map((r,i)=>(
+                {[{l:he?"שביל הגורל":"Life Path",a:lifePathText(coupleRes.lpm1,coupleRes.lp1),b:lifePathText(coupleRes.lpm2,coupleRes.lp2)},{l:he?"ערך השם":"Name",a:coupleRes.nv1,b:coupleRes.nv2},{l:he?"קול הנשמה":"Soul",a:coupleRes.su1,b:coupleRes.su2},{l:he?"ביטוי":"Expression",a:coupleRes.ex1,b:coupleRes.ex2}].map((r,i)=>(
                   <tr key={i} style={{borderBottom:`1px solid ${ac}08`}}>
                     <td style={{padding:"8px 10px",fontSize:12,color:ts,fontWeight:600}}>{r.l}</td>
                     <td style={{padding:"8px 10px",fontSize:18,fontWeight:700,color:ac,textAlign:"center",fontFamily:"'Cormorant Garamond',serif"}}>{r.a}</td>
@@ -2182,7 +2189,7 @@ function CompatWidget({he,dk}){
         <div className="gc">
           <div style={{textAlign:"center",marginBottom:16}}>
             <div style={{fontSize:10,color:ts}}>{pName}</div>
-            <div style={{fontSize:36,fontWeight:700,color:D[profileRes.lp]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{profileRes.lp}</div>
+            <div data-testid="profile-lp" style={{fontSize:36,fontWeight:700,color:D[profileRes.lp]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(profileRes.lpm,profileRes.lp)}</div>
             <div style={{fontSize:16,color:D[profileRes.lp]?.c||ac,fontWeight:600}}>{he?D[profileRes.lp]?.t:D[profileRes.lp]?.te}</div>
           </div>
 
@@ -2244,13 +2251,13 @@ function CompatWidget({he,dk}){
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,marginBottom:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:10,color:ts}}>{he?"הורה":"Parent"}</div>
-              <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpP]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{pcRes.lpP}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpP]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(pcRes.lpmP,pcRes.lpP)}</div>
               <div style={{fontSize:11,color:D[pcRes.lpP]?.c||ac,opacity:.7}}>{he?D[pcRes.lpP]?.t:D[pcRes.lpP]?.te}</div>
             </div>
             <div style={{color:`${ac}66`,display:"flex",justifyContent:"center"}}><Icon name="heart" size={18}/></div>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:10,color:ts}}>{he?"ילד/ה":"Child"}</div>
-              <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpC]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{pcRes.lpC}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpC]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(pcRes.lpmC,pcRes.lpC)}</div>
               <div style={{fontSize:11,color:D[pcRes.lpC]?.c||ac,opacity:.7}}>{he?D[pcRes.lpC]?.t:D[pcRes.lpC]?.te}</div>
             </div>
           </div>
@@ -2295,10 +2302,12 @@ function AffirmWidget({he,dk}){
 }
 
 // ═══════════════════ RITUAL WIDGET ═══════════════════
-function RitualWidget({number,he,dk}){
+/** The daily ritual for `number`; `basis` names which number it is (a day has three, each its own calculation). */
+function RitualWidget({number,basis,how,he,dk}){
   const ac=dk?"#c8a96a":"#937640";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
   const info=D[number]||D[1];const r=info.ritual;
-  return(<div><div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:2}}><Icon name="candle" size={18}/></div><div style={{fontSize:14,fontWeight:600,color:ac,marginTop:4}}>{he?"טקס יומי":"Daily Ritual"}</div></div>
+  return(<div><div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:2}}><Icon name="candle" size={18}/></div><div style={{fontSize:14,fontWeight:600,color:ac,marginTop:4}}>{he?"טקס יומי":"Daily Ritual"}</div>
+    {basis&&<div data-testid="ritual-basis" style={{fontSize:12,color:ts,marginTop:2}}>{basis}: <b style={{color:ac}}>{number}</b>{how}</div>}</div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
       {[{i:"target",l:he?"מילת מפתח":"Focus Word",v:he?r.word:r.wordE},{i:"bolt",l:he?"פעולה":"Action",v:he?r.act:r.actE},{i:"mirror",l:he?"התבוננות":"Reflection",v:he?r.reflect:r.reflectE},{i:"candle",l:he?"מיקרו-טקס":"Micro Ritual",v:he?r.micro:r.microE}].map((it,i)=>(
         <div key={i} className="ritual-item"><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:5}}><Icon name={it.i} size={16}/></div><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>{it.l}</div><div style={{fontSize:12,lineHeight:1.7,color:dk?"rgba(232,224,208,.55)":"rgba(0,0,0,.45)"}}><Locked he={he}>{it.v}</Locked></div></div>

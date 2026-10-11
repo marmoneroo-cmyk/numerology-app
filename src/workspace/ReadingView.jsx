@@ -7,7 +7,7 @@ import { compatKey, getRecommendations } from "../engine/index.js";
 import { ValidationError } from "../data/validation.js";
 import { useContent, numberTitle } from "./content.js";
 import { Card, Field, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, btnPrimary, btnGhost, display } from "./ui.jsx";
-import { parseDmy, formatDmy, formatStamp, readingTypeLabel, matchTypeLabel, personName, errorText } from "./format.js";
+import { parseDmy, formatDmy, formatStamp, readingTypeLabel, matchTypeLabel, personName, errorText, lifePathText } from "./format.js";
 import ReadingSummary from "../reading/ReadingSummary.jsx";
 import Locked from "../demo/DemoLock.jsx";
 
@@ -263,7 +263,7 @@ function MatchResult({ reading, he, c, content }) {
         c={c}
         names={[personName(person, he), personName(other, he)]}
         rows={[
-          [he ? "שביל הגורל" : "Life path", r.lp1, r.lp2],
+          [he ? "שביל הגורל" : "Life path", lifePathText(r.lpm1, r.lp1), lifePathText(r.lpm2, r.lp2)],
           [he ? "ערך השם" : "Name number", r.nv1, r.nv2],
           [he ? "קול הנשמה" : "Soul", r.su1, r.su2],
           [he ? "ביטוי" : "Expression", r.ex1, r.ex2],
@@ -286,7 +286,7 @@ function ParentChildResult({ reading, he, c, content }) {
         c={c}
         names={[`${parentName} (${he ? "הורה" : "parent"})`, `${childName} (${he ? "ילד/ה" : "child"})`]}
         rows={[
-          [he ? "שביל הגורל" : "Life path", r.lpP, r.lpC],
+          [he ? "שביל הגורל" : "Life path", lifePathText(r.lpmP, r.lpP), lifePathText(r.lpmC, r.lpC)],
           [he ? "ערך השם" : "Name number", r.nvP, r.nvC],
           [he ? "קול הנשמה" : "Soul", r.suP, r.suC],
         ]}

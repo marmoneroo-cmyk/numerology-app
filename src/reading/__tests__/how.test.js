@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { isDeepStrictEqual } from "node:util";
 import { howFor, reduction, HOW_KEYS } from "../how.js";
-import { fullCalc, PY, dailyRitualNumber, maturity, birthdayNumber, dominantNumbers, missingNumbers, textNumber } from "../../engine/index.js";
+import { fullCalc, PY, dailyRitualNumber, universalDay, maturity, birthdayNumber, dominantNumbers, missingNumbers, textNumber } from "../../engine/index.js";
 
 const CLOCKS = [
   new Date(2026, 9, 5, 12), // autumn: the +1 season
@@ -45,6 +45,7 @@ describe("every explanation ends in the engine's number", () => {
         if (!isDeepStrictEqual(how.result, map[key])) mismatches.push({ key, c, got: how.result, want: map[key] });
       }
       if (howFor("daily", c, he).result !== dailyRitualNumber(c.now)) mismatches.push({ key: "daily", c });
+      if (howFor("universal", c, he).result !== universalDay(c.now)) mismatches.push({ key: "universal", c });
       const extras = {
         mat: maturity(c.d, c.m, c.y, c.name),
         bday: birthdayNumber(c.d),
@@ -175,6 +176,23 @@ describe("the explanations read as worked examples", () => {
   it("knows nothing of other keys", () => {
     expect(howFor("nope", SHANI, true)).toBeNull();
     expect(howFor("constructor", SHANI, true)).toBeNull();
+  });
+
+  it("names the day's numbers apart: the day of the month, and the universal day from every digit of the date", () => {
+    const now = new Date(2026, 9, 11, 10);
+    const daily = howFor("daily", { now }, true);
+    expect([daily.title, daily.steps[0].math, daily.result]).toEqual(["מספר היום בחודש", "11 mod 9 = 2", 2]);
+    const universal = howFor("universal", { now }, true);
+    expect(universal.title).toBe("היום האוניברסלי");
+    expect(universal.steps.map((s) => [s.text, s.math])).toEqual([["סוכמים את כל ספרות התאריך 11.10.2026", "1+1+1+0+2+0+2+6 = 13"], ["מצמצמים", "1+3 = 4"]]);
+    expect(universal.result).toBe(4);
+  });
+
+  it("calls the hidden pinnacles and challenges a rule of the Studio's method", () => {
+    for (const key of ["hp", "hc"]) {
+      expect(howFor(key, SHANI, true).steps[0]).toEqual({ text: "כלל של שיטת הסטודיו", math: "" });
+      expect(howFor(key, SHANI, false).steps[0].text).toBe("A rule of the Studio's method");
+    }
   });
 });
 
