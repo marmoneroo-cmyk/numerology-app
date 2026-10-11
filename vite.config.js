@@ -13,7 +13,7 @@ export default defineConfig({
     // `npm run test:coverage`: the engine, the data layer, the workspace, the accounts and the Studio's units must stay at 80% or more
     coverage: {
       provider: 'v8',
-      include: ['src/engine/**', 'src/data/**', 'src/workspace/**', 'src/account/**', 'src/studio/**', 'src/sales/**', 'src/demo/**', 'src/legal/**', 'src/routes.js', 'src/Root.jsx', 'src/AppWorld.jsx', 'src/analytics.js', 'src/staleChunks.js'],
+      include: ['src/engine/**', 'src/data/**', 'src/workspace/**', 'src/account/**', 'src/studio/**', 'src/sales/**', 'src/demo/**', 'src/legal/**', 'src/reading/**', 'src/ui/**', 'src/routes.js', 'src/Root.jsx', 'src/AppWorld.jsx', 'src/analytics.js', 'src/staleChunks.js'],
       exclude: ['**/__tests__/**'],
       thresholds: { statements: 80, branches: 80, functions: 80, lines: 80 },
     },

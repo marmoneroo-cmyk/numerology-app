@@ -35,10 +35,10 @@ export default function PracticalNumbers({ he, numberTitle }) {
       <label className="calc-label" htmlFor={inputId}>
         {current.field[he ? 0 : 1]}
       </label>
-      <input id={inputId} className="gi" value={text} placeholder={current.hint} onChange={(e) => setText(e.target.value)} dir="auto" />
+      <input id={inputId} className="gi" value={text} placeholder={current.hint} onChange={(e) => setText(e.target.value)} dir="auto" maxLength={120} />
       <p className="calc-note">{he ? "כל ספרה נספרת כמו שהיא, אות עברית לפי ערכה ואות לועזית לפי מקומה. רווחים ומקפים לא נספרים." : "Each digit counts as it is, a Hebrew letter by value, a Latin one by position. Spaces and dashes do not count."}</p>
       {value > 0 && (
-        <div className="calc-result" aria-live="polite">
+        <div className="calc-result">
           <span className="calc-big" data-testid="practical-number">
             {value}
           </span>

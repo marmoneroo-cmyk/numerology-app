@@ -10,6 +10,8 @@ import HowButton from "../../reading/HowButton.jsx";
 import "./calcs.css";
 
 const list = (ns, he) => (ns.length ? ns.join(" · ") : he ? "אין" : "None");
+/** As long as a client's stored name may be (data/validation.js). */
+const MAX_NAME = 120;
 
 /** @param {{ he: boolean, numberTitle: (n: number) => string }} props */
 export default function NameCompare({ he, numberTitle }) {
@@ -30,7 +32,10 @@ export default function NameCompare({ he, numberTitle }) {
     { k: "miss", l: he ? "חסרים בשם" : "Missing in the name", v: (n) => list(missingNumbers(n), he) },
   ];
 
-  const setName = (i) => (e) => setNames(names.map((n, j) => (j === i ? e.target.value : n)));
+  const setName = (i) => (e) => {
+    const { value } = e.target;
+    setNames((current) => current.map((n, j) => (j === i ? value : n)));
+  };
 
   return (
     <div className="gc calc-card" dir={he ? "rtl" : "ltr"}>
@@ -40,14 +45,14 @@ export default function NameCompare({ he, numberTitle }) {
             <label className="calc-label" htmlFor={ids[i]}>
               {label}
             </label>
-            <input id={ids[i]} className="gi" value={names[i]} onChange={setName(i)} dir="rtl" />
+            <input id={ids[i]} className="gi" value={names[i]} onChange={setName(i)} dir="rtl" maxLength={MAX_NAME} />
           </div>
         ))}
         <div>
           <label className="calc-label" htmlFor={dobId}>
             {he ? "תאריך לידה (לא חובה)" : "Date of birth (optional)"}
           </label>
-          <input id={dobId} className="gi" value={dob} onChange={(e) => setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" />
+          <input id={dobId} className="gi" value={dob} onChange={(e) => setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" maxLength={10} />
         </div>
       </div>
       {born && (

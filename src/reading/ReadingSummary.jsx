@@ -45,8 +45,12 @@ function Group({ title, children }) {
   );
 }
 
-/** The four life cycles: ages, pinnacle, challenge, hidden pinnacle and hidden challenge; the current one marked. */
-function Cycles({ r, ctx, he }) {
+/**
+ * The four life cycles: ages, pinnacle, challenge, hidden pinnacle and hidden challenge; the one of the reading's
+ * date marked, "now" when that is today.
+ */
+function Cycles({ r, ctx, he, live }) {
+  const badge = live ? (he ? "עכשיו" : "Now") : he ? "בזמן הקריאה" : "At the reading";
   const names = CYCLE_NAMES[he ? "he" : "en"];
   const heads = [
     ["pk", he ? "פסגה" : "Pinnacle"],
@@ -80,7 +84,7 @@ function Cycles({ r, ctx, he }) {
                 <tr key={name} className={now ? "rs-now" : undefined} aria-current={now ? "true" : undefined}>
                   <th scope="row">
                     {name} <span className="rs-ages">{agesText(cycleSpans(r.exit)[i])}</span>
-                    {now && <span className="rs-badge">{he ? "עכשיו" : "Now"}</span>}
+                    {now && <span className="rs-badge">{badge}</span>}
                   </th>
                   {[r.pk[i], r.ch[i], r.hp[i], r.hc[i]].map((v, j) => (
                     <td key={j} className="rs-num" data-testid={`rs-${heads[j][0]}-${i}`}>
@@ -112,13 +116,18 @@ function NameStructure({ r, name, ctx, he, title, none }) {
   );
 }
 
+const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
 /**
- * @param {{ r: object, name: string, now: Date, add?: boolean, he: boolean }} props
- *   `r` is a full map (engine fullCalc), made for `name` on `now`; `add` is the +1 a saved reading recorded
+ * @param {{ r: object, name: string, now: Date, add?: boolean, he: boolean, today?: Date }} props
+ *   `r` is a full map (engine fullCalc), made for `name` on `now`; `add` is the +1 a saved reading recorded.
+ *   A reading made on another day than `today` speaks of its own date, not of "now".
  */
-export default function ReadingSummary({ r, name, now, add, he }) {
+export default function ReadingSummary({ r, name, now, add, he, today = new Date() }) {
   const content = useContent();
   const titleId = useId();
+  const live = sameDay(now, today);
+  const madeOn = `${pad2(now.getDate())}.${pad2(now.getMonth() + 1)}.${now.getFullYear()}`;
   const ctx = { d: r.d, m: r.m, y: r.y, name, now, add };
   const title = (n) => numberTitle(content, n, he);
   const year = content.YEAR_ENERGY?.[r.py];
@@ -148,7 +157,7 @@ export default function ReadingSummary({ r, name, now, add, he }) {
           <Row k="su" label={he ? "קול הנשמה" : "Soul"} value={r.su} meaning={title(r.su)} ctx={ctx} he={he} testId="rs-su" />
           <Row k="ex" label={he ? "ביטוי" : "Expression"} value={r.ex} meaning={title(r.ex)} ctx={ctx} he={he} testId="rs-ex" />
         </Group>
-        <Group title={he ? "התקופה עכשיו" : "This season"}>
+        <Group title={live ? (he ? "התקופה עכשיו" : "This season") : he ? `התקופה ב-${madeOn}` : `The season on ${madeOn}`}>
           {/* the year's theme is its interpretation in short: the demo blurs it, like the full text */}
           <Row k="py" label={he ? "שנה אישית" : "Personal year"} value={r.py} meaning={<Locked he={he}>{firstSentence(year?.[he ? "he" : "en"])}</Locked>} ctx={ctx} he={he} testId="rs-py" />
           <Row k="pm" label={he ? "חודש אישי" : "Personal month"} value={r.pm} ctx={ctx} he={he} testId="rs-pm" />
@@ -156,9 +165,9 @@ export default function ReadingSummary({ r, name, now, add, he }) {
           <Row k="hy" label={he ? "שנה נסתרת" : "Hidden year"} value={r.hy} ctx={ctx} he={he} testId="rs-hy" />
           <Row k="age" label={he ? "גיל" : "Age"} value={r.age} ctx={ctx} he={he} testId="rs-age" />
         </Group>
-        <Cycles r={r} ctx={ctx} he={he} />
+        <Cycles r={r} ctx={ctx} he={he} live={live} />
         <Group title={he ? "קארמה ולו שו" : "Karma and Lo Shu"}>
-          <Row k="kd" label={he ? "חובות קארמתיים" : "Karmic debts"} value={r.kd.length ? r.kd.join(" · ") : none} ctx={ctx} he={he} testId="rs-kd" />
+          <Row k="kd" label={he ? "חובות קארמיים" : "Karmic debts"} value={r.kd.length ? r.kd.join(" · ") : none} ctx={ctx} he={he} testId="rs-kd" />
           <Row k="ls" label={he ? "חסרים בלו שו" : "Missing in Lo Shu"} value={r.ls.miss.length ? r.ls.miss.join(" · ") : none} ctx={ctx} he={he} testId="rs-miss" />
           {planes.length > 0 && (
             <tr>

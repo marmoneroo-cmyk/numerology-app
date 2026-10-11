@@ -21,7 +21,7 @@ const CONTENT = {
 const show = (props = {}) =>
   render(
     <ContentContext.Provider value={CONTENT}>
-      <ReadingSummary r={MAP} name={NAME} now={NOW} he {...props} />
+      <ReadingSummary r={MAP} name={NAME} now={NOW} today={NOW} he {...props} />
     </ContentContext.Provider>,
   );
 const cell = (id) => screen.getByTestId(id).textContent;
@@ -68,6 +68,13 @@ describe("the map summary", () => {
     expect(within(screen.getByRole("dialog")).getByText(`${young.exit + 27}+`, { selector: "bdi" })).toBeTruthy();
   });
 
+  it("speaks of a saved reading's own date when it is opened on another day", () => {
+    show({ today: new Date(2027, 0, 20, 9) });
+    expect(screen.getByRole("heading", { level: 3, name: "התקופה ב-05.10.2026" })).toBeTruthy();
+    expect(screen.queryByText("עכשיו")).toBeNull();
+    expect(screen.getByText("בזמן הקריאה").closest("tr").getAttribute("aria-current")).toBe("true");
+  });
+
   it("explains a number in a window, and closes it with Escape, back to its button", () => {
     show();
     const how = screen.getByRole("button", { name: "איך זה חושב: שנה אישית" });
@@ -106,7 +113,7 @@ describe("the map summary", () => {
       "שביל הגורל", "ערך השם", "קול הנשמה", "ביטוי",
       "שנה אישית", "חודש אישי", "יום אישי", "שנה נסתרת", "גיל",
       "גילי המחזורים", "פסגה", "אתגר", "פסגה נסתרת", "אתגר נסתר",
-      "חובות קארמתיים", "חסרים בלו שו",
+      "חובות קארמיים", "חסרים בלו שו",
       "מספר הבגרות", "מספר יום הלידה", "דומיננטיים בשם", "חסרים בשם",
     ]);
   });

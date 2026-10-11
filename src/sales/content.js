@@ -27,7 +27,7 @@ export const SALES = {
       text: "פרטי הלקוחות, הקריאות הקודמות, ההערות והמפות נמצאים במקום אחד. מגיעים לפגישה כשהכול מוכן, ומתמקדים בשיחה.",
       items: [
         { icon: "users", title: "תיק לקוח מסודר", text: "פרטים, הערות, קבצים וכל הקריאות הקודמות. חיפוש מהיר מכל מסך, גם מהמקלדת (Ctrl+K)." },
-        { icon: "orb", title: "מפה מלאה בשיטה העברית", text: "שביל גורל, מספרי השם, שנה, חודש ויום אישיים, פסגות ואתגרים, חובות קארמתיים, לו-שו, מספר בגרות ומבנה השם." },
+        { icon: "orb", title: "מפה מלאה בשיטה העברית", text: "שביל גורל, מספרי השם, שנה, חודש ויום אישיים, פסגות ואתגרים, חובות קארמיים, לו-שו, מספר בגרות ומבנה השם." },
         { icon: "eye", title: "מצב פגישה", text: "הקריאה במסך גדול ונקי מול הלקוח, בלי תפריטים ובלי הסחות." },
       ],
     },
@@ -56,7 +56,7 @@ export const SALES = {
       items: [
         { icon: "gift", title: "ימי הולדת עם ברכה אישית", text: "ברכה נומרולוגית עם השנה האישית של הלקוח, שנפתחת בוואטסאפ למספר שלו." },
         { icon: "calendar", title: "מעקבים בזמן", text: "קריאות שהגיע מועד המעקב שלהן, עם הודעה מוכנה ששואלת מה שלום הלקוח." },
-        { icon: "refresh", title: "חידוש קשר", text: "לקוחות שלא היו בקשר חצי שנה, עם הודעה שמזכירה את השנה האישית שלהם עכשיו." },
+        { icon: "refresh", title: "חידוש קשר", text: "לקוחות בלי פעילות בחצי השנה האחרונה, עם הודעה שמזכירה את השנה האישית שלהם עכשיו." },
         { icon: "sparkles", title: "השנה האישית החדשה", text: "ביולי, כשהשנה האישית מתחלפת, הודעה מוכנה לכל לקוח." },
       ],
       note: "כל הודעה נפתחת בוואטסאפ מוכנה לשליחה, ונשלחת רק כשמחליטים לשלוח.",
@@ -192,7 +192,7 @@ export const SALES = {
       items: [
         { icon: "gift", title: "Birthdays with a personal greeting", text: "A numerology greeting with the client's personal year, opened in WhatsApp to their number." },
         { icon: "calendar", title: "Follow-ups on time", text: "Readings whose follow-up date has come, with a message ready to ask how the client is." },
-        { icon: "refresh", title: "Getting back in touch", text: "Clients quiet for half a year, with a message naming their personal year now." },
+        { icon: "refresh", title: "Getting back in touch", text: "Clients with no activity for half a year, with a message naming their personal year now." },
         { icon: "sparkles", title: "The new personal year", text: "In July, when the personal year turns, a message ready for each client." },
       ],
       note: "Every message opens in WhatsApp ready to send, and goes only when you choose to send it.",

@@ -21,7 +21,7 @@ import AdminScreen from "./account/AdminScreen.jsx";
 import LocalDataOffer from "./account/LocalDataOffer.jsx";
 import { accountStore } from "./account/workspaceStore.js";
 import {
-  LV, R, NV, SU, EX, LP, LPm, CA, PY, personalYearOn, loShu, fullCalc, liveNum, getRecommendations,
+  LV, R, NV, SU, EX, LP, LPm, CA, personalYearOn, loShu, fullCalc, liveNum, getRecommendations,
   yearCycle, cycleSpans, cycleAt, masterBase, dailyRitualNumber, compatKey, matchReading, coupleReading, parentChildReading,
 } from "./engine";
 import Icon from "./ui/Icon.jsx";
@@ -843,7 +843,7 @@ function CalculatorsWidget({he,dk}){
         <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
       </div>
       {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc">
-        {howCtx&&<div style={{textAlign:"center",marginBottom:10,fontSize:12,color:ts}}>{he?"איך נבדק חוב קארמתי":"How karmic debt is checked"}<HowButton k="kd" ctx={howCtx} he={he}/></div>}
+        {howCtx&&<div style={{textAlign:"center",marginBottom:10,fontSize:12,color:ts}}>{he?"איך נבדק חוב קארמי":"How karmic debt is checked"}<HowButton k="kd" ctx={howCtx} he={he}/></div>}
         {results.kd?.length===0?(<div style={{textAlign:"center",padding:16,background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={20}/></span><div style={{fontSize:14,color:ts,marginTop:6}}>{he?"אין חוב קארמי — הנשמה שלך נקייה!":"No karmic debt — your soul is clear!"}</div></div>):(
           <div>{results.kd?.map(k=>(<div key={k} style={{padding:14,background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:24,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span>

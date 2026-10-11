@@ -9,7 +9,7 @@ import { useState } from "react";
 import { ENGINE_VERSION, addsOne, fullCalc, yearCycle, matchReading, parentChildReading, getRecommendations } from "../engine/index.js";
 import PlusOneNote from "../ui/PlusOneNote.jsx";
 import { Card, Field, Loading, ErrorCard, ScreenTitle, BackButton, useLoad, btnPrimary } from "./ui.jsx";
-import { parseDmy, formatDmy, personOf, readingTypeLabel, matchTypeLabel } from "./format.js";
+import { parseBirthDate, formatDmy, personOf, readingTypeLabel, matchTypeLabel } from "./format.js";
 
 const TYPES = ["map", "match", "parentChild", "yearCycle"];
 const MATCH_TYPES = ["love", "twin", "biz", "parent"];
@@ -42,9 +42,10 @@ export default function NewReading({ store, go, he, c, now, clientId }) {
       const o = others.find((x) => x.id === otherId);
       return o ? { clientId: o.id, name: o.fullName, birthDate: o.birthDate } : null;
     }
-    const iso = parseDmy(otherDob, now().getFullYear() + 1);
+    // a real date up to today, as every birth date in the Studio
+    const born = parseBirthDate(otherDob, now());
     const nm = otherName.trim();
-    return nm && iso ? { clientId: null, name: nm, birthDate: iso } : null;
+    return nm && born ? { clientId: null, name: nm, birthDate: `${born.y}-${String(born.m).padStart(2, "0")}-${String(born.d).padStart(2, "0")}` } : null;
   };
 
   const run = async () => {

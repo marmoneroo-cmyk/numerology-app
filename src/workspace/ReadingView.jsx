@@ -149,7 +149,7 @@ function MapResult({ reading, he, c, content }) {
 
       {r.kd.length > 0 && (
         <Card>
-          <SectionTitle c={c}>{he ? "חובות קארמתיים" : "Karmic debts"}</SectionTitle>
+          <SectionTitle c={c}>{he ? "חובות קארמיים" : "Karmic debts"}</SectionTitle>
           {r.kd.map((k, i) => (
             <p key={i} style={{ margin: "0 0 6px", fontSize: 14, lineHeight: 1.6 }}>
               <strong style={{ color: c.ac }}>{k}</strong> · <Locked he={he}>{content.KARMA[k]?.[lang] || ""}</Locked>

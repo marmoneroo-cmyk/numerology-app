@@ -4,7 +4,7 @@
  */
 import { toYmd } from "../data/store.js";
 import { validateReading } from "../data/validation.js";
-import { ENGINE_VERSION, fullCalc, getRecommendations } from "../engine/index.js";
+import { ENGINE_VERSION, addsOne, fullCalc, getRecommendations } from "../engine/index.js";
 
 const DAY_MS = 86400000;
 
@@ -44,7 +44,7 @@ function sampleReadings() {
       clientId: "c4",
       type: "map",
       title: "פגישה ראשונה",
-      input: { name, birthDate: "1992-03-03", add: calc.py !== fullCalc(3, 3, 1992, name, false, at).py },
+      input: { name, birthDate: "1992-03-03", add: addsOne(at) },
       result: { ...calc, insights: { he: getRecommendations(calc, "he"), en: getRecommendations(calc, "en") } },
       engineVersion: ENGINE_VERSION,
       computedFor: at.toISOString(),
