@@ -2,6 +2,8 @@
  * Every word of the sales page, in Hebrew and English (the two trees have the same shape).
  * The Hebrew speaks to readers in the plural or impersonally, never in the singular. The claims follow what
  * the Studio does today, and the privacy ones follow the privacy policy (src/legal/content.js).
+ * The page sells a workspace for a numerology practice, not a calculator: the session, the map and how it
+ * was calculated, and the care that brings clients back (the owner's consultation with ChatGPT, 2026-10-11).
  */
 export const SALES = {
   he: {
@@ -11,30 +13,75 @@ export const SALES = {
     signIn: "כניסה למנויים",
     hero: {
       kicker: "תוכנה לנומרולוגים",
-      title: "כל הלקוחות, הקריאות והמפות — במקום אחד",
-      subtitle: "הסטודיו לנומרולוגים: תיקי לקוחות, חישובים מדויקים, מצב פגישה ודוחות PDF בשם שלכם.",
-      tryIt: "לנסות את הסטודיו",
-      contact: "לדבר איתנו",
-      note: "ההדגמה נפתחת מיד, עם לקוחות לדוגמה. בלי הרשמה.",
-      shotAlt: "הסטודיו: מסך \"היום\" עם ימי ההולדת של השבוע, הלקוחות האחרונים וקלף היום",
+      title: "סביבת העבודה לנומרולוגיה מקצועית",
+      subtitle: "פחות זמן על ניהול וחישובים, יותר מקום למקצועיות ולקשר עם הלקוחות. תיקי הלקוחות, המפות, הפגישות והמעקבים, במקום אחד.",
+      tryIt: "לצפייה בהדגמה, בלי הרשמה",
+      contact: "לתקופת ניסיון",
+      perMonth: "לחודש",
+      trialDays: "ימי ניסיון חינם",
+      personal: "הצטרפות אישית",
+      shotAlt: "הסטודיו: סיכום המפה של לקוחה לדוגמה, כל המספרים במסך אחד, וליד כל מספר כפתור שמסביר איך הוא חושב",
     },
-    features: {
-      title: "מה יש בסטודיו",
+    pillars: {
+      title: "כל מה שצריך לפגישה, בלי לחפש בין מסכים ומחברות",
+      text: "פרטי הלקוחות, הקריאות הקודמות, ההערות והמפות נמצאים במקום אחד. מגיעים לפגישה כשהכול מוכן, ומתמקדים בשיחה.",
       items: [
-        { icon: "users", title: "תיקי לקוחות", text: "לכל לקוח תאריך לידה, טלפון, הערות, תגיות וקבצים. חיפוש מהיר מכל מסך, גם מהמקלדת (Ctrl+K)." },
-        { icon: "orb", title: "קריאה מלאה", text: "שביל גורל, מספרי השם, שנה וחודש אישיים, מחזורים, פסגות ואתגרים, חובות קארמיים ומפת לו-שו, מחושבים מיד." },
+        { icon: "users", title: "תיק לקוח מסודר", text: "פרטים, הערות, קבצים וכל הקריאות הקודמות. חיפוש מהיר מכל מסך, גם מהמקלדת (Ctrl+K)." },
+        { icon: "orb", title: "מפה מלאה בשיטה העברית", text: "שביל גורל, מספרי השם, שנה, חודש ויום אישיים, פסגות ואתגרים, חובות קארמתיים, לו-שו, מספר בגרות ומבנה השם." },
         { icon: "eye", title: "מצב פגישה", text: "הקריאה במסך גדול ונקי מול הלקוח, בלי תפריטים ובלי הסחות." },
-        { icon: "doc", title: "דוחות PDF בשם שלכם", text: "דוח מעוצב לכל לקוח, חתום בשם שלכם, מוכן לשליחה." },
-        { icon: "sparkles", title: "מסך \"היום\"", text: "ימי ההולדת של השבוע עם ברכה מוכנה בוואטסאפ, הלקוחות האחרונים וקלף היום, במבט אחד." },
-        { icon: "heart", title: "התאמות וכלים", text: "התאמה זוגית והתאמת הורה וילד, טבלאות, מחשבונים וקלפים." },
       ],
     },
-    join: {
-      title: "איך מצטרפים",
-      steps: [
-        { title: "פונים אלינו", text: "שולחים לנו הודעה, ושואלים כל מה שרוצים לדעת." },
-        { title: "פותחים לכם חשבון", text: "עם תקופת ניסיון חינם. מקבלים פרטי כניסה, ובמסך \"החשבון שלי\" מחליפים לסיסמה משלכם. מומלץ להפעיל גם אימות דו-שלבי." },
-        { title: "עובדים מכל מקום", text: "במחשב ובטלפון, בדפדפן. הלקוחות והקריאות שמורים בחשבון." },
+    demo: {
+      title: "לא צריך לדמיין איך זה עובד. אפשר פשוט להיכנס ולבדוק.",
+      text: "ההדגמה נפתחת מיד, עם לקוחות לדוגמה ובלי הרשמה. כל המסכים, הכותרות והמספרים גלויים; הפירושים המלאים מטושטשים ונפתחים במנוי.",
+      cta: "לפתיחת ההדגמה",
+    },
+    map: {
+      kicker: "בפגישה",
+      title: "כל המפה הנומרולוגית. גם הדרך שבה היא חושבה.",
+      text: "טבלת סיכום אחת מציגה את כל המספרים, כדי להקריא ללקוח בלי לדפדף. ליד כל מספר יש כפתור שמראה את החישוב צעד אחר צעד, וכך אפשר להסביר כל תוצאה.",
+      points: [
+        "כל המפה במסך אחד: מספרי הליבה, התקופה עכשיו, מחזורי החיים, הקארמה ומבנה השם.",
+        "\"איך זה חושב?\" ליד כל מספר, עם החישוב המלא.",
+        "ה-1+ לשנה האישית, מה-1.7 ועד ה-31.12, נוסף אוטומטית.",
+        "דוח PDF מעוצב בשם שלכם.",
+      ],
+      shotAlt: "טבלת סיכום המפה: שביל הגורל, מספרי השם, השנה האישית, מחזורי החיים ועוד, כל מספר עם כפתור הסבר",
+      howAlt: "החלון \"איך זה חושב\" של השנה האישית: סכום הספרות, הצמצום, וה-1+ שמוסיפים מה-1.7 ועד ה-31.12",
+    },
+    care: {
+      kicker: "אחרי הפגישה",
+      title: "הקשר עם הלקוח לא חייב להסתיים בסוף הפגישה",
+      text: "מסך \"היום\" מרכז את ההזדמנויות לחזור ללקוחות, בלי להסתמך על הזיכרון או על יומן נפרד.",
+      items: [
+        { icon: "gift", title: "ימי הולדת עם ברכה אישית", text: "ברכה נומרולוגית עם השנה האישית של הלקוח, שנפתחת בוואטסאפ למספר שלו." },
+        { icon: "calendar", title: "מעקבים בזמן", text: "קריאות שהגיע מועד המעקב שלהן, עם הודעה מוכנה ששואלת מה שלום הלקוח." },
+        { icon: "refresh", title: "חידוש קשר", text: "לקוחות שלא היו בקשר חצי שנה, עם הודעה שמזכירה את השנה האישית שלהם עכשיו." },
+        { icon: "sparkles", title: "השנה האישית החדשה", text: "ביולי, כשהשנה האישית מתחלפת, הודעה מוכנה לכל לקוח." },
+      ],
+      note: "כל הודעה נפתחת בוואטסאפ מוכנה לשליחה, ונשלחת רק כשמחליטים לשלוח.",
+      shotAlt: "מסך \"היום\" בסטודיו: ימי ההולדת של השבוע עם ברכה, מעקבים שהגיע זמנם, ולקוחות שכדאי לחזור אליהם",
+    },
+    worth: {
+      title: "כמה פגישות צריך כדי שהמנוי ישתלם?",
+      text: "מזינים מחיר ממוצע לפגישה ומספר פגישות נוספות בחודש, ורואים את התרחיש.",
+      priceLabel: "מחיר ממוצע לפגישה, בשקלים",
+      sessionsLabel: "פגישות נוספות בחודש",
+      income: "הכנסה בתרחיש",
+      after: "אחרי עלות המנוי",
+      coveredOne: "המנוי מכוסה מפגישה אחת בחודש",
+      coveredMany: "המנוי מכוסה מ-{n} פגישות בחודש",
+      disclaimer: "תרחיש להמחשה בלבד: הסטודיו לא מבטיח פגישות או הכנסה. החישוב לא כולל הוצאות ומסים.",
+    },
+    tools: {
+      title: "ועוד כלים לעבודה היומיומית",
+      items: [
+        { icon: "heart", title: "התאמות", text: "התאמה זוגית, להבה תאומה, שותפות עסקית, והורה וילד." },
+        { icon: "calculator", title: "מספרים מעשיים", text: "טלפון, כתובת, רכב, חשבון בנק ושם עסק, עם החישוב המלא." },
+        { icon: "users", title: "השוואת שמות", text: "שם נוכחי מול שם מוצע, כל המספרים זה לצד זה, והשינויים מסומנים." },
+        { icon: "sparkle", title: "מחולל שמות", text: "שמות נפוצים שמסתכמים במספר המבוקש." },
+        { icon: "chart", title: "טבלאות ומחזורים", text: "מחזור השנים האישי, פסגות ואתגרים, ומפת לו-שו." },
+        { icon: "cards", title: "קלפים ומספר היום", text: "קלף היום ומספר היום, לפתיחה של כל יום עבודה." },
       ],
     },
     privacy: {
@@ -56,18 +103,34 @@ export const SALES = {
       trialDays: "ימי ניסיון חינם",
       trial: "תקופת ניסיון חינם",
       includes: ["כל הכלים שבסטודיו", "דוחות PDF בשם שלכם", "ביטול בתוך 14 ימים"],
-      contact: "לדבר איתנו",
+      contact: "לתקופת ניסיון",
+    },
+    join: {
+      title: "איך מצטרפים",
+      steps: [
+        { title: "פונים אלינו", text: "שולחים לנו הודעה, ושואלים כל מה שרוצים לדעת." },
+        { title: "פותחים לכם חשבון", text: "עם תקופת ניסיון חינם. מקבלים פרטי כניסה, ובמסך \"החשבון שלי\" מחליפים לסיסמה משלכם. מומלץ להפעיל גם אימות דו-שלבי." },
+        { title: "עובדים מכל מקום", text: "במחשב ובטלפון, בדפדפן. הלקוחות והקריאות שמורים בחשבון." },
+      ],
     },
     faq: {
-      title: "שאלות נפוצות",
+      title: "לפני שמתחילים, כמה דברים שכדאי לדעת",
       items: [
+        { q: "אפשר לבדוק לפני שמצטרפים?", a: "כן. ההדגמה פתוחה לכולם, עם לקוחות לדוגמה ובלי הרשמה. הכותרות והמספרים גלויים, והפירושים המלאים מטושטשים." },
         { q: "צריך להתקין משהו?", a: "לא. הסטודיו עובד בדפדפן, במחשב ובטלפון." },
+        { q: "איך מצטרפים לתקופת הניסיון?", a: "שולחים לנו הודעה, ואנחנו פותחים לכם חשבון עם תקופת ניסיון חינם." },
+        { q: "מה קורה בסוף תקופת הניסיון?", a: "מחליטים אם להמשיך. ממשיכים: הכול נשאר כמו שהוא. לא ממשיכים: אפשר לייצא את המידע לפני שהחשבון נסגר." },
+        { q: "איך מבטלים?", a: "בהודעה אלינו. בתוך 14 ימים מהעסקה מקבלים החזר לפי מדיניות הביטולים (ייתכנו דמי ביטול של עד 5% או 100 ש\"ח, הנמוך מביניהם)." },
         { q: "על כמה מכשירים אפשר לעבוד?", a: "מספר המכשירים נקבע במנוי, ובכל רגע יש חיבור פעיל אחד. מכשיר ישן אפשר להסיר לבד, במסך \"החשבון שלי\"." },
         { q: "של מי המידע?", a: "שלכם. אפשר לייצא את כל הלקוחות והקריאות לקובץ גיבוי בכל רגע, ולשמור עותק מקומי במכשיר." },
-        { q: "מה קורה בסוף תקופת הניסיון?", a: "מחליטים אם להמשיך. ממשיכים: הכול נשאר כמו שהוא. לא ממשיכים: אפשר לייצא את המידע לפני שהחשבון נסגר." },
         { q: "יש גם אנגלית?", a: "כן. הסטודיו עובד בעברית ובאנגלית, ומחליפים שפה בלחיצה." },
-        { q: "איך מבטלים?", a: "בהודעה אלינו. בתוך 14 ימים מהעסקה מקבלים החזר לפי מדיניות הביטולים (ייתכנו דמי ביטול של עד 5% או 100 ש\"ח, הנמוך מביניהם)." },
       ],
+    },
+    final: {
+      title: "הגיע הזמן להכיר סביבת עבודה שנבנתה לנומרולוגים",
+      text: "מתחילים בהדגמה הפתוחה, מתרשמים מהכלים, ואז פונים אלינו לתקופת הניסיון.",
+      tryIt: "לצפייה בהדגמה",
+      contact: "לתקופת ניסיון",
     },
     footer: {
       label: "יצירת קשר ומסמכים",
@@ -86,30 +149,75 @@ export const SALES = {
     signIn: "Subscriber sign-in",
     hero: {
       kicker: "Software for numerologists",
-      title: "Every client, reading and map — in one place",
-      subtitle: "The Studio for numerologists: client files, precise calculations, meeting mode and PDF reports in your name.",
-      tryIt: "Try the Studio",
-      contact: "Talk to us",
-      note: "The demo opens at once, with sample clients. No sign-up.",
-      shotAlt: "The Studio: the Today screen with this week's birthdays, recent clients and today's card",
+      title: "The workspace for professional numerology",
+      subtitle: "Less time on admin and arithmetic, more room for your craft and your clients. Client files, maps, sessions and follow-ups, in one place.",
+      tryIt: "See the demo, no sign-up",
+      contact: "Ask for a trial",
+      perMonth: "a month",
+      trialDays: "days of free trial",
+      personal: "Personal onboarding",
+      shotAlt: "The Studio: a sample client's map summary, every number on one screen, each with a button that explains how it was calculated",
     },
-    features: {
-      title: "What's in the Studio",
+    pillars: {
+      title: "Everything a session needs, without hunting through screens and notebooks",
+      text: "Client details, past readings, notes and maps sit in one place. Arrive at the session ready, and focus on the conversation.",
       items: [
-        { icon: "users", title: "Client files", text: "Each client with a birth date, phone, notes, tags and files. Quick search from any screen, from the keyboard too (Ctrl+K)." },
-        { icon: "orb", title: "A full reading", text: "Life path, name numbers, personal year and month, cycles, pinnacles and challenges, karmic debts and the Lo Shu grid, calculated at once." },
+        { icon: "users", title: "An orderly client file", text: "Details, notes, files and every past reading. Quick search from any screen, from the keyboard too (Ctrl+K)." },
+        { icon: "orb", title: "A full map, the Hebrew method", text: "Life path, name numbers, personal year, month and day, pinnacles and challenges, karmic debts, Lo Shu, maturity and the name's make-up." },
         { icon: "eye", title: "Meeting mode", text: "The reading on a large, clean screen in front of the client, with no menus and no distractions." },
-        { icon: "doc", title: "PDF reports in your name", text: "A designed report for each client, signed with your name, ready to send." },
-        { icon: "sparkles", title: "The Today screen", text: "This week's birthdays with a WhatsApp greeting ready, recent clients and today's card, at a glance." },
-        { icon: "heart", title: "Matches and tools", text: "Couple and parent-child matches, tables, calculators and cards." },
       ],
     },
-    join: {
-      title: "How to join",
-      steps: [
-        { title: "Get in touch", text: "Send us a message, and ask anything you want to know." },
-        { title: "We open your account", text: "With a free trial. You get sign-in details, then switch to a password of your own in My account. Two-step verification is recommended too." },
-        { title: "Work from anywhere", text: "On computer and phone, in the browser. Your clients and readings are kept in your account." },
+    demo: {
+      title: "No need to imagine how it works. Just go in and see.",
+      text: "The demo opens at once, with sample clients and no sign-up. Every screen, title and number is visible; the full interpretations are blurred and open with a subscription.",
+      cta: "Open the demo",
+    },
+    map: {
+      kicker: "In the session",
+      title: "The whole numerology map. And how it was calculated.",
+      text: "One summary table shows every number, to read to the client without paging. Beside each number, a button shows the calculation step by step, so every result can be explained.",
+      points: [
+        "The whole map on one screen: the core numbers, this season, the life cycles, karma and the name's make-up.",
+        "\"How was this calculated?\" beside every number, with the full arithmetic.",
+        "The +1 on the personal year, from July 1 to December 31, added automatically.",
+        "A designed PDF report in your name.",
+      ],
+      shotAlt: "The map summary table: life path, name numbers, personal year, life cycles and more, each number with an explain button",
+      howAlt: "The \"how was this calculated\" window for the personal year: the digits, the reduction, and the +1 added from July 1 to December 31",
+    },
+    care: {
+      kicker: "After the session",
+      title: "The relationship with a client need not end with the session",
+      text: "The Today screen gathers the chances to get back to clients, without relying on memory or a separate diary.",
+      items: [
+        { icon: "gift", title: "Birthdays with a personal greeting", text: "A numerology greeting with the client's personal year, opened in WhatsApp to their number." },
+        { icon: "calendar", title: "Follow-ups on time", text: "Readings whose follow-up date has come, with a message ready to ask how the client is." },
+        { icon: "refresh", title: "Getting back in touch", text: "Clients quiet for half a year, with a message naming their personal year now." },
+        { icon: "sparkles", title: "The new personal year", text: "In July, when the personal year turns, a message ready for each client." },
+      ],
+      note: "Every message opens in WhatsApp ready to send, and goes only when you choose to send it.",
+      shotAlt: "The Studio's Today screen: this week's birthdays with a greeting, follow-ups due, and clients worth getting back to",
+    },
+    worth: {
+      title: "How many sessions make the subscription worth it?",
+      text: "Enter an average session price and a number of extra sessions a month, and see the scenario.",
+      priceLabel: "Average session price, in shekels",
+      sessionsLabel: "Extra sessions a month",
+      income: "Scenario income",
+      after: "After the subscription",
+      coveredOne: "One session a month covers the subscription",
+      coveredMany: "{n} sessions a month cover the subscription",
+      disclaimer: "An illustration only: the Studio does not promise sessions or income. The sum leaves out expenses and taxes.",
+    },
+    tools: {
+      title: "And more tools for the everyday work",
+      items: [
+        { icon: "heart", title: "Matches", text: "Love match, twin flame, business partnership, and parent and child." },
+        { icon: "calculator", title: "Practical numbers", text: "Phone, address, car, bank account and business name, with the full arithmetic." },
+        { icon: "users", title: "Compare names", text: "A current name against a proposed one, every number side by side, the changes marked." },
+        { icon: "sparkle", title: "Name generator", text: "Common names that add up to the number you want." },
+        { icon: "chart", title: "Tables and cycles", text: "The personal year cycle, pinnacles and challenges, and the Lo Shu grid." },
+        { icon: "cards", title: "Cards and today's number", text: "Today's card and today's number, to open each working day." },
       ],
     },
     privacy: {
@@ -131,18 +239,34 @@ export const SALES = {
       trialDays: "days of free trial",
       trial: "A free trial period",
       includes: ["Every tool in the Studio", "PDF reports in your name", "Cancel within 14 days"],
-      contact: "Talk to us",
+      contact: "Ask for a trial",
+    },
+    join: {
+      title: "How to join",
+      steps: [
+        { title: "Get in touch", text: "Send us a message, and ask anything you want to know." },
+        { title: "We open your account", text: "With a free trial. You get sign-in details, then switch to a password of your own in My account. Two-step verification is recommended too." },
+        { title: "Work from anywhere", text: "On computer and phone, in the browser. Your clients and readings are kept in your account." },
+      ],
     },
     faq: {
-      title: "Common questions",
+      title: "Before you start, a few things worth knowing",
       items: [
+        { q: "Can I try it before joining?", a: "Yes. The demo is open to all, with sample clients and no sign-up. Titles and numbers are visible, and the full interpretations are blurred." },
         { q: "Is there anything to install?", a: "No. The Studio runs in the browser, on computer and phone." },
+        { q: "How do I start the trial?", a: "Send us a message, and we open an account for you with a free trial." },
+        { q: "What happens when the trial ends?", a: "You decide whether to go on. Go on: everything stays as it is. Stop: export the data before the account is closed." },
+        { q: "How do I cancel?", a: "With a message to us. Within 14 days of the purchase you get a refund under the cancellation policy (a fee of up to 5% or 100 NIS, the lower, may apply)." },
         { q: "On how many devices can I work?", a: "The number of devices is set in the subscription, and one session is active at a time. You can remove an old device yourself, in My account." },
         { q: "Whose data is it?", a: "Yours. You can export all clients and readings to a backup file at any time, and keep a local copy on the device." },
-        { q: "What happens when the trial ends?", a: "You decide whether to go on. Go on: everything stays as it is. Stop: export the data before the account is closed." },
         { q: "Is it in English too?", a: "Yes. The Studio works in Hebrew and English, and switching takes one click." },
-        { q: "How do I cancel?", a: "With a message to us. Within 14 days of the purchase you get a refund under the cancellation policy (a fee of up to 5% or 100 NIS, the lower, may apply)." },
       ],
+    },
+    final: {
+      title: "Time to meet a workspace built for numerologists",
+      text: "Start with the open demo, get a feel for the tools, then ask us for the trial.",
+      tryIt: "See the demo",
+      contact: "Ask for a trial",
     },
     footer: {
       label: "Contact and documents",

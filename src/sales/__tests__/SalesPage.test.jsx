@@ -3,7 +3,7 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
 import SalesPage from "../SalesPage.jsx";
-import { Price } from "../sections.jsx";
+import { Price, Worth } from "../sections.jsx";
 import { SALES } from "../content.js";
 import { PRICE_MONTHLY, TRIAL_DAYS } from "../config.js";
 
@@ -18,10 +18,31 @@ describe("the sales page", () => {
     const contact = screen.getAllByRole("link", { name: new RegExp(SALES.he.hero.contact) });
     expect(contact.length).toBeGreaterThan(0);
     for (const link of contact) expect(link.getAttribute("href").startsWith("mailto:")).toBe(true); // no WhatsApp number yet: email
-    for (const title of [SALES.he.features.title, SALES.he.join.title, SALES.he.privacy.title, SALES.he.price.title, SALES.he.faq.title]) {
-      expect(screen.getByRole("heading", { level: 2, name: title })).toBeTruthy();
+    const titles = [SALES.he.pillars, SALES.he.demo, SALES.he.map, SALES.he.care, SALES.he.worth, SALES.he.tools, SALES.he.privacy, SALES.he.price, SALES.he.faq, SALES.he.final].map((s) => s.title);
+    for (const title of titles) expect(screen.getByRole("heading", { level: 2, name: title })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 3, name: SALES.he.join.title })).toBeTruthy();
+  });
+
+  it("shows the real Studio: the map summary first, then how a number was calculated, then Today", () => {
+    render(<SalesPage he onLanguage={() => {}} />);
+    const hero = screen.getByRole("img", { name: SALES.he.hero.shotAlt });
+    expect(hero.getAttribute("src")).toBe("/sales/shot-summary.webp");
+    expect(hero.getAttribute("loading")).toBeNull(); // the first picture is not deferred
+    expect(screen.getByRole("img", { name: SALES.he.map.howAlt }).getAttribute("src")).toBe("/sales/shot-how.webp");
+    const today = screen.getByRole("img", { name: SALES.he.care.shotAlt });
+    expect(today.getAttribute("src")).toBe("/sales/shot-today.webp");
+    expect(today.getAttribute("loading")).toBe("lazy");
+    for (const img of screen.getAllByRole("img")) {
+      expect(Number(img.getAttribute("width"))).toBeGreaterThan(0);
+      expect(Number(img.getAttribute("height"))).toBeGreaterThan(0);
     }
-    expect(screen.getByRole("img", { name: SALES.he.hero.shotAlt }).getAttribute("src")).toBe("/sales/studio-today.webp");
+  });
+
+  it("states the trial, the price and personal joining under the hero's buttons", () => {
+    render(<SalesPage he onLanguage={() => {}} />);
+    const hero = screen.getByRole("heading", { level: 1 }).closest("section");
+    const facts = within(hero).getAllByRole("listitem").map((li) => li.textContent);
+    expect(facts).toEqual([`${TRIAL_DAYS} ${SALES.he.hero.trialDays}`, `₪${PRICE_MONTHLY} ${SALES.he.hero.perMonth}`, SALES.he.hero.personal]);
   });
 
   it("links the legal pages and the privacy details", () => {
@@ -44,8 +65,9 @@ describe("the sales page", () => {
     expect(PRICE_MONTHLY).toBeGreaterThan(0);
     expect(TRIAL_DAYS).toBeGreaterThan(0);
     render(<SalesPage he onLanguage={() => {}} />);
-    expect(screen.getByText(`₪${PRICE_MONTHLY}`)).toBeTruthy();
-    expect(screen.getByText(`${TRIAL_DAYS} ${SALES.he.price.trialDays}`)).toBeTruthy();
+    const price = screen.getByRole("heading", { level: 2, name: SALES.he.price.title }).closest("section");
+    expect(within(price).getByText(`₪${PRICE_MONTHLY}`)).toBeTruthy();
+    expect(within(price).getByText(`${TRIAL_DAYS} ${SALES.he.price.trialDays}`)).toBeTruthy();
     expect(screen.queryByText(SALES.he.price.onRequest)).toBeNull();
   });
 
@@ -53,10 +75,12 @@ describe("the sales page", () => {
     render(<Price t={SALES.he.price} contact={null} price={null} trialDays={null} />);
     expect(screen.getByText(SALES.he.price.onRequest)).toBeTruthy();
     expect(screen.getByText(SALES.he.price.trial)).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: SALES.he.join.title })).toBeNull(); // no steps without them
     cleanup();
-    render(<Price t={SALES.he.price} contact={null} price={149} trialDays={14} />);
+    render(<Price t={SALES.he.price} join={SALES.he.join} contact={null} price={149} trialDays={14} />);
     expect(screen.getByText("₪149")).toBeTruthy();
     expect(screen.getByText(`14 ${SALES.he.price.trialDays}`)).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent)).toEqual(SALES.he.join.steps.map((s) => s.title));
   });
 
   it("switches language, right to left and back", () => {
@@ -68,5 +92,37 @@ describe("the sales page", () => {
     rerender(<SalesPage he={false} onLanguage={onLanguage} />);
     expect(container.firstChild.getAttribute("dir")).toBe("ltr");
     expect(screen.getByRole("heading", { level: 1, name: SALES.en.hero.title })).toBeTruthy();
+  });
+});
+
+describe("is it worth it", () => {
+  const t = SALES.he.worth;
+  const show = () => render(<Worth t={t} price={149} />);
+  const value = (id) => screen.getByTestId(id).textContent;
+
+  it("starts from one extra session at 300: 300 in, 151 after the subscription, covered by one session", () => {
+    show();
+    expect([value("worth-income"), value("worth-after")]).toEqual(["₪300", "₪151"]);
+    expect(screen.getByText(t.coveredOne)).toBeTruthy();
+  });
+
+  it("follows the visitor's numbers, and shows a shortfall as a minus", () => {
+    show();
+    fireEvent.change(screen.getByLabelText(t.priceLabel), { target: { value: "100" } });
+    expect(screen.getByText(t.coveredMany.replace("{n}", "2"))).toBeTruthy();
+    expect(value("worth-after")).toBe("−₪49");
+    fireEvent.change(screen.getByRole("slider"), { target: { value: "4" } });
+    expect([value("worth-income"), value("worth-after")]).toEqual(["₪400", "₪251"]);
+    fireEvent.change(screen.getByLabelText(t.priceLabel), { target: { value: "" } });
+    expect(value("worth-income")).toBe("₪0");
+    expect(screen.queryByText(t.coveredOne)).toBeNull();
+  });
+
+  it("says it is a scenario, not a promise, and hides without a price", () => {
+    show();
+    expect(screen.getByText(t.disclaimer)).toBeTruthy();
+    cleanup();
+    const { container } = render(<Worth t={t} price={null} />);
+    expect(container.textContent).toBe("");
   });
 });

@@ -1,10 +1,11 @@
 /**
- * The Studio's sales page, at the plain address: what the Studio is, a way to try it, how to join, the price and
- * the common questions. It loads alone (Root.jsx); the Studio and its demo load only when asked for.
+ * The Studio's sales page, at the plain address. It sells a workspace for a numerology practice: the session,
+ * the map and how it was calculated, the care that brings clients back, the open demo, the price and the
+ * common questions. It loads alone (Root.jsx); the Studio and its demo load only when asked for.
  */
 import { SALES } from "./content.js";
 import { contactLink } from "./config.js";
-import { Hero, Features, Join, Privacy, Price, Faq } from "./sections.jsx";
+import { Hero, Pillars, DemoBand, MapShowcase, CareShowcase, Worth, Tools, Privacy, Price, Faq, Final } from "./sections.jsx";
 import "./sales.css";
 
 export default function SalesPage({ he = true, onLanguage }) {
@@ -22,11 +23,16 @@ export default function SalesPage({ he = true, onLanguage }) {
       </header>
       <main>
         <Hero t={t.hero} contact={contact} />
-        <Features t={t.features} />
-        <Join t={t.join} />
+        <Pillars t={t.pillars} />
+        <DemoBand t={t.demo} />
+        <MapShowcase t={t.map} />
+        <CareShowcase t={t.care} />
+        <Worth t={t.worth} />
+        <Tools t={t.tools} />
         <Privacy t={t.privacy} />
-        <Price t={t.price} contact={contact} />
+        <Price t={t.price} join={t.join} contact={contact} />
         <Faq t={t.faq} />
+        <Final t={t.final} contact={contact} />
       </main>
       <footer className="sales-footer">
         <nav aria-label={t.footer.label}>

@@ -23,8 +23,12 @@ describe("the sales page's words", () => {
     const shape = (value) =>
       typeof value === "string" ? "text" : Array.isArray(value) ? value.map(shape) : Object.fromEntries(Object.entries(value).map(([key, v]) => [key, shape(v)]));
     expect(shape(SALES.en)).toEqual(shape(SALES.he));
-    expect(SALES.he.features.items).toHaveLength(6);
+    expect(SALES.he.pillars.items).toHaveLength(3);
+    expect(SALES.he.care.items).toHaveLength(4);
+    expect(SALES.he.tools.items).toHaveLength(6);
     expect(SALES.he.join.steps).toHaveLength(3);
+    expect(SALES.he.worth.coveredMany).toContain("{n}");
+    expect(SALES.en.worth.coveredMany).toContain("{n}");
     for (const line of [...texts(SALES.he), ...texts(SALES.en)]) {
       expect(line.trim()).not.toBe("");
       expect(line).not.toMatch(/TBD|TODO|lorem|___/i);
