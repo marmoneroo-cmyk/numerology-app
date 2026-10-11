@@ -8,6 +8,7 @@ import { useContent, numberTitle } from "../workspace/content.js";
 import { LV, cycleAt, cycleSpans, maturity, birthdayNumber, dominantNumbers, missingNumbers } from "../engine/index.js";
 import { agesText } from "./ages.js";
 import HowButton from "./HowButton.jsx";
+import Locked from "../demo/DemoLock.jsx";
 import "./summary.css";
 
 const CYCLE_NAMES = { he: ["חיפוש", "מציאה", "יתד", "שיא"], en: ["Search", "Discovery", "Anchor", "Peak"] };
@@ -122,7 +123,7 @@ export default function ReadingSummary({ r, name, now, add, he }) {
   const title = (n) => numberTitle(content, n, he);
   const year = content.YEAR_ENERGY?.[r.py];
   const none = he ? "אין" : "None";
-  const planes = r.ls.planes.map((p) => (PLANES[p] || [p, p])[he ? 0 : 1]);
+  const planes = r.ls.planes.map((p) => (Object.hasOwn(PLANES, p) ? PLANES[p] : [p, p])[he ? 0 : 1]);
   // the name numbers count Hebrew letters only: a name typed in Latin letters makes them 0
   const hebrewName = [...String(name ?? "")].some((ch) => LV[ch]);
   return (
@@ -148,7 +149,8 @@ export default function ReadingSummary({ r, name, now, add, he }) {
           <Row k="ex" label={he ? "ביטוי" : "Expression"} value={r.ex} meaning={title(r.ex)} ctx={ctx} he={he} testId="rs-ex" />
         </Group>
         <Group title={he ? "התקופה עכשיו" : "This season"}>
-          <Row k="py" label={he ? "שנה אישית" : "Personal year"} value={r.py} meaning={firstSentence(year?.[he ? "he" : "en"])} ctx={ctx} he={he} testId="rs-py" />
+          {/* the year's theme is its interpretation in short: the demo blurs it, like the full text */}
+          <Row k="py" label={he ? "שנה אישית" : "Personal year"} value={r.py} meaning={<Locked he={he}>{firstSentence(year?.[he ? "he" : "en"])}</Locked>} ctx={ctx} he={he} testId="rs-py" />
           <Row k="pm" label={he ? "חודש אישי" : "Personal month"} value={r.pm} ctx={ctx} he={he} testId="rs-pm" />
           <Row k="pd" label={he ? "יום אישי" : "Personal day"} value={r.pd} ctx={ctx} he={he} testId="rs-pd" />
           <Row k="hy" label={he ? "שנה נסתרת" : "Hidden year"} value={r.hy} ctx={ctx} he={he} testId="rs-hy" />

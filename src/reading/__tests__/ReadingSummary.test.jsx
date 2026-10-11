@@ -77,6 +77,10 @@ describe("the map summary", () => {
     expect(within(dialog).getByText("6+1 = 7")).toBeTruthy();
     expect(within(dialog).getByText("7").tagName).toBe("B");
     expect(document.activeElement).toBe(within(dialog).getByRole("button", { name: "סגירה" }));
+    // Tab stays in the window, even after a click moved the focus off its button
+    document.body.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(document.activeElement).toBe(within(dialog).getByRole("button", { name: "סגירה" }));
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(how);

@@ -121,21 +121,23 @@ const hiTo = (fullName, he) => {
   return he ? `היי${first ? ` ${first}` : ""}` : `Hi${first ? ` ${first}` : ""}`;
 };
 
-/** After a session: asks how the client is, and offers a follow-up meeting. */
+// The Hebrew messages to clients are impersonal: no singular "you" (שלך, לך, שלומך), whoever the client is.
+
+/** After a session: asks how things are, and offers a follow-up meeting. */
 export function followUpText(fullName, he, { signature } = {}) {
   const text = he
-    ? `${hiTo(fullName, true)}, רציתי לשאול מה שלומך מאז הפגישה שלנו. אם מתאים, אפשר לקבוע פגישת המשך.`
+    ? `${hiTo(fullName, true)}, רציתי לשאול מה נשמע מאז הפגישה שלנו. אם מתאים, אפשר לקבוע פגישת המשך.`
     : `${hiTo(fullName, false)}, I wanted to ask how you are since our session. If it suits you, we can book a follow-up.`;
   return withSignature(text, signature);
 }
 
-/** To a client not heard from in a long while: their personal year now, and an offer to meet. */
+/** To a client with no activity for a long while: the personal year now, and an offer to meet. */
 export function checkInText(fullName, he, { personalYear, signature } = {}) {
   const wish = wishFor(personalYear);
   let text;
   if (he) {
-    const year = wish ? ` בנומרולוגיה, השנה האישית שלך עכשיו היא ${personalYear} — ${wish.he}.` : "";
-    text = `${hiTo(fullName, true)}, מזמן לא דיברנו!${year} אם מתאים, אפשר לקבוע פגישה ולראות יחד מה מחכה לך.`;
+    const year = wish ? ` בנומרולוגיה, עכשיו זו שנה אישית ${personalYear} — ${wish.he}.` : "";
+    text = `${hiTo(fullName, true)}, מזמן לא דיברנו!${year} אם מתאים, אפשר לקבוע פגישה ולראות יחד מה מחכה בהמשך.`;
   } else {
     const year = wish ? ` In numerology, your personal year now is ${personalYear} — ${wish.en}.` : "";
     text = `${hiTo(fullName, false)}, it has been a while!${year} If it suits you, we can meet and see what is ahead.`;
@@ -143,13 +145,17 @@ export function checkInText(fullName, he, { personalYear, signature } = {}) {
   return withSignature(text, signature);
 }
 
-/** In July, when the +1 moves every personal year on: the client's new year, and an offer to meet. */
+/** In July, when the +1 moves every personal year on: the new year, and an offer to meet. */
 export function newYearText(fullName, he, { personalYear, signature } = {}) {
   const wish = wishFor(personalYear);
-  if (!wish) return checkInText(fullName, he, { signature });
-  const text = he
-    ? `${hiTo(fullName, true)}, השנה האישית החדשה שלך התחילה: ${personalYear} — ${wish.he}. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.`
-    : `${hiTo(fullName, false)}, your new personal year has begun: ${personalYear} — ${wish.en}. If it suits you, we can meet and see what it brings.`;
+  let text;
+  if (he) {
+    const year = wish ? `: ${personalYear} — ${wish.he}` : "";
+    text = `${hiTo(fullName, true)}, שנה אישית חדשה התחילה${year}. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.`;
+  } else {
+    const year = wish ? `: ${personalYear} — ${wish.en}` : "";
+    text = `${hiTo(fullName, false)}, your new personal year has begun${year}. If it suits you, we can meet and see what it brings.`;
+  }
   return withSignature(text, signature);
 }
 
@@ -160,8 +166,8 @@ export const isNewYearMonth = (now) => now.getMonth() === 6;
 export const QUIET_DAYS = 182;
 
 /**
- * The clients not heard from in `days` days or more (no edit and no reading), the longest quiet
- * first, with whole months since; archived ones are left out.
+ * The clients with no activity (no edit and no saved reading) for `days` days or more, the longest quiet
+ * first, with the months since, rounded; archived ones are left out.
  * @returns {{client: object, months: number}[]}
  */
 export function quietClients(clients, now, { days = QUIET_DAYS, count = 5 } = {}) {
@@ -170,7 +176,7 @@ export function quietClients(clients, now, { days = QUIET_DAYS, count = 5 } = {}
     .filter((c) => !c.archived && Date.parse(lastActive(c)) <= limit)
     .sort((a, b) => byActivity(b, a))
     .slice(0, count)
-    .map((client) => ({ client, months: Math.floor((now.getTime() - Date.parse(lastActive(client))) / (30.44 * DAY_MS)) }));
+    .map((client) => ({ client, months: Math.round((now.getTime() - Date.parse(lastActive(client))) / (30.44 * DAY_MS)) }));
 }
 
 /**
@@ -184,10 +190,10 @@ export function greetingText(fullName, he, { personalYear, signature } = {}) {
   let text;
   if (!wish) {
     text = he
-      ? `יום הולדת שמח${to}! מאחלים לך שנה של אור, צמיחה והגשמה.`
+      ? `יום הולדת שמח${to}! מאחלים שנה של אור, צמיחה והגשמה.`
       : `Happy birthday${to}! Wishing you a year of light, growth and fulfilment.`;
   } else if (he) {
-    text = `יום הולדת שמח${to}!\nבנומרולוגיה, השנה האישית שלך היא ${personalYear} — ${wish.he}.\nמאחלים לך שנה מלאה באור ובהגשמה.`;
+    text = `יום הולדת שמח${to}!\nבנומרולוגיה, זו שנה אישית ${personalYear} — ${wish.he}.\nמאחלים שנה מלאה באור ובהגשמה.`;
   } else {
     text = `Happy birthday${to}!\nIn numerology, your personal year is ${personalYear} — ${wish.en}.\nWishing you a year full of light and fulfilment.`;
   }

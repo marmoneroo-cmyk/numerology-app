@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* The demo, as AppWorld opens it: a reading shows its summary and numbers, and blurs its interpretations. */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, within, waitFor } from "@testing-library/react";
 import AppWorld from "../AppWorld.jsx";
 
 const canvas2d = new Proxy({}, { get: (store, key) => (key in store ? store[key] : () => canvas2d), set: (store, key, value) => ((store[key] = value), true) });
@@ -46,9 +46,12 @@ describe("the demo's reading", { timeout: 20000 }, () => {
     expect(await screen.findByRole("heading", { name: "סיכום המפה" }, LONG)).toBeTruthy();
     expect(screen.getByTestId("rs-lp").textContent).toBe("33"); // the numbers stay
     // the first chapter opens by itself; its story is blurred, and says where the full one is
+    // the year's theme in the summary is part of the interpretation: blurred too, beside its number
+    expect(screen.getByTestId("rs-py").closest("tr").querySelector(".demo-locked")).toBeTruthy();
     expect((await screen.findAllByText("הפירוש המלא נפתח במנוי", {}, LONG)).length).toBeGreaterThan(0);
+    // the first chapter opens by itself a moment later; its story is blurred
+    await waitFor(() => expect(container.querySelector(".nar-line .demo-locked")).toBeTruthy(), LONG);
     const story = container.querySelector(".nar-line .demo-locked");
-    expect(story).toBeTruthy();
     expect(story.getAttribute("aria-hidden")).toBe("true");
     expect(screen.getByRole("note").textContent).toContain("הפירושים המלאים מטושטשים");
   });

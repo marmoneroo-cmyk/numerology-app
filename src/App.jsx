@@ -383,7 +383,7 @@ function YearWave({proj,dk,he}){
         <circle cx={p.x} cy={p.y} r={p.isCurrent?7:hover===i?6:3.5} fill={p.isCurrent?ac:hover===i?ac:`${ac}88`} opacity={p.isCurrent?1:hover===i?.9:.6}>{p.isCurrent&&<animate attributeName="r" values="6;9;6" dur="3s" repeatCount="indefinite"/>}</circle>
         <text x={p.x} y={h-pad+16} textAnchor="middle" fontSize="9" fill={p.isCurrent?ac:`${ac}55`} fontWeight={p.isCurrent?"700":"400"}>{p.year}</text>
         <text x={p.x} y={p.y-12} textAnchor="middle" fontSize="11" fontWeight="700" fill={ac} opacity={p.isCurrent||hover===i?1:0} style={{transition:"opacity .3s"}}>{p.py}</text>
-        {hover===i&&!p.isCurrent&&(<foreignObject x={p.x-80} y={p.y-65} width={160} height={50}><div style={{background:dk?"rgba(15,15,30,.95)":"rgba(255,255,255,.95)",border:`1px solid ${ac}33`,borderRadius:8,padding:"6px 10px",textAlign:"center",fontSize:10,color:dk?"#e8e0d0":"#2a2520",backdropFilter:"blur(10px)"}}><div style={{fontWeight:700,color:ac}}>{p.year} — {he?D[p.py]?.t:D[p.py]?.te}</div><div style={{opacity:.6,marginTop:2}}>{p.energy[he?"he":"en"]}</div></div></foreignObject>)}
+        {hover===i&&!p.isCurrent&&(<foreignObject x={p.x-80} y={p.y-65} width={160} height={50}><div style={{background:dk?"rgba(15,15,30,.95)":"rgba(255,255,255,.95)",border:`1px solid ${ac}33`,borderRadius:8,padding:"6px 10px",textAlign:"center",fontSize:10,color:dk?"#e8e0d0":"#2a2520",backdropFilter:"blur(10px)"}}><div style={{fontWeight:700,color:ac}}>{p.year} — {he?D[p.py]?.t:D[p.py]?.te}</div><div style={{opacity:.6,marginTop:2}}><Locked he={he}>{p.energy[he?"he":"en"]}</Locked></div></div></foreignObject>)}
       </g>))}
     </svg>
   </div>);

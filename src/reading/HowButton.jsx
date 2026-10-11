@@ -29,23 +29,19 @@ function HowDialog({ how, he, onClose }) {
       if (e.key === "Escape") {
         e.stopPropagation();
         close.current();
+      } else if (e.key === "Tab") {
+        // the window has one control: Tab stays on it, wherever a click left the focus
+        e.preventDefault();
+        closeButton.current?.focus();
       }
     };
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
   }, []);
 
-  // the window has one control, so Tab stays on it
-  const keepFocus = (e) => {
-    if (e.key === "Tab") {
-      e.preventDefault();
-      closeButton.current?.focus();
-    }
-  };
-
   return (
     <div className="how-backdrop" onClick={() => close.current()}>
-      <div className="how-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} dir={he ? "rtl" : "ltr"} onClick={(e) => e.stopPropagation()} onKeyDown={keepFocus}>
+      <div className="how-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} dir={he ? "rtl" : "ltr"} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
         <div className="how-head">
           <h3 id={titleId}>{he ? `איך זה חושב: ${how.title}` : `How it was calculated: ${how.title}`}</h3>
           <button ref={closeButton} type="button" className="how-close" onClick={() => close.current()} aria-label={he ? "סגירה" : "Close"}>

@@ -4,25 +4,36 @@ import {
   followUpText, checkInText, newYearText, isNewYearMonth, quietClients,
 } from "../today.js";
 
+describe("every message to a client is impersonal in Hebrew", () => {
+  // the sales page's check (src/sales/__tests__/content.test.js): no singular "you", whoever the client is
+  const SINGULAR_YOU = /(?<![א-ת])(אתה|שלך|לך|עליך|אליך|ממך|אותך|בך|שלומך|תוכל|תוכלי|הנך)(?![א-ת])/;
+  it.each([1, 5, 9, undefined])("with personal year %s", (personalYear) => {
+    for (const make of [greetingText, followUpText, checkInText, newYearText]) {
+      expect(make("רחל כהן", true, { personalYear, signature: "שני" })).not.toMatch(SINGULAR_YOU);
+    }
+  });
+});
+
 describe("messages that bring clients back", () => {
   it("after a session: asks how the client is, and offers a follow-up", () => {
-    expect(followUpText("רחל כהן", true, { signature: "שני" })).toBe("היי רחל, רציתי לשאול מה שלומך מאז הפגישה שלנו. אם מתאים, אפשר לקבוע פגישת המשך.\nשני");
+    expect(followUpText("רחל כהן", true, { signature: "שני" })).toBe("היי רחל, רציתי לשאול מה נשמע מאז הפגישה שלנו. אם מתאים, אפשר לקבוע פגישת המשך.\nשני");
     expect(followUpText("", false)).toBe("Hi, I wanted to ask how you are since our session. If it suits you, we can book a follow-up.");
   });
 
   it("after a long quiet: the personal year now, when there is one", () => {
     expect(checkInText("רחל כהן", true, { personalYear: 7 })).toBe(
-      "היי רחל, מזמן לא דיברנו! בנומרולוגיה, השנה האישית שלך עכשיו היא 7 — שנה של העמקה, חוכמה פנימית ושקט. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה מחכה לך.",
+      "היי רחל, מזמן לא דיברנו! בנומרולוגיה, עכשיו זו שנה אישית 7 — שנה של העמקה, חוכמה פנימית ושקט. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה מחכה בהמשך.",
     );
-    expect(checkInText("רחל כהן", true)).toBe("היי רחל, מזמן לא דיברנו! אם מתאים, אפשר לקבוע פגישה ולראות יחד מה מחכה לך.");
+    expect(checkInText("רחל כהן", true)).toBe("היי רחל, מזמן לא דיברנו! אם מתאים, אפשר לקבוע פגישה ולראות יחד מה מחכה בהמשך.");
     expect(checkInText("Rachel", false, { personalYear: 1 })).toContain("your personal year now is 1 — a year of new beginnings");
   });
 
   it("in July: the new personal year", () => {
     expect(newYearText("רחל כהן", true, { personalYear: 2, signature: "שני" })).toBe(
-      "היי רחל, השנה האישית החדשה שלך התחילה: 2 — שנה של שיתוף, קשרים וסבלנות שמשתלמת. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.\nשני",
+      "היי רחל, שנה אישית חדשה התחילה: 2 — שנה של שיתוף, קשרים וסבלנות שמשתלמת. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.\nשני",
     );
-    expect(newYearText("רחל כהן", true, {})).toBe(checkInText("רחל כהן", true, {}));
+    // without a birth date there is no year to name, and no "it has been a while" to a client seen yesterday
+    expect(newYearText("רחל כהן", true, {})).toBe("היי רחל, שנה אישית חדשה התחילה. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.");
     expect([isNewYearMonth(new Date(2026, 6, 1)), isNewYearMonth(new Date(2026, 6, 31)), isNewYearMonth(new Date(2026, 7, 1))]).toEqual([true, true, false]);
   });
 });
@@ -34,7 +45,7 @@ describe("quietClients", () => {
 
   it("lists the clients quiet for half a year, the longest quiet first, with the months", () => {
     const list = quietClients([client("a", 10), client("b", 400), client("c", 200), client("d", 900, { archived: true })], NOW);
-    expect(list.map((x) => [x.client.id, x.months])).toEqual([["b", 13], ["c", 6]]);
+    expect(list.map((x) => [x.client.id, x.months])).toEqual([["b", 13], ["c", 7]]);
   });
 
   it("counts a recent reading as contact, and stops at `count`", () => {
@@ -231,19 +242,19 @@ describe("greetingLink", () => {
 
 describe("greetingText", () => {
   it("greets by the first name, in Hebrew or English", () => {
-    expect(greetingText("רחל כהן", true)).toBe("יום הולדת שמח, רחל! מאחלים לך שנה של אור, צמיחה והגשמה.");
+    expect(greetingText("רחל כהן", true)).toBe("יום הולדת שמח, רחל! מאחלים שנה של אור, צמיחה והגשמה.");
     expect(greetingText("Rachel Cohen", false)).toBe("Happy birthday, Rachel! Wishing you a year of light, growth and fulfilment.");
-    expect(greetingText("  אורי   בן דוד ", true)).toBe("יום הולדת שמח, אורי! מאחלים לך שנה של אור, צמיחה והגשמה.");
+    expect(greetingText("  אורי   בן דוד ", true)).toBe("יום הולדת שמח, אורי! מאחלים שנה של אור, צמיחה והגשמה.");
   });
 
   it("still reads well without a name", () => {
-    expect(greetingText("", true)).toBe("יום הולדת שמח! מאחלים לך שנה של אור, צמיחה והגשמה.");
+    expect(greetingText("", true)).toBe("יום הולדת שמח! מאחלים שנה של אור, צמיחה והגשמה.");
     expect(greetingText(undefined, false)).toBe("Happy birthday! Wishing you a year of light, growth and fulfilment.");
   });
 
   it("with the numbers: names the personal year and what it brings, and signs with the studio's name", () => {
     expect(greetingText("רחל כהן", true, { personalYear: 7, signature: "שני כהן" })).toBe(
-      "יום הולדת שמח, רחל!\nבנומרולוגיה, השנה האישית שלך היא 7 — שנה של העמקה, חוכמה פנימית ושקט.\nמאחלים לך שנה מלאה באור ובהגשמה.\nשני כהן",
+      "יום הולדת שמח, רחל!\nבנומרולוגיה, זו שנה אישית 7 — שנה של העמקה, חוכמה פנימית ושקט.\nמאחלים שנה מלאה באור ובהגשמה.\nשני כהן",
     );
     expect(greetingText("Rachel Cohen", false, { personalYear: 1, signature: "Shani Cohen" })).toBe(
       "Happy birthday, Rachel!\nIn numerology, your personal year is 1 — a year of new beginnings and the courage to act.\nWishing you a year full of light and fulfilment.\nShani Cohen",
@@ -262,7 +273,7 @@ describe("greetingText", () => {
 
   it("falls back to the plain greeting when the personal year is not 1 to 9", () => {
     for (const personalYear of [0, 10, 11, NaN, undefined, null, "5"]) {
-      expect(greetingText("רחל כהן", true, { personalYear, signature: "שני" })).toBe("יום הולדת שמח, רחל! מאחלים לך שנה של אור, צמיחה והגשמה.\nשני");
+      expect(greetingText("רחל כהן", true, { personalYear, signature: "שני" })).toBe("יום הולדת שמח, רחל! מאחלים שנה של אור, צמיחה והגשמה.\nשני");
     }
   });
 

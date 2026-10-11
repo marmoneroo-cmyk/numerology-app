@@ -19,7 +19,7 @@ const NOA = { fullName: "נועה ברק", phone: "054-9998877" }; // no birth d
 const ALL = [RACHEL, YOSSI, MICHAL, DANA, URI, NOA]; // ids id-1 to id-6, NOA the most recent
 
 // every personal year is 5 in these tests (see renderToday)
-const RACHEL_GREETING_HE = "יום הולדת שמח, רחל!\nבנומרולוגיה, השנה האישית שלך היא 5 — שנה של שינוי, חופש והרפתקאות.\nמאחלים לך שנה מלאה באור ובהגשמה.";
+const RACHEL_GREETING_HE = "יום הולדת שמח, רחל!\nבנומרולוגיה, זו שנה אישית 5 — שנה של שינוי, חופש והרפתקאות.\nמאחלים שנה מלאה באור ובהגשמה.";
 const RACHEL_GREETING_EN = "Happy birthday, רחל!\nIn numerology, your personal year is 5 — a year of change, freedom and adventure.\nWishing you a year full of light and fulfilment.";
 
 const EMPTY_HE = "עוד אין לקוחות. מוסיפים את הראשון ב׳לקוח חדש׳.";
@@ -110,17 +110,17 @@ describe("Today", () => {
       fireEvent.click(within(row).getByRole("button", { name: "לבדיקה של רחל כהן" }));
       expect(h.onOpenReading).toHaveBeenCalledWith("rd1");
       const message = within(row).getByRole("link", { name: "הודעה לרחל כהן" });
-      expect(message.getAttribute("href")).toBe(`https://wa.me/972521234567?text=${encodeURIComponent("היי רחל, רציתי לשאול מה שלומך מאז הפגישה שלנו. אם מתאים, אפשר לקבוע פגישת המשך.")}`);
+      expect(message.getAttribute("href")).toBe(`https://wa.me/972521234567?text=${encodeURIComponent("היי רחל, רציתי לשאול מה נשמע מאז הפגישה שלנו. אם מתאים, אפשר לקבוע פגישת המשך.")}`);
     });
 
     it("lists the clients quiet for half a year, with a message naming their personal year now", async () => {
       renderToday(fakeStore([RACHEL_OLD, YOSSI_NOW]));
       const panel = (await screen.findByRole("heading", { name: "כדאי לחזור אליהם" })).closest("section");
       const [row] = within(panel).getAllByRole("listitem");
-      expect(within(row).getByText("פעילות אחרונה לפני 9 חודשים")).toBeTruthy();
+      expect(within(row).getByText("פעילות אחרונה לפני 10 חודשים")).toBeTruthy(); // 300 days
       expect(within(panel).queryByText("יוסי לוי")).toBeNull(); // in touch two days ago
       const href = within(row).getByRole("link", { name: "הודעה לרחל כהן" }).getAttribute("href");
-      expect(decodeURIComponent(href.split("?text=")[1])).toContain("השנה האישית שלך עכשיו היא 5");
+      expect(decodeURIComponent(href.split("?text=")[1])).toContain("עכשיו זו שנה אישית 5");
       expect(within(screen.getByRole("heading", { name: "מעקבים שהגיע זמנם" }).closest("section")).getByText("אין מעקבים שהגיע זמנם.")).toBeTruthy();
     });
 
@@ -141,7 +141,7 @@ describe("Today", () => {
       const panel = (await screen.findByRole("heading", { name: "השנה האישית החדשה" })).closest("section");
       expect(within(panel).getByText("שנה אישית חדשה: 5")).toBeTruthy();
       const href = within(panel).getByRole("link", { name: "הודעה ליוסי לוי" }).getAttribute("href");
-      expect(decodeURIComponent(href.split("?text=")[1])).toContain("השנה האישית החדשה שלך התחילה: 5");
+      expect(decodeURIComponent(href.split("?text=")[1])).toContain("שנה אישית חדשה התחילה: 5");
     });
   });
 

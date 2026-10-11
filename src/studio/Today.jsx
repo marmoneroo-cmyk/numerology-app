@@ -12,6 +12,7 @@ import {
 } from "./today.js";
 import { formatDmy } from "../workspace/format.js";
 import HowButton from "../reading/HowButton.jsx";
+import Locked from "../demo/DemoLock.jsx";
 import "./today.css";
 
 const DATE_FORMAT = { weekday: "long", day: "numeric", month: "long", year: "numeric" };
@@ -103,7 +104,7 @@ function DayBand({ he, today, day, onNewReading }) {
       <div>
         <p className="st-today-date">{today.toLocaleDateString(he ? "he-IL" : "en-GB", DATE_FORMAT)}</p>
         <p className="st-today-meaning">
-          {day.title && <b>{day.title}.</b>} {day.text}
+          {day.title && <b>{day.title}.</b>} <Locked he={he}>{day.text}</Locked>
         </p>
       </div>
       <button type="button" className="st-today-btn st-today-solid st-today-go fx" onClick={() => onNewReading()}>
@@ -250,11 +251,15 @@ const NEW_YEAR_FIRST = 8;
 function Reconnect({ he, clients, now, personalYear, greetAnyone, signature }) {
   const [showAll, setShowAll] = useState(false);
   const newYear = isNewYearMonth(now);
-  const everyone = newYear ? recentClients(clients, Infinity) : [];
+  // a client with no birth date has no personal year to send
+  const everyone = newYear ? recentClients(clients, Infinity).filter((c) => c.birthDate) : [];
   const list = newYear
     ? everyone.slice(0, showAll ? everyone.length : NEW_YEAR_FIRST).map((client) => ({ client, months: null }))
     : quietClients(clients, now);
-  if (!list.length) return <p className="st-today-quiet">{he ? "כל הלקוחות היו בקשר בחצי השנה האחרונה." : "Every client was in touch in the last half year."}</p>;
+  if (!list.length) {
+    if (newYear) return <p className="st-today-quiet">{he ? "אין עדיין לקוחות עם תאריך לידה." : "No clients with a birth date yet."}</p>;
+    return <p className="st-today-quiet">{he ? "לכל הלקוחות הייתה פעילות בחצי השנה האחרונה." : "Every client had activity in the last half year."}</p>;
+  }
   const more = newYear && !showAll && everyone.length > NEW_YEAR_FIRST;
   return (
     <>
@@ -377,6 +382,7 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
         <div className="st-cols-2">
           <Panel title={he ? "מעקבים שהגיע זמנם" : "Follow-ups due"}>
             {due.data && <FollowUps {...messages} due={due.data.followUps} clients={load.data} onOpenReading={onOpenReading} />}
+            {due.error && <p className="st-today-quiet">{he ? "לא הצלחנו לטעון את המעקבים." : "The follow-ups did not load."}</p>}
           </Panel>
           <Panel title={isNewYearMonth(today) ? (he ? "השנה האישית החדשה" : "The new personal year") : he ? "כדאי לחזור אליהם" : "Worth getting back to"}>
             <Reconnect {...messages} clients={load.data} now={today} personalYear={personalYear} />

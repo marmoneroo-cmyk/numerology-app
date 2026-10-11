@@ -1,7 +1,9 @@
 /**
  * The demo shows every title and number, but not the interpretations: those are what a subscription
- * buys. Inside the demo an interpretation is blurred, and its letters are swapped first, so the
- * page's code does not hold the text either.
+ * buys. Inside the demo an interpretation is blurred, and its letters are swapped first, so the page
+ * itself (its DOM: what copying, reading mode or a screen reader get) does not hold the text either.
+ * This is a showcase lock, not access control: the texts ship with the app's script, which the public
+ * customer page needs anyway.
  */
 import { createContext, isValidElement, useContext } from "react";
 import "./demoLock.css";
