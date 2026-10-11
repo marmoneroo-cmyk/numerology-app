@@ -1,11 +1,13 @@
 /**
  * The "היום" home: today's universal day with a way into a new reading, the
  * clients' birthdays this week, the most recently active clients, quick
- * actions, and today's card. It reads the client list from the workspace store
- * once; the day, the numbers and the deck come in from the app.
+ * actions, the follow-ups that are due (each can be marked done), the clients
+ * worth a word, and today's card. It reads the client list and the summary
+ * from the workspace store; the day, the numbers and the deck come in from the app.
  */
 import { useEffect, useRef, useState } from "react";
 import { useLoad } from "../workspace/ui.jsx";
+import { NotFoundError } from "../data/store.js";
 import {
   checkInText, followUpText, greetingLink, greetingText, initialsOf, isNewYearMonth, newYearText, quietClients,
   recentClients, shareLink, upcomingBirthdays,
@@ -208,36 +210,97 @@ function Birthdays({ he, clients, today, lifePath, personalYear, greetAnyone, si
   );
 }
 
-/** The readings whose follow-up date has come: open the reading, or ask the client how they are. */
-function FollowUps({ he, due, clients, onOpenReading, greetAnyone, signature }) {
+/**
+ * Marking a due follow-up done: its date is cleared (as the clients screen does) and `due` reloads. A
+ * reading deleted meanwhile just leaves the list. A press while that row is being marked (until the list
+ * has reloaded) is ignored. Once the row is gone, a focus left with nowhere to be moves to the "done"
+ * button that took its place (or the last one), or else to the panel's title; a focus the user has moved
+ * on meanwhile stays put. `failed` is the follow-up whose update failed; it clears when the next try
+ * starts, so a second failure is announced again. No `markDone` for a store that cannot update.
+ */
+function useMarkDone(store, due, title) {
+  const [failed, setFailed] = useState(null);
+  const busy = useRef(new Set());
+  const refocusAt = useRef(null);
+  useEffect(() => {
+    if (refocusAt.current === null) return;
+    const at = refocusAt.current;
+    refocusAt.current = null;
+    const active = document.activeElement;
+    if (active && active !== document.body && active.isConnected) return;
+    const buttons = title.current?.closest("section")?.querySelectorAll("button[data-done]") || [];
+    (buttons[Math.min(at, buttons.length - 1)] || title.current)?.focus();
+  }, [due.data, due.error, title]);
+  if (!store.readings) return { markDone: undefined, failed: null };
+  const markDone = async (f, index) => {
+    if (busy.current.has(f.readingId)) return;
+    busy.current.add(f.readingId);
+    setFailed(null);
+    try {
+      await store.readings.update(f.readingId, { followUp: null });
+      refocusAt.current = index;
+      await due.reload(); // never rejects: a failed load shows in the panel
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        refocusAt.current = index;
+        await due.reload();
+      } else {
+        setFailed(f); // the row stays, and the alert names the client
+      }
+    } finally {
+      busy.current.delete(f.readingId);
+    }
+  };
+  return { markDone, failed };
+}
+
+/** The readings whose follow-up date has come: open the reading, ask the client how they are, or mark it done. */
+function FollowUps({ he, due, clients, onOpenReading, onDone, failed, greetAnyone, signature }) {
   if (!due.length) return <p className="st-today-quiet">{he ? "אין מעקבים שהגיע זמנם." : "No follow-ups due."}</p>;
   const byId = new Map(clients.map((c) => [c.id, c]));
+  const clientOf = (f) => byId.get(f.clientId) || { fullName: f.clientName };
+  // a failed row that has since left the list (marked done elsewhere, say) needs no alert
+  const failedName = failed && due.some((f) => f.readingId === failed.readingId) ? clientOf(failed).fullName : null;
   return (
-    <ul className="st-today-rows">
-      {due.map((f) => {
-        const client = byId.get(f.clientId) || { fullName: f.clientName };
-        const text = followUpText(client.fullName, he, { signature });
-        const link = messageLink(client, text, greetAnyone);
-        return (
-          <li key={f.readingId} className="st-today-row">
-            <Initials name={client.fullName} />
-            <div className="st-today-who">
-              <b className="st-today-name">{client.fullName}</b>
-              <span className="st-today-sub">{he ? `מעקב מ-${formatDmy(f.followUp)}` : `Follow-up from ${formatDmy(f.followUp)}`}</span>
-            </div>
-            <span className="st-today-actions">
-              {onOpenReading && (
-                <button type="button" className="st-today-btn st-today-small fx" onClick={() => onOpenReading(f.readingId)}>
-                  {he ? "לבדיקה" : "Open"}
-                  <span className="st-sr">{he ? ` של ${client.fullName}` : ` for ${client.fullName}`}</span>
-                </button>
-              )}
-              {link && <MessageButton he={he} href={link} text={text} client={client} label={he ? "הודעה" : "Message"} />}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      {failedName && (
+        <p className="st-today-error" role="alert">
+          {he ? `לא הצלחנו לסמן את המעקב של ${failedName} כבוצע. אפשר לנסות שוב.` : `${failedName}'s follow-up was not marked done. Try again.`}
+        </p>
+      )}
+      <ul className="st-today-rows">
+        {due.map((f, i) => {
+          const client = clientOf(f);
+          const text = followUpText(client.fullName, he, { signature });
+          const link = messageLink(client, text, greetAnyone);
+          return (
+            <li key={f.readingId} className="st-today-row st-today-row-wrap">
+              <Initials name={client.fullName} />
+              <div className="st-today-who">
+                <b className="st-today-name">{client.fullName}</b>
+                <span className="st-today-sub">{he ? `מעקב מ-${formatDmy(f.followUp)}` : `Follow-up from ${formatDmy(f.followUp)}`}</span>
+              </div>
+              <span className="st-today-row-actions">
+                {onOpenReading && (
+                  <button type="button" className="st-today-btn st-today-small fx" onClick={() => onOpenReading(f.readingId)}>
+                    {he ? "לבדיקה" : "Open"}
+                    <span className="st-sr">{he ? ` של ${client.fullName}` : ` for ${client.fullName}`}</span>
+                  </button>
+                )}
+                {link && <MessageButton he={he} href={link} text={text} client={client} label={he ? "הודעה" : "Message"} />}
+                {onDone && (
+                  <button type="button" data-done className="st-today-btn st-today-small fx" onClick={() => onDone(f, i)}>
+                    {he ? "בוצע" : "Done"}
+                    {/* starts with a space: a screen reader may or may not put one before it */}
+                    <span className="st-sr">{he ? ` — המעקב של ${client.fullName}` : ` — ${client.fullName}'s follow-up`}</span>
+                  </button>
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }
 
@@ -355,7 +418,10 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
   const load = useLoad(() => store.clients.list(), [store]);
   const due = useLoad(() => store.summary(now()), [store]);
   const firstTitle = useRef(null);
+  const followTitle = useRef(null);
   const retry = useRetry(load, firstTitle);
+  const retryDue = useRetry(due, followTitle);
+  const done = useMarkDone(store, due, followTitle);
   const today = now();
   const messages = { he, greetAnyone, signature };
   return (
@@ -380,9 +446,20 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
       {/* once there are clients: the ones to follow up, and the ones worth a word */}
       {load.data?.length > 0 && (
         <div className="st-cols-2">
-          <Panel title={he ? "מעקבים שהגיע זמנם" : "Follow-ups due"}>
-            {due.data && <FollowUps {...messages} due={due.data.followUps} clients={load.data} onOpenReading={onOpenReading} />}
-            {due.error && <p className="st-today-quiet">{he ? "לא הצלחנו לטעון את המעקבים." : "The follow-ups did not load."}</p>}
+          <Panel title={he ? "מעקבים שהגיע זמנם" : "Follow-ups due"} titleRef={followTitle}>
+            {due.data && (
+              <FollowUps {...messages} due={due.data.followUps} clients={load.data} onOpenReading={onOpenReading} onDone={done.markDone} failed={done.failed} />
+            )}
+            {due.error && (
+              <div className="st-today-failed">
+                <p role="alert" className="st-today-error">
+                  {he ? "לא הצלחנו לטעון את המעקבים." : "The follow-ups did not load."}
+                </p>
+                <button type="button" className="st-today-btn st-today-small fx" onClick={() => retryDue()}>
+                  {he ? "לנסות שוב" : "Try again"}
+                </button>
+              </div>
+            )}
           </Panel>
           <Panel title={isNewYearMonth(today) ? (he ? "השנה האישית החדשה" : "The new personal year") : he ? "כדאי לחזור אליהם" : "Worth getting back to"}>
             <Reconnect {...messages} clients={load.data} now={today} personalYear={personalYear} />

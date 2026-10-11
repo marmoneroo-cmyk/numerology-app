@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, within, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, within, cleanup, waitFor } from "@testing-library/react";
 import Today from "../Today.jsx";
 import { createStore } from "../../data/store.js";
 import { memoryBackend } from "../../data/memoryBackend.js";
@@ -111,6 +111,144 @@ describe("Today", () => {
       expect(h.onOpenReading).toHaveBeenCalledWith("rd1");
       const message = within(row).getByRole("link", { name: "הודעה לרחל כהן" });
       expect(message.getAttribute("href")).toBe(`https://wa.me/972521234567?text=${encodeURIComponent("היי רחל, רציתי לשאול מה נשמע מאז הפגישה שלנו. אם מתאים, אפשר לקבוע פגישת המשך.")}`);
+      expect(within(row).queryByRole("button", { name: /בוצע/ })).toBeNull(); // a store that cannot update readings
+    });
+
+    describe("marking a follow-up done", () => {
+      /** A saved year reading of `clientId` (id-1 is RACHEL, id-2 DANA) whose follow-up date is `followUp`. */
+      const dueReading = (clientId, followUp) => ({
+        clientId, type: "yearCycle", input: { birthDate: "1985-10-07", add: false }, result: { proj: [{ year: 2026, py: 5, isCurrent: true }] },
+        engineVersion: "2.0.0", computedFor: "2026-09-01T09:00:00.000Z", followUp,
+      });
+      /** The store with RACHEL and DANA, each with a follow-up due; `update` stands in for the readings' update. */
+      async function dueStore(update) {
+        const store = await storeWith([RACHEL, DANA]);
+        await store.readings.create(dueReading("id-1", "2026-10-01"));
+        await store.readings.create(dueReading("id-2", "2026-10-02"));
+        return update ? { ...store, readings: { ...store.readings, update } } : store;
+      }
+      const followUps = async () => (await screen.findByRole("heading", { name: "מעקבים שהגיע זמנם" })).closest("section");
+      const DONE_RACHEL = "בוצע — המעקב של רחל כהן";
+      const DONE_DANA = "בוצע — המעקב של דנה שמיר";
+
+      it("clears the date, drops the row, and moves the focus to the next one, then to the panel's title", async () => {
+        const store = await dueStore();
+        renderToday(store);
+        const panel = await followUps();
+        const done = await within(panel).findByRole("button", { name: DONE_RACHEL });
+        expect(document.activeElement).toBe(document.body); // loading moves no focus
+        fireEvent.click(done);
+        await waitFor(() => expect(within(panel).queryByRole("button", { name: DONE_RACHEL })).toBeNull());
+        await waitFor(() => expect(document.activeElement).toBe(within(panel).getByRole("button", { name: DONE_DANA })));
+        fireEvent.click(within(panel).getByRole("button", { name: DONE_DANA }));
+        expect(await within(panel).findByText("אין מעקבים שהגיע זמנם.")).toBeTruthy();
+        await waitFor(() => expect(document.activeElement).toBe(within(panel).getByRole("heading", { name: "מעקבים שהגיע זמנם" })));
+        expect((await store.summary(NOW)).followUps).toEqual([]);
+        expect((await store.readings.listRecent()).map((r) => r.followUp)).toEqual([null, null]);
+      });
+
+      it("leaves the focus where the user has moved it meanwhile", async () => {
+        renderToday(await dueStore());
+        const panel = await followUps();
+        const done = await within(panel).findByRole("button", { name: DONE_RACHEL });
+        const elsewhere = screen.getByRole("button", { name: "לקוח חדש" });
+        elsewhere.focus(); // pressed done, then went on to another button before the list reloaded
+        fireEvent.click(done);
+        await waitFor(() => expect(within(panel).queryByRole("button", { name: DONE_RACHEL })).toBeNull());
+        expect(within(panel).getByRole("button", { name: DONE_DANA })).toBeTruthy();
+        expect(document.activeElement).toBe(elsewhere);
+      });
+
+      it("shows the list failing to reload after a follow-up is marked, with the focus on the title and a retry", async () => {
+        const store = await dueStore();
+        let calls = 0;
+        const summary = (...args) => (++calls === 2 ? Promise.reject(new Error("offline")) : store.summary(...args));
+        renderToday({ ...store, summary });
+        const panel = await followUps();
+        fireEvent.click(await within(panel).findByRole("button", { name: DONE_RACHEL }));
+        expect((await within(panel).findByRole("alert")).textContent).toBe("לא הצלחנו לטעון את המעקבים.");
+        await waitFor(() => expect(document.activeElement).toBe(within(panel).getByRole("heading", { name: "מעקבים שהגיע זמנם" })));
+        fireEvent.click(within(panel).getByRole("button", { name: "לנסות שוב" }));
+        expect(await within(panel).findByRole("button", { name: DONE_DANA })).toBeTruthy();
+        expect(within(panel).queryByRole("button", { name: DONE_RACHEL })).toBeNull(); // it was marked
+      });
+
+      it("names the client when it could not, keeps the row, and says it again on a second failure", async () => {
+        const update = vi.fn(async () => {
+          throw new Error("offline");
+        });
+        renderToday(await dueStore(update));
+        const panel = await followUps();
+        const done = await within(panel).findByRole("button", { name: DONE_RACHEL });
+        fireEvent.click(done);
+        const first = await within(panel).findByRole("alert");
+        expect(first.textContent).toBe("לא הצלחנו לסמן את המעקב של רחל כהן כבוצע. אפשר לנסות שוב.");
+        expect(update).toHaveBeenCalledWith(expect.any(String), { followUp: null });
+        fireEvent.click(done);
+        await waitFor(() => expect(update).toHaveBeenCalledTimes(2));
+        const second = await within(panel).findByRole("alert");
+        expect(second).not.toBe(first); // put back, so a screen reader reads it again
+        expect(within(panel).getByRole("button", { name: DONE_RACHEL })).toBe(done);
+      });
+
+      it("clears the failure once another follow-up is marked done", async () => {
+        const store = await dueStore();
+        const update = vi.fn((id, patch) => (update.mock.calls.length === 1 ? Promise.reject(new Error("offline")) : store.readings.update(id, patch)));
+        renderToday({ ...store, readings: { ...store.readings, update } });
+        const panel = await followUps();
+        fireEvent.click(await within(panel).findByRole("button", { name: DONE_RACHEL }));
+        expect(await within(panel).findByRole("alert")).toBeTruthy();
+        fireEvent.click(within(panel).getByRole("button", { name: DONE_DANA }));
+        await waitFor(() => expect(within(panel).queryByRole("button", { name: DONE_DANA })).toBeNull());
+        expect(within(panel).queryByRole("alert")).toBeNull();
+        expect(within(panel).getByRole("button", { name: DONE_RACHEL })).toBeTruthy(); // still due
+      });
+
+      it("sends one update for a double press", async () => {
+        const store = await dueStore();
+        let finish;
+        const update = vi.fn((id, patch) => new Promise((resolve) => (finish = () => resolve(store.readings.update(id, patch)))));
+        renderToday({ ...store, readings: { ...store.readings, update } });
+        const panel = await followUps();
+        const done = await within(panel).findByRole("button", { name: DONE_RACHEL });
+        fireEvent.click(done);
+        fireEvent.click(done);
+        expect(update).toHaveBeenCalledTimes(1);
+        finish();
+        await waitFor(() => expect(within(panel).queryByRole("button", { name: DONE_RACHEL })).toBeNull());
+        expect(update).toHaveBeenCalledTimes(1);
+      });
+
+      it("drops a follow-up whose reading was deleted meanwhile, with no error", async () => {
+        const store = await dueStore();
+        renderToday(store);
+        const panel = await followUps();
+        const done = await within(panel).findByRole("button", { name: DONE_RACHEL });
+        const rachels = (await store.readings.listRecent()).find((r) => r.clientId === "id-1");
+        await store.readings.remove(rachels.id); // on another device, say
+        fireEvent.click(done);
+        await waitFor(() => expect(within(panel).queryByRole("button", { name: DONE_RACHEL })).toBeNull());
+        expect(within(panel).queryByRole("alert")).toBeNull();
+        expect(within(panel).getByRole("button", { name: DONE_DANA })).toBeTruthy();
+      });
+
+      it("offers to try again when the follow-ups do not load", async () => {
+        const store = await dueStore();
+        let calls = 0;
+        const summary = (...args) => (++calls === 1 ? Promise.reject(new Error("offline")) : store.summary(...args));
+        renderToday({ ...store, summary });
+        const panel = await followUps();
+        expect((await within(panel).findByRole("alert")).textContent).toBe("לא הצלחנו לטעון את המעקבים.");
+        fireEvent.click(within(panel).getByRole("button", { name: "לנסות שוב" }));
+        expect(await within(panel).findByRole("button", { name: DONE_RACHEL })).toBeTruthy();
+        // the pressed button is gone: the focus goes to the panel's title
+        await waitFor(() => expect(document.activeElement).toBe(within(panel).getByRole("heading", { name: "מעקבים שהגיע זמנם" })));
+      });
+
+      it("labels the button in English too", async () => {
+        renderToday(await dueStore(), { he: false });
+        expect(await screen.findByRole("button", { name: "Done — רחל כהן's follow-up" })).toBeTruthy();
+      });
     });
 
     it("lists the clients quiet for half a year, with a message naming their personal year now", async () => {

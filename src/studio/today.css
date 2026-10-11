@@ -184,11 +184,19 @@
   font-size: 13px;
   font-weight: 500;
 }
-.st-today-actions {
+/* a follow-up's buttons: side by side, and under the name when the row is too narrow for both */
+.st-today-row-wrap {
+  flex-wrap: wrap;
+}
+.st-today-row-wrap .st-today-who {
+  flex-basis: 140px;
+}
+.st-today-row-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 6px;
+  margin-inline-start: auto;
 }
 .st-today-who {
   flex: 1;
