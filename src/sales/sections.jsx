@@ -5,9 +5,9 @@ import { PRICE_MONTHLY, TRIAL_DAYS } from "./config.js";
 
 /** Real screenshots of the demo (public/sales), sample clients only; sizes keep the page from jumping. */
 const SHOTS = {
-  summary: { src: "/sales/shot-summary.webp", width: 1280, height: 1118 },
+  summary: { src: "/sales/shot-summary.webp", width: 1280, height: 1124 },
   how: { src: "/sales/shot-how.webp", width: 1040, height: 558 },
-  today: { src: "/sales/shot-today.webp", width: 1400, height: 856 },
+  today: { src: "/sales/shot-today.webp", width: 1400, height: 874 },
 };
 
 /** A link to the owner: WhatsApp (in a new tab) or an email. Nothing without a contact. */
