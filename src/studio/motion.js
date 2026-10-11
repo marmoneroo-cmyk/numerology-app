@@ -13,9 +13,19 @@ export function vibrate(ms, nav = navigator) {
   }
 }
 
-/** Runs `update` inside a view transition where the browser has one and motion is welcome; otherwise directly. */
+/**
+ * Runs `update` inside a view transition where the browser has one and motion is welcome; otherwise directly.
+ * A transition cut short (another screen change starts during it) rejects its promises; the update has still
+ * run, so that is no error, and nothing is left unhandled in the console.
+ */
 export function withViewTransition(update, doc = document) {
-  if (doc.startViewTransition && !prefersReducedMotion()) return doc.startViewTransition(update);
+  if (doc.startViewTransition && !prefersReducedMotion()) {
+    const transition = doc.startViewTransition(update);
+    const ignore = () => {};
+    transition?.ready?.catch?.(ignore);
+    transition?.finished?.catch?.(ignore);
+    return transition;
+  }
   update();
   return null;
 }

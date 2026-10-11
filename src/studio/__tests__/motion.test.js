@@ -56,6 +56,22 @@ describe("motion", () => {
     expect(update).toHaveBeenCalledTimes(3);
   });
 
+  it("leaves no unhandled rejection when the browser cuts a transition short (a second screen change during the first)", async () => {
+    motion(false);
+    const update = vi.fn();
+    const aborted = () => Promise.reject(new DOMException("Transition was aborted because of invalid state", "InvalidStateError"));
+    const doc = {
+      startViewTransition: vi.fn((fn) => {
+        fn();
+        return { ready: aborted(), finished: aborted(), updateCallbackDone: Promise.resolve() };
+      }),
+    };
+    withViewTransition(update, doc);
+    withViewTransition(update, doc);
+    await new Promise((resolve) => setTimeout(resolve, 0)); // an unhandled rejection would fail the run here
+    expect(update).toHaveBeenCalledTimes(2); // the screen still changed both times
+  });
+
   it("draws the gold ripple on .fx elements only, removes it, and can be detached", () => {
     motion(false);
     vi.useFakeTimers();
