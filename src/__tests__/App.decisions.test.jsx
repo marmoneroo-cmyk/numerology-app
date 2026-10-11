@@ -90,7 +90,7 @@ describe("the day's three numbers, each under its own name", { timeout: 20000 },
     studio();
     await signedIn();
     tool("קריאה");
-    setField(await screen.findByPlaceholderText("הכנס את שמך בעברית...", {}, LONG), "מאיה לוי");
+    setField(await screen.findByPlaceholderText("השם המלא בעברית...", {}, LONG), "מאיה לוי");
     fireEvent.click(screen.getByRole("button", { name: "המשך ←" }));
     const date = await screen.findByPlaceholderText("dd.mm.yyyy", {}, LONG);
     setField(date, "19.04.1986");
@@ -118,7 +118,7 @@ describe("one score for a couple, on every screen", { timeout: 20000 }, () => {
     setField(dates[0], "06.10.1990");
     setField(names[1], "רחל כהן");
     setField(dates[1], "07.10.1985");
-    fireEvent.click(screen.getByRole("button", { name: "בדוק התאמה" }));
+    fireEvent.click(screen.getByRole("button", { name: "לבדוק התאמה" }));
     expect(await screen.findByText("58%", {}, LONG)).toBeTruthy(); // the tab used to give 63%
 
     tool("מחשבונים");
@@ -131,7 +131,7 @@ describe("one score for a couple, on every screen", { timeout: 20000 }, () => {
     setField(firstDate, "06.10.1990");
     setField(second, "רחל כהן");
     setField(secondDate, "07.10.1985");
-    fireEvent.click(within(area).getByRole("button", { name: "חשב התאמה" }));
+    fireEvent.click(within(area).getByRole("button", { name: "לחשב התאמה" }));
     expect(await within(area).findByText("58%", {}, LONG)).toBeTruthy();
   });
 
@@ -145,10 +145,27 @@ describe("one score for a couple, on every screen", { timeout: 20000 }, () => {
     setField(dates[0], "19.04.1986");
     setField(names[1], "יוסי לוי");
     setField(dates[1], "06.10.1990");
-    fireEvent.click(screen.getByRole("button", { name: "בדוק התאמה" }));
+    fireEvent.click(screen.getByRole("button", { name: "לבדוק התאמה" }));
     // 50, life paths 2 and 8 (6 apart) −5, souls 5 and 6 +8 = 53
     expect(await screen.findByText("53%", {}, LONG)).toBeTruthy();
     expect(within(toolArea()).getAllByText("11/2").length).toBeGreaterThan(0);
+  });
+
+  it("compares a master soul in one digit on the התאמה tab, and shows it beside that digit: 11/2 (the owner, 2026-10-12)", async () => {
+    studio();
+    await signedIn();
+    tool("התאמה");
+    const names = await screen.findAllByPlaceholderText("שם בעברית...", {}, LONG);
+    const dates = screen.getAllByPlaceholderText("dd.mm.yyyy");
+    setField(names[0], "הוד"); // soul ה5 ו6 = 11
+    setField(dates[0], "01.01.1990");
+    setField(names[1], "אביב"); // soul א1 י1 = 2
+    setField(dates[1], "01.01.1990");
+    fireEvent.click(screen.getByRole("button", { name: "לבדוק התאמה" }));
+    // the same date +20, souls 2 and 2 +15, names 6 and 6 +10: 95 (with the 11 kept, the souls would be 9 apart: 80)
+    expect(await screen.findByText("95%", {}, LONG)).toBeTruthy();
+    const soulRow = within(toolArea()).getByRole("row", { name: /קול הנשמה/ });
+    expect(within(soulRow).getByText("11/2")).toBeTruthy();
   });
 
   it("shows a master life path beside its base in the personal profile: 11/2", async () => {
@@ -158,7 +175,7 @@ describe("one score for a couple, on every screen", { timeout: 20000 }, () => {
     fireEvent.click(await screen.findByRole("button", { name: "פרופיל אישי" }, LONG));
     setField(await screen.findByPlaceholderText("שם בעברית...", {}, LONG), "מאיה לוי");
     setField(screen.getByPlaceholderText("dd.mm.yyyy"), "19.04.1986");
-    fireEvent.click(screen.getByRole("button", { name: "גלה את עצמך" }));
+    fireEvent.click(screen.getByRole("button", { name: "לבנות פרופיל" }));
     expect((await screen.findByTestId("profile-lp", {}, LONG)).textContent).toBe("11/2");
   });
 });
@@ -189,7 +206,7 @@ describe("the four periods, in order, with their hidden numbers", { timeout: 200
     setField(await screen.findByPlaceholderText("שם פרטי...", {}, LONG), "מאיה");
     setField(screen.getByPlaceholderText("שם משפחה..."), "לוי");
     setField(screen.getByPlaceholderText("dd.mm.yyyy"), "19.04.1986");
-    fireEvent.click(within(toolArea()).getByRole("button", { name: "חשב" }));
+    fireEvent.click(within(toolArea()).getByRole("button", { name: "לחשב" }));
     await expectPeriods();
   });
 
@@ -201,7 +218,7 @@ describe("the four periods, in order, with their hidden numbers", { timeout: 200
     const [name] = toolArea().querySelectorAll("input.gi");
     setField(name, "מאיה לוי");
     setField(within(toolArea()).getByPlaceholderText("dd.mm.yyyy"), "19.04.1986");
-    fireEvent.click(within(toolArea()).getByRole("button", { name: "חשב" }));
+    fireEvent.click(within(toolArea()).getByRole("button", { name: "לחשב" }));
     await expectPeriods();
   });
 });

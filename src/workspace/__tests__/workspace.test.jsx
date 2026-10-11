@@ -137,7 +137,7 @@ describe("workspace", () => {
     await tap("בדיקה חדשה");
     // October: the +1 season (July 1 - December 31), so the personal year 6 becomes 7, by itself
     expect((await screen.findByRole("note")).textContent).toMatch(/^נוסף 1 לשנה האישית/);
-    await tap("חשב ושמור");
+    await tap("לחשב ולשמור");
     expect(await screen.findByText(`גרסת מנוע ${ENGINE_VERSION}`)).toBeTruthy();
     // the saved map opens on its summary: every number on one screen
     expect(screen.getByRole("heading", { name: "סיכום המפה" })).toBeTruthy();
@@ -161,6 +161,36 @@ describe("workspace", () => {
     await openClient("שני כהן אזולאי");
     await tap(/שביל הגורל 33/);
     expect(await screen.findByText("תובנה שנשמרה")).toBeTruthy();
+  });
+
+  it("shows the insights saved before 2026-10-12 in today's wording, which never speaks to the reader in the singular", async () => {
+    await setup(async (s) => {
+      const c = await s.clients.create(SHANI);
+      const calc = fullCalc(15, 8, 1990, SHANI.fullName, false, NOW);
+      const saved = [{ icon: "sparkle", t: "יקיצה רוחנית", d: "אתה בנקודת שיא רוחנית." }]; // as engine 2.1 saved it
+      await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: false }, result: { ...calc, insights: { he: saved, en: saved } }, engineVersion: "2.1.0", computedFor: NOW.toISOString() });
+    });
+    await openClient("שני כהן אזולאי");
+    await tap(/שביל הגורל 33/);
+    expect(await screen.findByText("זו נקודת שיא רוחנית.")).toBeTruthy();
+    expect(screen.queryByText("אתה בנקודת שיא רוחנית.")).toBeNull();
+  });
+
+  it("shows a master soul in a saved match beside the digit it was compared in: 11/2", async () => {
+    await setup(async (s) => {
+      await s.clients.create({ fullName: "אביב", birthDate: "1990-01-01" });
+      await s.clients.create({ fullName: "הוד", birthDate: "1990-01-01" });
+    });
+    await openClient("הוד");
+    await tap("בדיקה חדשה");
+    await tapTab("התאמה");
+    const picker = await screen.findByLabelText("בחירה מהלקוחות");
+    fireEvent.change(picker, { target: { value: within(picker).getByRole("option", { name: /אביב/ }).value } });
+    click("לחשב ולשמור");
+    // the same date: +20; souls 11 (ה5 ו6) and 2 (א1 י1) compared as 2 and 2: +15; names 6 and 6: +10 → 95
+    expect(await screen.findByText("95%")).toBeTruthy();
+    const soulRow = screen.getByRole("row", { name: /קול הנשמה/ });
+    expect(within(soulRow).getByText("11/2")).toBeTruthy();
   });
 
   it("shows a saved map in meeting mode, from its stored snapshot, when the Studio offers it", async () => {
@@ -204,7 +234,7 @@ describe("workspace", () => {
     const picker = await screen.findByLabelText("בחירה מהלקוחות");
     const avir = within(picker).getByRole("option", { name: /אביר אזולאי/ });
     fireEvent.change(picker, { target: { value: avir.value } });
-    click("חשב ושמור");
+    click("לחשב ולשמור");
     const expected = matchReading(personOf("שני כהן אזולאי", "1990-08-15"), personOf("אביר אזולאי", "1987-11-03"), "love");
     expect(await screen.findByText(`${expected.score}%`)).toBeTruthy();
     expect(screen.getByText("אהבה, יופי ויצירה")).toBeTruthy();
@@ -220,7 +250,7 @@ describe("workspace", () => {
     await tapTab("התאמה");
     const picker = await screen.findByLabelText("בחירה מהלקוחות");
     fireEvent.change(picker, { target: { value: within(picker).getByRole("option", { name: /רחל כהן/ }).value } });
-    click("חשב ושמור");
+    click("לחשב ולשמור");
     // 50; life paths 8 and 4, 4 apart: nothing; souls 6 and 5, 1 apart: +8 → 58 (App.decisions.test.jsx: the same on the tab)
     expect(await screen.findByText("58%")).toBeTruthy();
   });
@@ -235,7 +265,7 @@ describe("workspace", () => {
     await tapTab("התאמה");
     const picker = await screen.findByLabelText("בחירה מהלקוחות");
     fireEvent.change(picker, { target: { value: within(picker).getByRole("option", { name: /יוסי לוי/ }).value } });
-    click("חשב ושמור");
+    click("לחשב ולשמור");
     // 1+9+0+4+1+9+8+6 = 38 → 11, compared as 2: 50, 2 and 8 (6 apart) −5, souls 5 and 6 +8 = 53
     expect(await screen.findByText("53%")).toBeTruthy();
     expect(screen.getByText("11/2")).toBeTruthy();
@@ -250,7 +280,7 @@ describe("workspace", () => {
     await tapTab("הורה-ילד");
     fireEvent.change(await screen.findByLabelText("שם האדם השני"), { target: { value: "נועה כהן" } });
     fireEvent.change(screen.getByLabelText("תאריך הלידה של האדם השני"), { target: { value: "07.03.2015" } });
-    click("חשב ושמור");
+    click("לחשב ולשמור");
     expect(await screen.findByText("55%")).toBeTruthy();
   });
 

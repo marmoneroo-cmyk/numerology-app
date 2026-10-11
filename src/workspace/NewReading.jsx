@@ -162,7 +162,7 @@ export default function NewReading({ store, go, he, c, now, clientId }) {
         )}
 
         {error && <p role="alert" style={{ color: c.danger, fontSize: 13 }}>{error}</p>}
-        <button className="gb" style={btnPrimary} onClick={run} disabled={busy}>{he ? "חשב ושמור" : "Calculate and save"}</button>
+        <button className="gb" style={btnPrimary} onClick={run} disabled={busy}>{he ? "לחשב ולשמור" : "Calculate and save"}</button>
       </Card>
     </div>
   );

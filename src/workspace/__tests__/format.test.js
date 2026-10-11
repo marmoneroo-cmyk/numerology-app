@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { parseDmy, parseBirthDate, formatDmy, formatStamp, personOf, personName, summarizeReading, formatBytes, errorText, countLabel, lifePathText } from "../format.js";
+import { parseDmy, parseBirthDate, formatDmy, formatStamp, personOf, personName, summarizeReading, formatBytes, errorText, countLabel, comparedText } from "../format.js";
 
-describe("a life path compared in one digit", () => {
+describe("a number compared in one digit (a life path, name, soul or expression in a match)", () => {
   it("shows a master beside that digit, and the digit alone otherwise or when the original was not saved", () => {
-    expect([lifePathText(11, 2), lifePathText(22, 4), lifePathText(33, 6)]).toEqual(["11/2", "22/4", "33/6"]);
-    expect([lifePathText(7, 7), lifePathText(undefined, 4)]).toEqual(["7", "4"]);
+    expect([comparedText(11, 2), comparedText(22, 4), comparedText(33, 6)]).toEqual(["11/2", "22/4", "33/6"]);
+    expect([comparedText(7, 7), comparedText(undefined, 4)]).toEqual(["7", "4"]);
   });
 });
 

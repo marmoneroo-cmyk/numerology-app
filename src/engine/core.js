@@ -18,7 +18,10 @@
 // 2.1.0: the owner's decisions on the review (2026-10-11, temporary defaults): the psychological map shows 0
 //        for a trait no number gives points to (no more filler), the live calculator keeps the master numbers,
 //        and a couple scores the same everywhere (the studio's love match; see compat.js)
-export const ENGINE_VERSION = "2.1.0";
+// 2.2.0: the owner's answers of 2026-10-12: compatibility compares the name, soul and expression in one digit
+//        too (their originals come back beside them), and the Hebrew recommendations speak of the numbers,
+//        not to the reader in the singular (same rules)
+export const ENGINE_VERSION = "2.2.0";
 
 /** Hebrew letter values, final forms included. Any other character counts 0. Frozen: shared by every reading. */
 export const LV = Object.freeze({

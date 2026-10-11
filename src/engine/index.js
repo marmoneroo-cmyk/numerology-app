@@ -36,5 +36,5 @@ export {
   liveNum,
 } from "./core.js";
 export { nameCounts, dominantNumbers, missingNumbers, maturity, birthdayNumber, charValue, textNumber } from "./extras.js";
-export { getRecommendations } from "./recommendations.js";
+export { getRecommendations, HEBREW_REWORDING, inTodaysWording } from "./recommendations.js";
 export { COMPAT_RULES, compatKey, matchReading, coupleReading, parentChildReading } from "./compat.js";

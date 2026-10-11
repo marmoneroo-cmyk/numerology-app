@@ -400,7 +400,7 @@ describe("lead capture gate", () => {
   /** A customer's reading up to the point where the phone number is asked for. */
   async function reachGate() {
     customerPage();
-    const [name] = await screen.findAllByPlaceholderText("הכנס את שמך בעברית...");
+    const [name] = await screen.findAllByPlaceholderText("השם המלא בעברית...");
     fireEvent.change(name, { target: { value: "דנה" } });
     fireEvent.click(screen.getAllByRole("button", { name: "המשך ←" })[0]);
     const born = await screen.findByPlaceholderText("dd.mm.yyyy");

@@ -28,10 +28,11 @@ export function parseBirthDate(text, now = new Date()) {
 export const formatDmy = (iso) => (iso ? `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}` : "");
 
 /**
- * A life path where it is compared in one digit: a master shows beside that digit, "11/2" (the owner,
- * 2026-10-11); otherwise the digit alone. A reading saved without the original shows the digit.
+ * A number where it is compared in one digit (a life path, name, soul or expression in a match): a master
+ * shows beside that digit, "11/2" (the owner, 2026-10-11); otherwise the digit alone. A reading saved
+ * without the original shows the digit.
  */
-export const lifePathText = (original, reduced) => (isMaster(original) ? `${original}/${reduced}` : String(reduced));
+export const comparedText = (original, reduced) => (isMaster(original) ? `${original}/${reduced}` : String(reduced));
 
 /** An ISO timestamp as a local date, "5.10.2026". */
 export function formatStamp(iso) {

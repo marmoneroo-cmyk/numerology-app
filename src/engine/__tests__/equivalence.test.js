@@ -65,6 +65,13 @@ const refLive = (s) => {
   }
   return sum ? reduce(sum, true) : 0;
 };
+// since 2026-10-12 the Hebrew recommendations speak of the numbers, not to the reader in the singular (the
+// owner's rule for Hebrew text); the rules did not change, so the shipped texts are compared through the
+// engine's rewording table, which also shows saved readings in today's wording
+const REWORDED = engine.HEBREW_REWORDING;
+const reworded = engine.inTodaysWording;
+// the singular "you" in Hebrew, either gender (as the legal pages' test has it), and its imperative
+const SINGULAR_YOU = /(?<![א-ת])(אתה|שלך|לך|עליך|אליך|ממך|אותך|בך|תוכל|תוכלי|הנך|שחרר)(?![א-ת])/;
 /** The six traits from the numbers in one digit: [trait, [numbers that give 3], [numbers that give 2]]. */
 const refPsych = ({ nv, lp, su, ex, py }) => {
   const points = (threes, twos) => Math.min(10, threes.filter(Boolean).length * 3 + twos.filter(Boolean).length * 2);
@@ -224,7 +231,7 @@ describe.each(CLOCKS.map(([label, now], i) => [label, now, i]))("engine matches 
       // the recommendation rules did not change: both read the engine's own map
       return [
         [kept(got), kept(defaults[k]), changed, defaults[k].pm, engine.getRecommendations(got, lang)],
-        [kept(wants[k].map), kept(wants[k].map), wanted, wanted.pm, legacy.getRecommendations(got, lang)],
+        [kept(wants[k].map), kept(wants[k].map), wanted, wanted.pm, reworded(legacy.getRecommendations(got, lang))],
       ];
     });
     expect(res.mismatches).toEqual([]);
@@ -259,10 +266,24 @@ describe("recommendation rules over every combination of the numbers they read",
     const res = sweep(maps, (map) => {
       const before = structuredClone(map);
       const got = [engine.getRecommendations(map, "he"), engine.getRecommendations(map, "en")];
-      return [[...got, map], [legacy.getRecommendations(map, "he"), legacy.getRecommendations(map, "en"), before]];
+      return [[...got, map], [reworded(legacy.getRecommendations(map, "he")), legacy.getRecommendations(map, "en"), before]];
     });
     expect(res.mismatches).toEqual([]);
     expect(res.checked).toBe(12 * 12 * 12 * 9 * 2 * 3);
+  });
+
+  it("speaks Hebrew without the singular 'you', and rewords every shipped text that had it", () => {
+    expect(SINGULAR_YOU.test("מה שלך?")).toBe(true); // the check itself works
+    const NUMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33];
+    const ours = new Set(), shipped = new Set();
+    for (const lp of NUMS) for (const nv of NUMS) for (const su of NUMS) for (let py = 1; py <= 9; py++)
+      for (const kd of [[], [13]]) for (const miss of [[], [4, 8]]) {
+        const map = { lp, nv, su, ex: 8, py, kd, ls: { miss } };
+        for (const r of engine.getRecommendations(map, "he")) ours.add(r.t).add(r.d);
+        for (const r of legacy.getRecommendations(map, "he")) shipped.add(r.t).add(r.d);
+      }
+    expect([...ours].filter((s) => SINGULAR_YOU.test(s))).toEqual([]);
+    expect([...shipped].filter((s) => SINGULAR_YOU.test(s)).sort()).toEqual(Object.keys(REWORDED).sort());
   });
 });
 

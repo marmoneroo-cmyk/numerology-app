@@ -15,7 +15,7 @@ import CommandPalette, { useCommandShortcut } from "./studio/CommandPalette.jsx"
 import Card from "./studio/cards/Card.jsx";
 import Deck from "./studio/cards/Deck.jsx";
 import { useToast } from "./studio/Toasts.jsx";
-import { personOf, parseBirthDate, lifePathText } from "./workspace/format.js";
+import { personOf, parseBirthDate, comparedText } from "./workspace/format.js";
 import { whatsappLink } from "./studio/today.js";
 import AdminScreen from "./account/AdminScreen.jsx";
 import LocalDataOffer from "./account/LocalDataOffer.jsx";
@@ -82,87 +82,87 @@ else if(t==="card")[330,392,494].forEach((f,i)=>{const o=this.c.createOscillator
 // ═══════════════════ DATA LAYER ═══════════════════
 const D = {
   1:{t:"המנהיג",te:"The Leader",s:"מנהיגות · עצמאות · חדשנות",se:"Leadership · Independence · Innovation",
-    narrative:"אתה נולדת להוביל. לא מתוך כוח, אלא מתוך ראייה. כשהעולם מהסס — אתה צועד קדימה.",
+    narrative:"אנשי 1 נולדו להוביל. לא מתוך כוח, אלא מתוך ראייה. כשהעולם מהסס — הם צועדים קדימה.",
     narrativeE:"You were born to lead. Not through force, but through vision. When the world hesitates — you step forward.",
     shadow:"נטייה לבדידות, שליטתיות, חוסר סבלנות",shadowE:"Tendency toward isolation, control, impatience",
     growth:"ללמוד להאציל, לסמוך, לשתף פעולה",growthE:"Learn to delegate, trust, collaborate",
     c:"#FFD700",el:"אש",stone:"רובי",crystal:"סיטרין",color:"אדום וזהב",career:"יזם, מנכ״ל, מנהיג, מעצב",luck:"ראשון",
-    ritual:{word:"התחלה",wordE:"Begin",act:"התחל דבר אחד חדש היום",actE:"Start one new thing today",reflect:"מה אני ממתין לו?",reflectE:"What am I waiting for?",micro:"הדלק נר בזריחה והגדר כוונה אחת",microE:"Light a candle at dawn and set one intention"}},
+    ritual:{word:"התחלה",wordE:"Begin",act:"להתחיל היום דבר אחד חדש",actE:"Start one new thing today",reflect:"למה אני מחכה?",reflectE:"What am I waiting for?",micro:"להדליק נר בזריחה ולהגדיר כוונה אחת",microE:"Light a candle at dawn and set one intention"}},
   2:{t:"המגשר",te:"The Mediator",s:"שותפות · אינטואיציה · הרמוניה",se:"Partnership · Intuition · Harmony",
-    narrative:"אתה הגשר בין עולמות. הרגישות שלך היא לא חולשה — היא כוח-על.",
+    narrative:"אנשי 2 הם הגשר בין עולמות. הרגישות שלהם היא לא חולשה — היא כוח-על.",
     narrativeE:"You are the bridge between worlds. Your sensitivity is not weakness — it is a superpower.",
     shadow:"תלות רגשית, חוסר החלטיות, ויתור עצמי",shadowE:"Emotional dependency, indecisiveness, self-sacrifice",
     growth:"לפתח קול עצמאי, להציב גבולות",growthE:"Develop an independent voice, set boundaries",
     c:"#C0C0C0",el:"מים",stone:"פנינה",crystal:"מונסטון",color:"לבן וכסף",career:"יועץ, מטפל, דיפלומט",luck:"שני",
-    ritual:{word:"הקשבה",wordE:"Listen",act:"הקשב לאדם אחד בלי לשפוט",actE:"Listen to one person without judgment",reflect:"למי אני צריך לסלוח?",reflectE:"Who do I need to forgive?",micro:"שב בשקט 5 דקות ותן למחשבות לזרום",microE:"Sit quietly for 5 minutes and let thoughts flow"}},
+    ritual:{word:"הקשבה",wordE:"Listen",act:"להקשיב לאדם אחד בלי לשפוט",actE:"Listen to one person without judgment",reflect:"למי הגיע הזמן לסלוח?",reflectE:"Who do I need to forgive?",micro:"לשבת בשקט 5 דקות ולתת למחשבות לזרום",microE:"Sit quietly for 5 minutes and let thoughts flow"}},
   3:{t:"היוצר",te:"The Creator",s:"ביטוי · תקשורת · שמחה",se:"Expression · Communication · Joy",
-    narrative:"היקום נתן לך את מתנת הביטוי. המילים שלך, הצבעים שלך, הצחוק שלך — כולם כלי בריאה.",
+    narrative:"היקום נתן לאנשי 3 את מתנת הביטוי. המילים, הצבעים והצחוק שלהם — כולם כלי בריאה.",
     narrativeE:"The universe gave you the gift of expression. Your words, colors, laughter — all tools of creation.",
     shadow:"פיזור, שטחיות, בריחה מרגשות עמוקים",shadowE:"Scattering, superficiality, avoidance of deep emotion",
     growth:"למקד את האנרגיה היצירתית, להעמיק",growthE:"Focus creative energy, go deeper",
     c:"#FF6B6B",el:"אש",stone:"אמטיסט",crystal:"טורמלין",color:"סגול וצהוב",career:"אמן, סופר, שחקן, מרצה",luck:"שלישי",
-    ritual:{word:"ביטוי",wordE:"Express",act:"צור משהו — כתוב, צייר, שיר",actE:"Create something — write, draw, sing",reflect:"מה אני מפחד לומר?",reflectE:"What am I afraid to say?",micro:"כתוב 3 משפטים על מה שאתה מרגיש עכשיו",microE:"Write 3 sentences about what you feel right now"}},
+    ritual:{word:"ביטוי",wordE:"Express",act:"ליצור משהו — לכתוב, לצייר, לשיר",actE:"Create something — write, draw, sing",reflect:"מה מפחיד אותי לומר?",reflectE:"What am I afraid to say?",micro:"לכתוב 3 משפטים על מה שמרגישים עכשיו",microE:"Write 3 sentences about what you feel right now"}},
   4:{t:"הבונה",te:"The Builder",s:"יציבות · סדר · מסירות",se:"Stability · Order · Devotion",
-    narrative:"אתה עמוד התווך. מה שאתה בונה — נשאר. הסבלנות שלך, הנאמנות שלך, העקביות שלך — אלה הם היסודות.",
+    narrative:"אנשי 4 הם עמוד התווך. מה שהם בונים — נשאר. הסבלנות, הנאמנות והעקביות שלהם — אלה הם היסודות.",
     narrativeE:"You are the cornerstone. What you build — endures. Your patience, loyalty, consistency — these are the foundations.",
     shadow:"נוקשות, פחד משינוי, עבודת יתר",shadowE:"Rigidity, fear of change, overwork",
     growth:"ללמוד גמישות, לשחרר שליטה",growthE:"Learn flexibility, release control",
     c:"#4ECDC4",el:"אדמה",stone:"אמרלד",crystal:"ג׳ייד",color:"ירוק וחום",career:"מהנדס, אדריכל, מנהל",luck:"רביעי",
-    ritual:{word:"בנייה",wordE:"Build",act:"סיים משימה אחת שנשארה פתוחה",actE:"Complete one unfinished task",reflect:"מה אני בונה שישאר?",reflectE:"What am I building that will last?",micro:"סדר פינה אחת בבית בכוונה מלאה",microE:"Organize one corner of your home with full intention"}},
+    ritual:{word:"בנייה",wordE:"Build",act:"לסיים משימה אחת שנשארה פתוחה",actE:"Complete one unfinished task",reflect:"מה אני בונה שיישאר?",reflectE:"What am I building that will last?",micro:"לסדר פינה אחת בבית בכוונה מלאה",microE:"Organize one corner of your home with full intention"}},
   5:{t:"החופשי",te:"The Free Spirit",s:"חופש · הרפתקה · שינוי",se:"Freedom · Adventure · Change",
-    narrative:"הרוח נושאת אותך. חמשת החושים שלך חיים ופועמים. אתה כאן כדי לטעום, לגעת, לחוות — את הכל.",
+    narrative:"הרוח נושאת את אנשי 5. חמשת החושים שלהם חיים ופועמים. הם כאן כדי לטעום, לגעת, לחוות — את הכול.",
     narrativeE:"The wind carries you. Your five senses are alive and pulsing. You are here to taste, touch, experience — everything.",
     shadow:"חוסר מחויבות, חיפוש תמידי, חוסר שקט",shadowE:"Lack of commitment, constant seeking, restlessness",
     growth:"למצוא חופש בתוך מחויבות",growthE:"Find freedom within commitment",
     c:"#45B7D1",el:"אוויר",stone:"יהלום",crystal:"אקוומרין",color:"תכלת ולבן",career:"נוסע, עיתונאי, יזם",luck:"חמישי",
-    ritual:{word:"חופש",wordE:"Freedom",act:"עשה משהו ספונטני היום",actE:"Do something spontaneous today",reflect:"ממה אני באמת בורח?",reflectE:"What am I truly running from?",micro:"צא להליכה ללא מסלול, עקוב אחרי הסקרנות",microE:"Take a walk with no route, follow curiosity"}},
+    ritual:{word:"חופש",wordE:"Freedom",act:"לעשות היום משהו ספונטני",actE:"Do something spontaneous today",reflect:"ממה אני באמת מנסה לברוח?",reflectE:"What am I truly running from?",micro:"לצאת להליכה בלי מסלול ולעקוב אחרי הסקרנות",microE:"Take a walk with no route, follow curiosity"}},
   6:{t:"המטפל",te:"The Nurturer",s:"אהבה · אחריות · יופי",se:"Love · Responsibility · Beauty",
-    narrative:"הלב שלך הוא מקדש. אתה נושא אנרגיית אהבה ללא תנאים. המשפחה, הקהילה, היופי — זה העולם שלך.",
+    narrative:"הלב של אנשי 6 הוא מקדש. הם נושאים אנרגיית אהבה ללא תנאים. המשפחה, הקהילה, היופי — זה העולם שלהם.",
     narrativeE:"Your heart is a sanctuary. You carry the energy of unconditional love. Family, community, beauty — that is your world.",
     shadow:"שליטה דרך אהבה, הקרבה עצמית, נטל אחריות",shadowE:"Control through love, self-sacrifice, burden of responsibility",
     growth:"ללמוד לאהוב בלי לשלוט",growthE:"Learn to love without controlling",
     c:"#96CEB4",el:"אדמה",stone:"ספיר",crystal:"רוז קוורץ",color:"ורוד וכחול",career:"מורה, רופא, מעצב, שף",luck:"שישי",
-    ritual:{word:"אהבה",wordE:"Love",act:"אמור לאדם אחד שאתה אוהב אותו",actE:"Tell one person you love them",reflect:"האם אני נותן לעצמי מספיק?",reflectE:"Am I giving enough to myself?",micro:"הכן משהו יפה — אוכל, פרח, סידור",microE:"Prepare something beautiful — food, flower, arrangement"}},
+    ritual:{word:"אהבה",wordE:"Love",act:"להגיד לאדם אחד מילת אהבה",actE:"Tell one person you love them",reflect:"האם יש בחיי מספיק נתינה לעצמי?",reflectE:"Am I giving enough to myself?",micro:"להכין משהו יפה — אוכל, פרח, סידור",microE:"Prepare something beautiful — food, flower, arrangement"}},
   7:{t:"המיסטיקן",te:"The Mystic",s:"רוחניות · חכמה · חקירה",se:"Spirituality · Wisdom · Inquiry",
-    narrative:"שבעה שערי חכמה פתוחים לפניך. אתה צולל לעומקים שרוב האנשים לא מעזים. האמת — היא המצפן שלך.",
+    narrative:"שבעה שערי חכמה פתוחים לפני אנשי 7. הם צוללים לעומקים שרוב האנשים לא מעזים. האמת — היא המצפן שלהם.",
     narrativeE:"Seven gates of wisdom stand open before you. You dive into depths most dare not explore. Truth — is your compass.",
     shadow:"ניתוק רגשי, ביקורתיות, בדידות נבחרת",shadowE:"Emotional detachment, criticism, chosen solitude",
     growth:"לאזן שכל ולב, לפתוח לאחרים",growthE:"Balance mind and heart, open to others",
     c:"#9B59B6",el:"מים",stone:"עין החתול",crystal:"אמטיסט",color:"סגול ולבן",career:"חוקר, פילוסוף, מדען",luck:"שני",
-    ritual:{word:"חקירה",wordE:"Inquire",act:"למד משהו חדש לחלוטין היום",actE:"Learn something completely new today",reflect:"מה אני מפחד לדעת?",reflectE:"What am I afraid to know?",micro:"קרא פסקה אחת ממקור חכמה עתיק",microE:"Read one passage from an ancient wisdom source"}},
+    ritual:{word:"חקירה",wordE:"Inquire",act:"ללמוד היום משהו חדש לחלוטין",actE:"Learn something completely new today",reflect:"מה מפחיד אותי לדעת?",reflectE:"What am I afraid to know?",micro:"לקרוא פסקה אחת ממקור חכמה עתיק",microE:"Read one passage from an ancient wisdom source"}},
   8:{t:"בעל הכוח",te:"The Powerhouse",s:"כוח · שפע · הגשמה",se:"Power · Abundance · Manifestation",
-    narrative:"סמל האינסוף הוא שלך. יש לך את הכוח להפוך חזונות למציאות. השפע זורם אליך כשאתה מיישר קו עם הייעוד.",
+    narrative:"סמל האינסוף שייך לאנשי 8. יש להם את הכוח להפוך חזונות למציאות. השפע זורם אליהם כשהם מיישרים קו עם הייעוד.",
     narrativeE:"The infinity symbol is yours. You have the power to turn visions into reality. Abundance flows when you align with purpose.",
     shadow:"אובססיה לכוח, חומרנות, שליטה",shadowE:"Power obsession, materialism, control",
     growth:"להשתמש בכוח לטובת הכלל",growthE:"Use power for the collective good",
     c:"#E67E22",el:"אש",stone:"יהלום צהוב",crystal:"טייגר אי",color:"כתום וזהב",career:"משקיע, בנקאי, מנהל בכיר",luck:"שבת",
-    ritual:{word:"הגשמה",wordE:"Manifest",act:"כתוב את המטרה הגדולה שלך בבהירות",actE:"Write your biggest goal with clarity",reflect:"מה אני מוכן להקריב?",reflectE:"What am I willing to sacrifice?",micro:"החזק מטבע ביד, דמיין את השפע זורם אליך",microE:"Hold a coin, visualize abundance flowing to you"}},
+    ritual:{word:"הגשמה",wordE:"Manifest",act:"לכתוב בבהירות את המטרה הגדולה",actE:"Write your biggest goal with clarity",reflect:"מה אסכים להקריב?",reflectE:"What am I willing to sacrifice?",micro:"להחזיק מטבע ביד ולדמיין את השפע זורם פנימה",microE:"Hold a coin, visualize abundance flowing to you"}},
   9:{t:"החכם",te:"The Sage",s:"חמלה · סיום · חכמה עליונה",se:"Compassion · Completion · Higher Wisdom",
-    narrative:"תשע הוא מספר ההשלמה. אתה נשמה ותיקה. החמלה שלך אינסופית והראייה שלך חוצה זמן.",
+    narrative:"תשע הוא מספר ההשלמה. אנשי 9 הם נשמות ותיקות. החמלה שלהם אינסופית והראייה שלהם חוצה זמן.",
     narrativeE:"Nine is the number of completion. You are an old soul. Your compassion is infinite and your vision transcends time.",
     shadow:"התנשאות, קושי לשחרר, עצב עולמי",shadowE:"Superiority, difficulty letting go, world-weariness",
     growth:"ללמוד לשחרר בשלום, לחיות בהווה",growthE:"Learn to release in peace, live in the present",
     c:"#E74C3C",el:"מים",stone:"גארנט",crystal:"לאפיס לזולי",color:"אדום כהה וכחול",career:"מנהיג רוחני, רופא, אמן",luck:"שלישי",
-    ritual:{word:"שחרור",wordE:"Release",act:"שחרר דבר אחד שכבר לא משרת אותך",actE:"Release one thing that no longer serves you",reflect:"מה אני מוכן לסיים?",reflectE:"What am I ready to complete?",micro:"כתוב מכתב סליחה — ואז שרוף אותו",microE:"Write a forgiveness letter — then burn it"}},
+    ritual:{word:"שחרור",wordE:"Release",act:"לשחרר דבר אחד שכבר לא משרת אותי",actE:"Release one thing that no longer serves you",reflect:"מה הגיע הזמן לסיים?",reflectE:"What am I ready to complete?",micro:"לכתוב מכתב סליחה — ואז לשרוף אותו",microE:"Write a forgiveness letter — then burn it"}},
 };
 
 const KARMA={
-  13:{he:"חוב של עצלות — בגלגול קודם נמנעת מעמל. בחיים אלה המציאות דורשת ממך התמדה.",en:"Laziness debt — You avoided effort before. This life demands perseverance."},
-  14:{he:"חוב של שליטה — ניצלת חופש. עליך ללמוד משמעת עצמית.",en:"Control debt — You misused freedom. You must learn self-discipline."},
-  16:{he:"חוב של אגו — האגו שלט. עליך ללמוד ענווה וחיבור.",en:"Ego debt — Ego ruled you. You must learn humility and connection."},
-  19:{he:"חוב של כוח — ניצלת אחרים. עליך לעמוד לבד ולקחת אחריות.",en:"Power debt — You exploited others. You must stand alone with responsibility."},
+  13:{he:"חוב של עצלות — בגלגול קודם הייתה הימנעות מעמל. בחיים אלה המציאות דורשת התמדה.",en:"Laziness debt — You avoided effort before. This life demands perseverance."},
+  14:{he:"חוב של שליטה — החופש נוצל לרעה. השיעור הוא משמעת עצמית.",en:"Control debt — You misused freedom. You must learn self-discipline."},
+  16:{he:"חוב של אגו — האגו שלט. השיעור הוא ענווה וחיבור.",en:"Ego debt — Ego ruled you. You must learn humility and connection."},
+  19:{he:"חוב של כוח — אחרים נוצלו. השיעור הוא לעמוד לבד ולקחת אחריות.",en:"Power debt — You exploited others. You must stand alone with responsibility."},
 };
 
 const YEAR_ENERGY={
   1:{he:"שנת התחלות חדשות. הזמן לפעול.",en:"Year of new beginnings. Time to act.",level:8},
-  2:{he:"שנת סבלנות ושיתוף פעולה. המתן.",en:"Year of patience and cooperation. Wait.",level:4},
-  3:{he:"שנת ביטוי ויצירתיות. תן לאור לזרום.",en:"Year of expression and creativity. Let light flow.",level:7},
-  4:{he:"שנת בנייה ועבודה. הנח יסודות.",en:"Year of building and work. Lay foundations.",level:5},
-  5:{he:"שנת שינוי והרפתקה. אל תירא.",en:"Year of change and adventure. Don't fear.",level:8},
-  6:{he:"שנת אחריות ואהבה. חזור הביתה.",en:"Year of responsibility and love. Come home.",level:6},
-  7:{he:"שנת התבוננות פנימית. צלול פנימה.",en:"Year of inner reflection. Dive within.",level:3},
-  8:{he:"שנת כוח והגשמה. הזמן שלך.",en:"Year of power and manifestation. Your time.",level:9},
-  9:{he:"שנת סיום ושחרור. שחרר.",en:"Year of completion and release. Let go.",level:5},
+  2:{he:"שנת סבלנות ושיתוף פעולה. זמן להמתין.",en:"Year of patience and cooperation. Wait.",level:4},
+  3:{he:"שנת ביטוי ויצירתיות. זמן לתת לאור לזרום.",en:"Year of expression and creativity. Let light flow.",level:7},
+  4:{he:"שנת בנייה ועבודה. זמן להניח יסודות.",en:"Year of building and work. Lay foundations.",level:5},
+  5:{he:"שנת שינוי והרפתקה. זמן להעז, בלי פחד.",en:"Year of change and adventure. Don't fear.",level:8},
+  6:{he:"שנת אחריות ואהבה. זמן לחזור הביתה.",en:"Year of responsibility and love. Come home.",level:6},
+  7:{he:"שנת התבוננות פנימית. זמן לצלול פנימה.",en:"Year of inner reflection. Dive within.",level:3},
+  8:{he:"שנת כוח והגשמה. זה הזמן.",en:"Year of power and manifestation. Your time.",level:9},
+  9:{he:"שנת סיום ושחרור. זמן לשחרר.",en:"Year of completion and release. Let go.",level:5},
 };
 
 const AFFIRMATIONS=[
@@ -170,13 +170,13 @@ const AFFIRMATIONS=[
   {he:"אני בדיוק במקום הנכון",en:"I am exactly where I need to be"},
   {he:"הכוח לשנות נמצא בתוכי",en:"The power to change lies within me"},
   {he:"היקום תומך בכל צעד שלי",en:"The universe supports my every step"},
-  {he:"אני מושך שפע ואהבה",en:"I attract abundance and love"},
+  {he:"שפע ואהבה נמשכים אליי",en:"I attract abundance and love"},
   {he:"החכמה הפנימית שלי מנחה אותי",en:"My inner wisdom guides me"},
   {he:"כל יום הוא הזדמנות להתחדשות",en:"Every day is a chance for renewal"},
-  {he:"אני ראוי לכל הטוב שמגיע אלי",en:"I am worthy of all good coming my way"},
+  {he:"מגיע לי כל הטוב שבדרך אליי",en:"I am worthy of all good coming my way"},
   {he:"הנשמה שלי יודעת את הדרך",en:"My soul knows the way"},
-  {he:"אני סומך על התזמון של היקום",en:"I trust the universe's timing"},
-  {he:"אני פותח שערים חדשים",en:"I open new doors"},
+  {he:"יש לי אמון בתזמון של היקום",en:"I trust the universe's timing"},
+  {he:"אפתח שערים חדשים",en:"I open new doors"},
   {he:"האנרגיה שלי יוצרת את המציאות שלי",en:"My energy creates my reality"},
 ];
 
@@ -480,7 +480,7 @@ function exportReport(r,name,he,interp,licensee){
 // ═══════════════════ MASTER NUMBERS ═══════════════════
 const MASTER={
   11:{t:"המאיר",te:"The Illuminator",he:"ערוץ רוחני עוצמתי. אינטואיציה חריפה, כריזמה רוחנית, יכולת להאיר את הדרך לאחרים. האתגר: עצבנות, רגישות יתר, חרדה.",en:"Powerful spiritual channel. Sharp intuition, spiritual charisma, ability to illuminate the path for others. Challenge: nervousness, oversensitivity, anxiety.",c:"#E0B0FF"},
-  22:{t:"בונה המאסטר",te:"The Master Builder",he:"הכוח להפוך חלומות גדולים למציאות מוחשית. חזון גלובלי עם יכולת מעשית. האתגר: לחץ עצום, ציפיות מעצמו גבוהות מדי.",en:"The power to turn grand dreams into tangible reality. Global vision with practical ability. Challenge: immense pressure, expectations too high.",c:"#FFD700"},
+  22:{t:"בונה המאסטר",te:"The Master Builder",he:"הכוח להפוך חלומות גדולים למציאות מוחשית. חזון גלובלי עם יכולת מעשית. האתגר: לחץ עצום, ציפיות עצמיות גבוהות מדי.",en:"The power to turn grand dreams into tangible reality. Global vision with practical ability. Challenge: immense pressure, expectations too high.",c:"#FFD700"},
   33:{t:"המרפא",te:"The Master Healer",he:"אנרגיית אהבה אוניברסלית. יכולת ריפוי עמוקה, מורה רוחני מלידה. האתגר: הקרבה עצמית קיצונית, נטל רגשי כבד.",en:"Universal love energy. Deep healing ability, born spiritual teacher. Challenge: extreme self-sacrifice, heavy emotional burden.",c:"#7FFFD4"},
 };
 
@@ -516,7 +516,7 @@ function TablesWidget({he,dk}){
   const[animIn,setAnimIn]=useState(false);
   const[showExtra,setShowExtra]=useState(false);
   const doCalc=()=>{
-    try{setError("");const b=parseBirthDate(dob);if(!b)throw 0;const{d,m,y}=b;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,fullName,undefined,at);setHowCtx({d,m,y,name:fullName,now:at});setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
+    try{setError("");const b=parseBirthDate(dob);if(!b)throw 0;const{d,m,y}=b;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,fullName,undefined,at);setHowCtx({d,m,y,name:fullName,now:at});setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"יש לוודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
   };
   const thStyle={padding:"11px 14px",fontSize:12,fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`,letterSpacing:.3};
   const tdStyle={padding:"11px 14px",fontSize:14,fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
@@ -535,7 +535,7 @@ function TablesWidget({he,dk}){
         <PlusOneNote he={he} color={ts}/>
       </div>
       {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:14,textAlign:"center"}}>{error}</div>}
-      <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doCalc}>{he?"חשב":"Calculate"}</button>
+      <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doCalc}>{he?"לחשב":"Calculate"}</button>
     </div>
     {results&&animIn&&(<div style={{animation:"fadeInUp .7s ease-out"}}>
       <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
@@ -556,7 +556,7 @@ function TablesWidget({he,dk}){
           );})}</tbody>
         </table></div>
       </div>
-      <div style={{textAlign:"center",margin:"20px 0"}}><button className="ghost" onClick={()=>{setShowExtra(!showExtra);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center",gap:8}}><span>{he?(showExtra?"הסתר תוצאות נוספות":"הצג תוצאות נוספות"):(showExtra?"Hide Extra Results":"Show Extra Results")}</span><span style={{transform:showExtra?"rotate(180deg)":"rotate(0)",transition:"transform .3s",display:"inline-block"}}>▾</span></button></div>
+      <div style={{textAlign:"center",margin:"20px 0"}}><button className="ghost" onClick={()=>{setShowExtra(!showExtra);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center",gap:8}}><span>{he?(showExtra?"פחות תוצאות":"עוד תוצאות"):(showExtra?"Hide Extra Results":"Show Extra Results")}</span><span style={{transform:showExtra?"rotate(180deg)":"rotate(0)",transition:"transform .3s",display:"inline-block"}}>▾</span></button></div>
       {showExtra&&(<div style={{animation:"fadeInUp .5s ease-out"}}>
         <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
           <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"נשמה וביטוי":"Soul & Expression"}</h4></div>
@@ -639,7 +639,7 @@ function CalculatorsWidget({he,dk}){
   // ── PERSONAL CALC ──
   const doPersonalCalc=()=>{
     setError("");const d=parseDob(dob);
-    if(!d||!firstName.trim()){setError(he?"מלא שם ותאריך לידה":"Enter name and date of birth");return;}
+    if(!d||!firstName.trim()){setError(he?"יש למלא שם ותאריך לידה":"Enter name and date of birth");return;}
     AU.init();AU.p("reveal");
     const nm=(firstName+" "+lastName).trim();
     const at=new Date();
@@ -652,7 +652,7 @@ function CalculatorsWidget({he,dk}){
   // ── MATCH CALC ──
   const doMatchCalc=(type)=>{
     setError("");const d1=parseDob(m1dob),d2=parseDob(m2dob);
-    if(!d1||!d2||!m1name.trim()||!m2name.trim()){setError(he?"מלא את כל השדות":"Fill all fields");return;}
+    if(!d1||!d2||!m1name.trim()||!m2name.trim()){setError(he?"יש למלא את כל השדות":"Fill all fields");return;}
     AU.init();AU.p("reveal");
     const res=matchReading({...d1,name:m1name},{...d2,name:m2name},type);
     setMatchRes({...res,compat:LP_COMPAT[compatKey(res.lp1,res.lp2)]||null});
@@ -712,7 +712,7 @@ function CalculatorsWidget({he,dk}){
           <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
           <PlusOneNote he={he} color={ts}/>
         </div>
-        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב מספרים":"Calculate Numbers"}</button>
+        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"לחשב מספרים":"Calculate Numbers"}</button>
       </div>
 
       {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}>
@@ -774,7 +774,7 @@ function CalculatorsWidget({he,dk}){
           <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
           <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
         </div>
-        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
+        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"לחשב":"Calculate"}</button>
       </div>
       {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
@@ -801,7 +801,7 @@ function CalculatorsWidget({he,dk}){
           <div><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
           <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
         </div>
-        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
+        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"לחשב":"Calculate"}</button>
       </div>
       {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}>
         <div className="gc" style={{padding:0,overflow:"hidden"}}>
@@ -833,7 +833,7 @@ function CalculatorsWidget({he,dk}){
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="chart" size={26} stroke={1.3}/></div></div>
         <div style={{marginBottom:12}}><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
-        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const ls=loShu(d.d,d.m,d.y);setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:new Date()});setResults({ls,lp:LP(d.d,d.m,d.y)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
+        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const ls=loShu(d.d,d.m,d.y);setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:new Date()});setResults({ls,lp:LP(d.d,d.m,d.y)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"לחשב":"Calculate"}</button>
       </div>
       {results&&animIn&&results.ls&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc">
         <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:16,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid{howCtx&&<HowButton k="ls" ctx={howCtx} he={he}/>}</h4>{results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
@@ -850,11 +850,11 @@ function CalculatorsWidget({he,dk}){
           <div><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
           <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
         </div>
-        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
+        <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"לחשב":"Calculate"}</button>
       </div>
       {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc">
         {howCtx&&<div style={{textAlign:"center",marginBottom:10,fontSize:12,color:ts}}>{he?"איך נבדק חוב קארמי":"How karmic debt is checked"}<HowButton k="kd" ctx={howCtx} he={he}/></div>}
-        {results.kd?.length===0?(<div style={{textAlign:"center",padding:16,background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={20}/></span><div style={{fontSize:14,color:ts,marginTop:6}}>{he?"אין חוב קארמי — הנשמה שלך נקייה!":"No karmic debt — your soul is clear!"}</div></div>):(
+        {results.kd?.length===0?(<div style={{textAlign:"center",padding:16,background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={20}/></span><div style={{fontSize:14,color:ts,marginTop:6}}>{he?"אין חוב קארמי — הנשמה נקייה!":"No karmic debt — your soul is clear!"}</div></div>):(
           <div>{results.kd?.map(k=>(<div key={k} style={{padding:14,background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:24,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span>
             <span style={{fontSize:12,lineHeight:1.8,color:ts}}><Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></span>
@@ -872,7 +872,7 @@ function CalculatorsWidget({he,dk}){
           <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
           <PlusOneNote he={he} color={ts}/>
         </div>
-        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const at=new Date();setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:at});setResults({proj:yearCycle(d.d,d.m,undefined,at)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
+        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const at=new Date();setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:at});setResults({proj:yearCycle(d.d,d.m,undefined,at)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"לחשב":"Calculate"}</button>
       </div>
       {results&&animIn&&results.proj&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc" style={{padding:0,overflow:"hidden"}}>
         <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
@@ -921,7 +921,7 @@ function CalculatorsWidget({he,dk}){
             <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={m2dob} onChange={e=>setM2dob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
           </div>
         </div>
-        <button className="gb" disabled={!m1name.trim()||!m2name.trim()||!m1dob.trim()||!m2dob.trim()} onClick={()=>doMatchCalc(calc)}>{he?"חשב התאמה":"Check Match"}</button>
+        <button className="gb" disabled={!m1name.trim()||!m2name.trim()||!m1dob.trim()||!m2dob.trim()} onClick={()=>doMatchCalc(calc)}>{he?"לחשב התאמה":"Check Match"}</button>
       </div>
 
       {matchRes&&(<div style={{animation:"fadeInUp .7s ease-out"}}>
@@ -931,9 +931,9 @@ function CalculatorsWidget({he,dk}){
 
           {/* LP comparison */}
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,marginBottom:14,alignItems:"center"}}>
-            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m1name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(matchRes.lpm1,matchRes.lp1)}</div><div style={{fontSize:10,color:D[matchRes.lp1]?.c||ac,opacity:.7}}>{he?D[matchRes.lp1]?.t:D[matchRes.lp1]?.te}</div></div>
+            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m1name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(matchRes.lpm1,matchRes.lp1)}</div><div style={{fontSize:10,color:D[matchRes.lp1]?.c||ac,opacity:.7}}>{he?D[matchRes.lp1]?.t:D[matchRes.lp1]?.te}</div></div>
             <div style={{fontSize:18,color:`${ac}66`,display:"flex",justifyContent:"center"}}>{calc==="parent"?<Icon name="heart" size={16}/>:"⟷"}</div>
-            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m2name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(matchRes.lpm2,matchRes.lp2)}</div><div style={{fontSize:10,color:D[matchRes.lp2]?.c||ac,opacity:.7}}>{he?D[matchRes.lp2]?.t:D[matchRes.lp2]?.te}</div></div>
+            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m2name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(matchRes.lpm2,matchRes.lp2)}</div><div style={{fontSize:10,color:D[matchRes.lp2]?.c||ac,opacity:.7}}>{he?D[matchRes.lp2]?.t:D[matchRes.lp2]?.te}</div></div>
           </div>
 
           {/* Twin flame badge */}
@@ -962,7 +962,7 @@ function CalculatorsWidget({he,dk}){
 
           {/* Numbers table */}
           <div style={{marginTop:14,overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(0,0,0,.015)"}}><th style={{...thSt,fontSize:10}}></th><th style={{...thSt,fontSize:10}}>{m1name.split(" ")[0]}</th><th style={{...thSt,fontSize:10}}>{m2name.split(" ")[0]}</th></tr></thead><tbody>
-            {[{l:he?"שביל":"Path",a:lifePathText(matchRes.lpm1,matchRes.lp1),b:lifePathText(matchRes.lpm2,matchRes.lp2)},{l:he?"שם":"Name",a:matchRes.nv1,b:matchRes.nv2},{l:he?"נשמה":"Soul",a:matchRes.su1,b:matchRes.su2},{l:he?"ביטוי":"Expr.",a:matchRes.ex1,b:matchRes.ex2}].map((r,i)=>(
+            {[{l:he?"שביל":"Path",a:comparedText(matchRes.lpm1,matchRes.lp1),b:comparedText(matchRes.lpm2,matchRes.lp2)},{l:he?"שם":"Name",a:comparedText(matchRes.nvm1,matchRes.nv1),b:comparedText(matchRes.nvm2,matchRes.nv2)},{l:he?"נשמה":"Soul",a:comparedText(matchRes.sum1,matchRes.su1),b:comparedText(matchRes.sum2,matchRes.su2)},{l:he?"ביטוי":"Expr.",a:comparedText(matchRes.exm1,matchRes.ex1),b:comparedText(matchRes.exm2,matchRes.ex2)}].map((r,i)=>(
               <tr key={i} style={{borderBottom:`1px solid ${ac}08`}}><td style={{...tdSt,fontSize:11,color:ts,fontWeight:600}}>{r.l}</td><td style={{...tdSt,fontSize:17,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>{r.a}</td><td style={{...tdSt,fontSize:17,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>{r.b}</td></tr>
             ))}
           </tbody></table></div>
@@ -1026,7 +1026,7 @@ function CalculatorsWidget({he,dk}){
       <div className="st-tiles">
         <CalcTile icon="calculator" title={he?"מספרים מעשיים":"Practical Numbers"} desc={he?"טלפון, כתובת, רכב, חשבון, שם עסק":"Phone, address, car, account, business name"} onClick={()=>setCalc("practical")}/>
         <CalcTile icon="sparkle" title={he?"מחולל שמות":"Name Generator"} desc={he?"שמות לפי מספר נומרולוגי":"Names by numerology number"} onClick={()=>setCalc("namegen")}/>
-        <CalcTile icon="share" title={he?"ייצוא תוצאות":"Export Results"} desc={he?"שמור את הקריאה שלך":"Save your reading"} onClick={()=>setCalc("export")}/>
+        <CalcTile icon="share" title={he?"ייצוא תוצאות":"Export Results"} desc={he?"לשמור את הקריאה":"Save your reading"} onClick={()=>setCalc("export")}/>
       </div>
     )}
 
@@ -1039,7 +1039,7 @@ function CalculatorsWidget({he,dk}){
       <div className="gc">
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחולל שמות":"Name Generator"}</div></div>
         <div style={{marginBottom:14}}>
-          <label style={labelSt}>{he?"בחר מספר יעד":"Choose target number"}</label>
+          <label style={labelSt}>{he?"בחירת מספר יעד":"Choose target number"}</label>
           <div style={{display:"grid",gridTemplateColumns:"repeat(9,1fr)",gap:4}}>
             {[1,2,3,4,5,6,7,8,9].map(n=>(
               <div key={n} onClick={()=>{setGenTarget(n);AU.init();AU.p("click");}} style={{textAlign:"center",padding:"10px 4px",borderRadius:10,cursor:"pointer",border:`1.5px solid ${genTarget===n?(D[n]?.c||ac)+"66":"transparent"}`,background:genTarget===n?`${D[n]?.c||ac}0a`:"transparent",transition:"all .3s"}}>
@@ -1068,7 +1068,7 @@ function CalculatorsWidget({he,dk}){
       <BackBtn/>
       <div className="gc" style={{textAlign:"center"}}>
         <div style={{color:ac,marginBottom:10,display:"flex",justifyContent:"center"}}><Icon name="share" size={26} stroke={1.3}/></div>
-        <p style={{fontSize:13,color:ts,lineHeight:1.8,marginBottom:16}}>{he?"כדי לייצא תוצאות, ערוך קריאה בטאב הקריאה ולחץ על ״שמור דו״ח״ בסוף הקריאה.":"To export results, run a reading in the Reading tab and click 'Save Report' at the end."}</p>
+        <p style={{fontSize:13,color:ts,lineHeight:1.8,marginBottom:16}}>{he?"כדי לייצא תוצאות, עורכים קריאה בלשונית הקריאה ולוחצים על ״שמירת דו״ח PDF״ בסוף הקריאה.":"To export results, run a reading in the Reading tab and click 'Save Report' at the end."}</p>
         <div style={{color:ac,opacity:.18,margin:"20px 0",display:"flex",justifyContent:"center"}}><Icon name="doc" size={40} stroke={1.2}/></div>
       </div>
     </div>)}
@@ -1148,7 +1148,7 @@ function Hero({ he, dk, onStart, onUseName, onReveal }) {
       <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 580, animation: "fadeInUp 1s ease-out" }}>
         <div className="chip" style={{ marginBottom: 22, letterSpacing: 2 }}>✦ {he ? "נומרולוגיה אישית" : "Personal Numerology"}</div>
         <h1 style={{ fontSize: "clamp(32px,8vw,72px)", fontWeight: he ? 700 : 400, lineHeight: 1.12, fontFamily: "'Cormorant Garamond',serif", margin: "0 auto", color: ac, textShadow: `0 0 45px ${ac}55`, maxWidth: "100%", overflowWrap: "break-word" }}>
-          {(he ? "המספרים שלך מספרים סיפור" : "Your Numbers Tell a Story").split(" ").flatMap((w, wi, arr) => {
+          {(he ? "המספרים מספרים סיפור" : "Your Numbers Tell a Story").split(" ").flatMap((w, wi, arr) => {
             const word = <span key={"w" + wi} style={{ display: "inline-block", whiteSpace: "nowrap" }}><RevealChars text={w} delay={.2 + wi * .22}/></span>;
             return wi < arr.length - 1 ? [word, <span key={"s" + wi}> </span>] : [word];
           })}
@@ -1158,9 +1158,9 @@ function Hero({ he, dk, onStart, onUseName, onReveal }) {
         </p>
 
         <div style={{ marginTop: 24, marginInline: "auto", maxWidth: 460, padding: "18px 18px 20px", borderRadius: 20, border: `1px solid ${ac}3a`, background: dk ? "rgba(12,12,28,.5)" : "rgba(255,255,255,.6)", backdropFilter: "blur(14px)", boxShadow: `0 18px 55px rgba(0,0,0,${dk ? .42 : .12})` }}>
-          <div style={{ fontSize: 10.5, color: `${ac}cc`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "מחשבון חי · גלה את המספרים שלך" : "Live · discover your numbers"}</div>
+          <div style={{ fontSize: 10.5, color: `${ac}cc`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "מחשבון חי · המספרים מתגלים בזמן ההקלדה" : "Live · discover your numbers"}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-            <input value={nm} maxLength={MAX_INPUT} onChange={(e) => setNm(e.target.value)} placeholder={he ? "השם המלא שלך…" : "Your full name…"} dir={he ? "rtl" : "ltr"} style={{ ...inputSt, textAlign: he ? "right" : "left" }}/>
+            <input value={nm} maxLength={MAX_INPUT} onChange={(e) => setNm(e.target.value)} placeholder={he ? "השם המלא…" : "Your full name…"} dir={he ? "rtl" : "ltr"} style={{ ...inputSt, textAlign: he ? "right" : "left" }}/>
             <div style={circleSt(num)}><div style={{ textAlign: "center" }}><div style={numSt}>{num ? (num > 9 ? num : <RollDigit value={num}/>) : "—"}</div><div style={lblSt}>{he ? "שם" : "Name"}</div></div></div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -1172,7 +1172,7 @@ function Hero({ he, dk, onStart, onUseName, onReveal }) {
             {num > 0 && lp > 0 && <span style={{ opacity: .5 }}> · </span>}
             {lp > 0 && <span>{he ? `שביל: ${(lp <= 9 ? D[lp]?.t : MASTER[lp]?.t) || ""}` : `Path: ${(lp <= 9 ? D[lp]?.te : MASTER[lp]?.te) || ""}`}</span>}
           </div>}
-          <button className="gb" onClick={() => (bothReady ? onReveal(nm, dob) : (nm.trim() ? onUseName(nm) : onStart()))} style={{ width: "100%", marginTop: 14, padding: "14px", fontSize: 15 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="orb" size={16}/>{bothReady ? (he ? "גלה את הקריאה המלאה שלי" : "Reveal my full reading") : (he ? "קבל את הקריאה המלאה" : "Get the full reading")}</span></button>
+          <button className="gb" onClick={() => (bothReady ? onReveal(nm, dob) : (nm.trim() ? onUseName(nm) : onStart()))} style={{ width: "100%", marginTop: 14, padding: "14px", fontSize: 15 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="orb" size={16}/>{bothReady ? (he ? "לחשוף את הקריאה המלאה" : "Reveal my full reading") : (he ? "לקבל את הקריאה המלאה" : "Get the full reading")}</span></button>
         </div>
 
         <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginTop: 24, fontSize: 12.5, color: ts }}>
@@ -1182,7 +1182,7 @@ function Hero({ he, dk, onStart, onUseName, onReveal }) {
         </div>
       </div>
       <div onClick={onStart} style={{ position: "absolute", bottom: 18, zIndex: 2, color: ac, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "bob 2.2s ease-in-out infinite" }}>
-        <span style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", opacity: .7 }}>{he ? "גלול" : "Scroll"}</span>
+        <span style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", opacity: .7 }}>{he ? "גלילה" : "Scroll"}</span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
       </div>
     </div>
@@ -1196,7 +1196,7 @@ function HowItWorks({ he, dk }) {
   const ts = dk ? "rgba(232,224,208,.45)" : "rgba(42,37,32,.5)";
   const steps = he ? [
     { i: "pen", t: "מזינים שם ותאריך לידה", d: "תוך דקה, בלי הרשמה" },
-    { i: "orb", t: "מקבלים קריאה חינמית", d: "המספרים, האישיות והשנה שלך" },
+    { i: "orb", t: "מקבלים קריאה חינמית", d: "המספרים, האישיות והשנה האישית" },
     { i: "star", t: "מעמיקים בקריאה המלאה", d: "מחזורי חיים, מפת לו-שו והמלצות" },
   ] : [
     { i: "pen", t: "Enter name & birth date", d: "In a minute, no signup" },
@@ -1229,9 +1229,9 @@ function WhyNumerology({ he, dk }) {
     <SR><div className="gc" style={{ marginBottom: 16 }}>
       <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 8 }}>{he ? "מה זו נומרולוגיה?" : "What is numerology?"}</h2>
       <p style={{ textAlign: "center", fontSize: 14, lineHeight: 1.9, color: ts, maxWidth: 480, marginInline: "auto", marginBottom: 18 }}>
-        {he ? "נומרולוגיה היא שפה עתיקה שמתרגמת את השם ותאריך הלידה שלך למספרים בעלי משמעות. כל מספר נושא אנרגיה, אופי ומסר — וביחד הם מציירים מפה של מי שאתה, מה הייעוד שלך ומה התזמון הנכון לצעדים הגדולים בחיים." : "Numerology is an ancient language that translates your name and birth date into meaningful numbers. Each number carries energy, character and a message — together they map who you are, your purpose, and the right timing for life's big moves."}
+        {he ? "נומרולוגיה היא שפה עתיקה שמתרגמת שם ותאריך לידה למספרים בעלי משמעות. כל מספר נושא אנרגיה, אופי ומסר — וביחד הם מציירים מפה של האישיות, של הייעוד ושל התזמון הנכון לצעדים הגדולים בחיים." : "Numerology is an ancient language that translates your name and birth date into meaningful numbers. Each number carries energy, character and a message — together they map who you are, your purpose, and the right timing for life's big moves."}
       </p>
-      <div style={{ fontSize: 11, textAlign: "center", color: `${ac}99`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "לחץ על מספר לגלות את המשמעות" : "Tap a number to reveal its meaning"}</div>
+      <div style={{ fontSize: 11, textAlign: "center", color: `${ac}99`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "לוחצים על מספר כדי לגלות את המשמעות" : "Tap a number to reveal its meaning"}</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
           const info = NUM_LIB[n]; const isOpen = open === n;
@@ -1358,7 +1358,7 @@ function LeadCapture({ he, dk }) {
     <p style={{ fontSize: 13, color: ts, maxWidth: 380, margin: "6px auto 14px", lineHeight: 1.7 }}>{he ? "השאירו מייל וקבלו ממני מסר נומרולוגי בכל ראש חודש — חינם, וניתן לבטל בכל עת." : "Leave your email for a monthly numerology message — free, cancel anytime."}</p>
     {sent ? <div style={{ fontSize: 14, color: ac, fontWeight: 600 }}>{he ? "תודה! ההצטרפות נשלחה בוואטסאפ ✦" : "Thank you! Sent via WhatsApp ✦"}</div> :
       <div style={{ display: "flex", gap: 8, maxWidth: 400, margin: "0 auto" }}>
-        <input value={email} maxLength={MAX_EMAIL} onChange={e => setEmail(e.target.value)} placeholder={he ? "המייל שלך…" : "Your email…"} dir="ltr" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: 14, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
+        <input value={email} maxLength={MAX_EMAIL} onChange={e => setEmail(e.target.value)} placeholder={he ? "כתובת המייל…" : "Your email…"} dir="ltr" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: 14, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
         <button className="gb" onClick={submit} style={{ width: "auto", padding: "12px 18px", fontSize: 13 }}>{he ? "הצטרפו" : "Join"}</button>
       </div>}
     <p style={{ fontSize: 10, color: ts, opacity: .55, marginTop: 10 }}>{he ? "* ההרשמה נשלחת בהודעת וואטסאפ" : "* Signing up sends a WhatsApp message"}</p>
@@ -1383,7 +1383,7 @@ function SampleMap({ he, dk, onStart }) {
   return (<SR><div className="gc" style={{ marginBottom: 16 }}>
     <div style={{ textAlign: "center", marginBottom: 16 }}>
       <div className="chip" style={{ marginBottom: 10 }}>✦ {he ? "הצצה למפה" : "Sample map"}</div>
-      <h2 className="shimmer-text" style={{ fontSize: 22, fontWeight: 600, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "מה מחכה לך במפה האישית" : "What's inside your personal map"}</h2>
+      <h2 className="shimmer-text" style={{ fontSize: 22, fontWeight: 600, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "מה מחכה במפה האישית" : "What's inside your personal map"}</h2>
       <p style={{ fontSize: 12.5, color: ts, marginTop: 4 }}>{he ? "דוגמה אמיתית למפה נומרולוגית" : "A real example of a numerology map"}</p>
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16, alignItems: "center" }}>
@@ -1426,8 +1426,8 @@ function LeadGate({ he, dk, results, name, onUnlock }) {
   };
   return (<SR><div className="gc" style={{ textAlign: "center", maxWidth: 460, margin: "0 auto" }}>
     <div style={{ color: ac, display: "flex", justifyContent: "center", marginBottom: 10 }}><Icon name="sparkle" size={30} stroke={1.2}/></div>
-    <h2 className="shimmer-text" style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "הקריאה שלך מוכנה" : "Your reading is ready"}</h2>
-    <p style={{ fontSize: 15, color: tm, marginTop: 8 }}>{he ? "מצאנו " : "We found "}<strong style={{ color: ac, fontSize: 22 }}>{N}</strong>{he ? " נקודות במפה האישית שלך" : " insights in your personal map"}</p>
+    <h2 className="shimmer-text" style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "הקריאה מוכנה" : "Your reading is ready"}</h2>
+    <p style={{ fontSize: 15, color: tm, marginTop: 8 }}>{he ? "מצאנו " : "We found "}<strong style={{ color: ac, fontSize: 22 }}>{N}</strong>{he ? " נקודות במפה האישית" : " insights in your personal map"}</p>
     <p style={{ fontSize: 12.5, color: ts, margin: "8px auto 16px", maxWidth: 360, lineHeight: 1.7 }}>{he ? "הזינו מספר וואטסאפ כדי לחשוף את הקריאה המלאה — חינם, ללא התחייבות." : "Enter your WhatsApp number to unlock the full reading — free, no commitment."}</p>
     <div style={{ display: "flex", gap: 8, maxWidth: 380, margin: "0 auto" }}>
       <input value={phone} maxLength={MAX_INPUT} onChange={e => setPhone(e.target.value)} placeholder={he ? "מספר וואטסאפ…" : "WhatsApp number…"} dir="ltr" inputMode="tel" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "13px 15px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
@@ -1559,7 +1559,7 @@ export default function App({ view, navigate } = {}){
       setChapters([false,false,false,false,false,false]);
       setTimeout(()=>{setChapters(c=>{const n=[...c];n[0]=true;return n;});AU.p("chapter");},800);saveStreak();
       return true;
-    }catch{setError(he?"אנא ודא שכל הנתונים הוזנו כהלכה":"Please check that all data is entered correctly");return false;}
+    }catch{setError(he?"יש לוודא שכל הנתונים הוזנו כהלכה":"Please check that all data is entered correctly");return false;}
   },[he,saveStreak]);
   const doCalc=useCallback(()=>{runReading(name,dob);},[name,dob,runReading]);
 
@@ -1571,11 +1571,11 @@ export default function App({ view, navigate } = {}){
 
   const nextUnrevealed=chapters.findIndex(c=>!c);
   const chapterDefs=results?[
-    {icon:"star",title:he?"מהות":"Essence",sub:he?"מי את/ה באמת":"Who you truly are"},
-    {icon:"orb",title:he?"גורל":"Destiny",sub:he?"השביל שלך":"Your path"},
+    {icon:"star",title:he?"מהות":"Essence",sub:he?"המהות האמיתית":"Who you truly are"},
+    {icon:"orb",title:he?"גורל":"Destiny",sub:he?"שביל הגורל":"Your path"},
     {icon:"wave",title:he?"העונה הנוכחית":"Current Season",sub:he?"האנרגיה של עכשיו":"The energy of now"},
     {icon:"map",title:he?"מפת החיים":"Life Map",sub:he?"מחזורים ותחנות":"Cycles and stations"},
-    {icon:"mind",title:he?"העולם הפנימי":"Inner World",sub:he?"הפסיכולוגיה שלך":"Your psychology"},
+    {icon:"mind",title:he?"העולם הפנימי":"Inner World",sub:he?"העולם הפסיכולוגי":"Your psychology"},
     {icon:"compass",title:he?"הדרך קדימה":"Path Forward",sub:he?"המלצות וטקסים":"Guidance and rituals"},
   ]:[];
 
@@ -1724,7 +1724,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <>
           <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}} onReveal={(n,d)=>{setName(n);setDob(d);setStep(2);const ok=runReading(n,d);if(ok)setTimeout(()=>scrollToId("reading-section"),90);}}/>
           <HowItWorks he={he} dk={dk}/>
-          <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:11,color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · נסה עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
+          <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:11,color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · אפשר לנסות עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
         </>
       )}
       <div id="reading-section" style={{scrollMarginTop:70}}/>
@@ -1791,16 +1791,16 @@ button,a,input{-webkit-tap-highlight-color:transparent}
             {step===1&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
               <div style={{textAlign:"center",marginBottom:24}}>
                 <div style={{fontSize:10,color:`${ac}66`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 1":"Step 1"}</div>
-                <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"מי את/ה?":"Who are you?"}</h2>
+                <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"השם המלא":"Who are you?"}</h2>
               </div>
               <label style={{display:"block",marginBottom:8,fontSize:12,color:`${ac}99`,fontWeight:500}}>{he?"שם מלא":"Full Name"}</label>
-              <input className="gi" maxLength={MAX_INPUT} placeholder={he?"הכנס את שמך בעברית...":"Enter your name in Hebrew..."} value={name} onChange={e=>setName(e.target.value)} dir="rtl" style={{marginBottom:24,textAlign:"right"}} onKeyDown={e=>{if(e.key==="Enter"&&name.trim()){setStep(2);AU.init();AU.p("click");}}}/>
+              <input className="gi" maxLength={MAX_INPUT} placeholder={he?"השם המלא בעברית...":"Enter your name in Hebrew..."} value={name} onChange={e=>setName(e.target.value)} dir="rtl" style={{marginBottom:24,textAlign:"right"}} onKeyDown={e=>{if(e.key==="Enter"&&name.trim()){setStep(2);AU.init();AU.p("click");}}}/>
               <button className="gb" disabled={!name.trim()} onClick={()=>{setStep(2);AU.init();AU.p("click");}}>{he?"המשך ←":"Continue →"}</button>
             </div>)}
             {step===2&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
               <div style={{textAlign:"center",marginBottom:24}}>
                 <div style={{fontSize:10,color:`${ac}66`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 2":"Step 2"}</div>
-                <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"מתי נולדת?":"When were you born?"}</h2>
+                <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"תאריך הלידה":"When were you born?"}</h2>
               </div>
               <label style={{display:"block",marginBottom:8,fontSize:12,color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
               <input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{marginBottom:18,textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter"&&dob.trim())doCalc();}}/>
@@ -1808,7 +1808,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
               {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:16,textAlign:"center"}}>{error}</div>}
               <div style={{display:"flex",gap:10}}>
                 <button className="ghost" onClick={()=>{setStep(1);AU.p("click");}}>{he?"→ חזרה":"← Back"}</button>
-                <button className="gb" disabled={!dob.trim()} onClick={doCalc} style={{flex:1}}>{he?"גלה את הייעוד שלך":"Reveal Your Destiny"}</button>
+                <button className="gb" disabled={!dob.trim()} onClick={doCalc} style={{flex:1}}>{he?"לגלות את הייעוד":"Reveal Your Destiny"}</button>
               </div>
             </div>)}
           </div>
@@ -1844,7 +1844,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {/* CHAPTER 2 */}
         <Chapter index={2} title={chapterDefs[1]?.title} subtitle={chapterDefs[1]?.sub} icon={chapterDefs[1]?.icon} isActive={nextUnrevealed===1} isRevealed={chapters[1]} onReveal={()=>revealChapter(1)} dk={dk} he={he}>
-          <p className="nar-line">{he?"שביל הגורל שלך מספר "+results.lp+" חושף את הייעוד העמוק שלך":"Your Life Path "+results.lp+" reveals your deepest purpose"}</p>
+          <p className="nar-line">{he?"שביל הגורל, מספר "+results.lp+", חושף את הייעוד העמוק":"Your Life Path "+results.lp+" reveals your deepest purpose"}</p>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,margin:"16px 0"}}>
             <div style={{padding:"16px",background:dk?"rgba(180,50,50,.06)":"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.12)",borderRadius:14,textAlign:"center"}}><div style={{color:"#d98a8a",marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="moon" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:"#e88",marginBottom:4}}>{he?"צד צל":"Shadow"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}><Locked he={he}>{he?D[lpBase]?.shadow:D[lpBase]?.shadowE}</Locked></div></div>
             <div style={{padding:"16px",background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,textAlign:"center"}}><div style={{color:ac,marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="seed" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:ac,marginBottom:4}}>{he?"צמיחה":"Growth"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}><Locked he={he}>{he?D[lpBase]?.growth:D[lpBase]?.growthE}</Locked></div></div>
@@ -1871,7 +1871,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {/* CHAPTER 4 */}
         <Chapter index={4} title={chapterDefs[3]?.title} subtitle={chapterDefs[3]?.sub} icon={chapterDefs[3]?.icon} isActive={nextUnrevealed===3} isRevealed={chapters[3]} onReveal={()=>revealChapter(3)} dk={dk} he={he}>
-          <p className="nar-line">{he?"גלול קדימה כדי לראות את האנרגיה שלך ב-10 השנים הקרובות":"Scroll forward to see your energy over the next 10 years"}</p>
+          <p className="nar-line">{he?"גוללים קדימה כדי לראות את האנרגיה של 10 השנים הקרובות":"Scroll forward to see your energy over the next 10 years"}</p>
           <YearWave proj={results.proj} dk={dk} he={he}/>
           <div className="divider"/>
           <div style={{textAlign:"center",marginBottom:14}}><h4 style={{fontSize:17,fontWeight:isRtl?600:400,color:ac}}>{he?"מחזורי חיים":"Life Cycles"}</h4></div>
@@ -1881,9 +1881,9 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {/* CHAPTER 5 */}
         <Chapter index={5} title={chapterDefs[4]?.title} subtitle={chapterDefs[4]?.sub} icon={chapterDefs[4]?.icon} isActive={nextUnrevealed===4} isRevealed={chapters[4]} onReveal={()=>revealChapter(4)} dk={dk} he={he}>
-          <p className="nar-line">{he?"המפה הפסיכולוגית שלך":"Your psychological map"}</p>
+          <p className="nar-line">{he?"המפה הפסיכולוגית":"Your psychological map"}</p>
           <PsychRadar psych={results.psych} dk={dk} he={he}/>
-          {(()=>{const max=Object.entries(results.psych).sort((a,b)=>b[1]-a[1])[0];const names={leadership:he?"מנהיגות":"Leadership",intuition:he?"אינטואיציה":"Intuition",creativity:he?"יצירתיות":"Creativity",stability:he?"יציבות":"Stability",ambition:he?"שאיפה":"Ambition",wisdom:he?"חכמה":"Wisdom"};return(<div style={{textAlign:"center",marginTop:14,padding:"14px",background:`${ac}06`,borderRadius:12}}><div style={{fontSize:13,fontWeight:600,color:ac,marginBottom:4}}>{he?"הכוח הדומיננטי שלך":"Your dominant strength"}</div><div style={{fontSize:22,fontWeight:700,color:ac}}>{names[max[0]]} — {max[1]}/10</div></div>);})()}
+          {(()=>{const max=Object.entries(results.psych).sort((a,b)=>b[1]-a[1])[0];const names={leadership:he?"מנהיגות":"Leadership",intuition:he?"אינטואיציה":"Intuition",creativity:he?"יצירתיות":"Creativity",stability:he?"יציבות":"Stability",ambition:he?"שאיפה":"Ambition",wisdom:he?"חכמה":"Wisdom"};return(<div style={{textAlign:"center",marginTop:14,padding:"14px",background:`${ac}06`,borderRadius:12}}><div style={{fontSize:13,fontWeight:600,color:ac,marginBottom:4}}>{he?"הכוח הדומיננטי":"Your dominant strength"}</div><div style={{fontSize:22,fontWeight:700,color:ac}}>{names[max[0]]} — {max[1]}/10</div></div>);})()}
         </Chapter>
 
         {/* CHAPTER 6 */}
@@ -1960,7 +1960,7 @@ const LP_COMPAT = {
   "3-5":{he:{con:"חיים כמו חגיגה — יצירתיות, הרפתקה ועוצמה",ch:"אין עוגן — שניהם עפים, מי נוחת?",tip:"בנו שורשים, גם אם קטנים"},en:{con:"Life as celebration — creativity, adventure, intensity",ch:"No anchor — both fly, who lands?",tip:"Build roots, even small ones"}},
   "3-6":{he:{con:"אהבה, יופי ויצירה — בית מלא חיים",ch:"ה-6 עלול לחנוק את ה-3 החופשי",tip:"תנו מרחב יצירתי בתוך מסגרת אוהבת"},en:{con:"Love, beauty and creation — a home full of life",ch:"The 6 may smother the free 3",tip:"Give creative space within a loving framework"}},
   "3-7":{he:{con:"ביטוי ומחשבה — שילוב של אמנות ופילוסופיה",ch:"ה-3 חברתי, ה-7 בודד — קונפליקט בסיסי",tip:"כבדו את הצורך השונה — לפעמים יחד, לפעמים לבד"},en:{con:"Expression and thought — art meets philosophy",ch:"The 3 is social, the 7 is solitary — basic conflict",tip:"Respect the different needs — sometimes together, sometimes apart"}},
-  "3-8":{he:{con:"כריזמה וכוח — זוג שמושך תשומת לב",ch:"שניהם אוהבים את הבמה — מי מאחורי הקלעים?",tip:"חלקו את האור הזרקורים"},en:{con:"Charisma and power — an attention-drawing couple",ch:"Both love the spotlight — who's backstage?",tip:"Share the spotlight"}},
+  "3-8":{he:{con:"כריזמה וכוח — זוג שמושך תשומת לב",ch:"שניהם אוהבים את הבמה — מי מאחורי הקלעים?",tip:"חלקו את אור הזרקורים"},en:{con:"Charisma and power — an attention-drawing couple",ch:"Both love the spotlight — who's backstage?",tip:"Share the spotlight"}},
   "3-9":{he:{con:"יצירתיות ברמה הגבוהה — שניהם מבטאים את הנשמה",ch:"רגשות חזקים מדי לפעמים — דרמה",tip:"תעלו רגשות ליצירה במקום לקונפליקט"},en:{con:"High-level creativity — both express the soul",ch:"Sometimes emotions are too intense — drama",tip:"Channel emotions into creation, not conflict"}},
   "4-4":{he:{con:"יציבות מוחלטת — בניין מוצק של אמון",ch:"נוקשות כפולה, פחד משינוי",tip:"שברו שגרה מדי פעם — זה לא מסוכן"},en:{con:"Absolute stability — solid foundation of trust",ch:"Double rigidity, fear of change",tip:"Break routine sometimes — it's not dangerous"}},
   "4-5":{he:{con:"ה-4 מעגן וה-5 מרגש — מתח יצירתי",ch:"קונפליקט בסיסי בין יציבות לחופש",tip:"ה-4 צריך להרפות, ה-5 צריך להתחייב קצת"},en:{con:"The 4 anchors, the 5 excites — creative tension",ch:"Basic conflict between stability and freedom",tip:"The 4 needs to loosen up, the 5 needs to commit a bit"}},
@@ -1988,7 +1988,7 @@ function getCompat(a,b){const k1=`${Math.min(a,b)}-${Math.max(a,b)}`;return LP_C
 
 const TRAITS={
   1:{he:{str:["עצמאות ויוזמה","כושר מנהיגות טבעי","אומץ ונחישות"],ch:["קושי בשיתוף פעולה","חוסר סבלנות","נטייה לבדידות"],soul:"ללמוד שמנהיגות אמיתית היא שירות, לא שליטה"},en:{str:["Independence and initiative","Natural leadership","Courage and determination"],ch:["Difficulty in cooperation","Impatience","Tendency to isolation"],soul:"To learn that true leadership is service, not control"}},
-  2:{he:{str:["רגישות ואמפתיה עמוקה","כושר הקשבה יוצא דופן","דיפלומטיות"],ch:["חוסר החלטיות","תלות רגשית","ויתור על עצמו"],soul:"לפתח קול עצמאי ולהציב גבולות בריאים"},en:{str:["Deep sensitivity and empathy","Exceptional listening ability","Diplomacy"],ch:["Indecisiveness","Emotional dependency","Self-sacrifice"],soul:"To develop an independent voice and set healthy boundaries"}},
+  2:{he:{str:["רגישות ואמפתיה עמוקה","כושר הקשבה יוצא דופן","דיפלומטיות"],ch:["חוסר החלטיות","תלות רגשית","ויתור עצמי"],soul:"לפתח קול עצמאי ולהציב גבולות בריאים"},en:{str:["Deep sensitivity and empathy","Exceptional listening ability","Diplomacy"],ch:["Indecisiveness","Emotional dependency","Self-sacrifice"],soul:"To develop an independent voice and set healthy boundaries"}},
   3:{he:{str:["כושר ביטוי מבריק","יצירתיות ודמיון","אופטימיות וכריזמה"],ch:["פיזור אנרגיה","שטחיות","בריחה מרגשות כבדים"],soul:"ללמוד שעומק ושמחה יכולים לדור יחד"},en:{str:["Brilliant expression ability","Creativity and imagination","Optimism and charisma"],ch:["Energy scattering","Superficiality","Avoidance of heavy emotions"],soul:"To learn that depth and joy can coexist"}},
   4:{he:{str:["אמינות ויציבות","חריצות ומסירות","חשיבה שיטתית"],ch:["נוקשות ופחד משינוי","עבודת יתר","קושי לשחרר שליטה"],soul:"ללמוד שגמישות היא חוזק, לא חולשה"},en:{str:["Reliability and stability","Diligence and devotion","Systematic thinking"],ch:["Rigidity and fear of change","Overwork","Difficulty releasing control"],soul:"To learn that flexibility is strength, not weakness"}},
   5:{he:{str:["כושר הסתגלות מדהים","תשוקה לחיים","מגנטיות ומשיכה"],ch:["חוסר מחויבות","חוסר שקט פנימי","התמכרות לגירויים"],soul:"למצוא את החופש האמיתי בתוך מחויבות"},en:{str:["Amazing adaptability","Passion for life","Magnetism and attraction"],ch:["Lack of commitment","Inner restlessness","Addiction to stimulation"],soul:"To find true freedom within commitment"}},
@@ -2029,7 +2029,7 @@ function CompatWidget({he,dk}){
   const calcCouple=()=>{
     setError("");
     const d1=parseDob(c1dob),d2=parseDob(c2dob);
-    if(!d1||!d2||!c1name.trim()||!c2name.trim()){setError(he?"אנא מלא את כל השדות":"Please fill all fields");return;}
+    if(!d1||!d2||!c1name.trim()||!c2name.trim()){setError(he?"יש למלא את כל השדות":"Please fill all fields");return;}
     AU.init();AU.p("reveal");setAnim(true);setCoupleRes(null);
     setTimeout(()=>{
       const res=coupleReading({...d1,name:c1name},{...d2,name:c2name});
@@ -2041,7 +2041,7 @@ function CompatWidget({he,dk}){
   const calcProfile=()=>{
     setError("");
     const d=parseDob(pDob);
-    if(!d||!pName.trim()){setError(he?"אנא מלא את כל השדות":"Please fill all fields");return;}
+    if(!d||!pName.trim()){setError(he?"יש למלא את כל השדות":"Please fill all fields");return;}
     AU.init();AU.p("reveal");setAnim(true);setProfileRes(null);
     setTimeout(()=>{
       // the life path in one digit for the traits, its original (masters kept) shown beside it: 11/2
@@ -2056,7 +2056,7 @@ function CompatWidget({he,dk}){
   const calcPC=()=>{
     setError("");
     const dp=parseDob(parentDob),dc=parseDob(childDob);
-    if(!dp||!dc||!parentName.trim()||!childName.trim()){setError(he?"אנא מלא את כל השדות":"Please fill all fields");return;}
+    if(!dp||!dc||!parentName.trim()||!childName.trim()){setError(he?"יש למלא את כל השדות":"Please fill all fields");return;}
     AU.init();AU.p("reveal");setAnim(true);setPcRes(null);
     setTimeout(()=>{
       const res=parentChildReading({...dp,name:parentName},{...dc,name:childName});
@@ -2101,7 +2101,7 @@ function CompatWidget({he,dk}){
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={c2dob} onChange={e=>setC2dob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
           </div>
         </div>
-        <button className="gb" onClick={calcCouple} disabled={!c1name.trim()||!c2name.trim()||!c1dob.trim()||!c2dob.trim()}>{he?"בדוק התאמה":"Check Compatibility"}</button>
+        <button className="gb" onClick={calcCouple} disabled={!c1name.trim()||!c2name.trim()||!c1dob.trim()||!c2dob.trim()}>{he?"לבדוק התאמה":"Check Compatibility"}</button>
       </div>
 
       {anim&&<div style={{textAlign:"center",marginTop:24}}><div style={{width:50,height:50,border:`2px solid ${ac}33`,borderTopColor:ac,borderRadius:"50%",margin:"0 auto",animation:"spin 1s linear infinite"}}/></div>}
@@ -2114,13 +2114,13 @@ function CompatWidget({he,dk}){
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,marginBottom:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:10,color:ts}}>{c1name.split(" ")[0]}</div>
-              <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(coupleRes.lpm1,coupleRes.lp1)}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(coupleRes.lpm1,coupleRes.lp1)}</div>
               <div style={{fontSize:11,color:D[coupleRes.lp1]?.c||ac,opacity:.7}}>{he?D[coupleRes.lp1]?.t:D[coupleRes.lp1]?.te}</div>
             </div>
             <div style={{fontSize:20,color:`${ac}44`}}>⟷</div>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:10,color:ts}}>{c2name.split(" ")[0]}</div>
-              <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(coupleRes.lpm2,coupleRes.lp2)}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(coupleRes.lpm2,coupleRes.lp2)}</div>
               <div style={{fontSize:11,color:D[coupleRes.lp2]?.c||ac,opacity:.7}}>{he?D[coupleRes.lp2]?.t:D[coupleRes.lp2]?.te}</div>
             </div>
           </div>
@@ -2155,7 +2155,7 @@ function CompatWidget({he,dk}){
                 <th style={{padding:"8px 10px",fontSize:11,fontWeight:700,color:ac,textAlign:"center"}}>{c2name.split(" ")[0]||"2"}</th>
               </tr></thead>
               <tbody>
-                {[{l:he?"שביל הגורל":"Life Path",a:lifePathText(coupleRes.lpm1,coupleRes.lp1),b:lifePathText(coupleRes.lpm2,coupleRes.lp2)},{l:he?"ערך השם":"Name",a:coupleRes.nv1,b:coupleRes.nv2},{l:he?"קול הנשמה":"Soul",a:coupleRes.su1,b:coupleRes.su2},{l:he?"ביטוי":"Expression",a:coupleRes.ex1,b:coupleRes.ex2}].map((r,i)=>(
+                {[{l:he?"שביל הגורל":"Life Path",a:comparedText(coupleRes.lpm1,coupleRes.lp1),b:comparedText(coupleRes.lpm2,coupleRes.lp2)},{l:he?"ערך השם":"Name",a:comparedText(coupleRes.nvm1,coupleRes.nv1),b:comparedText(coupleRes.nvm2,coupleRes.nv2)},{l:he?"קול הנשמה":"Soul",a:comparedText(coupleRes.sum1,coupleRes.su1),b:comparedText(coupleRes.sum2,coupleRes.su2)},{l:he?"ביטוי":"Expression",a:comparedText(coupleRes.exm1,coupleRes.ex1),b:comparedText(coupleRes.exm2,coupleRes.ex2)}].map((r,i)=>(
                   <tr key={i} style={{borderBottom:`1px solid ${ac}08`}}>
                     <td style={{padding:"8px 10px",fontSize:12,color:ts,fontWeight:600}}>{r.l}</td>
                     <td style={{padding:"8px 10px",fontSize:18,fontWeight:700,color:ac,textAlign:"center",fontFamily:"'Cormorant Garamond',serif"}}>{r.a}</td>
@@ -2176,11 +2176,11 @@ function CompatWidget({he,dk}){
           <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"פרופיל אישיותי":"Personality Profile"}</div>
         </div>
         <div style={personBlockSt}>
-          <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="dna" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"הפרטים שלך":"Your Details"}</div></div>
+          <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="dna" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"הפרטים":"Your Details"}</div></div>
           <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={pName} onChange={e=>setPName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
           <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={pDob} onChange={e=>setPDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
         </div>
-        <button className="gb" onClick={calcProfile} disabled={!pName.trim()||!pDob.trim()} style={{marginTop:12}}>{he?"גלה את עצמך":"Discover Yourself"}</button>
+        <button className="gb" onClick={calcProfile} disabled={!pName.trim()||!pDob.trim()} style={{marginTop:12}}>{he?"לבנות פרופיל":"Discover Yourself"}</button>
       </div>
 
       {anim&&<div style={{textAlign:"center",marginTop:24}}><div style={{width:50,height:50,border:`2px solid ${ac}33`,borderTopColor:ac,borderRadius:"50%",margin:"0 auto",animation:"spin 1s linear infinite"}}/></div>}
@@ -2189,7 +2189,7 @@ function CompatWidget({he,dk}){
         <div className="gc">
           <div style={{textAlign:"center",marginBottom:16}}>
             <div style={{fontSize:10,color:ts}}>{pName}</div>
-            <div data-testid="profile-lp" style={{fontSize:36,fontWeight:700,color:D[profileRes.lp]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(profileRes.lpm,profileRes.lp)}</div>
+            <div data-testid="profile-lp" style={{fontSize:36,fontWeight:700,color:D[profileRes.lp]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(profileRes.lpm,profileRes.lp)}</div>
             <div style={{fontSize:16,color:D[profileRes.lp]?.c||ac,fontWeight:600}}>{he?D[profileRes.lp]?.t:D[profileRes.lp]?.te}</div>
           </div>
 
@@ -2239,7 +2239,7 @@ function CompatWidget({he,dk}){
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={childDob} onChange={e=>setChildDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
           </div>
         </div>
-        <button className="gb" onClick={calcPC} disabled={!parentName.trim()||!childName.trim()||!parentDob.trim()||!childDob.trim()}>{he?"בדוק חיבור":"Check Connection"}</button>
+        <button className="gb" onClick={calcPC} disabled={!parentName.trim()||!childName.trim()||!parentDob.trim()||!childDob.trim()}>{he?"לבדוק חיבור":"Check Connection"}</button>
       </div>
 
       {anim&&<div style={{textAlign:"center",marginTop:24}}><div style={{width:50,height:50,border:`2px solid ${ac}33`,borderTopColor:ac,borderRadius:"50%",margin:"0 auto",animation:"spin 1s linear infinite"}}/></div>}
@@ -2251,13 +2251,13 @@ function CompatWidget({he,dk}){
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,marginBottom:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:10,color:ts}}>{he?"הורה":"Parent"}</div>
-              <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpP]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(pcRes.lpmP,pcRes.lpP)}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpP]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(pcRes.lpmP,pcRes.lpP)}</div>
               <div style={{fontSize:11,color:D[pcRes.lpP]?.c||ac,opacity:.7}}>{he?D[pcRes.lpP]?.t:D[pcRes.lpP]?.te}</div>
             </div>
             <div style={{color:`${ac}66`,display:"flex",justifyContent:"center"}}><Icon name="heart" size={18}/></div>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:10,color:ts}}>{he?"ילד/ה":"Child"}</div>
-              <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpC]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{lifePathText(pcRes.lpmC,pcRes.lpC)}</div>
+              <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpC]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(pcRes.lpmC,pcRes.lpC)}</div>
               <div style={{fontSize:11,color:D[pcRes.lpC]?.c||ac,opacity:.7}}>{he?D[pcRes.lpC]?.t:D[pcRes.lpC]?.te}</div>
             </div>
           </div>
@@ -2280,7 +2280,7 @@ function CompatWidget({he,dk}){
           {/* What the child teaches the parent */}
           <div style={{marginTop:14,padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14,textAlign:"center"}}>
             <div style={{color:ac,marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={20} stroke={1.3}/></div>
-            <div style={{fontSize:12,fontWeight:600,color:ac,marginBottom:6}}>{he?"מה הילד בא ללמד אותך":"What the child comes to teach you"}</div>
+            <div style={{fontSize:12,fontWeight:600,color:ac,marginBottom:6}}>{he?"מה הילד בא ללמד את ההורה":"What the child comes to teach you"}</div>
             <p style={{fontSize:14,lineHeight:1.9,color:ts,fontStyle:"italic"}}><Locked he={he}>{he?D[pcRes.lpC]?.growth:D[pcRes.lpC]?.growthE}</Locked></p>
           </div>
         </div>
@@ -2296,8 +2296,8 @@ function AffirmWidget({he,dk}){
   const msg=AFFIRMATIONS[seed%AFFIRMATIONS.length];
   return(<div style={{textAlign:"center",padding:"16px 0"}}>
     <div style={{color:ac,marginBottom:12,opacity:.3,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={28} stroke={1.2}/></div>
-    <p style={{fontSize:12,color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)",marginBottom:16}}>{he?"ההודעה שלך להיום":"Your message today"}</p>
-    {!rev?(<div onClick={()=>{setRev(true);AU.init();AU.p("card");}} style={{cursor:"pointer",padding:"28px 20px",background:dk?"rgba(18,18,38,.5)":"rgba(255,255,255,.6)",border:`1.5px solid ${ac}28`,borderRadius:16,maxWidth:300,margin:"0 auto",transition:"all .3s"}}><div style={{color:ac,opacity:.4,marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="orb" size={20}/></div><div style={{fontSize:13,color:ac,letterSpacing:2}}>{he?"חשוף":"Reveal"}</div></div>):(<div style={{animation:"fadeInUp .8s ease-out",padding:"24px 20px",background:`${ac}06`,border:`1px solid ${ac}1a`,borderRadius:16,maxWidth:320,margin:"0 auto"}}><div style={{fontSize:17,lineHeight:2.2,color:dk?"#e8e0d0":"#2a2520",fontWeight:500,fontStyle:"italic"}}>"{msg[he?"he":"en"]}"</div><div style={{marginTop:10,fontSize:10,color:`${ac}55`,letterSpacing:2}}>✦ {today.toLocaleDateString(he?"he-IL":"en-US")} ✦</div></div>)}
+    <p style={{fontSize:12,color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)",marginBottom:16}}>{he?"ההודעה להיום":"Your message today"}</p>
+    {!rev?(<div onClick={()=>{setRev(true);AU.init();AU.p("card");}} style={{cursor:"pointer",padding:"28px 20px",background:dk?"rgba(18,18,38,.5)":"rgba(255,255,255,.6)",border:`1.5px solid ${ac}28`,borderRadius:16,maxWidth:300,margin:"0 auto",transition:"all .3s"}}><div style={{color:ac,opacity:.4,marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="orb" size={20}/></div><div style={{fontSize:13,color:ac,letterSpacing:2}}>{he?"לחשיפה":"Reveal"}</div></div>):(<div style={{animation:"fadeInUp .8s ease-out",padding:"24px 20px",background:`${ac}06`,border:`1px solid ${ac}1a`,borderRadius:16,maxWidth:320,margin:"0 auto"}}><div style={{fontSize:17,lineHeight:2.2,color:dk?"#e8e0d0":"#2a2520",fontWeight:500,fontStyle:"italic"}}>"{msg[he?"he":"en"]}"</div><div style={{marginTop:10,fontSize:10,color:`${ac}55`,letterSpacing:2}}>✦ {today.toLocaleDateString(he?"he-IL":"en-US")} ✦</div></div>)}
   </div>);
 }
 

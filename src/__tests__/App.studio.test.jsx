@@ -61,7 +61,7 @@ const setField = (input, value) => fireEvent.change(input, { target: { value } }
 /** A full reading from the reading tool: name, then birth date. */
 async function readingFor(name, date) {
   tool("קריאה");
-  setField(await screen.findByPlaceholderText("הכנס את שמך בעברית..."), name);
+  setField(await screen.findByPlaceholderText("השם המלא בעברית..."), name);
   fireEvent.click(screen.getByRole("button", { name: "המשך ←" }));
   setField(await screen.findByPlaceholderText("dd.mm.yyyy"), date);
   fireEvent.keyDown(screen.getByPlaceholderText("dd.mm.yyyy"), { key: "Enter" });
@@ -110,7 +110,7 @@ describe("the Studio", () => {
     expect(screen.queryByRole("dialog", { name: "מצב פגישה" })).toBeNull();
     // a new reading starts empty, so meeting mode has nothing stale to show
     fireEvent.click(screen.getByRole("button", { name: /קריאה חדשה/ }));
-    expect((await screen.findByPlaceholderText("הכנס את שמך בעברית...")).value).toBe("");
+    expect((await screen.findByPlaceholderText("השם המלא בעברית...")).value).toBe("");
     tool("היום");
     fireEvent.click(await screen.findByRole("button", { name: "מצב פגישה" }));
     expect(screen.queryByRole("dialog", { name: "מצב פגישה" })).toBeNull();

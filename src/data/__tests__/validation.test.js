@@ -109,10 +109,17 @@ describe("validateReading", () => {
   });
 
   it("keeps a parent-and-child reading saved before the original life paths were kept, and refuses a bad one", () => {
-    const { lpmP, lpmC, ...older } = SNAP.parentChild.result;
-    expect([typeof lpmP, typeof lpmC]).toEqual(["number", "number"]); // the engine keeps them now (2.1.0)
+    const { lpmP, lpmC, nvmP, nvmC, sumP, sumC, ...older } = SNAP.parentChild.result;
+    expect([lpmP, lpmC, nvmP, nvmC, sumP, sumC].map((n) => typeof n)).toEqual(Array(6).fill("number")); // kept since 2.1.0 / 2.2.0
     expect(validateReading(reading("parentChild", { result: older })).result).toEqual(older);
     expect(codes(() => validateReading(reading("parentChild", { result: { ...older, lpmP: "33" } })))).toEqual(["result.invalid"]);
+  });
+
+  it("keeps a match saved before the originals of the name, soul and expression were kept, and refuses a bad one", () => {
+    const { nvm1, nvm2, sum1, sum2, exm1, exm2, ...older } = SNAP.match.result;
+    expect([nvm1, nvm2, sum1, sum2, exm1, exm2].map((n) => typeof n)).toEqual(Array(6).fill("number")); // kept since 2.2.0
+    expect(validateReading(reading("match", { result: older })).result).toEqual(older);
+    expect(codes(() => validateReading(reading("match", { result: { ...older, sum1: null } })))).toEqual(["result.invalid"]);
   });
 
   it("rejects snapshots that do not have their type's shape", () => {

@@ -171,11 +171,23 @@ function personWithLifePath(lp, name) {
 const LIFE_PATHS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 describe("compatibility: one formula for a couple everywhere, and its rules spelled out", () => {
-  it("compares the life path reduced, and the name, soul and expression with their masters kept", () => {
-    expect(E.COMPAT_RULES).toEqual({ lifePath: "reduced", name: "mastersKept", soul: "mastersKept", expression: "mastersKept" });
+  it("compares every number in one digit, and keeps each original beside it (the owner, 2026-10-11 and 12)", () => {
+    expect(E.COMPAT_RULES).toEqual({ lifePath: "reduced", name: "reduced", soul: "reduced", expression: "reduced" });
     const match = E.matchReading(MAYA, { name: "הוד", d: 1, m: 2, y: 1990 }, "love");
-    expect([match.lp1, match.lpm1, match.lp2, match.lpm2]).toEqual([2, 11, 4, 22]); // the reduced one compared, the original kept
-    expect([match.su1, match.su2, match.nv1, match.nv2]).toEqual([5, 11, 3, 6]); // הוד: soul ה5 ו6 = 11, name 5+6+4 = 15 → 6
+    expect([match.lp1, match.lpm1, match.lp2, match.lpm2]).toEqual([2, 11, 4, 22]); // 38 → 11 → 2; 0+1+0+2+1+9+9+0 = 22 → 4
+    // הוד: soul ה5 ו6 = 11, compared as 2; name 5+6+4 = 15 → 6; expression ד4
+    expect([match.su2, match.sum2, match.nv2, match.nvm2, match.ex2, match.exm2]).toEqual([2, 11, 6, 6, 4, 4]);
+    expect([match.su1, match.sum1, match.nv1, match.nvm1, match.ex1, match.exm1]).toEqual([5, 5, 3, 3, 7, 7]);
+  });
+
+  it("counts a soul of 11 and a soul of 2 as the same", () => {
+    // הוד: soul 11, name 6; אביב: soul א1 י1 = 2, name 1+2+1+2 = 6; both born 1.1.1990 (life path 21 → 3)
+    const hod = { name: "הוד", d: 1, m: 1, y: 1990 }, aviv = { name: "אביב", d: 1, m: 1, y: 1990 };
+    const match = E.matchReading(hod, aviv, "love");
+    expect([match.su1, match.su2, match.sum1, match.sum2]).toEqual([2, 2, 11, 2]);
+    expect(match.score).toBe(95); // 50, same life path +20, same soul +15 (with 11 kept, 9 apart: nothing), same name +10
+    const family = E.parentChildReading(hod, aviv);
+    expect([family.suP, family.suC, family.sumP, family.score]).toEqual([2, 2, 11, 83]); // 55 +18 (same path) +10 (same soul)
   });
 
   it("scores a couple the same on the התאמה tab as in the calculators and the client file", () => {
@@ -189,6 +201,7 @@ describe("compatibility: one formula for a couple everywhere, and its rules spel
   it("keeps the original life paths of a parent and child beside the reduced ones it compares", () => {
     const pc = E.parentChildReading(MAYA, NOA);
     expect([pc.lpP, pc.lpmP, pc.lpC, pc.lpmC]).toEqual([2, 11, 7, 7]); // Noa: 1+4+0+2+2+0+1+6 = 16 → 7
+    expect([pc.nvP, pc.nvmP, pc.suP, pc.sumP]).toEqual([3, 3, 5, 5]); // no masters in Maya's name: the same either way
     expect(E.parentChildReading(RACHEL, NOA).score).toBe(65); // 55, life paths 4 and 7, souls 5 and 5 +10
   });
 

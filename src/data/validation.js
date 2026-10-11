@@ -139,18 +139,24 @@ function pickNums(obj, keys) {
 const MAP_SCALARS = ["nv", "lp", "age", "py", "hy", "su", "ex", "pm", "pd", "exit", "d", "m", "y"];
 const MATCH_KEYS = ["lp1", "lp2", "nv1", "nv2", "su1", "su2", "ex1", "ex2", "lpm1", "lpm2", "score", "harmony", "tension", "growth"];
 const PARENT_KEYS = ["lpP", "lpC", "nvP", "nvC", "suP", "suC", "score"];
-/** Since engine 2.1.0 a parent-and-child result also keeps the original life paths (masters kept); older ones do not. */
-const PARENT_OPTIONAL = ["lpmP", "lpmC"];
+/**
+ * The originals (masters kept) a compatibility result keeps beside the numbers it compares: the life paths
+ * of a parent and child since engine 2.1.0, and the names, souls and expressions since 2.2.0. Older ones lack them.
+ */
+const MATCH_OPTIONAL = ["nvm1", "nvm2", "sum1", "sum2", "exm1", "exm2"];
+const PARENT_OPTIONAL = ["lpmP", "lpmC", "nvmP", "nvmC", "sumP", "sumC"];
 const MATCH_TYPES = ["love", "twin", "biz", "parent"];
 
-/** The parent-and-child numbers, and the original life paths when the reading has them. */
-function parentResult(r) {
-  const nums = pickNums(r, PARENT_KEYS);
+/** `nums`, with each of `keys` that `r` has, when it is a number; null when one is not. */
+function withOptional(nums, r, keys) {
   if (!nums) return null;
-  const present = PARENT_OPTIONAL.filter((k) => r[k] !== undefined);
+  const present = keys.filter((k) => r[k] !== undefined);
   if (!present.every((k) => isNum(r[k]))) return null;
   return { ...nums, ...Object.fromEntries(present.map((k) => [k, r[k]])) };
 }
+
+/** The parent-and-child numbers, and the originals when the reading has them. */
+const parentResult = (r) => withOptional(pickNums(r, PARENT_KEYS), r, PARENT_OPTIONAL);
 
 function mapResult(r) {
   const scalars = pickNums(r, MAP_SCALARS);
@@ -184,7 +190,7 @@ const SNAPSHOTS = {
       return p && p.birthDate && o && MATCH_TYPES.includes(i.matchType) ? { person: p, other: o, matchType: i.matchType } : null;
     },
     result: (r) => {
-      const nums = pickNums(r, MATCH_KEYS);
+      const nums = withOptional(pickNums(r, MATCH_KEYS), r, MATCH_OPTIONAL);
       if (!nums || !(r.type === undefined || MATCH_TYPES.includes(r.type))) return null;
       return r.type === undefined ? nums : { ...nums, type: r.type };
     },

@@ -25,9 +25,13 @@ const PEOPLE = (() => {
 
 afterEach(() => vi.useRealTimers());
 
-// the scores read the soul number, which counts ה since 2026-10-11: the shipped handlers still agree on
-// every name without ה, which is what these sweeps compare
-const PLAIN = PEOPLE.filter((p) => !p.name.includes("ה"));
+// the scores read the soul number, which counts ה since 2026-10-11, and since 2026-10-12 compare a master
+// name, soul or expression in one digit (the shipped handlers kept it): the shipped handlers still agree on
+// every name without ה and without a master, which is what these sweeps compare. The master cases are worked
+// out by hand in decisions.test.js.
+const PLAIN = PEOPLE.filter((p) => !p.name.includes("ה") && ![engine.NV(p.name), engine.SU(p.name), engine.EX(p.name)].some(engine.isMaster));
+/** A compatibility result without the originals (masters kept) it now keeps beside the compared numbers. */
+const withoutOriginals = ({ nvm1, nvm2, sum1, sum2, exm1, exm2, ...rest }) => rest;
 
 function compareAllPairs(run, people = PLAIN) {
   const mismatches = [];
@@ -45,7 +49,7 @@ describe("compatibility readings match the shipped handlers for every pair of 30
     const res = compareAllPairs((a, b) => {
       const want = handlers.doMatchCalc(a, b, a.name, b.name, type);
       const got = engine.matchReading(a, b, type);
-      return [{ res: got, key: engine.compatKey(got.lp1, got.lp2) }, { res: want.res, key: want.k1 }];
+      return [{ res: withoutOriginals(got), key: engine.compatKey(got.lp1, got.lp2) }, { res: want.res, key: want.k1 }];
     });
     expect(res.mismatches).toEqual([]);
     expect(res.checked).toBe(PLAIN.length ** 2);
@@ -56,7 +60,7 @@ describe("compatibility readings match the shipped handlers for every pair of 30
   it("studio match: parent, scored as parent and child", () => {
     const res = compareAllPairs((a, b) => {
       const want = handlers.doMatchCalc(a, b, a.name, b.name, "parent").res;
-      const got = engine.matchReading(a, b, "parent");
+      const got = withoutOriginals(engine.matchReading(a, b, "parent"));
       const score = engine.parentChildReading(a, b).score;
       const gauges = {
         harmony: Math.min(10, Math.round(score / 10)),
@@ -86,10 +90,11 @@ describe("compatibility readings match the shipped handlers for every pair of 30
     expect(res.checked).toBe(PLAIN.length ** 2);
   });
 
-  it("parent and child, with the original life paths beside the compared ones", () => {
+  it("parent and child, with the originals beside the compared numbers", () => {
     const res = compareAllPairs((p, c) => {
-      const { lpmP, lpmC, ...got } = engine.parentChildReading(p, c);
-      return [[got, lpmP, lpmC], [handlers.calcPC(p, c, p.name, c.name), engine.LPm(p.d, p.m, p.y), engine.LPm(c.d, c.m, c.y)]];
+      const { lpmP, lpmC, nvmP, nvmC, sumP, sumC, ...got } = engine.parentChildReading(p, c);
+      const originals = (x) => [engine.LPm(x.d, x.m, x.y), engine.NV(x.name), engine.SU(x.name)];
+      return [[got, lpmP, nvmP, sumP, lpmC, nvmC, sumC], [handlers.calcPC(p, c, p.name, c.name), ...originals(p), ...originals(c)]];
     });
     expect(res.mismatches).toEqual([]);
     expect(res.checked).toBe(PLAIN.length ** 2);

@@ -62,7 +62,7 @@ describe("App inside Root", { timeout: 20000 }, () => {
 
   it("keeps the master numbers in the live calculator on Shani's page, and says what a 0 means on the sample map (the owner, 2026-10-11)", async () => {
     show("customer");
-    const name = await screen.findByPlaceholderText("השם המלא שלך…", {}, LONG);
+    const name = await screen.findByPlaceholderText("השם המלא…", {}, LONG);
     const circle = name.closest("section") || document.body;
     fireEvent.change(name, { target: { value: "Dana" } }); // D4 A1 N5 A1 = 11, no longer 2
     expect(await within(circle).findByText("11", {}, LONG)).toBeTruthy();

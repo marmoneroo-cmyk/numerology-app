@@ -37,7 +37,7 @@ describe("the demo's reading", { timeout: 20000 }, () => {
     const { container } = render(<AppWorld view="demo" navigate={vi.fn()} />);
     const nav = await screen.findByRole("navigation", { name: "כלי הסטודיו" }, LONG);
     fireEvent.click(within(nav).getByRole("button", { name: /קריאה/ }));
-    fireEvent.change(await screen.findByPlaceholderText("הכנס את שמך בעברית...", {}, LONG), { target: { value: "שני כהן אזולאי" } });
+    fireEvent.change(await screen.findByPlaceholderText("השם המלא בעברית...", {}, LONG), { target: { value: "שני כהן אזולאי" } });
     fireEvent.click(screen.getByRole("button", { name: "המשך ←" }));
     const date = await screen.findByPlaceholderText("dd.mm.yyyy", {}, LONG);
     fireEvent.change(date, { target: { value: "15.08.1990" } });

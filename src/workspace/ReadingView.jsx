@@ -3,11 +3,11 @@
  * the session summary, a follow-up date, the PDF report and deletion.
  */
 import { useEffect, useRef, useState } from "react";
-import { compatKey, getRecommendations } from "../engine/index.js";
+import { compatKey, getRecommendations, inTodaysWording } from "../engine/index.js";
 import { ValidationError } from "../data/validation.js";
 import { useContent, numberTitle } from "./content.js";
 import { Card, Field, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, btnPrimary, btnGhost, display } from "./ui.jsx";
-import { parseDmy, formatDmy, formatStamp, readingTypeLabel, matchTypeLabel, personName, errorText, lifePathText } from "./format.js";
+import { parseDmy, formatDmy, formatStamp, readingTypeLabel, matchTypeLabel, personName, errorText, comparedText } from "./format.js";
 import ReadingSummary from "../reading/ReadingSummary.jsx";
 import Locked from "../demo/DemoLock.jsx";
 
@@ -140,8 +140,8 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
 function MapResult({ reading, he, c, content }) {
   const r = reading.result;
   const lang = he ? "he" : "en";
-  // the insights saved with the reading; a reading saved before they were kept gets today's
-  const recs = r.insights ? r.insights[lang] : getRecommendations(r, lang);
+  // the insights saved with the reading, in today's wording; a reading saved before they were kept gets today's
+  const recs = r.insights ? inTodaysWording(r.insights[lang]) : getRecommendations(r, lang);
   return (
     <>
       {/* every number on one screen, as saved: made for its own date, with the +1 it recorded */}
@@ -263,10 +263,10 @@ function MatchResult({ reading, he, c, content }) {
         c={c}
         names={[personName(person, he), personName(other, he)]}
         rows={[
-          [he ? "שביל הגורל" : "Life path", lifePathText(r.lpm1, r.lp1), lifePathText(r.lpm2, r.lp2)],
-          [he ? "ערך השם" : "Name number", r.nv1, r.nv2],
-          [he ? "קול הנשמה" : "Soul", r.su1, r.su2],
-          [he ? "ביטוי" : "Expression", r.ex1, r.ex2],
+          [he ? "שביל הגורל" : "Life path", comparedText(r.lpm1, r.lp1), comparedText(r.lpm2, r.lp2)],
+          [he ? "ערך השם" : "Name number", comparedText(r.nvm1, r.nv1), comparedText(r.nvm2, r.nv2)],
+          [he ? "קול הנשמה" : "Soul", comparedText(r.sum1, r.su1), comparedText(r.sum2, r.su2)],
+          [he ? "ביטוי" : "Expression", comparedText(r.exm1, r.ex1), comparedText(r.exm2, r.ex2)],
         ]}
       />
       <CompatText entry={content.LP_COMPAT[compatKey(r.lp1, r.lp2)]} he={he} c={c} />
@@ -286,9 +286,9 @@ function ParentChildResult({ reading, he, c, content }) {
         c={c}
         names={[`${parentName} (${he ? "הורה" : "parent"})`, `${childName} (${he ? "ילד/ה" : "child"})`]}
         rows={[
-          [he ? "שביל הגורל" : "Life path", lifePathText(r.lpmP, r.lpP), lifePathText(r.lpmC, r.lpC)],
-          [he ? "ערך השם" : "Name number", r.nvP, r.nvC],
-          [he ? "קול הנשמה" : "Soul", r.suP, r.suC],
+          [he ? "שביל הגורל" : "Life path", comparedText(r.lpmP, r.lpP), comparedText(r.lpmC, r.lpC)],
+          [he ? "ערך השם" : "Name number", comparedText(r.nvmP, r.nvP), comparedText(r.nvmC, r.nvC)],
+          [he ? "קול הנשמה" : "Soul", comparedText(r.sumP, r.suP), comparedText(r.sumC, r.suC)],
         ]}
       />
       <CompatText entry={content.getCompat(r.lpP, r.lpC)} he={he} c={c} />
