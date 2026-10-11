@@ -38,6 +38,10 @@ import NameCompare from "./studio/calcs/NameCompare.jsx";
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
+/** The longest text a field takes: any real name or date fits, and a runaway paste is cut short. */
+const MAX_INPUT = 120;
+/** The longest an email address can be. */
+const MAX_EMAIL = 254;
 
 /** The Studio's tools in toolbar order. Quick search lists them too, findable by their name in either language. */
 const STUDIO_TOOLS = [
@@ -517,11 +521,11 @@ function TablesWidget({he,dk}){
     <div className="gc" style={{marginBottom:20}}>
       <div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:4,marginBottom:6}}>{he?"פרטים למילוי":"Enter Details"}</div></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם פרטי":"First Name"}</label><input className="gi" placeholder={he?"שם פרטי...":"First name..."} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
-        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם משפחה":"Last Name"}</label><input className="gi" placeholder={he?"שם משפחה...":"Last name..."} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} placeholder={he?"שם פרטי...":"First name..."} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם משפחה":"Last Name"}</label><input className="gi" maxLength={MAX_INPUT} placeholder={he?"שם משפחה...":"Last name..."} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:14}}>
-        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doCalc();}}/></div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doCalc();}}/></div>
         <PlusOneNote he={he} color={ts}/>
       </div>
       {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:14,textAlign:"center"}}>{error}</div>}
@@ -695,11 +699,11 @@ function CalculatorsWidget({he,dk}){
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="chart" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"כל המספרים שלי":"All My Numbers"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-          <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם פרטי...":"First name..."}/></div>
-          <div><label style={labelSt}>{he?"שם משפחה":"Last Name"}</label><input className="gi" value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם משפחה...":"Last name..."}/></div>
+          <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם פרטי...":"First name..."}/></div>
+          <div><label style={labelSt}>{he?"שם משפחה":"Last Name"}</label><input className="gi" maxLength={MAX_INPUT} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם משפחה...":"Last name..."}/></div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:12}}>
-          <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
+          <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
           <PlusOneNote he={he} color={ts}/>
         </div>
         <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב מספרים":"Calculate Numbers"}</button>
@@ -761,8 +765,8 @@ function CalculatorsWidget({he,dk}){
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="calendar" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"נומרוסקופ יומי":"Daily Numeroscope"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-          <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
-          <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
+          <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+          <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
         </div>
         <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
       </div>
@@ -788,8 +792,8 @@ function CalculatorsWidget({he,dk}){
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="refresh" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחזורי חיים":"Life Cycles"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-          <div><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
-          <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
+          <div><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+          <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
         </div>
         <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
       </div>
@@ -822,7 +826,7 @@ function CalculatorsWidget({he,dk}){
       <BackBtn/>
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="chart" size={26} stroke={1.3}/></div></div>
-        <div style={{marginBottom:12}}><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
+        <div style={{marginBottom:12}}><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
         <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const ls=loShu(d.d,d.m,d.y);setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:new Date()});setResults({ls,lp:LP(d.d,d.m,d.y)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
       </div>
       {results&&animIn&&results.ls&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc">
@@ -837,8 +841,8 @@ function CalculatorsWidget({he,dk}){
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="bolt" size={26} stroke={1.3}/></div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-          <div><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
-          <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
+          <div><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+          <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
         </div>
         <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"חשב":"Calculate"}</button>
       </div>
@@ -859,7 +863,7 @@ function CalculatorsWidget({he,dk}){
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="trending" size={26} stroke={1.3}/></div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:12}}>
-          <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
+          <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
           <PlusOneNote he={he} color={ts}/>
         </div>
         <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const at=new Date();setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:at});setResults({proj:yearCycle(d.d,d.m,undefined,at)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"חשב":"Calculate"}</button>
@@ -902,13 +906,13 @@ function CalculatorsWidget({he,dk}){
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
           <div style={{padding:14,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:14}}>
             <div style={{textAlign:"center",fontSize:11,fontWeight:600,color:ac,marginBottom:8}}>{calc==="parent"?(he?"הורה":"Parent"):(he?"צד א":"Person A")}</div>
-            <div style={{marginBottom:8}}><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" value={m1name} onChange={e=>setM1name(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם בעברית...":"Name..."}/></div>
-            <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={m1dob} onChange={e=>setM1dob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
+            <div style={{marginBottom:8}}><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" maxLength={MAX_INPUT} value={m1name} onChange={e=>setM1name(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם בעברית...":"Name..."}/></div>
+            <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={m1dob} onChange={e=>setM1dob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
           </div>
           <div style={{padding:14,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:14}}>
             <div style={{textAlign:"center",fontSize:11,fontWeight:600,color:ac,marginBottom:8}}>{calc==="parent"?(he?"ילד/ה":"Child"):(he?"צד ב":"Person B")}</div>
-            <div style={{marginBottom:8}}><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" value={m2name} onChange={e=>setM2name(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם בעברית...":"Name..."}/></div>
-            <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" value={m2dob} onChange={e=>setM2dob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
+            <div style={{marginBottom:8}}><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" maxLength={MAX_INPUT} value={m2name} onChange={e=>setM2name(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם בעברית...":"Name..."}/></div>
+            <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={m2dob} onChange={e=>setM2dob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
           </div>
         </div>
         <button className="gb" disabled={!m1name.trim()||!m2name.trim()||!m1dob.trim()||!m2dob.trim()} onClick={()=>doMatchCalc(calc)}>{he?"חשב התאמה":"Check Match"}</button>
@@ -1150,11 +1154,11 @@ function Hero({ he, dk, onStart, onUseName, onReveal }) {
         <div style={{ marginTop: 24, marginInline: "auto", maxWidth: 460, padding: "18px 18px 20px", borderRadius: 20, border: `1px solid ${ac}3a`, background: dk ? "rgba(12,12,28,.5)" : "rgba(255,255,255,.6)", backdropFilter: "blur(14px)", boxShadow: `0 18px 55px rgba(0,0,0,${dk ? .42 : .12})` }}>
           <div style={{ fontSize: 10.5, color: `${ac}cc`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "מחשבון חי · גלה את המספרים שלך" : "Live · discover your numbers"}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-            <input value={nm} onChange={(e) => setNm(e.target.value)} placeholder={he ? "השם המלא שלך…" : "Your full name…"} dir={he ? "rtl" : "ltr"} style={{ ...inputSt, textAlign: he ? "right" : "left" }}/>
+            <input value={nm} maxLength={MAX_INPUT} onChange={(e) => setNm(e.target.value)} placeholder={he ? "השם המלא שלך…" : "Your full name…"} dir={he ? "rtl" : "ltr"} style={{ ...inputSt, textAlign: he ? "right" : "left" }}/>
             <div style={circleSt(num)}><div style={{ textAlign: "center" }}><div style={numSt}>{num ? (num > 9 ? num : <RollDigit value={num}/>) : "—"}</div><div style={lblSt}>{he ? "שם" : "Name"}</div></div></div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <input value={dob} onChange={(e) => setDob(e.target.value)} placeholder={he ? "תאריך לידה · dd.mm.yyyy" : "Birth date · dd.mm.yyyy"} dir="ltr" onKeyDown={(e) => { if (e.key === "Enter" && bothReady) onReveal(nm, dob); }} style={{ ...inputSt, textAlign: "center", letterSpacing: 2 }}/>
+            <input value={dob} maxLength={MAX_INPUT} onChange={(e) => setDob(e.target.value)}placeholder={he ? "תאריך לידה · dd.mm.yyyy" : "Birth date · dd.mm.yyyy"} dir="ltr" onKeyDown={(e) => { if (e.key === "Enter" && bothReady) onReveal(nm, dob); }} style={{ ...inputSt, textAlign: "center", letterSpacing: 2 }}/>
             <div style={circleSt(lp)}><div style={{ textAlign: "center" }}><div style={numSt}>{lp ? (lp > 9 ? lp : <RollDigit value={lp}/>) : "—"}</div><div style={lblSt}>{he ? "שביל" : "Path"}</div></div></div>
           </div>
           {(num > 0 || lp > 0) && <div style={{ marginTop: 11, fontSize: 12.5, color: ts, lineHeight: 1.6, animation: "fadeInUp .4s ease-out" }}>
@@ -1348,7 +1352,7 @@ function LeadCapture({ he, dk }) {
     <p style={{ fontSize: 13, color: ts, maxWidth: 380, margin: "6px auto 14px", lineHeight: 1.7 }}>{he ? "השאירו מייל וקבלו ממני מסר נומרולוגי בכל ראש חודש — חינם, וניתן לבטל בכל עת." : "Leave your email for a monthly numerology message — free, cancel anytime."}</p>
     {sent ? <div style={{ fontSize: 14, color: ac, fontWeight: 600 }}>{he ? "תודה! ההצטרפות נשלחה בוואטסאפ ✦" : "Thank you! Sent via WhatsApp ✦"}</div> :
       <div style={{ display: "flex", gap: 8, maxWidth: 400, margin: "0 auto" }}>
-        <input value={email} onChange={e => setEmail(e.target.value)} placeholder={he ? "המייל שלך…" : "Your email…"} dir="ltr" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: 14, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
+        <input value={email} maxLength={MAX_EMAIL} onChange={e => setEmail(e.target.value)} placeholder={he ? "המייל שלך…" : "Your email…"} dir="ltr" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: 14, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
         <button className="gb" onClick={submit} style={{ width: "auto", padding: "12px 18px", fontSize: 13 }}>{he ? "הצטרפו" : "Join"}</button>
       </div>}
     <p style={{ fontSize: 10, color: ts, opacity: .55, marginTop: 10 }}>{he ? "* ההרשמה נשלחת בהודעת וואטסאפ" : "* Signing up sends a WhatsApp message"}</p>
@@ -1420,7 +1424,7 @@ function LeadGate({ he, dk, results, name, onUnlock }) {
     <p style={{ fontSize: 15, color: tm, marginTop: 8 }}>{he ? "מצאנו " : "We found "}<strong style={{ color: ac, fontSize: 22 }}>{N}</strong>{he ? " נקודות במפה האישית שלך" : " insights in your personal map"}</p>
     <p style={{ fontSize: 12.5, color: ts, margin: "8px auto 16px", maxWidth: 360, lineHeight: 1.7 }}>{he ? "הזינו מספר וואטסאפ כדי לחשוף את הקריאה המלאה — חינם, ללא התחייבות." : "Enter your WhatsApp number to unlock the full reading — free, no commitment."}</p>
     <div style={{ display: "flex", gap: 8, maxWidth: 380, margin: "0 auto" }}>
-      <input value={phone} onChange={e => setPhone(e.target.value)} placeholder={he ? "מספר וואטסאפ…" : "WhatsApp number…"} dir="ltr" inputMode="tel" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "13px 15px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
+      <input value={phone} maxLength={MAX_INPUT} onChange={e => setPhone(e.target.value)} placeholder={he ? "מספר וואטסאפ…" : "WhatsApp number…"} dir="ltr" inputMode="tel" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "13px 15px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
       <button className="gb" onClick={submit} style={{ width: "auto", padding: "13px 20px", fontSize: 14 }}>{he ? "חשפו" : "Unlock"}</button>
     </div>
     <p style={{ fontSize: 10, color: ts, opacity: .65, marginTop: 10, display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center" }}><Icon name="lock" size={11}/>{he ? "הפרטים נשלחים בוואטסאפ ולא מועברים לאחרים" : "Sent by WhatsApp, never passed on to others"}</p>
@@ -1784,7 +1788,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
                 <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"מי את/ה?":"Who are you?"}</h2>
               </div>
               <label style={{display:"block",marginBottom:8,fontSize:12,color:`${ac}99`,fontWeight:500}}>{he?"שם מלא":"Full Name"}</label>
-              <input className="gi" placeholder={he?"הכנס את שמך בעברית...":"Enter your name in Hebrew..."} value={name} onChange={e=>setName(e.target.value)} dir="rtl" style={{marginBottom:24,textAlign:"right"}} onKeyDown={e=>{if(e.key==="Enter"&&name.trim()){setStep(2);AU.init();AU.p("click");}}}/>
+              <input className="gi" maxLength={MAX_INPUT} placeholder={he?"הכנס את שמך בעברית...":"Enter your name in Hebrew..."} value={name} onChange={e=>setName(e.target.value)} dir="rtl" style={{marginBottom:24,textAlign:"right"}} onKeyDown={e=>{if(e.key==="Enter"&&name.trim()){setStep(2);AU.init();AU.p("click");}}}/>
               <button className="gb" disabled={!name.trim()} onClick={()=>{setStep(2);AU.init();AU.p("click");}}>{he?"המשך ←":"Continue →"}</button>
             </div>)}
             {step===2&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
@@ -1793,7 +1797,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
                 <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"מתי נולדת?":"When were you born?"}</h2>
               </div>
               <label style={{display:"block",marginBottom:8,fontSize:12,color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
-              <input className="gi" placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{marginBottom:18,textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter"&&dob.trim())doCalc();}}/>
+              <input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{marginBottom:18,textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter"&&dob.trim())doCalc();}}/>
               <PlusOneNote he={he} color={ts} style={{marginTop:-6,marginBottom:24,textAlign:"center"}}/>
               {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:16,textAlign:"center"}}>{error}</div>}
               <div style={{display:"flex",gap:10}}>
@@ -2081,13 +2085,13 @@ function CompatWidget({he,dk}){
         <div className="st-pair">
           <div style={personBlockSt}>
             <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="user" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"בן/בת זוג 1":"Partner 1"}</div></div>
-            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={c1name} onChange={e=>setC1name(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
-            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={c1dob} onChange={e=>setC1dob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={c1name} onChange={e=>setC1name(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={c1dob} onChange={e=>setC1dob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
           </div>
           <div style={personBlockSt}>
             <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="user" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"בן/בת זוג 2":"Partner 2"}</div></div>
-            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={c2name} onChange={e=>setC2name(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
-            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={c2dob} onChange={e=>setC2dob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={c2name} onChange={e=>setC2name(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={c2dob} onChange={e=>setC2dob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
           </div>
         </div>
         <button className="gb" onClick={calcCouple} disabled={!c1name.trim()||!c2name.trim()||!c1dob.trim()||!c2dob.trim()}>{he?"בדוק התאמה":"Check Compatibility"}</button>
@@ -2166,8 +2170,8 @@ function CompatWidget({he,dk}){
         </div>
         <div style={personBlockSt}>
           <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="dna" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"הפרטים שלך":"Your Details"}</div></div>
-          <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={pName} onChange={e=>setPName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
-          <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={pDob} onChange={e=>setPDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
+          <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={pName} onChange={e=>setPName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
+          <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={pDob} onChange={e=>setPDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
         </div>
         <button className="gb" onClick={calcProfile} disabled={!pName.trim()||!pDob.trim()} style={{marginTop:12}}>{he?"גלה את עצמך":"Discover Yourself"}</button>
       </div>
@@ -2219,13 +2223,13 @@ function CompatWidget({he,dk}){
         <div className="st-pair">
           <div style={personBlockSt}>
             <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="users" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"הורה":"Parent"}</div></div>
-            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={parentName} onChange={e=>setParentName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
-            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={parentDob} onChange={e=>setParentDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={parentName} onChange={e=>setParentName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={parentDob} onChange={e=>setParentDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
           </div>
           <div style={personBlockSt}>
             <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="user" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"ילד/ה":"Child"}</div></div>
-            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" value={childName} onChange={e=>setChildName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
-            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" value={childDob} onChange={e=>setChildDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={childName} onChange={e=>setChildName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
+            <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={childDob} onChange={e=>setChildDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
           </div>
         </div>
         <button className="gb" onClick={calcPC} disabled={!parentName.trim()||!childName.trim()||!parentDob.trim()||!childDob.trim()}>{he?"בדוק חיבור":"Check Connection"}</button>
