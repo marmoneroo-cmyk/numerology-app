@@ -93,9 +93,35 @@ describe("the explanations read as worked examples", () => {
 
   it("the soul number names the letters it counts", () => {
     const how = howFor("su", SHANI, true);
-    expect(how.steps[0]).toEqual({ text: "רק האותיות א, ו, י, ע", math: "י=1 א=1 ו=6 א=1 י=1" });
-    expect(how.steps[1]).toEqual({ text: "סוכמים", math: "1+1+6+1+1 = 10" });
-    expect(how.result).toBe(1);
+    expect(how.steps[0]).toEqual({ text: "רק האותיות א, ה, ו, י, ע", math: "י=1 ה=5 א=1 ו=6 א=1 י=1" });
+    expect(how.steps[1]).toEqual({ text: "סוכמים", math: "1+5+1+6+1+1 = 15" });
+    expect(how.result).toBe(6);
+  });
+
+  it("the personal month goes through the personal year, and the day through the month", () => {
+    const month = howFor("pm", SHANI, true);
+    expect(month.steps.slice(-2)).toEqual([
+      { text: "השנה האישית ועוד החודש (10)", math: "7+10 = 17" },
+      { text: "מצמצמים", math: "1+7 = 8" },
+    ]);
+    const day = howFor("pd", SHANI, true);
+    expect(day.steps.slice(-2)).toEqual([
+      { text: "החודש האישי ועוד היום בחודש (5)", math: "8+5 = 13" },
+      { text: "מצמצמים", math: "1+3 = 4" },
+    ]);
+  });
+
+  it("a karmic debt shows on the way down of a sum", () => {
+    const how = howFor("kd", { d: 1, m: 1, y: 2000, name: "אברהם גולדשטיין" }, true);
+    expect(how.steps[2].math.endsWith("= 49 → 13 → 4 ← חוב קארמי 13")).toBe(true);
+    expect(how.steps[3].math).toBe("1+5+6+1+1 = 14 → 5 ← חוב קארמי 14");
+    expect(how.result).toEqual([13, 14]);
+  });
+
+  it("a reading saved with the +1 outside July to December says it added the +1 itself", () => {
+    const march = { ...SHANI, now: new Date(2026, 2, 5, 12) };
+    expect(howFor("py", { ...march, add: true }, true).steps.at(-1).text).toBe("ה-1+ נוסף בבדיקה הזו");
+    expect(howFor("py", march, true).steps.some((s) => s.text.includes("1+"))).toBe(false);
   });
 
   it("the pinnacles start from day, month and year in one digit", () => {

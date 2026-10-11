@@ -13,7 +13,9 @@
 /** Bump whenever any result can change, so a saved reading knows which rules made it. */
 // 1.1.0: the +1 follows the date (July 1 - December 31) when a reading does not choose it
 // 1.2.0: a studio match of a parent and child scores as the parent-and-child reading
-export const ENGINE_VERSION = "1.2.0";
+// 2.0.0: the owner's answers to the calculation audit (2026-10-11): the soul counts ה, the personal month is
+//        the personal year plus the month (the day adds the day), karmic debts count every reduction step
+export const ENGINE_VERSION = "2.0.0";
 
 /** Hebrew letter values, final forms included. Any other character counts 0. Frozen: shared by every reading. */
 export const LV = Object.freeze({
@@ -22,8 +24,8 @@ export const LV = Object.freeze({
   "ע": 7, "פ": 8, "ף": 8, "צ": 9, "ץ": 9, "ק": 1, "ר": 2, "ש": 3, "ת": 4,
 });
 
-/** The letters that make the soul number. Treat as read-only. */
-export const VOW = new Set(["א", "ו", "י", "ע"]);
+/** The letters that make the soul number: א ה ו י ע (ה since 2026-10-11, the owner). Treat as read-only. */
+export const VOW = new Set(["א", "ה", "ו", "י", "ע"]);
 
 const isMaster = (n) => n === 11 || n === 22 || n === 33;
 const digitSum = (n) => [...String(Math.abs(n))].reduce((a, d) => a + +d, 0);
@@ -54,7 +56,7 @@ export function Rm(n) {
 /** Name number: every letter of the name. */
 export const NV = (s) => Rm(letterSum(s));
 
-/** Soul number: the vowels א ו י ע. */
+/** Soul number: the vowels א ה ו י ע. */
 export const SU = (s) => Rm(letterSum(s, (c) => VOW.has(c)));
 
 /** Consonant number: the letters that are not vowels. */
@@ -98,12 +100,14 @@ export function yearCycle(d, m, add, now = new Date()) {
   return proj;
 }
 
-/** Personal month: birth day and month plus the calendar month of `now`. */
-export const PM = (d, m, now = new Date()) => R(sumChars(`${pad2(d)}${pad2(m)}${now.getMonth() + 1}`));
+/**
+ * Personal month: the personal year on `now` plus its calendar month (the owner, 2026-10-11; before, the
+ * birth day and month plus the month, without the year). `add` is the +1, left out for the date to decide.
+ */
+export const PM = (d, m, now = new Date(), add) => R(PY(d, m, now.getFullYear(), add ?? addsOne(now)) + now.getMonth() + 1);
 
-/** Personal day: birth day and month plus the full date of `now`. */
-export const PD = (d, m, now = new Date()) =>
-  R(sumChars(`${pad2(d)}${pad2(m)}${now.getDate()}${now.getMonth() + 1}${now.getFullYear()}`));
+/** Personal day: the personal month plus the day of the month of `now`. */
+export const PD = (d, m, now = new Date(), add) => R(PM(d, m, now, add) + now.getDate());
 
 /** Challenge between two numbers: their reduced difference, 0 when equal. */
 export const CH = (a, b) => (a === b ? 0 : R(Math.abs(a - b)));
@@ -116,11 +120,21 @@ export const dailyRitualNumber = (now = new Date()) => now.getDate() % 9 || 9;
 
 const KARMIC = [13, 14, 16, 19];
 
-/** Karmic debts 13/14/16/19 found in the raw date sum, the raw name sum, or the birth day. */
+/** A sum and every step of its reduction: 49 -> [49, 13, 4]. */
+export function reductionChain(n) {
+  const steps = [n];
+  for (let x = n; x >= 10; ) steps.push((x = digitSum(x)));
+  return steps;
+}
+
+/**
+ * Karmic debts: 13, 14, 16 or 19 anywhere on the way down of the date's sum, the name's, the soul's or the
+ * consonants' (the owner, 2026-10-11; before, only the raw date and name sums), or the birth day itself.
+ * In the order 13, 14, 16, 19, then the birth day's.
+ */
 export function karmicDebt(d, m, y, nm) {
-  const dateSum = sumChars(`${d}${m}${y}`);
-  const nameSum = letterSum(nm);
-  const found = KARMIC.filter((k) => dateSum === k || nameSum === k);
+  const sums = [sumChars(`${d}${m}${y}`), letterSum(nm), letterSum(nm, (c) => VOW.has(c)), letterSum(nm, (c) => !VOW.has(c))];
+  const found = KARMIC.filter((k) => sums.some((s) => reductionChain(s).includes(k)));
   if (KARMIC.includes(d)) found.push(d);
   return [...new Set(found)];
 }
@@ -189,7 +203,7 @@ export function fullCalc(d, m, y, nm, add, now = new Date()) {
   const plus = add ?? addsOne(now);
   const nv = NV(nm), lp = LPm(d, m, y), age = CA(d, m, y, now), cy = now.getFullYear();
   const py = PY(d, m, cy, plus), hy = R(lp + age), su = SU(nm), ex = EX(nm);
-  const pm = PM(d, m, now), pd = PD(d, m, now);
+  const pm = PM(d, m, now, plus), pd = PD(d, m, now, plus);
 
   const rd = R(d), rm = R(m), ry = R(y);
   const pk = [R(rd + rm), R(rd + ry), 0, R(rm + ry)];

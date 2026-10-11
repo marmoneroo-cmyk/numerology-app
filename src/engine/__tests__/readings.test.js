@@ -25,10 +25,14 @@ const PEOPLE = (() => {
 
 afterEach(() => vi.useRealTimers());
 
-function compareAllPairs(run) {
+// the scores read the soul number, which counts ה since 2026-10-11: the shipped handlers still agree on
+// every name without ה, which is what these sweeps compare
+const PLAIN = PEOPLE.filter((p) => !p.name.includes("ה"));
+
+function compareAllPairs(run, people = PLAIN) {
   const mismatches = [];
   let checked = 0;
-  for (const a of PEOPLE) for (const b of PEOPLE) {
+  for (const a of people) for (const b of people) {
     const [got, want] = run(a, b);
     checked++;
     if (!isDeepStrictEqual(got, want) && mismatches.length < 5) mismatches.push({ a, b, got, want });
@@ -44,7 +48,7 @@ describe("compatibility readings match the shipped handlers for every pair of 30
       return [{ res: got, key: engine.compatKey(got.lp1, got.lp2) }, { res: want.res, key: want.k1 }];
     });
     expect(res.mismatches).toEqual([]);
-    expect(res.checked).toBe(90000);
+    expect(res.checked).toBe(PLAIN.length ** 2);
   });
 
   // the shipped code scored a parent and child match as a love match (the audit of 2026-10-11);
@@ -62,27 +66,32 @@ describe("compatibility readings match the shipped handlers for every pair of 30
       return [got, { ...want, score, ...gauges }];
     });
     expect(res.mismatches).toEqual([]);
-    expect(res.checked).toBe(90000);
+    expect(res.checked).toBe(PLAIN.length ** 2);
   });
 
   it("couple", () => {
     const res = compareAllPairs((a, b) => [engine.coupleReading(a, b), handlers.calcCouple(a, b, a.name, b.name)]);
     expect(res.mismatches).toEqual([]);
-    expect(res.checked).toBe(90000);
+    expect(res.checked).toBe(PLAIN.length ** 2);
   });
 
   it("parent and child", () => {
     const res = compareAllPairs((p, c) => [engine.parentChildReading(p, c), handlers.calcPC(p, c, p.name, c.name)]);
     expect(res.mismatches).toEqual([]);
-    expect(res.checked).toBe(90000);
+    expect(res.checked).toBe(PLAIN.length ** 2);
   });
 });
 
 describe("hand-checked compatibility examples", () => {
-  const shani = { d: 15, m: 8, y: 1990, name: "שני כהן אזולאי" }; // LP 6, NV 4, SU 1
+  const shani = { d: 15, m: 8, y: 1990, name: "שני כהן אזולאי" }; // LP 6, NV 4, SU 6 (the ה counts since 2026-10-11)
   const partner = { d: 1, m: 1, y: 1990, name: "שני" }; // LP 1+1+1+9+9 = 21 -> 3, NV 9, SU 1
-  it("studio love match: |6-3| = 3 (no LP bonus), same soul +15, no name bonus, score 65", () => {
-    expect(engine.matchReading(shani, partner, "love")).toMatchObject({ lp1: 6, lp2: 3, su1: 1, su2: 1, score: 65, harmony: 7, tension: 3 });
+  const sister = { d: 15, m: 8, y: 1990, name: "שני" }; // LP 6, NV 9, SU 1
+  it("studio love match: |6-3| = 3 (no LP bonus), souls 6 and 1 (no soul bonus), no name bonus, score 50", () => {
+    expect(engine.matchReading(shani, partner, "love")).toMatchObject({ lp1: 6, lp2: 3, su1: 6, su2: 1, score: 50, harmony: 5, tension: 4 });
+  });
+  it("same life path +20 and the same soul +15, names 9 and 4: score 85", () => {
+    // שי: ש3 + י1 = 4, its soul י = 1
+    expect(engine.matchReading(sister, { ...sister, name: "שי" }, "love")).toMatchObject({ lp1: 6, lp2: 6, su1: 1, su2: 1, nv1: 9, nv2: 4, score: 85 });
   });
   it("compatKey puts the smaller life path first", () => {
     expect([engine.compatKey(6, 3), engine.compatKey(3, 6), engine.compatKey(4, 4)]).toEqual(["3-6", "3-6", "4-4"]);

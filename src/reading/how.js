@@ -5,7 +5,7 @@
  * from the number beside it.
  */
 import {
-  LV, VOW, R, LP, LPm, NV, CA, addsOne, CH, cycleSpans, karmicDebt, loShu, dailyRitualNumber,
+  LV, VOW, R, LP, LPm, NV, CA, addsOne, CH, cycleSpans, karmicDebt, reductionChain, loShu, dailyRitualNumber,
   nameCounts, dominantNumbers, missingNumbers, charValue,
 } from "../engine/index.js";
 import { agesText } from "./ages.js";
@@ -36,7 +36,7 @@ const TITLES = {
   hp: ["פסגות נסתרות", "Hidden pinnacles"],
   hc: ["אתגרים נסתרים", "Hidden challenges"],
   exit: ["גילי המחזורים", "Cycle ages"],
-  kd: ["חובות קארמתיים", "Karmic debts"],
+  kd: ["חובות קארמיים", "Karmic debts"],
   ls: ["לו שו", "Lo Shu"],
   daily: ["המספר של היום", "Today's number"],
   mat: ["מספר הבגרות", "Maturity"],
@@ -84,13 +84,16 @@ function addReduce(a, b) {
 /** The challenge between two numbers: their difference, 0 when they are equal. */
 const diff = (a, b) => ({ math: `|${a}−${b}| = ${Math.abs(a - b)}`, result: CH(a, b) });
 
+/** The soul's letters as the engine counts them: "א, ה, ו, י, ע". */
+const VOWELS = [...VOW].join(", ");
+
 const LETTER_KINDS = {
   nv: { keep: () => true, he: "ערך כל אות בשם", en: "The value of every letter" },
-  su: { keep: (ch) => VOW.has(ch), he: "רק האותיות א, ו, י, ע", en: "Only the letters א ו י ע" },
-  ex: { keep: (ch) => !VOW.has(ch), he: "כל האותיות חוץ מ-א, ו, י, ע", en: "Every letter except א ו י ע" },
+  su: { keep: (ch) => VOW.has(ch), he: `רק האותיות ${VOWELS}`, en: `Only the letters ${VOWELS}` },
+  ex: { keep: (ch) => !VOW.has(ch), he: `כל האותיות חוץ מ-${VOWELS}`, en: `Every letter except ${VOWELS}` },
 };
 
-/** A name number: nv (every letter), su (the vowels א ו י ע) or ex (the other letters). */
+/** A name number: nv (every letter), su (the soul's letters, VOW) or ex (the other letters). */
 function nameNumber(kind, name, he) {
   const k = LETTER_KINDS[kind];
   const which = he ? k.he : k.en;
@@ -123,33 +126,44 @@ function age({ d, m, y, now }, he) {
   return { steps, result };
 }
 
-/** The personal year of calendar year `year`; `plus` is the +1 (the date decides it, July 1 - December 31). */
-function personalYear({ d, m, year, plus }, he) {
+/**
+ * The personal year of calendar year `year`; `plus` is the +1. `inSeason` says whether the date it was made for
+ * falls between July 1 and December 31: a reading saved with a +1 outside them added it by hand.
+ */
+function personalYear({ d, m, year, plus, inSeason = true }, he) {
   const ds = digitsOf(`${pad2(d)}${pad2(m)}${year}`);
   const base = reduceSteps(sum(ds), false, he);
   const steps = [step(he ? `ספרות יום וחודש הלידה, ועוד ספרות השנה ${year}` : `The digits of the birth day and month, plus those of ${year}`, addition(ds)), ...base.steps];
   if (!plus) return { steps, result: base.result };
   const after = reduceSteps(base.result + 1, false, he);
-  steps.push(step(he ? "מה-1.7 ועד ה-31.12 מוסיפים 1" : "From July 1 to December 31, add 1", `${base.result}+1 = ${base.result + 1}`), ...after.steps);
+  const why = inSeason
+    ? (he ? "מה-1.7 ועד ה-31.12 מוסיפים 1" : "From July 1 to December 31, add 1")
+    : (he ? "ה-1+ נוסף בבדיקה הזו" : "This reading added the +1");
+  steps.push(step(why, `${base.result}+1 = ${base.result + 1}`), ...after.steps);
   return { steps, result: after.result };
 }
 
-function personalMonth({ d, m, now }, he) {
-  const month = now.getMonth() + 1;
-  const ds = digitsOf(`${pad2(d)}${pad2(m)}${month}`);
-  const reduced = reduceSteps(sum(ds), false, he);
+/** The personal year on `now`, as a reading made then had it: its own +1 when it saved one, else the date's. */
+const yearOf = ({ d, m, now, add }, he) => personalYear({ d, m, year: now.getFullYear(), plus: add ?? addsOne(now), inSeason: addsOne(now) }, he);
+
+/** The personal month: the personal year, plus the month. */
+function personalMonth(ctx, he) {
+  const year = yearOf(ctx, he);
+  const month = ctx.now.getMonth() + 1;
+  const reduced = reduceSteps(year.result + month, false, he);
   return {
-    steps: [step(he ? `ספרות יום וחודש הלידה, ועוד ספרות החודש הנוכחי (${month})` : `The digits of the birth day and month, plus the current month (${month})`, addition(ds)), ...reduced.steps],
+    steps: [...year.steps, step(he ? `השנה האישית ועוד החודש (${month})` : `The personal year plus the month (${month})`, `${year.result}+${month} = ${year.result + month}`), ...reduced.steps],
     result: reduced.result,
   };
 }
 
-function personalDay({ d, m, now }, he) {
-  const today = `${now.getDate()}.${now.getMonth() + 1}.${now.getFullYear()}`;
-  const ds = digitsOf(`${pad2(d)}${pad2(m)}${now.getDate()}${now.getMonth() + 1}${now.getFullYear()}`);
-  const reduced = reduceSteps(sum(ds), false, he);
+/** The personal day: the personal month, plus the day of the month. */
+function personalDay(ctx, he) {
+  const monthly = personalMonth(ctx, he);
+  const day = ctx.now.getDate();
+  const reduced = reduceSteps(monthly.result + day, false, he);
   return {
-    steps: [step(he ? `ספרות יום וחודש הלידה, ועוד ספרות התאריך ${today}` : `The digits of the birth day and month, plus those of ${today}`, addition(ds)), ...reduced.steps],
+    steps: [...monthly.steps, step(he ? `החודש האישי ועוד היום בחודש (${day})` : `The personal month plus the day of the month (${day})`, `${monthly.result}+${day} = ${monthly.result + day}`), ...reduced.steps],
     result: reduced.result,
   };
 }
@@ -231,16 +245,26 @@ function cycles({ d, m, y }, he) {
   return { steps, result: exit, shown: spans.map(agesText).join(" · ") };
 }
 
+/** A sum and the way down from it, with any karmic number on the way marked: "4+9+... = 49 → 13 → 4 ← 13". */
+function sumWithChain(values, he) {
+  if (!values.length) return "0";
+  const chain = reductionChain(sum(values));
+  const debts = chain.filter((n) => KARMIC.includes(n));
+  const down = chain.length > 1 ? ` → ${chain.slice(1).join(" → ")}` : "";
+  const flag = debts.length ? (he ? ` ← חוב קארמי ${debts.join(", ")}` : ` ← karmic debt ${debts.join(", ")}`) : "";
+  return `${addition(values)}${down}${flag}`;
+}
+
 function karmic({ d, m, y, name }, he) {
-  const dateDigits = digitsOf(`${d}${m}${y}`);
-  const values = lettersOf(name, () => true).map((ch) => LV[ch]);
-  const flag = (n) => (KARMIC.includes(n) ? (he ? " ← חוב קארמתי" : " ← karmic debt") : "");
+  const valuesOf = (keep) => lettersOf(name, keep).map((ch) => LV[ch]);
   return {
     steps: [
-      step(he ? "חוב קארמתי הוא 13, 14, 16 או 19 באחד משלושה מקומות" : "A karmic debt is 13, 14, 16 or 19 in one of three places"),
-      step(he ? "סכום ספרות תאריך הלידה" : "The sum of the birth date's digits", `${addition(dateDigits)}${flag(sum(dateDigits))}`),
-      step(he ? "סכום ערכי האותיות בשם" : "The sum of the name's letter values", `${values.length ? addition(values) : "0"}${flag(sum(values))}`),
-      step(he ? "יום הלידה" : "The birth day", `${d}${flag(d)}`),
+      step(he ? "חוב קארמי הוא 13, 14, 16 או 19 בכל שלב של הצמצום, או יום לידה כזה" : "A karmic debt is 13, 14, 16 or 19 at any step of a reduction, or such a birth day"),
+      step(he ? "סכום ספרות תאריך הלידה" : "The sum of the birth date's digits", sumWithChain(digitsOf(`${d}${m}${y}`), he)),
+      step(he ? "סכום ערכי האותיות בשם" : "The sum of the name's letter values", sumWithChain(valuesOf(() => true), he)),
+      step(he ? `קול הנשמה (${VOWELS})` : `The soul (${VOWELS})`, sumWithChain(valuesOf((ch) => VOW.has(ch)), he)),
+      step(he ? "הביטוי (שאר האותיות)" : "The expression (the other letters)", sumWithChain(valuesOf((ch) => !VOW.has(ch)), he)),
+      step(he ? "יום הלידה" : "The birth day", KARMIC.includes(d) ? `${d}${he ? " ← חוב קארמי" : " ← karmic debt"}` : `${d}`),
     ],
     result: karmicDebt(d, m, y, name),
   };
@@ -325,7 +349,7 @@ const BUILDERS = {
   ex: (ctx, he) => nameNumber("ex", ctx.name, he),
   lp: lifePath,
   age,
-  py: (ctx, he) => personalYear({ d: ctx.d, m: ctx.m, year: ctx.year ?? ctx.now.getFullYear(), plus: ctx.add ?? addsOne(ctx.now) }, he),
+  py: (ctx, he) => personalYear({ d: ctx.d, m: ctx.m, year: ctx.year ?? ctx.now.getFullYear(), plus: ctx.add ?? addsOne(ctx.now), inSeason: addsOne(ctx.now) }, he),
   pm: personalMonth,
   pd: personalDay,
   hy: hiddenYear,

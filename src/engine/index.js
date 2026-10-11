@@ -21,6 +21,7 @@ export {
   PD,
   CH,
   karmicDebt,
+  reductionChain,
   loShu,
   yearCycle,
   cycleSpans,

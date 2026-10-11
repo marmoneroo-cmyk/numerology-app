@@ -31,7 +31,7 @@ describe("the map summary", () => {
     show();
     expect(screen.getByRole("heading", { level: 2, name: "סיכום המפה" })).toBeTruthy();
     expect(screen.getByText(/שני כהן אזולאי/).textContent).toContain("15.08.1990");
-    expect([cell("rs-lp"), cell("rs-nv"), cell("rs-su"), cell("rs-ex")]).toEqual(["33", "4", "1", "3"]);
+    expect([cell("rs-lp"), cell("rs-nv"), cell("rs-su"), cell("rs-ex")]).toEqual(["33", "4", "6", "7"]);
     expect([cell("rs-py"), cell("rs-age")]).toEqual(["7", "36"]);
     expect([cell("rs-pm"), cell("rs-pd"), cell("rs-hy")]).toEqual([MAP.pm, MAP.pd, MAP.hy].map(String));
     expect([0, 1, 2, 3].map((i) => cell(`rs-pk-${i}`))).toEqual(MAP.pk.map(String));
@@ -45,7 +45,7 @@ describe("the map summary", () => {
     show();
     const row = (id) => screen.getByTestId(id).closest("tr");
     expect(within(row("rs-lp")).getByText("המורה הגדול")).toBeTruthy();
-    expect(within(row("rs-ex")).getByText("היוצר")).toBeTruthy();
+    expect(within(row("rs-nv")).getByText("הבונה")).toBeTruthy();
     expect(within(row("rs-py")).getByText("שנת התבוננות פנימית")).toBeTruthy();
   });
 
