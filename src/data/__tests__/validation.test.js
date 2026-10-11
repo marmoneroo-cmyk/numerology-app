@@ -108,6 +108,13 @@ describe("validateReading", () => {
     expect(codes(() => validateReading(reading("map", { computedFor: "yesterday" })))).toEqual(["computedFor.invalid"]);
   });
 
+  it("keeps a parent-and-child reading saved before the original life paths were kept, and refuses a bad one", () => {
+    const { lpmP, lpmC, ...older } = SNAP.parentChild.result;
+    expect([typeof lpmP, typeof lpmC]).toEqual(["number", "number"]); // the engine keeps them now (2.1.0)
+    expect(validateReading(reading("parentChild", { result: older })).result).toEqual(older);
+    expect(codes(() => validateReading(reading("parentChild", { result: { ...older, lpmP: "33" } })))).toEqual(["result.invalid"]);
+  });
+
   it("rejects snapshots that do not have their type's shape", () => {
     expect(codes(() => validateReading(reading("map", { result: { lp: 33 } })))).toEqual(["result.invalid"]);
     expect(codes(() => validateReading(reading("yearCycle", { result: {} })))).toEqual(["result.invalid"]);

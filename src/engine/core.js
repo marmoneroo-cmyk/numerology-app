@@ -15,7 +15,10 @@
 // 1.2.0: a studio match of a parent and child scores as the parent-and-child reading
 // 2.0.0: the owner's answers to the calculation audit (2026-10-11): the soul counts ה, the personal month is
 //        the personal year plus the month (the day adds the day), karmic debts count every reduction step
-export const ENGINE_VERSION = "2.0.0";
+// 2.1.0: the owner's decisions on the review (2026-10-11, temporary defaults): the psychological map shows 0
+//        for a trait no number gives points to (no more filler), the live calculator keeps the master numbers,
+//        and a couple scores the same everywhere (the studio's love match; see compat.js)
+export const ENGINE_VERSION = "2.1.0";
 
 /** Hebrew letter values, final forms included. Any other character counts 0. Frozen: shared by every reading. */
 export const LV = Object.freeze({
@@ -27,7 +30,9 @@ export const LV = Object.freeze({
 /** The letters that make the soul number: א ה ו י ע (ה since 2026-10-11, the owner). Treat as read-only. */
 export const VOW = new Set(["א", "ה", "ו", "י", "ע"]);
 
-const isMaster = (n) => n === 11 || n === 22 || n === 33;
+/** The master numbers, kept whole where the method keeps them. The one list every screen uses. */
+export const MASTER_NUMBERS = Object.freeze([11, 22, 33]);
+export const isMaster = (n) => MASTER_NUMBERS.includes(n);
 const digitSum = (n) => [...String(Math.abs(n))].reduce((a, d) => a + +d, 0);
 const sumChars = (s) => [...s].reduce((a, c) => a + +c, 0);
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -35,23 +40,30 @@ const pad2 = (n) => String(n).padStart(2, "0");
 const dateDigits = (d, m, y) => `${pad2(d)}${pad2(m)}${y}`;
 const letterSum = (s, keep = () => true) => [...s].filter(keep).reduce((a, c) => a + (LV[c] || 0), 0);
 
-/** Reduce to a single digit. 0 stays 0; a negative single digit is returned as is. */
-export function R(n) {
-  if (n === 0) return 0;
-  while (n >= 10 || n <= -10) n = digitSum(n);
-  return n;
-}
-
-/** Reduce to a single digit, but stop at the master numbers 11, 22 and 33. */
-export function Rm(n) {
-  if (isMaster(n)) return n;
-  let x = Math.abs(n);
-  while (x >= 10) {
+/**
+ * The one reduction every number goes through: add the digits until one is left (38 → 11 → 2). With
+ * `keepMasters` it stops at 11, 22 or 33, as the sum itself or at any step on the way (38 → 11). Which
+ * numbers keep their masters is the method's choice, made where each number is calculated:
+ * the name, soul, expression, life path, maturity and birthday keep them; the personal year, month and day,
+ * the hidden year, the pinnacles, challenges and their hidden ones, Lo Shu and the universal day do not.
+ * 0 stays 0. Without `keepMasters` a negative single digit is returned as is (the shipped R's behaviour).
+ */
+export function reduce(n, { keepMasters = false } = {}) {
+  if (n === 0) return 0; // and -0, which the shipped R also gave as 0
+  if (keepMasters && isMaster(n)) return n;
+  let x = keepMasters ? Math.abs(n) : n;
+  while (x >= 10 || x <= -10) {
     x = digitSum(x);
-    if (isMaster(x)) return x;
+    if (keepMasters && isMaster(x)) return x;
   }
   return x;
 }
+
+/** Reduce to a single digit. 0 stays 0; a negative single digit is returned as is. */
+export const R = (n) => reduce(n);
+
+/** Reduce to a single digit, but stop at the master numbers 11, 22 and 33. */
+export const Rm = (n) => reduce(n, { keepMasters: true });
 
 /** Name number: every letter of the name. */
 export const NV = (s) => Rm(letterSum(s));
@@ -115,8 +127,18 @@ export const CH = (a, b) => (a === b ? 0 : R(Math.abs(a - b)));
 /** The meaning a master number borrows: 11 -> 2, 22 -> 4, 33 -> 6. Single digits stay. */
 export const masterBase = (n) => (n > 9 ? sumChars(String(n)) : n);
 
-/** The number of the day for the daily ritual: day of the month mod 9, 9 instead of 0. */
+/**
+ * The number of the day of the month, for the daily ritual on the "יומי" screen: the day mod 9, 9 instead
+ * of 0. The same for everyone, and not the universal day (below) nor anyone's personal day (PD).
+ */
 export const dailyRitualNumber = (now = new Date()) => now.getDate() % 9 || 9;
+
+/**
+ * The universal day, on the "היום" screen (the owner, 2026-10-11): every digit of the date, reduced to one
+ * digit (11.10.2026: 1+1+1+0+2+0+2+6 = 13 → 4). A sum of 11 or 22 is reduced too, until the owner says
+ * otherwise.
+ */
+export const universalDay = (now = new Date()) => R(sumChars(dateDigits(now.getDate(), now.getMonth() + 1, now.getFullYear())));
 
 const KARMIC = [13, 14, 16, 19];
 
@@ -165,9 +187,12 @@ export function cycleSpans(exit) {
 /** The life cycle (0-3) a person of `age` is in; -1 only for a negative age. */
 export const cycleAt = (age, exit) => cycleSpans(exit).findIndex(({ from, to }) => age >= from && (to === null || age < to));
 
-/** The psychological map: six traits on 0-10, with a deterministic floor of 2-4. */
-function psychMap({ nv, lp, su, ex, py, d, m, y }) {
-  const psych = {
+/**
+ * The psychological map: six traits on 0-10, from points the numbers (in one digit) give. A trait no number
+ * gives points to shows 0 (the owner, 2026-10-11; it used to get a filler of 2-4 that came from no number).
+ */
+function psychMap({ nv, lp, su, ex, py }) {
+  return {
     leadership: Math.min(10, (nv === 1 || nv === 8 ? 3 : 0) + (lp === 1 || lp === 8 ? 3 : 0) + (su === 1 ? 2 : 0) + (ex === 8 ? 2 : 0)),
     intuition: Math.min(10, (nv === 2 || nv === 7 ? 3 : 0) + (lp === 2 || lp === 7 ? 3 : 0) + (su === 7 ? 2 : 0) + (su === 2 ? 2 : 0)),
     creativity: Math.min(10, (nv === 3 || nv === 5 ? 3 : 0) + (lp === 3 || lp === 5 ? 3 : 0) + (su === 3 ? 2 : 0) + (ex === 5 ? 2 : 0)),
@@ -175,11 +200,6 @@ function psychMap({ nv, lp, su, ex, py, d, m, y }) {
     ambition: Math.min(10, (nv === 8 || nv === 1 ? 3 : 0) + (lp === 8 ? 3 : 0) + (py === 8 || py === 1 ? 2 : 0) + (ex === 8 ? 2 : 0)),
     wisdom: Math.min(10, (nv === 7 || nv === 9 ? 3 : 0) + (lp === 7 || lp === 9 ? 3 : 0) + (su === 9 ? 2 : 0) + (su === 7 ? 2 : 0)),
   };
-  const seed = Math.abs(nv * 7 + lp * 13 + su * 17 + ex * 19 + py * 23 + d * 3 + m * 5 + y);
-  Object.keys(psych).forEach((k, i) => {
-    if (psych[k] < 2) psych[k] = 2 + ((seed + i * 37) % 3);
-  });
-  return psych;
 }
 
 /**
@@ -218,12 +238,13 @@ export function fullCalc(d, m, y, nm, add, now = new Date()) {
   const proj = yearCycle(d, m, plus, now);
 
   const reduced = { nv: R(nv), lp: R(lp), su: R(su), ex: R(ex) };
-  const psych = psychMap({ ...reduced, py, d, m, y });
+  const psych = psychMap({ ...reduced, py });
   return { nv, lp, age, py, hy, su, ex, pm, pd, pk, ch, hp, hc, exit: 27 - reduced.lp, kd, ls, proj, psych, d, m, y };
 }
 
 /**
- * The live calculator: Hebrew by letter value, Latin by position ((code - 65) % 9 + 1).
+ * The live calculator: Hebrew by letter value, Latin by position ((code - 65) % 9 + 1), master numbers
+ * kept as the full reading keeps them (the owner, 2026-10-11: "Dana" is 11, not 2).
  * A character counts as Latin when its upper case falls between "A" and "Z" as a string,
  * so "ß" (upper case "SS") counts as S. Digits, spaces and everything else count 0.
  */
@@ -236,5 +257,5 @@ export function liveNum(s) {
       if (u >= "A" && u <= "Z") sum += ((u.charCodeAt(0) - 65) % 9) + 1;
     }
   }
-  return sum ? R(sum) : 0;
+  return sum ? Rm(sum) : 0;
 }

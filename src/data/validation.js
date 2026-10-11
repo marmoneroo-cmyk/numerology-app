@@ -139,7 +139,18 @@ function pickNums(obj, keys) {
 const MAP_SCALARS = ["nv", "lp", "age", "py", "hy", "su", "ex", "pm", "pd", "exit", "d", "m", "y"];
 const MATCH_KEYS = ["lp1", "lp2", "nv1", "nv2", "su1", "su2", "ex1", "ex2", "lpm1", "lpm2", "score", "harmony", "tension", "growth"];
 const PARENT_KEYS = ["lpP", "lpC", "nvP", "nvC", "suP", "suC", "score"];
+/** Since engine 2.1.0 a parent-and-child result also keeps the original life paths (masters kept); older ones do not. */
+const PARENT_OPTIONAL = ["lpmP", "lpmC"];
 const MATCH_TYPES = ["love", "twin", "biz", "parent"];
+
+/** The parent-and-child numbers, and the original life paths when the reading has them. */
+function parentResult(r) {
+  const nums = pickNums(r, PARENT_KEYS);
+  if (!nums) return null;
+  const present = PARENT_OPTIONAL.filter((k) => r[k] !== undefined);
+  if (!present.every((k) => isNum(r[k]))) return null;
+  return { ...nums, ...Object.fromEntries(present.map((k) => [k, r[k]])) };
+}
 
 function mapResult(r) {
   const scalars = pickNums(r, MAP_SCALARS);
@@ -184,7 +195,7 @@ const SNAPSHOTS = {
       const o = isPlainObject(i) && person(i.other);
       return p && p.birthDate && o && (i.role === "parent" || i.role === "child") ? { person: p, other: o, role: i.role } : null;
     },
-    result: (r) => pickNums(r, PARENT_KEYS),
+    result: parentResult,
   },
   yearCycle: {
     input: (i) => (isPlainObject(i) && isIsoDate(i.birthDate, 3000) ? { birthDate: i.birthDate, add: i.add === true } : null),

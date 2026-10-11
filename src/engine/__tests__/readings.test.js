@@ -69,14 +69,28 @@ describe("compatibility readings match the shipped handlers for every pair of 30
     expect(res.checked).toBe(PLAIN.length ** 2);
   });
 
-  it("couple", () => {
-    const res = compareAllPairs((a, b) => [engine.coupleReading(a, b), handlers.calcCouple(a, b, a.name, b.name)]);
+  // since 2026-10-11 (the owner) the couple scores as the studio's love match everywhere; the shipped
+  // התאמה tab added 5 more for name numbers 1 or 2 apart, and nothing else differed
+  it("couple: the studio's love match, 5 under the shipped tab exactly when the names are 1 or 2 apart", () => {
+    const res = compareAllPairs((a, b) => {
+      const got = engine.coupleReading(a, b);
+      const shipped = handlers.calcCouple(a, b, a.name, b.name);
+      const numbersOf = (r) => [r.lp1, r.lp2, r.nv1, r.nv2, r.su1, r.su2, r.ex1, r.ex2];
+      const nameGap = Math.abs(shipped.nv1 - shipped.nv2);
+      return [
+        { love: isDeepStrictEqual(got, engine.matchReading(a, b, "love")), numbers: numbersOf(got), gap: shipped.score - got.score },
+        { love: true, numbers: numbersOf(shipped), gap: nameGap === 1 || nameGap === 2 ? 5 : 0 },
+      ];
+    });
     expect(res.mismatches).toEqual([]);
     expect(res.checked).toBe(PLAIN.length ** 2);
   });
 
-  it("parent and child", () => {
-    const res = compareAllPairs((p, c) => [engine.parentChildReading(p, c), handlers.calcPC(p, c, p.name, c.name)]);
+  it("parent and child, with the original life paths beside the compared ones", () => {
+    const res = compareAllPairs((p, c) => {
+      const { lpmP, lpmC, ...got } = engine.parentChildReading(p, c);
+      return [[got, lpmP, lpmC], [handlers.calcPC(p, c, p.name, c.name), engine.LPm(p.d, p.m, p.y), engine.LPm(c.d, c.m, c.y)]];
+    });
     expect(res.mismatches).toEqual([]);
     expect(res.checked).toBe(PLAIN.length ** 2);
   });

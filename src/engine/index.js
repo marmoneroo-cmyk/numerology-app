@@ -6,6 +6,9 @@ export {
   ENGINE_VERSION,
   LV,
   VOW,
+  MASTER_NUMBERS,
+  isMaster,
+  reduce,
   R,
   Rm,
   NV,
@@ -28,9 +31,10 @@ export {
   cycleAt,
   masterBase,
   dailyRitualNumber,
+  universalDay,
   fullCalc,
   liveNum,
 } from "./core.js";
 export { nameCounts, dominantNumbers, missingNumbers, maturity, birthdayNumber, charValue, textNumber } from "./extras.js";
 export { getRecommendations } from "./recommendations.js";
-export { compatKey, matchReading, coupleReading, parentChildReading } from "./compat.js";
+export { COMPAT_RULES, compatKey, matchReading, coupleReading, parentChildReading } from "./compat.js";

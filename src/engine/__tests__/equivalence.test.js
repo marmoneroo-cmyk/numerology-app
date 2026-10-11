@@ -2,9 +2,10 @@
  * The engine must give exactly what the shipped App.jsx gave, for every input,
  * except where the owner changed the method on 2026-10-11 (the soul's vowels add
  * ה, the personal month is the personal year plus the month and the personal day
- * adds the day, and karmic debts count every step of the reduction). Those are
- * checked against small reference versions of the new rules, written here apart
- * from the engine.
+ * adds the day, and karmic debts count every step of the reduction; then, as
+ * temporary defaults, the live calculator keeps masters and the psychological map
+ * drops its filler). Those are checked against small reference versions of the
+ * new rules, written here apart from the engine.
  * Each sweep collects mismatches instead of asserting per item, so a failure
  * prints the first offending inputs and the sweep sizes stay large but fast.
  */
@@ -51,6 +52,31 @@ const refKarmic = (d, m, y, nm) => {
 };
 /** The parts of a map the owner did not change, which must still equal the shipped code's. */
 const kept = ({ su, ex, pm, pd, kd, psych, ...rest }) => rest;
+// since the second round of 2026-10-11 (the owner's temporary defaults): the live calculator keeps the
+// master numbers, and the psychological map has no filler, only the points of its rules
+const refLive = (s) => {
+  let sum = 0;
+  for (const ch of s) {
+    if (engine.LV[ch]) sum += engine.LV[ch];
+    else {
+      const u = ch.toUpperCase();
+      if (u >= "A" && u <= "Z") sum += ((u.charCodeAt(0) - 65) % 9) + 1;
+    }
+  }
+  return sum ? reduce(sum, true) : 0;
+};
+/** The six traits from the numbers in one digit: [trait, [numbers that give 3], [numbers that give 2]]. */
+const refPsych = ({ nv, lp, su, ex, py }) => {
+  const points = (threes, twos) => Math.min(10, threes.filter(Boolean).length * 3 + twos.filter(Boolean).length * 2);
+  return {
+    leadership: points([nv === 1 || nv === 8, lp === 1 || lp === 8], [su === 1, ex === 8]),
+    intuition: points([nv === 2 || nv === 7, lp === 2 || lp === 7], [su === 7, su === 2]),
+    creativity: points([nv === 3 || nv === 5, lp === 3 || lp === 5], [su === 3, ex === 5]),
+    stability: points([nv === 4 || nv === 6, lp === 4 || lp === 6], [su === 6, ex === 4]),
+    ambition: points([nv === 8 || nv === 1, lp === 8], [py === 8 || py === 1, ex === 8]),
+    wisdom: points([nv === 7 || nv === 9, lp === 7 || lp === 9], [su === 9, su === 7]),
+  };
+};
 
 const CLOCKS = [
   ["a regular day", new Date(2026, 9, 5, 12, 0)],
@@ -109,10 +135,10 @@ describe("engine matches the shipped code", () => {
     expect(res.checked).toBe(101001);
   });
 
-  it("name numbers and the live calculator over 3,011 names", () => {
+  it("name numbers and the live calculator over 3,011 names (the live one now keeps masters; reduced, it is the shipped value)", () => {
     const res = sweep(NAMES, (s) => [
-      [engine.NV(s), engine.liveNum(s), engine.SU(s), engine.EX(s)],
-      [legacy.NV(s), legacy.liveNum(s), refSU(s), refEX(s)],
+      [engine.NV(s), engine.liveNum(s), engine.R(engine.liveNum(s)), engine.SU(s), engine.EX(s)],
+      [legacy.NV(s), refLive(s), legacy.liveNum(s), refSU(s), refEX(s)],
     ]);
     expect(res.mismatches).toEqual([]);
     expect(res.checked).toBe(3011);
@@ -205,15 +231,19 @@ describe.each(CLOCKS.map(([label, now], i) => [label, now, i]))("engine matches 
     expect(res.checked).toBe(1500);
   });
 
-  it("a name with no ה keeps its shipped psychological map", () => {
+  it("the psychological map: the points of its rules, 0 where none, and the shipped value wherever a trait has points", () => {
     const r = rng(2000 + i);
     const cases = Array.from({ length: 800 }, () => [1 + Math.floor(r() * 31), 1 + Math.floor(r() * 12), 1900 + Math.floor(r() * 131), pick(r, NAMES)]).filter(([, , , nm]) => !nm.includes("ה"));
     freeze(now);
-    const wants = cases.map(([d, m, y, nm]) => legacy.fullCalc(d, m, y, nm, engine.addsOne(now)).psych);
+    const shipped = cases.map(([d, m, y, nm]) => legacy.fullCalc(d, m, y, nm, engine.addsOne(now)).psych);
     freeze(DECOY);
     const res = sweep(cases.keys(), (k) => {
       const [d, m, y, nm] = cases[k];
-      return [engine.fullCalc(d, m, y, nm, undefined, now).psych, wants[k]];
+      const got = engine.fullCalc(d, m, y, nm, undefined, now);
+      const want = refPsych({ nv: reduce(got.nv), lp: reduce(got.lp), su: reduce(got.su), ex: reduce(got.ex), py: got.py });
+      // the shipped filler only ever replaced a 0
+      const kept = Object.fromEntries(Object.keys(want).map((t) => [t, want[t] === 0 ? 0 : shipped[k][t]]));
+      return [[got.psych, got.psych], [want, kept]];
     });
     expect(res.mismatches).toEqual([]);
     expect(res.checked).toBeGreaterThan(300);
