@@ -4,8 +4,8 @@
  */
 import { BUSINESS_EMAIL } from "../business.js";
 
-/** The owner's WhatsApp number for questions about the Studio: digits only, with the country code (972...). */
-export const SALES_WHATSAPP = null;
+/** The owner's WhatsApp number for questions about the Studio: digits only, with the country code (the owner, 2026-10-11). */
+export const SALES_WHATSAPP = "972524000820";
 /** The monthly price, in shekels (the owner, 2026-10-10). */
 export const PRICE_MONTHLY = 149;
 /** Days of free trial (the owner, 2026-10-10). */

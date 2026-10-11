@@ -6,8 +6,8 @@ import { LEGAL_DOCS, LEGAL_EMAIL, LEGAL_UPDATED, OPERATOR_NAME, buildLegalDocs }
 
 const DOCS = ["terms", "privacy", "refunds"];
 const LANGUAGES = [
-  { he: true, key: "he", name: "Hebrew", dir: "rtl", date: "7.10.2026", updated: "עודכן לאחרונה" },
-  { he: false, key: "en", name: "English", dir: "ltr", date: "7 October 2026", updated: "Last updated" },
+  { he: true, key: "he", name: "Hebrew", dir: "rtl", date: "11.10.2026", updated: "עודכן לאחרונה" },
+  { he: false, key: "en", name: "English", dir: "ltr", date: "11 October 2026", updated: "Last updated" },
 ];
 
 /** Every string a page shows: its title, and each section's title, paragraphs and items. */

@@ -8,13 +8,13 @@
  */
 
 /** The "last updated" date on every legal page (YYYY-MM-DD). Change it whenever a page changes. */
-export const LEGAL_UPDATED = "2026-10-07";
+export const LEGAL_UPDATED = "2026-10-11";
 
 /** The address for every legal matter: questions, privacy requests and cancellations. */
 export const LEGAL_EMAIL = "shlomi.cohen4444@gmail.com";
 
-/** The operator's legal name. While it is null the pages say only "מפעיל השירות"; once set, they show it after that. */
-export const OPERATOR_NAME = null;
+/** The operator's legal name (the owner, 2026-10-11). While it is null the pages say only "מפעיל השירות"; once set, they show it after that. */
+export const OPERATOR_NAME = "עדן כהן";
 
 /** Who runs the service, at the end of a sentence: the neutral term, followed by the legal name once it is known. */
 function operator(name, he) {

@@ -18,7 +18,7 @@ describe("how the sales page reaches the owner", () => {
     expect(contactLink(true, { whatsapp: null, email: null })).toBeNull();
   });
 
-  it("reaches the business email while the owner's number is not set", () => {
-    expect(contactLink(true).kind).toBe("email");
+  it("reaches the owner on WhatsApp, the number the owner gave (2026-10-11)", () => {
+    expect(contactLink(true)).toEqual({ kind: "whatsapp", href: `https://wa.me/972524000820?text=${encodeURIComponent("היי, אשמח לשמוע על הסטודיו לנומרולוגים")}` });
   });
 });

@@ -6,6 +6,7 @@ import App from "../App.jsx";
 import { AccountProvider } from "../account/AccountContext.jsx";
 import { ToastProvider } from "../studio/Toasts.jsx";
 import { demoService } from "../demo/sampleAccount.js";
+import { SALES_WHATSAPP } from "../sales/config.js";
 
 /** A 2D context that accepts every drawing call: the background canvases draw stars the tests do not look at. */
 const canvas2d = new Proxy({}, { get: (store, key) => (key in store ? store[key] : () => canvas2d), set: (store, key, value) => ((store[key] = value), true) });
@@ -73,6 +74,10 @@ describe("App inside Root", { timeout: 20000 }, () => {
     const navigate = show("demo", { active: true, loadService: async () => demoService() });
     const banner = await screen.findByRole("note", {}, LONG);
     expect(banner.textContent).toContain("זו הדגמה");
+    // the banner reaches the owner on WhatsApp, in a new tab
+    const talk = within(banner).getByRole("link", { name: "לדבר איתנו" });
+    expect(talk.getAttribute("href").startsWith(`https://wa.me/${SALES_WHATSAPP}?text=`)).toBe(true);
+    expect([talk.getAttribute("target"), talk.getAttribute("rel")]).toEqual(["_blank", "noopener noreferrer"]);
     expect((await screen.findAllByText(/רחל כהן/, {}, LONG)).length).toBeGreaterThan(0);
     // the sample clients' phones are for show: a greeting opens WhatsApp with no one chosen
     for (const greeting of screen.getAllByRole("link", { name: /^ברכה/ })) expect(greeting.getAttribute("href").startsWith("https://wa.me/?text=")).toBe(true);

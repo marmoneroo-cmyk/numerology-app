@@ -5,7 +5,7 @@ import { render, screen, fireEvent, cleanup, within } from "@testing-library/rea
 import SalesPage from "../SalesPage.jsx";
 import { Price, Worth } from "../sections.jsx";
 import { SALES } from "../content.js";
-import { PRICE_MONTHLY, TRIAL_DAYS } from "../config.js";
+import { PRICE_MONTHLY, TRIAL_DAYS, SALES_WHATSAPP } from "../config.js";
 
 afterEach(cleanup);
 
@@ -17,7 +17,12 @@ describe("the sales page", () => {
     expect(screen.getByRole("link", { name: SALES.he.signIn }).getAttribute("href")).toBe("#studio");
     const contact = screen.getAllByRole("link", { name: new RegExp(SALES.he.hero.contact) });
     expect(contact.length).toBeGreaterThan(0);
-    for (const link of contact) expect(link.getAttribute("href").startsWith("mailto:")).toBe(true); // no WhatsApp number yet: email
+    // the owner's WhatsApp, in a new tab
+    for (const link of contact) {
+      expect(link.getAttribute("href").startsWith(`https://wa.me/${SALES_WHATSAPP}?text=`)).toBe(true);
+      expect(link.getAttribute("target")).toBe("_blank");
+      expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    }
     const titles = [SALES.he.pillars, SALES.he.demo, SALES.he.map, SALES.he.care, SALES.he.worth, SALES.he.tools, SALES.he.privacy, SALES.he.price, SALES.he.faq, SALES.he.final].map((s) => s.title);
     for (const title of titles) expect(screen.getByRole("heading", { level: 2, name: title })).toBeTruthy();
     expect(screen.getByRole("heading", { level: 3, name: SALES.he.join.title })).toBeTruthy();
@@ -52,6 +57,10 @@ describe("the sales page", () => {
     expect(within(footer).getByRole("link", { name: SALES.he.footer.privacy }).getAttribute("href")).toBe("#privacy");
     expect(within(footer).getByRole("link", { name: SALES.he.footer.refunds }).getAttribute("href")).toBe("#refunds");
     expect(screen.getByRole("link", { name: SALES.he.privacy.more }).getAttribute("href")).toBe("#privacy");
+    // and the owner's WhatsApp, in a new tab
+    const whatsapp = within(footer).getByRole("link", { name: SALES.he.footer.whatsapp });
+    expect(whatsapp.getAttribute("href").startsWith(`https://wa.me/${SALES_WHATSAPP}?text=`)).toBe(true);
+    expect([whatsapp.getAttribute("target"), whatsapp.getAttribute("rel")]).toEqual(["_blank", "noopener noreferrer"]);
   });
 
   it("answers the common questions in place, each one opening by itself", () => {
