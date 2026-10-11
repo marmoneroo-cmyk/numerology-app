@@ -4,7 +4,7 @@
  * actions, and today's card. It reads the client list from the workspace store
  * once; the day, the numbers and the deck come in from the app.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLoad } from "../workspace/ui.jsx";
 import {
   checkInText, followUpText, greetingLink, greetingText, initialsOf, isNewYearMonth, newYearText, quietClients,
@@ -240,40 +240,55 @@ function FollowUps({ he, due, clients, onOpenReading, greetAnyone, signature }) 
   );
 }
 
+/** In July, the clients shown before "show all". */
+const NEW_YEAR_FIRST = 8;
+
 /**
  * Clients worth a word: the ones quiet for half a year, with their personal year now; in July, when the +1
- * moves every personal year on, the most recent clients with their new year.
+ * moves every personal year on, every client with their new year (the most recent first, the rest on asking).
  */
 function Reconnect({ he, clients, now, personalYear, greetAnyone, signature }) {
+  const [showAll, setShowAll] = useState(false);
   const newYear = isNewYearMonth(now);
-  const list = newYear ? recentClients(clients, 8).map((client) => ({ client, months: null })) : quietClients(clients, now);
+  const everyone = newYear ? recentClients(clients, Infinity) : [];
+  const list = newYear
+    ? everyone.slice(0, showAll ? everyone.length : NEW_YEAR_FIRST).map((client) => ({ client, months: null }))
+    : quietClients(clients, now);
   if (!list.length) return <p className="st-today-quiet">{he ? "כל הלקוחות היו בקשר בחצי השנה האחרונה." : "Every client was in touch in the last half year."}</p>;
+  const more = newYear && !showAll && everyone.length > NEW_YEAR_FIRST;
   return (
-    <ul className="st-today-rows">
-      {list.map(({ client, months }) => {
-        const year = client.birthDate ? personalYear(client.birthDate, now) : undefined;
-        const make = newYear ? newYearText : checkInText;
-        const text = make(client.fullName, he, { personalYear: year, signature });
-        const link = messageLink(client, text, greetAnyone);
-        const about = newYear
-          ? year && (he ? `שנה אישית חדשה: ${year}` : `New personal year: ${year}`)
-          : he ? `פעילות אחרונה לפני ${months} חודשים` : `Last activity ${months} months ago`;
-        return (
-          <li key={client.id} className="st-today-row">
-            <Initials name={client.fullName} />
-            <div className="st-today-who">
-              <b className="st-today-name">{client.fullName}</b>
-              {about && <span className="st-today-sub">{about}</span>}
-            </div>
-            {link ? (
-              <MessageButton he={he} href={link} text={text} client={client} label={he ? "הודעה" : "Message"} />
-            ) : (
-              <span className="st-today-sub">{he ? "אין טלפון" : "No phone"}</span>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      <ul className="st-today-rows">
+        {list.map(({ client, months }) => {
+          const year = client.birthDate ? personalYear(client.birthDate, now) : undefined;
+          const make = newYear ? newYearText : checkInText;
+          const text = make(client.fullName, he, { personalYear: year, signature });
+          const link = messageLink(client, text, greetAnyone);
+          const about = newYear
+            ? year && (he ? `שנה אישית חדשה: ${year}` : `New personal year: ${year}`)
+            : he ? `פעילות אחרונה לפני ${months} חודשים` : `Last activity ${months} months ago`;
+          return (
+            <li key={client.id} className="st-today-row">
+              <Initials name={client.fullName} />
+              <div className="st-today-who">
+                <b className="st-today-name">{client.fullName}</b>
+                {about && <span className="st-today-sub">{about}</span>}
+              </div>
+              {link ? (
+                <MessageButton he={he} href={link} text={text} client={client} label={he ? "הודעה" : "Message"} />
+              ) : (
+                <span className="st-today-sub">{he ? "אין טלפון" : "No phone"}</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {more && (
+        <button type="button" className="st-today-btn st-today-small fx" onClick={() => setShowAll(true)}>
+          {he ? `להציג את כל ${everyone.length} הלקוחות` : `Show all ${everyone.length} clients`}
+        </button>
+      )}
+    </>
   );
 }
 

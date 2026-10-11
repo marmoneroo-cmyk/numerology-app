@@ -124,6 +124,17 @@ describe("Today", () => {
       expect(within(screen.getByRole("heading", { name: "מעקבים שהגיע זמנם" }).closest("section")).getByText("אין מעקבים שהגיע זמנם.")).toBeTruthy();
     });
 
+    it("in July, offers every client their new year: eight first, the rest on asking", async () => {
+      const JULY = new Date(2026, 6, 3, 10);
+      const many = Array.from({ length: 11 }, (_, i) => ({ id: `c${i}`, fullName: `לקוח ${i + 1}`, birthDate: "1990-03-06", phone: "050-7654321", updatedAt: ago(i + 1, JULY), lastActivityAt: ago(i + 1, JULY) }));
+      renderToday(fakeStore(many), { now: () => JULY });
+      const panel = (await screen.findByRole("heading", { name: "השנה האישית החדשה" })).closest("section");
+      expect(within(panel).getAllByRole("listitem")).toHaveLength(8);
+      fireEvent.click(within(panel).getByRole("button", { name: "להציג את כל 11 הלקוחות" }));
+      expect(within(panel).getAllByRole("listitem")).toHaveLength(11);
+      expect(within(panel).queryByRole("button", { name: /להציג את כל/ })).toBeNull();
+    });
+
     it("in July, offers every recent client their new personal year", async () => {
       const JULY = new Date(2026, 6, 3, 10);
       renderToday(fakeStore([{ ...YOSSI_NOW, phone: "050-7654321", updatedAt: ago(2, JULY), lastActivityAt: ago(2, JULY) }]), { now: () => JULY });
