@@ -21,6 +21,7 @@
  */
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import { createDatabase, createUser, newSession, endSession, as, rpc, makeAdmin } from "./harness.js";
 
 // PGlite is slow on a busy machine and several attacks make hundreds of calls: a slow run must not look like a failed one
@@ -161,7 +162,8 @@ describe("inventory: who may reach what", () => {
 
   it("authenticated can execute only the private helpers that report on the caller, never the ones that write", async () => {
     const reachable = (await truth("select proname from pg_proc where pronamespace = 'private'::regnamespace and has_function_privilege('authenticated', oid, 'EXECUTE') order by 1")).map((r) => r.proname);
-    expect(reachable).toEqual(["clean_text", "file_count", "initial_status", "is_admin", "mfa_ok", "require_admin", "require_session", "session_ok", "signed_in"]);
+    // the quota limits and the caller's own file bytes (2026-10-12) report only on the caller, like file_count
+    expect(reachable).toEqual(["clean_text", "doc_quota_bytes", "file_bytes", "file_count", "file_quota_bytes", "initial_status", "is_admin", "mfa_ok", "require_admin", "require_session", "session_ok", "signed_in"]);
     const victim = await signedIn();
     const caller = await signedIn();
     const before = await stateOf(victim.id);
@@ -1132,6 +1134,69 @@ describe("injection and abuse", () => {
       expect(await failure(rpc(db, a, "ws_batch", { p_ops: [put("attachments", { id: "f3", size: 1 })] }))).toMatch(/over the account quota/);
       expect(await rpc(db, a, "ws_batch", { p_ops: [put("attachments", { id: "f2", size: half - 1 }), put("attachments", { id: "f3", size: 1 })] })).toEqual({ applied: 2 });
     });
+
+    // FIXED after the 2026-10-12 audit; was (MEDIUM): the quotas counted rows only, so one account could keep
+    // about 49 GiB of readings and 195 GiB of files, and the 2 GiB file check summed a size the app writes itself
+    describe("in bytes", () => {
+      /** Runs `fn` with a limit lowered to `bytes` (so the test needs no gigabytes), then puts the real one back. */
+      async function withLimit(name, bytes, fn) {
+        const real = (await db.query(`select private.${name}()::text as v`)).rows[0].v;
+        const define = (v) => db.exec(`create or replace function private.${name}() returns bigint language sql stable set search_path = '' as $$ select ${v}::bigint $$`);
+        try {
+          await define(bytes);
+          await fn();
+        } finally {
+          await define(real);
+        }
+      }
+      /** Text that does not compress, so the database keeps it at its full length. */
+      const noise = (n) => randomBytes(n).toString("base64").slice(0, n);
+      const upload = (user, name, size) =>
+        failure(as(db, user, (tx) => tx.query("insert into storage.objects (bucket_id, name, metadata) values ('ws-files', $1, $2)", [`${user.id}/${name}`, JSON.stringify({ size })])));
+
+      it("the limits are 256 MiB of documents and 2 GiB of files", async () => {
+        const { rows } = await db.query("select private.doc_quota_bytes()::text as docs, private.file_quota_bytes()::text as files");
+        expect(rows[0]).toEqual({ docs: "268435456", files: "2147483648" });
+      });
+
+      it("documents: a batch that takes the account past the limit is refused whole; other accounts are unaffected", async () => {
+        const a = await signedIn();
+        const b = await signedIn();
+        await withLimit("doc_quota_bytes", 20000, async () => {
+          expect(await rpc(db, a, "ws_batch", { p_ops: [put("clients", { id: "c1", note: noise(8000) }), put("readings", { id: "r1", note: noise(8000) })] })).toEqual({ applied: 2 });
+          expect(await failure(rpc(db, a, "ws_batch", { p_ops: [put("readings", { id: "r2", note: noise(8000) })] }))).toMatch(/over the account quota/);
+          expect(await countOf("ws_readings", a.id)).toBe(1);
+          expect(await rpc(db, b, "ws_batch", { p_ops: [put("readings", { id: "r1", note: noise(8000) })] })).toEqual({ applied: 1 });
+          // room is made by shrinking or deleting: the same batch fits once r1 is small
+          expect(await rpc(db, a, "ws_batch", { p_ops: [put("readings", { id: "r1", note: "short" }), put("readings", { id: "r2", note: noise(8000) })] })).toEqual({ applied: 2 });
+        });
+      });
+
+      it("files: uploads stop at the limit by the size storage records, for each account apart", async () => {
+        const a = await signedIn();
+        const b = await signedIn();
+        await withLimit("file_quota_bytes", 1000, async () => {
+          expect(await upload(a, "f1", 600)).toBe("no error");
+          expect(await upload(a, "f2", 600)).toBe("no error"); // under the limit when it starts
+          expect(await upload(a, "f3", 1)).toMatch(/row-level security/);
+          expect(await upload(b, "f1", 600)).toBe("no error");
+        });
+      });
+    });
+  });
+
+  // FIXED after the 2026-10-12 audit; was (LOW): Supabase's default privileges open every new table and function in
+  // public to anon and to every signed-in user, so a table added later would be readable before anyone noticed
+  it("a table or function added later is closed to visitors and subscribers until a migration grants it", async () => {
+    await db.exec("create table public.zz_later (id int); insert into public.zz_later values (1); create function public.zz_later_fn() returns int language sql as $$ select 1 $$;");
+    try {
+      const a = await signedIn();
+      expect(await failure(sql(null, "select * from public.zz_later"))).toMatch(/permission denied/);
+      expect(await failure(sql(a, "select * from public.zz_later"))).toMatch(/permission denied/);
+      expect(await failure(sql(a, "select public.zz_later_fn()"))).toMatch(/permission denied for function/);
+    } finally {
+      await db.exec("drop table public.zz_later; drop function public.zz_later_fn();");
+    }
   });
 
   describe("log_event", () => {

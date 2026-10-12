@@ -352,6 +352,17 @@ describe("what the production entry (index.ts) hands the function", () => {
     expect((await loadIndex(full)).allowedOrigins).toContain("https://studio.shani-cohen.com");
   });
 
+  // FIXED after the 2026-10-12 audit (LOW): the preview address of a merged branch was still allowed
+  it("allows exactly the Studio's two addresses, and no leftover preview", async () => {
+    expect((await loadIndex(full)).allowedOrigins).toEqual(["https://studio.shani-cohen.com", "https://numerology-app-orcin.vercel.app"]);
+  });
+
+  // FIXED after the 2026-10-12 audit (LOW): `npm:@supabase/supabase-js@2` let any 2.x in at the next deploy
+  it("pins the exact supabase-js version the function runs", () => {
+    const entry = readFileSync(new URL("./index.ts", import.meta.url), "utf8");
+    expect(entry).toMatch(/from "npm:@supabase\/supabase-js@\d+\.\d+\.\d+"/);
+  });
+
   // FIXED after the 2026-10-07 audit; was (LOW): supabase/functions/admin-accounts/index.ts:18. The production function also trusts
   // http://localhost:5273. A browser origin is shared by everything that listens on that port on the machine
   // (another dev server there reads the same localStorage as this app's dev server, including an admin login
