@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* App inside Root: entering and leaving the Studio go through `navigate`; the demo says what it is and stays in memory. */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, cleanup, within, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, within, waitFor, act } from "@testing-library/react";
 import App from "../App.jsx";
 import { AccountProvider } from "../account/AccountContext.jsx";
 import { ToastProvider } from "../studio/Toasts.jsx";
@@ -135,5 +135,71 @@ describe("App inside Root", { timeout: 20000 }, () => {
     expect(open).not.toHaveBeenCalled();
     fireEvent.click(within(banner).getByRole("button", { name: "חזרה לעמוד" }));
     expect(navigate).toHaveBeenCalledWith("home");
+  });
+
+  describe("the home screen and the fixes that came with it (the owner, 2026-10-12)", () => {
+    const demo = () => show("demo", { active: true, loadService: async () => demoService() });
+    const home = async () => (await screen.findByRole("heading", { name: "האנרגיה של היום" }, LONG)).closest("section");
+    const tools = () => screen.getByRole("heading", { name: "כל הכלים" }).closest("section");
+    const navButton = (name) => within(screen.getByRole("navigation", { name: "כלי הסטודיו" })).getByRole("button", { name });
+
+    it("opens each tool from its tile, and has no leads tile in the demo", async () => {
+      demo();
+      await home();
+      expect(within(tools()).queryByRole("button", { name: "לידים" })).toBeNull();
+      expect(within(tools()).queryByRole("button", { name: "היום" })).toBeNull();
+      fireEvent.click(within(tools()).getByRole("button", { name: "קלפים" }));
+      expect(navButton("קלפים").getAttribute("aria-current")).toBe("page");
+    });
+
+    it("goes home to 'היום' from the top bar in the Studio; on Shani's page the button stays as it was", async () => {
+      demo();
+      await home();
+      fireEvent.click(navButton("קריאה"));
+      expect(screen.queryByRole("heading", { name: "האנרגיה של היום" })).toBeNull();
+      fireEvent.click(document.querySelector(".home-btn"));
+      expect(await home()).toBeTruthy();
+      expect(navButton("היום").getAttribute("aria-current")).toBe("page");
+      cleanup();
+      show("customer");
+      fireEvent.click(document.querySelector(".home-btn"));
+      expect(screen.queryByRole("heading", { name: "האנרגיה של היום" })).toBeNull();
+      expect(await screen.findByPlaceholderText("השם המלא…", {}, LONG)).toBeTruthy();
+    });
+
+    it("remembers the Studio's light theme for the next visit, while Shani's page still opens dark", async () => {
+      demo();
+      await home();
+      expect(document.documentElement.dataset.stTheme).toBe("dark");
+      fireEvent.click(screen.getByRole("button", { name: "מצב בהיר" }));
+      expect(document.documentElement.dataset.stTheme).toBe("light");
+      expect(localStorage.getItem("studio-theme")).toBe("light");
+      cleanup();
+      demo();
+      await home();
+      expect(document.documentElement.dataset.stTheme).toBe("light");
+      cleanup();
+      show("customer");
+      expect(document.documentElement.dataset.stTheme).toBe("dark");
+      fireEvent.click(screen.getByRole("button", { name: "מצב בהיר" })); // the page's own switch
+      expect(document.documentElement.dataset.stTheme).toBe("light");
+      expect(localStorage.getItem("studio-theme")).toBe("light"); // still the Studio's choice, not the page's
+    });
+
+    it("lets the opening splash go after 5.2 seconds, however often the app renders meanwhile", () => {
+      vi.useFakeTimers();
+      try {
+        show("customer");
+        expect(screen.getByText("המספרים מדברים... מוכנים?")).toBeTruthy();
+        act(() => vi.advanceTimersByTime(3000));
+        fireEvent.click(screen.getByRole("button", { name: "EN" })); // a new language: the app renders again
+        act(() => vi.advanceTimersByTime(1000));
+        fireEvent.click(screen.getByRole("button", { name: "עב" }));
+        act(() => vi.advanceTimersByTime(1300)); // 5.3 seconds in all
+        expect(screen.queryByText(/המספרים מדברים|The numbers speak/)).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });

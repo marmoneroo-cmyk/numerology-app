@@ -40,6 +40,8 @@ import ScreenIntro from "./studio/ScreenIntro.jsx";
 import { psychLevels, PSYCH_NAMES, LEVEL_WORDS } from "./reading/psych.js";
 import { SCREEN_HELP, MATCH_HELP } from "./studio/screenHelp.js";
 import { ScreenBoundary } from "./workspace/ui.jsx";
+import Particles from "./ui/Particles.jsx";
+import { storedStudioDark, rememberStudioTheme } from "./studio/theme.js";
 
 /**
  * The tarot deck and its art load with the קלפים tab only. A new lazy component on each try: React keeps a
@@ -201,53 +203,7 @@ function SR({children,delay=0}){const ref=useRef(null);const[v,setV]=useState(fa
 
 function AN({value,delay=0}){const[d,setD]=useState("—");const[v,setV]=useState(false);useEffect(()=>{const t1=setTimeout(()=>setV(true),delay);let c=0;const iv=setInterval(()=>{setD(Math.floor(Math.random()*9)+1);c++;if(c>12){clearInterval(iv);setD(value);}},45);const t2=setTimeout(()=>{clearInterval(iv);setD(value);},delay+600);return()=>{clearTimeout(t1);clearTimeout(t2);clearInterval(iv);};},[value,delay]);return <span style={{opacity:v?1:0,transform:v?"scale(1)":"scale(0.4)",transition:"all 0.6s cubic-bezier(0.34,1.56,0.64,1)",display:"inline-block"}}>{d}</span>;}
 
-// ═══════════════════ PARTICLES ═══════════════════
-// Living galaxy: parallax twinkling stars, cursor constellations, shooting stars
-function Particles({dk}){
-  const ref=useRef(null);
-  const mouse=useRef({x:0,y:0,tx:0,ty:0,active:false});
-  useEffect(()=>{
-    const c=ref.current;if(!c)return;const ctx=c.getContext("2d");let id;
-    let W=0,H=0,dpr=1;const stars=[];const shooters=[];
-    function build(){stars.length=0;const n=Math.min(230,Math.floor(W*H/8500));for(let i=0;i<n;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+.3,depth:Math.random(),tw:Math.random()*6.283,tws:.5+Math.random()*1.6,o:.18+Math.random()*.55,dx:(Math.random()-.5)*.05,dy:(Math.random()-.5)*.05});}
-    const resize=()=>{dpr=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;c.width=W*dpr;c.height=H*dpr;c.style.width=W+"px";c.style.height=H+"px";ctx.setTransform(dpr,0,0,dpr,0,0);build();};
-    resize();window.addEventListener("resize",resize);
-    const onMove=e=>{mouse.current.tx=e.clientX||0;mouse.current.ty=e.clientY||0;mouse.current.active=true;};
-    window.addEventListener("mousemove",onMove,{passive:true});
-    const cl=dk?"200,169,106":"147,118,64";let frame=0;
-    function draw(){
-      frame++;const m=mouse.current;m.x+=(m.tx-m.x)*.06;m.y+=(m.ty-m.y)*.06;
-      ctx.clearRect(0,0,W,H);
-      const ox=m.x-W/2,oy=m.y-H/2;
-      for(const s of stars){
-        s.x+=s.dx;s.y+=s.dy;if(s.x<-10)s.x=W+10;if(s.x>W+10)s.x=-10;if(s.y<-10)s.y=H+10;if(s.y>H+10)s.y=-10;
-        s.tw+=.02*s.tws;const tw=.55+.45*Math.sin(s.tw);
-        const px=s.x+ox*s.depth*.025,py=s.y+oy*s.depth*.025;
-        ctx.beginPath();ctx.arc(px,py,s.r*(.6+s.depth*.8),0,6.283);
-        ctx.fillStyle=`rgba(${cl},${s.o*tw*(.4+s.depth*.6)})`;ctx.fill();
-      }
-      if(m.active){
-        const R=140,near=[];
-        for(const s of stars){const px=s.x+ox*s.depth*.025,py=s.y+oy*s.depth*.025;const d=Math.hypot(px-m.x,py-m.y);if(d<R)near.push([px,py,d]);}
-        for(let i=0;i<near.length;i++){
-          const a=near[i];
-          ctx.beginPath();ctx.moveTo(m.x,m.y);ctx.lineTo(a[0],a[1]);ctx.strokeStyle=`rgba(${cl},${.13*(1-a[2]/R)})`;ctx.lineWidth=.6;ctx.stroke();
-          for(let j=i+1;j<near.length;j++){const b=near[j];const dd=Math.hypot(a[0]-b[0],a[1]-b[1]);if(dd<72){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.strokeStyle=`rgba(${cl},${.07*(1-dd/72)})`;ctx.lineWidth=.5;ctx.stroke();}}
-        }
-        const g=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,R);g.addColorStop(0,`rgba(${cl},.05)`);g.addColorStop(1,`rgba(${cl},0)`);ctx.fillStyle=g;ctx.beginPath();ctx.arc(m.x,m.y,R,0,6.283);ctx.fill();
-      }
-      if(frame%150===0&&shooters.length<2){const lr=Math.random()<.5;shooters.push({x:Math.random()*W,y:Math.random()*H*.45,vx:(lr?1:-1)*(5+Math.random()*3),vy:1.8+Math.random()*1.6,life:1});}
-      for(let i=shooters.length-1;i>=0;i--){const sh=shooters[i];sh.x+=sh.vx;sh.y+=sh.vy;sh.life-=.012;if(sh.life<=0||sh.x<-60||sh.x>W+60||sh.y>H+60){shooters.splice(i,1);continue;}
-        const tx=sh.x-sh.vx*7,ty=sh.y-sh.vy*7;const grd=ctx.createLinearGradient(sh.x,sh.y,tx,ty);grd.addColorStop(0,`rgba(255,248,232,${.85*sh.life})`);grd.addColorStop(1,`rgba(${cl},0)`);ctx.strokeStyle=grd;ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(sh.x,sh.y);ctx.lineTo(tx,ty);ctx.stroke();
-        ctx.beginPath();ctx.arc(sh.x,sh.y,1.7,0,6.283);ctx.fillStyle=`rgba(255,248,232,${sh.life})`;ctx.fill();
-      }
-      id=requestAnimationFrame(draw);
-    }
-    draw();
-    return()=>{cancelAnimationFrame(id);window.removeEventListener("resize",resize);window.removeEventListener("mousemove",onMove);};
-  },[dk]);
-  return <canvas ref={ref} style={{position:"fixed",top:0,left:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:0}}/>;
-}
+// The sky behind every page (stars, cursor constellations, shooting stars) is src/ui/Particles.jsx
 
 // Glowing aura that trails the cursor (desktop only)
 function CursorAura({dk}){
@@ -474,7 +430,9 @@ function Chapter({index,title,subtitle,icon,children,isActive,isRevealed,onRevea
 // ═══════════════════ INTRO ═══════════════════
 function Intro({onDone,he,dk}){
   const[p,setP]=useState(0);const ac=dk?"#c8a96a":"#937640";
-  useEffect(()=>{const ts=[setTimeout(()=>setP(1),400),setTimeout(()=>setP(2),1800),setTimeout(()=>setP(3),3200),setTimeout(()=>setP(4),4500),setTimeout(()=>onDone(),5200)];return()=>ts.forEach(clearTimeout);},[onDone]);
+  // the timers start once: App hands in a new onDone on every render, and restarting them kept the splash up
+  const done=useRef(onDone);useEffect(()=>{done.current=onDone;});
+  useEffect(()=>{const ts=[setTimeout(()=>setP(1),400),setTimeout(()=>setP(2),1800),setTimeout(()=>setP(3),3200),setTimeout(()=>setP(4),4500),setTimeout(()=>done.current(),5200)];return()=>ts.forEach(clearTimeout);},[]);
   return(<div style={{position:"fixed",inset:0,zIndex:9999,background:dk?"#080812":"#f5f0e8",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",transition:"opacity 1s ease",opacity:p>=4?0:1,pointerEvents:p>=4?"none":"all"}}>
     <div style={{fontSize:80,color:ac,opacity:p>=1?1:0,transform:`scale(${p>=1?1:.2})`,transition:"all 1.2s cubic-bezier(.34,1.56,.64,1)",textShadow:`0 0 80px ${ac}33`,marginBottom:30}}>✦</div>
     <h1 style={{fontSize:52,fontWeight:300,letterSpacing:10,color:ac,opacity:p>=2?1:0,transform:`translateY(${p>=2?0:25}px)`,transition:"all 1s ease .3s",fontFamily:"'Cormorant Garamond',serif",textTransform:"uppercase"}}>{he?"נומרולוגיה":"Numerology"}</h1>
@@ -1519,7 +1477,8 @@ function LeadsWidget({ he, dk }) {
  *   App picks its view from the address and the stored preference, as it always did.
  */
 export default function App({ view, navigate } = {}){
-  const[lang,setLang]=useState("he");const[dk,setDk]=useState(true);const[snd,setSnd]=useState(true);const[intro,setIntro]=useState(true);
+  // the customer page always opens dark; the Studio keeps a theme of its own, remembered between visits (src/studio/theme.js)
+  const[lang,setLang]=useState("he");const[siteDk,setSiteDk]=useState(true);const[studioDk,setStudioDk]=useState(storedStudioDark);const[snd,setSnd]=useState(true);const[intro,setIntro]=useState(true);
   const[step,setStep]=useState(1);const[tab,setTab]=useState("today");const[name,setName]=useState("");const[dob,setDob]=useState("");
   const[results,setResults]=useState(null);const[showRes,setShowRes]=useState(false);const[error,setError]=useState("");
   const[readingName,setReadingName]=useState(""); // whom `results` were made for: the name field may change after
@@ -1540,7 +1499,7 @@ export default function App({ view, navigate } = {}){
     try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}setLegalDoc(null);
   };
 
-  const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const showOwnerUI=owner&&!previewCustomer;const ts=softText(dk,showOwnerUI); // the Studio (owner console) vs. the public customer page
+  const he=lang==="he";const isRtl=he;const showOwnerUI=owner&&!previewCustomer;const dk=showOwnerUI?studioDk:siteDk;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=softText(dk,showOwnerUI); // the Studio (owner console) vs. the public customer page
   // Shani's interpretation content, shared with the client workspace (src/workspace)
   // the subscriber's account: the Studio opens only for a signed-in, active session
   const account=useAccount();
@@ -1650,6 +1609,10 @@ export default function App({ view, navigate } = {}){
   // the screens cross-fade where the browser can (view transitions), and simply change elsewhere or under reduced motion
   const selectTool=(k)=>{AU.init();AU.p("click");withViewTransition(()=>{flushSync(()=>{setTab(k);if(k!=="reading")setShowRes(false);});keepFocus();});};
   const newReading=()=>{clearReading();setTab("reading");};
+  // the top bar's "בית": in the Studio its home, "היום" (the owner, 2026-10-12); on the customer page an empty reading form, as before
+  const goHomeScreen=()=>{if(!showOwnerUI){goHome();return;}if(legalDoc)closeLegal();selectTool("today");};
+  // each view keeps its own theme; the Studio's is remembered for the next visit
+  const toggleTheme=()=>{if(!showOwnerUI){setSiteDk(!dk);return;}setStudioDk(!dk);rememberStudioTheme(!dk);};
   // quick search (Ctrl+K): in the signed-in Studio only, and not over meeting mode
   const canSearch=showOwnerUI&&studioReady&&!meeting;
   const openPalette=useCallback(()=>setPaletteOpen(true),[]);
@@ -1737,7 +1700,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     {/* ═══ TOP BAR with HOME BUTTON ═══ */}
     <div className={showOwnerUI?"tbar st-tbar":"tbar"}>
       <div style={{display:"flex",gap:4,alignItems:"center"}}>
-        <button className="home-btn" onClick={goHome}>
+        <button className="home-btn" onClick={goHomeScreen}>
           <span style={{fontSize:fs(14)}}>✦</span>
           <span>{he?"בית":"Home"}</span>
         </button>
@@ -1746,7 +1709,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         {streak>1&&<span style={{fontSize:fs(10),color:ac,opacity:.6,display:"inline-flex",alignItems:"center",gap:3}}><Icon name="flame" size={12}/>{streak}</span>}
         {showOwnerUI&&studioReady&&<button className="tbtn st-search-btn" title={he?"חיפוש מהיר (Ctrl+K)":"Quick search (Ctrl+K)"} aria-label={he?"חיפוש מהיר":"Quick search"} aria-keyshortcuts="Control+K Meta+K" onClick={()=>{AU.init();AU.p("click");openPalette();}}><Icon name="search" size={14}/><span className="st-search-text">{he?"חיפוש":"Search"}<kbd dir="ltr" aria-hidden="true">Ctrl K</kbd></span></button>}
         <button className="tbtn" onClick={()=>{setLang(lang==="he"?"en":"he");AU.init();AU.p("click");}}>{he?"EN":"עב"}</button>
-        <button className="tbtn" aria-label={dk?(he?"מצב בהיר":"Light mode"):(he?"מצב כהה":"Dark mode")} onClick={()=>{setDk(!dk);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{dk?<Icon name="sun" size={14}/>:<Icon name="moon" size={14}/>}</button>
+        <button className="tbtn" aria-label={dk?(he?"מצב בהיר":"Light mode"):(he?"מצב כהה":"Dark mode")} onClick={()=>{toggleTheme();AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{dk?<Icon name="sun" size={14}/>:<Icon name="moon" size={14}/>}</button>
         <button className={`tbtn ${snd?"act":""}`} aria-label={he?"צלילים":"Sounds"} aria-pressed={snd} onClick={()=>{AU.init();setSnd(!snd);AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{snd?<Icon name="soundOn" size={14}/>:<Icon name="soundOff" size={14}/>}</button>
         {owner&&!demo&&<button className="tbtn act" title={he?"מעבר בין סטודיו לתצוגת לקוח":"Toggle Studio / Customer"} onClick={()=>{const next=!previewCustomer;setPreviewCustomer(next);if(next){setTab("reading");setShowRes(false);}AU.init();AU.p("click");window.scrollTo({top:0,behavior:"smooth"});}} aria-label={previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={previewCustomer?"crown":"eye"} size={13}/><span className="tbtn-text" style={{fontSize:fs(10.5),fontWeight:700}}>{previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")}</span></button>}
         <button className={`tbtn ${owner?"":"act"}`} title={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):(he?"כניסת בעל עסק":"Owner login")} onClick={()=>{AU.init();AU.p("click");owner?exitOwner():enterOwner();}} aria-label={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):undefined} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={owner?"door":"crown"} size={13}/><span className="tbtn-text" style={{fontSize:fs(10.5),fontWeight:700}}>{owner?(he?"יציאה":"Exit"):(he?"סטודיו":"Studio")}</span></button>
@@ -1794,7 +1757,9 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           onNewReading={newReading}
           onNewClient={()=>openClient({name:"clientForm"})}
           onMeeting={openMeeting}
-          onSearch={openPalette}/>}
+          onSearch={openPalette}
+          tools={studioTools}
+          onTool={selectTool}/>}
 
         {showOwnerUI&&tab==="clients"&&workspaceStore&&<ContentContext.Provider value={workspaceContent}>
           {!demo&&<LocalDataOffer store={workspaceStore} userId={account.profile.id} he={he} dk={dk} logEvent={account.service.logEvent} onUploaded={()=>setWorkspaceKey(k=>k+1)}/>}
