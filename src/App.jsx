@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import { jsPDF } from "jspdf";
 import WorkspaceApp from "./workspace/WorkspaceApp.jsx";
 import { ContentContext } from "./workspace/content.js";
@@ -1501,10 +1501,12 @@ export default function App({ view, navigate } = {}){
   const[deckDeal,setDeckDeal]=useState(0);
   const licensee=studioReady?{fullName:account.profile.fullName||account.profile.email,phone:account.profile.phone}:null;
   const[workspaceKey,setWorkspaceKey]=useState(0);
-  // another account in the Studio (or none) starts clean: nothing of the previous subscriber's client stays on screen
+  // another account in the Studio (or none) starts clean: nothing of the previous subscriber's client stays on screen.
+  // A layout effect, so the reset lands with the sign-in itself: a tool pressed the moment the Studio shows is never
+  // sent back to "היום" by a reset that ran after it (it happened under load, 2026-10-12).
   const studioUser=account.profile?.id??null;
   const lastStudioUser=useRef(studioUser);
-  useEffect(()=>{if(lastStudioUser.current===studioUser)return;lastStudioUser.current=studioUser;clearReading();setTab("today");
+  useLayoutEffect(()=>{if(lastStudioUser.current===studioUser)return;lastStudioUser.current=studioUser;clearReading();setTab("today");
     // and nothing of theirs in quick search, meeting mode or a client waiting to open
     setPaletteOpen(false);setPaletteClients([]);setMeeting(null);setOpenRequest(null);setDeckDeal(0);},[studioUser]);
   useEffect(()=>{if(tab==="admin"&&account.profile?.role!=="admin")setTab("today");},[tab,account.profile?.role]);
