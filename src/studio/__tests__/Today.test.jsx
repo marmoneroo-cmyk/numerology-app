@@ -72,7 +72,9 @@ afterEach(() => {
 describe("Today", () => {
   it("shows the universal day, the date and the day's meaning, and starts a new reading", async () => {
     const h = renderToday(await storeWith([]));
-    expect(screen.getByText("8").className).toContain("st-today-num");
+    expect(screen.getByRole("heading", { name: "האנרגיה של היום" })).toBeTruthy();
+    // the day's number is in the middle of the wheel (the wheel's ring has an 8 of its own)
+    expect(document.querySelector(".st-wheel .st-today-num").textContent).toBe("8");
     expect(screen.getByText("היום האוניברסלי")).toBeTruthy();
     expect(screen.getByText(NOW.toLocaleDateString("he-IL", DATE_FORMAT))).toBeTruthy();
     expect(document.querySelector(".st-today-meaning").textContent).toBe("עוצמה. הישגים, שפע וסמכות.");
@@ -338,12 +340,13 @@ describe("Today", () => {
     expect(h.onOpenClient).toHaveBeenCalledWith("id-4");
   });
 
-  it("offers quick actions", async () => {
+  // the quick actions moved (2026-10-12): a new client and meeting mode beside the new reading, quick search among the tools
+  it("offers a new client and meeting mode with today's energy, and quick search among the tools", async () => {
     const h = renderToday(await storeWith([]));
-    const actions = panel("פעולות מהירות");
-    fireEvent.click(within(actions).getByRole("button", { name: "לקוח חדש" }));
-    fireEvent.click(within(actions).getByRole("button", { name: "מצב פגישה" }));
-    const search = within(actions).getByRole("button", { name: "חיפוש מהיר" });
+    const energy = panel("האנרגיה של היום");
+    fireEvent.click(within(energy).getByRole("button", { name: "לקוח חדש" }));
+    fireEvent.click(within(energy).getByRole("button", { name: "מצב פגישה" }));
+    const search = within(panel("כל הכלים")).getByRole("button", { name: "חיפוש מהיר" });
     expect(search.textContent).toContain("Ctrl K");
     expect(search.getAttribute("aria-keyshortcuts")).toContain("Control+K");
     fireEvent.click(search);
@@ -351,11 +354,12 @@ describe("Today", () => {
     await screen.findAllByText(EMPTY_HE);
   });
 
-  it("leaves out a quick action the app has not wired", async () => {
-    renderToday(await storeWith([]), { onMeeting: undefined });
-    const actions = panel("פעולות מהירות");
-    expect(within(actions).queryByRole("button", { name: "מצב פגישה" })).toBeNull();
-    expect(within(actions).getAllByRole("button")).toHaveLength(2);
+  it("leaves out an action the app has not wired", async () => {
+    renderToday(await storeWith([]), { onMeeting: undefined, onSearch: undefined });
+    const energy = panel("האנרגיה של היום");
+    expect(within(energy).queryByRole("button", { name: "מצב פגישה" })).toBeNull();
+    expect(within(energy).getAllByRole("button").map((b) => b.textContent)).toEqual(["קריאה חדשה", "לקוח חדש", expect.any(String)]); // and how the day is counted
+    expect(screen.queryByRole("heading", { name: "כל הכלים" })).toBeNull(); // no tools and no search: no tiles
     await screen.findAllByText(EMPTY_HE);
   });
 
@@ -447,9 +451,145 @@ describe("Today", () => {
     expect(within(michal).getByText("In 5 days · 11.10 · Turning 48")).toBeTruthy();
 
     expect(within(panel("Recent clients")).getByRole("button", { name: /דנה שמיר.*Life path 3/ })).toBeTruthy();
-    const actions = panel("Quick actions");
-    for (const name of ["New client", "Meeting mode", "Quick search"]) expect(within(actions).getByRole("button", { name })).toBeTruthy();
+    for (const name of ["New client", "Meeting mode"]) expect(within(panel("Today's energy")).getByRole("button", { name })).toBeTruthy();
+    expect(within(panel("All the tools")).getByRole("button", { name: "Quick search" })).toBeTruthy();
     expect(within(panel("Today's card")).getByText("החפיסה כאן")).toBeTruthy();
+  });
+
+  describe("the dashboard", () => {
+    const TOOLS = [
+      { k: "today", i: "sparkles", he: "היום", en: "Today" },
+      { k: "clients", i: "user", he: "לקוחות", en: "Clients" },
+      { k: "cards", i: "cards", he: "קלפים", en: "Cards" },
+    ];
+    /** A saved reading of `clientId`, with this follow-up date or none. */
+    const reading = (clientId, followUp = null) => ({
+      clientId, type: "yearCycle", input: { birthDate: "1985-10-07", add: false }, result: { proj: [{ year: 2026, py: 5, isCurrent: true }] },
+      engineVersion: "2.0.0", computedFor: "2026-09-01T09:00:00.000Z", followUp,
+    });
+    /** ALL's clients (id-1 RACHEL to id-6 NOA), RACHEL's follow-up overdue, DANA's on Friday, and a reading of MICHAL's with none. */
+    async function busyStore() {
+      const store = await storeWith(ALL);
+      await store.readings.create(reading("id-1", "2026-10-01"));
+      await store.readings.create(reading("id-4", "2026-10-09"));
+      await store.readings.create(reading("id-3"));
+      return store;
+    }
+    const figure = (name) => within(screen.getByRole("region", { name: "נתונים מהתיק" })).findByRole("button", { name });
+
+    it("draws the clients' life paths on the wheel, a master path with the number it reduces to", async () => {
+      // Arrange: the engine's paths, by birth date (NOA has no birth date, URI is archived)
+      const PATHS = { "1985-10-07": 11, "1990-10-06": 6, "1978-10-11": 22, "1992-03-03": 6 };
+
+      // Act
+      renderToday(await storeWith(ALL), { lifePath: (iso) => PATHS[iso] });
+
+      // Assert
+      const wheel = await screen.findByRole("img", { name: /לקוחות לפי שביל גורל/ });
+      expect(wheel.getAttribute("aria-label")).toBe(
+        "גלגל המספרים 1 עד 9. היום האוניברסלי הוא 8. לקוחות לפי שביל גורל: 2: לקוח אחד, 4: לקוח אחד, 6: 2 לקוחות. 11, 22 ו-33 נספרים עם 2, 4 ו-6.",
+      );
+      const bubbles = [...document.querySelectorAll(".st-wheel-count")];
+      expect(bubbles.map((b) => b.querySelector("title").textContent)).toEqual(["שביל גורל 2: לקוח אחד", "שביל גורל 4: לקוח אחד", "שביל גורל 6: 2 לקוחות"]);
+      expect(bubbles.map((b) => b.querySelector("text").textContent)).toEqual(["1", "1", "2"]);
+      const [one, , two] = bubbles.map((b) => Number(b.querySelector("circle").getAttribute("r")));
+      expect(two).toBeGreaterThan(one); // the bigger count, the bigger bubble
+      expect(screen.getByText("לקוחות בכל שביל גורל")).toBeTruthy();
+      expect(screen.getByText("11, 22 ו-33 נספרים עם 2, 4 ו-6")).toBeTruthy();
+      expect(document.querySelector(".st-wheel-num.is-today").textContent).toBe("8");
+    });
+
+    it("says on the wheel when no client has a birth date yet, and draws no bubbles", async () => {
+      renderToday(await storeWith([NOA]));
+      const wheel = await screen.findByRole("img", { name: /עוד אין לקוחות עם תאריך לידה/ });
+      expect(wheel.getAttribute("aria-label")).toBe("גלגל המספרים 1 עד 9. היום האוניברסלי הוא 8. עוד אין לקוחות עם תאריך לידה.");
+      expect(document.querySelectorAll(".st-wheel-count")).toHaveLength(0);
+      expect(screen.getByText("כאן יופיע כמה לקוחות יש בכל שביל גורל.")).toBeTruthy();
+    });
+
+    it("counts the clients, the saved readings, the follow-ups due and this week's birthdays, and each leads to its place", async () => {
+      const onTool = vi.fn();
+      renderToday(await busyStore(), { tools: TOOLS, onTool });
+      fireEvent.click(await figure("5 לקוחות פעילים, לפתיחת הלקוחות"));
+      fireEvent.click(await figure("3 קריאות שמורות, לתיקי הלקוחות"));
+      expect(onTool.mock.calls).toEqual([["clients"], ["clients"]]);
+      fireEvent.click(await figure("מעקב אחד שהגיע זמנו, לרשימת המעקבים"));
+      expect(document.activeElement).toBe(screen.getByRole("heading", { name: "מעקבים שהגיע זמנם" }));
+      fireEvent.click(await figure("3 ימי הולדת בשבוע הקרוב, לרשימת ימי ההולדת"));
+      expect(document.activeElement).toBe(screen.getByRole("heading", { name: "ימי הולדת השבוע" }));
+    });
+
+    it("keeps the figures quiet while they load, and shows a dash for the ones that could not", async () => {
+      const flaky = failingOnce(await storeWith([RACHEL]));
+      renderToday(flaky.store);
+      const figures = screen.getByRole("region", { name: "נתונים מהתיק" });
+      expect(figures.querySelectorAll(".st-skel")).toHaveLength(4);
+      expect(figures.querySelectorAll("[aria-busy='true']")).toHaveLength(4);
+      await screen.findByRole("alert");
+      // the clients failed: their figures (clients, birthdays) show a dash; the summary came, so its figures are there
+      expect([...figures.querySelectorAll(".st-stat-num")].map((n) => n.textContent)).toEqual(["—", "0", "0", "—"]);
+      expect(within(figures).getAllByText("(לא נטען)")).toHaveLength(2);
+      expect(figures.querySelectorAll(".st-skel")).toHaveLength(0);
+    });
+
+    it("lays out the week ahead, the birthdays and the follow-ups on their days; the panel lists only the ones due", async () => {
+      renderToday(await busyStore());
+      const days = await within(panel("השבוע הקרוב")).findAllByRole("listitem");
+      expect(days).toHaveLength(7);
+      await within(days[0]).findByText("יום שלישי 6.10, היום: יום הולדת של יוסי לוי, מעקב עם רחל כהן.");
+      expect(days[0].className).toContain("is-today");
+      expect(within(days[1]).getByText("יום רביעי 7.10: יום הולדת של רחל כהן.")).toBeTruthy();
+      expect(within(days[2]).getByText("יום חמישי 8.10: אין ימי הולדת או מעקבים.")).toBeTruthy(); // URI's birthday: archived
+      expect(within(days[3]).getByText("יום שישי 9.10: מעקב עם דנה שמיר.")).toBeTruthy();
+      expect(within(days[5]).getByText("יום ראשון 11.10: יום הולדת של מיכל אברהם.")).toBeTruthy();
+      const due = panel("מעקבים שהגיע זמנם");
+      expect(within(due).getAllByRole("listitem").map(nameIn)).toEqual(["רחל כהן"]); // DANA's is on Friday
+    });
+
+    it("asks the store for the follow-ups up to the week's last day", async () => {
+      const store = await storeWith([RACHEL]);
+      const summary = vi.fn(store.summary);
+      renderToday({ ...store, summary });
+      await screen.findAllByText("אין מעקבים שהגיע זמנם.");
+      expect(summary).toHaveBeenCalledWith(new Date(2026, 9, 12));
+    });
+
+    it("shows three first steps instead of the week while there are no clients", async () => {
+      renderToday(await storeWith([]));
+      expect(await screen.findAllByText(EMPTY_HE)).toHaveLength(2);
+      const steps = within(panel("מתחילים כאן")).getAllByRole("listitem");
+      expect(steps.map((s) => s.textContent)).toEqual([
+        "מוסיפים לקוח ב׳לקוח חדש׳: שם, תאריך לידה וטלפון.",
+        "עושים קריאה ושומרים אותה בתיק של הלקוח.",
+        "קובעים תאריך מעקב, והוא יופיע כאן ביום שלו.",
+      ]);
+      expect(screen.queryByRole("heading", { name: "השבוע הקרוב" })).toBeNull();
+    });
+
+    it("lists every tool but today, each with a line on what it is for, and opens one", async () => {
+      const onTool = vi.fn();
+      renderToday(await storeWith([]), { tools: TOOLS, onTool });
+      const tiles = within(panel("כל הכלים")).getAllByRole("button");
+      // quick search first, as a bar, then a tile for each tool
+      expect(tiles.map((t) => document.getElementById(t.getAttribute("aria-labelledby")).textContent)).toEqual(["חיפוש מהיר", "לקוחות", "קלפים"]);
+      expect(document.getElementById(tiles[0].getAttribute("aria-describedby")).textContent).toBe("לקוח, כלי או פעולה, מכל מסך");
+      const clients = within(panel("כל הכלים")).getByRole("button", { name: "לקוחות" });
+      expect(document.getElementById(clients.getAttribute("aria-describedby")).textContent).toBe("תיק לכל לקוח, עם הקריאות והמעקבים");
+      fireEvent.click(within(panel("כל הכלים")).getByRole("button", { name: "קלפים" }));
+      expect(onTool).toHaveBeenCalledWith("cards");
+      await screen.findAllByText(EMPTY_HE);
+    });
+
+    it("speaks English on the wheel, the figures and the week", async () => {
+      renderToday(await busyStore(), { he: false, tools: TOOLS, onTool: vi.fn() });
+      expect((await screen.findByRole("img", { name: /Clients by life path/ })).getAttribute("aria-label")).toBe(
+        "The wheel of numbers 1 to 9. The universal day is 8. Clients by life path: 1: 1 client, 3: 1 client, 6: 1 client, 7: 1 client.",
+      );
+      expect(await within(screen.getByRole("region", { name: "From the client files" })).findByRole("button", { name: "5 active clients, open the clients" })).toBeTruthy();
+      const days = await within(panel("The week ahead")).findAllByRole("listitem");
+      await within(days[0]).findByText("Tuesday 6.10, today: יוסי לוי's birthday; a follow-up with רחל כהן.");
+      expect(within(panel("All the tools")).getByRole("button", { name: "Cards" })).toBeTruthy();
+    });
   });
 
   it("speaks English while loading, after a failure, and with no clients or birthdays", async () => {

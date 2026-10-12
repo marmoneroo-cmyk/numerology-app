@@ -26,6 +26,20 @@
   --st-shadow: rgba(0, 0, 0, 0.45);
   --st-display: "Cormorant Garamond", "Times New Roman", serif;
   --st-body: "Heebo", "Noto Sans Hebrew", Arial, sans-serif;
+  /* depth for the home screen (2026-10-12): a violet glow, three surfaces from low to raised, a hairline
+     instead of a gold border, soft shadows and the radii */
+  --st-violet: #a093f6;
+  --st-violet-wash: rgba(143, 128, 242, 0.14);
+  --st-violet-glow: rgba(143, 128, 242, 0.45);
+  --st-surface-1: #0e0e26;
+  --st-surface-2: #141438;
+  --st-surface-3: #1b1b48;
+  --st-hairline: rgba(236, 228, 212, 0.09);
+  --st-shadow-soft: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 34px -18px rgba(0, 0, 0, 0.8);
+  --st-shadow-lift: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 22px 44px -18px rgba(0, 0, 0, 0.9);
+  --st-radius-s: 12px;
+  --st-radius-m: 18px;
+  --st-radius-l: 24px;
 }
 :root[data-st-theme="light"] {
   --st-void: #f5f0e8;
@@ -45,6 +59,16 @@
   --st-ok: #2d6e4e;
   --st-danger: #a33a3a;
   --st-shadow: rgba(60, 40, 10, 0.18);
+  /* a faint lavender in place of the violet glow */
+  --st-violet: #5b4bc4;
+  --st-violet-wash: rgba(91, 75, 196, 0.08);
+  --st-violet-glow: rgba(91, 75, 196, 0.22);
+  --st-surface-1: #fffaf2;
+  --st-surface-2: #fffdf9;
+  --st-surface-3: #ffffff;
+  --st-hairline: rgba(31, 27, 23, 0.1);
+  --st-shadow-soft: 0 1px 2px rgba(60, 40, 10, 0.06), 0 12px 30px -16px rgba(60, 40, 10, 0.22);
+  --st-shadow-lift: 0 2px 4px rgba(60, 40, 10, 0.08), 0 20px 40px -18px rgba(60, 40, 10, 0.3);
 }
 
 /*

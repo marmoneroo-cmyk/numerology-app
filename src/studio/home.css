@@ -1,0 +1,730 @@
+/*
+ * The home screen (Today.jsx, NumberWheel.jsx): today's energy with the wheel of numbers, the four figures,
+ * the week ahead, the lists, every tool and today's card. Depth comes from the surfaces, a soft shadow and a
+ * violet glow; gold is kept for titles, numbers and today. Every colour is a studio.css token, so the light
+ * theme follows. Motion only shows what is new (the wheel drawn once, the parts coming in, a slow glow on
+ * today's number), and none of it runs under reduced motion.
+ */
+
+/* the parts come in one after another (--i is each one's place) */
+.st-rise {
+  animation: st-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+@keyframes st-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* the panels on this screen: a raised surface with a hairline, not a gold frame */
+.st-today .st-panel {
+  border: 1px solid var(--st-hairline);
+  border-radius: var(--st-radius-m);
+  background: linear-gradient(180deg, var(--st-surface-2), var(--st-surface-1));
+  box-shadow: var(--st-shadow-soft);
+  padding: 18px 20px;
+}
+.st-today .st-today-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+  font-size: max(var(--ts-min, 0px), calc(15.5px * var(--ts, 1)));
+  font-weight: 600;
+  scroll-margin-top: 150px;
+}
+.st-today .st-today-title::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: var(--st-gold);
+  opacity: 0.85;
+}
+
+/* ── today's energy ── */
+.st-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  gap: 24px 44px;
+  align-items: center;
+  padding: 34px 40px;
+  border: 1px solid var(--st-hairline);
+  border-radius: var(--st-radius-l);
+  background: radial-gradient(90% 120% at 100% 0%, var(--st-gold-wash), transparent 60%), linear-gradient(160deg, var(--st-surface-3), var(--st-surface-1) 72%);
+  box-shadow: var(--st-shadow-soft);
+}
+/* the Lo Shu square, faint in the corner behind the title */
+.st-hero-grid {
+  position: absolute;
+  inset-block-start: -18px;
+  inset-inline-start: -18px;
+  z-index: -1;
+  width: 190px;
+  height: 190px;
+  opacity: 0.055;
+  pointer-events: none;
+}
+.st-hero-grid text {
+  fill: var(--st-gold);
+  font-family: var(--st-display);
+  font-size: 15px;
+}
+.st-hero-grid path {
+  fill: none;
+  stroke: var(--st-gold);
+  stroke-width: 0.6;
+}
+.st-hero-text {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.st-hero-title {
+  margin: 0;
+  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--st-gold-text);
+}
+.st-today-date {
+  margin: 0;
+  font-size: max(var(--ts-min, 0px), calc(14.5px * var(--ts, 1)));
+  color: var(--st-ink-soft);
+}
+.st-today-meaning {
+  margin: 6px 0 0;
+  font-size: 34px;
+  font-weight: 300;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+.st-today-meaning b {
+  font-weight: 600;
+  color: var(--st-gold-text);
+}
+.st-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* ── the wheel ── */
+.st-wheel {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 0;
+}
+/* the violet glow behind it */
+.st-wheel::before {
+  content: "";
+  position: absolute;
+  inset-block-start: -8%;
+  inset-inline: -8%;
+  aspect-ratio: 1;
+  z-index: -1;
+  background: radial-gradient(closest-side, var(--st-violet-wash), transparent);
+  pointer-events: none;
+}
+.st-wheel-disc {
+  position: relative;
+  width: min(100%, 390px);
+  aspect-ratio: 1;
+}
+.st-wheel-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.st-today-num {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--st-display);
+  font-size: 100px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--st-gold);
+  text-shadow: 0 0 34px var(--st-violet-glow);
+  font-variant-numeric: lining-nums tabular-nums;
+  pointer-events: none;
+}
+.st-wheel-ring {
+  fill: none;
+}
+.st-wheel-outer {
+  stroke: var(--st-line-strong);
+  stroke-width: 1;
+  stroke-dasharray: 1;
+  transform: rotate(-90deg); /* drawn from the top, clockwise */
+  animation: st-wheel-draw 1.2s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+.st-wheel-inner {
+  stroke: var(--st-line);
+  stroke-width: 0.8;
+}
+.st-wheel-star {
+  fill: none;
+  stroke: var(--st-gold);
+  stroke-opacity: 0.18;
+  stroke-width: 0.8;
+}
+.st-wheel-glow-in {
+  stop-color: var(--st-violet);
+  stop-opacity: 0.6;
+}
+.st-wheel-glow-out {
+  stop-color: var(--st-violet);
+  stop-opacity: 0;
+}
+.st-wheel-halo {
+  animation: st-wheel-breathe 6s ease-in-out infinite;
+}
+.st-wheel-mark {
+  fill: var(--st-gold-wash);
+  stroke: var(--st-gold);
+  stroke-width: 1.2;
+}
+.st-wheel-num {
+  fill: var(--st-ink-soft);
+  font-family: var(--st-display);
+  font-size: 17px;
+  font-variant-numeric: lining-nums;
+  animation: st-fade 0.5s ease both;
+  animation-delay: calc(var(--n, 0) * 50ms + 300ms);
+}
+.st-wheel-num.is-today {
+  fill: var(--st-gold);
+  font-size: 21px;
+  font-weight: 600;
+}
+.st-wheel-count {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: st-pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.15) both;
+  animation-delay: calc(var(--n, 0) * 40ms + 500ms);
+}
+.st-wheel-count circle {
+  fill: var(--st-surface-2);
+  fill: color-mix(in srgb, var(--st-violet) 24%, var(--st-surface-1));
+  stroke: var(--st-violet);
+  stroke-opacity: 0.6;
+  stroke-width: 0.8;
+}
+.st-wheel-count.is-today circle {
+  fill: var(--st-surface-2);
+  fill: color-mix(in srgb, var(--st-gold) 22%, var(--st-surface-1));
+  stroke: var(--st-gold);
+}
+.st-wheel-count text {
+  fill: var(--st-ink);
+  font-family: var(--st-body);
+  font-size: 9.5px;
+  font-weight: 700;
+}
+.st-wheel-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: max(var(--ts-min, 0px), calc(13.5px * var(--ts, 1)));
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--st-ink-soft);
+}
+.st-wheel-key {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  min-height: 1.5em;
+  margin: 0;
+  font-size: max(var(--ts-min, 0px), calc(12.5px * var(--ts, 1)));
+  color: var(--st-ink-faint);
+  text-align: center;
+}
+.st-wheel-key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.st-wheel-dot {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--st-violet);
+  border-radius: 50%;
+  background: var(--st-violet-wash);
+}
+
+/* ── the four figures ── */
+.st-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.st-stat {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--st-hairline);
+  border-radius: var(--st-radius-m);
+  background: linear-gradient(180deg, var(--st-surface-2), var(--st-surface-1));
+  box-shadow: var(--st-shadow-soft);
+  color: var(--st-ink);
+  font: inherit;
+  text-align: start;
+}
+.st-stat-go {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.st-stat-go:hover {
+  transform: translateY(-2px);
+  border-color: var(--st-line-strong);
+  box-shadow: var(--st-shadow-lift);
+}
+.st-stat-go:active {
+  transform: translateY(0) scale(0.98);
+}
+.st-stat-num {
+  min-height: 46px;
+  font-family: var(--st-display);
+  font-size: 44px;
+  font-weight: 500;
+  line-height: 1.05;
+  color: var(--st-gold);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.st-stat-label {
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
+  font-weight: 700;
+}
+.st-stat-sub {
+  font-size: max(var(--ts-min, 0px), calc(12.5px * var(--ts, 1)));
+  color: var(--st-ink-faint);
+}
+/* a figure still on its way */
+.st-skel {
+  display: inline-block;
+  width: 1.6ch;
+  height: 0.7em;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--st-gold-wash), var(--st-violet-wash), var(--st-gold-wash));
+  background-size: 200% 100%;
+  vertical-align: middle;
+  animation: st-shimmer 1.4s ease-in-out infinite;
+}
+
+/* ── the week ahead ── */
+.st-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.st-week-day {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  min-height: 104px;
+  padding: 10px 10px 12px;
+  border: 1px solid var(--st-hairline);
+  border-radius: var(--st-radius-s);
+  background: var(--st-surface-1);
+}
+.st-week-day.is-today {
+  border-color: var(--st-line-strong);
+  background: linear-gradient(180deg, var(--st-gold-wash), var(--st-surface-1));
+  box-shadow: inset 0 2px 0 var(--st-gold);
+}
+.st-week-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+.st-week-name {
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
+  font-weight: 700;
+}
+.st-week-day.is-today .st-week-name {
+  color: var(--st-gold-text);
+}
+.st-week-date {
+  font-size: max(var(--ts-min, 0px), calc(12.5px * var(--ts, 1)));
+  color: var(--st-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.st-week-events {
+  display: grid;
+  gap: 5px;
+}
+.st-week-ev {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: max(var(--ts-min, 0px), calc(12.5px * var(--ts, 1)));
+  color: var(--st-ink-soft);
+}
+.st-week-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.st-week-ev.is-birthday .st-week-dot {
+  background: var(--st-gold);
+}
+.st-week-ev.is-follow .st-week-dot {
+  background: var(--st-violet);
+}
+.st-week-who {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-week-more {
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
+  color: var(--st-ink-faint);
+}
+.st-week-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 12px 0 0;
+}
+.st-week-key .st-week-ev {
+  color: var(--st-ink-faint);
+}
+
+/* ── no clients yet: three steps ── */
+.st-welcome-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.st-welcome-steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 14px 16px;
+  border: 1px solid var(--st-hairline);
+  border-radius: var(--st-radius-s);
+  background: var(--st-surface-1);
+  font-size: max(var(--ts-min, 0px), calc(14.5px * var(--ts, 1)));
+  line-height: 1.6;
+}
+.st-welcome-steps li::before {
+  content: counter(step);
+  font-family: var(--st-display);
+  font-size: 30px;
+  line-height: 1;
+  color: var(--st-gold);
+}
+
+/* ── the lists, two by two ── */
+.st-today-lists {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+/* ── every tool: a bar for quick search, then a tile for each tool ── */
+.st-tool-search {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 8px 10px;
+  padding-inline-end: 16px;
+  border: 1px solid var(--st-line);
+  border-radius: 999px;
+  background: var(--st-surface-1);
+  color: var(--st-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.st-tool-search:hover {
+  border-color: var(--st-line-strong);
+  box-shadow: 0 0 0 4px var(--st-violet-wash);
+}
+.st-tool-search .st-tool-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+.st-tool-search .st-tool-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-tool-search kbd {
+  justify-self: end;
+}
+.st-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.st-tool-tile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "icon name" "icon line";
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 2px;
+  width: 100%;
+  height: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--st-hairline);
+  border-radius: var(--st-radius-m);
+  background: linear-gradient(180deg, var(--st-surface-2), var(--st-surface-1));
+  color: var(--st-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.st-tool-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--st-line-strong);
+  box-shadow: var(--st-shadow-lift);
+}
+.st-tool-tile:active {
+  transform: translateY(0) scale(0.98);
+}
+.st-tool-icon {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--st-gold-wash);
+  color: var(--st-gold-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.st-tool-tile:hover .st-tool-icon,
+.st-tool-search:hover .st-tool-icon {
+  background: var(--st-violet-wash);
+  color: var(--st-violet);
+}
+.st-tool-name {
+  grid-area: name;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
+  font-weight: 700;
+}
+.st-tool-line {
+  grid-area: line;
+  font-size: max(var(--ts-min, 0px), calc(12.5px * var(--ts, 1)));
+  line-height: 1.45;
+  color: var(--st-ink-faint);
+}
+.st-tool-search .st-tool-icon,
+.st-tool-search .st-tool-name,
+.st-tool-search .st-tool-line {
+  grid-area: auto;
+}
+
+/* ── sizes ── */
+@media (min-width: 900px) {
+  .st-today-lists {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* two columns up to a wide screen: an odd tile out takes the whole row */
+@media (max-width: 1099.98px) {
+  .st-tools-grid > li:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+/* a wide screen: the columns the tiles fill evenly (Today.jsx sets --cols) */
+@media (min-width: 1100px) {
+  .st-tools-grid {
+    grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr));
+  }
+}
+/* a tablet: the wheel narrower; the figures two by two, and the week's days show dots instead of names */
+@media (max-width: 899.98px) {
+  .st-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 290px);
+    gap: 20px 28px;
+    padding: 26px 26px;
+  }
+  .st-today-meaning {
+    font-size: 27px;
+  }
+  .st-today-num {
+    font-size: 76px;
+  }
+  .st-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .st-week {
+    gap: 5px;
+  }
+  .st-week-day {
+    justify-items: center;
+    min-height: 0;
+    padding: 8px 3px 10px;
+    text-align: center;
+  }
+  .st-week-head {
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .st-week-events {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+  }
+  .st-week-who {
+    display: none;
+  }
+  .st-welcome-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* a phone: one column, the wheel under the words */
+@media (max-width: 639.98px) {
+  .st-hero {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 22px 16px;
+    border-radius: var(--st-radius-m);
+  }
+  .st-today-meaning {
+    font-size: max(var(--ts-min, 0px), calc(19px * var(--ts, 1)));
+  }
+  .st-hero-actions .st-today-btn {
+    flex: 1 1 auto;
+  }
+  .st-wheel-disc {
+    width: min(100%, 270px);
+  }
+  .st-today-num {
+    font-size: 70px;
+  }
+  .st-stat {
+    padding: 14px;
+  }
+  .st-stat-num {
+    min-height: 38px;
+    font-size: 36px;
+  }
+  .st-today .st-panel {
+    padding: 16px 14px;
+  }
+  .st-week-name {
+    font-size: max(var(--ts-min, 0px), calc(11px * var(--ts, 1)));
+  }
+  .st-week-date {
+    font-size: max(var(--ts-min, 0px), calc(10.5px * var(--ts, 1)));
+  }
+  /* a narrow tile: the icon beside the name, the line under both */
+  .st-tool-tile {
+    grid-template-areas: "icon name" "line line";
+    align-items: center;
+    row-gap: 8px;
+    padding: 12px;
+  }
+  .st-tool-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+  .st-tool-search .st-tool-line {
+    display: none;
+  }
+}
+
+@keyframes st-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes st-wheel-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes st-wheel-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes st-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+@keyframes st-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* reduced motion: everything is simply there */
+@media (prefers-reduced-motion: reduce) {
+  .st-today .st-rise,
+  .st-wheel-outer,
+  .st-wheel-num,
+  .st-wheel-halo,
+  .st-wheel-count,
+  .st-skel {
+    animation: none;
+  }
+  .st-stat-go,
+  .st-tool-tile,
+  .st-tool-search,
+  .st-tool-icon {
+    transition: none;
+  }
+  .st-stat-go:hover,
+  .st-tool-tile:hover {
+    transform: none;
+  }
+}

@@ -1,10 +1,11 @@
 /*
- * The "היום" home (Today.jsx): the today band, three panels and today's card.
- * Colours come only from the studio.css tokens, so both themes follow.
+ * The "היום" home (Today.jsx): its buttons, panels, rows and chips. The new parts of the screen (today's
+ * energy and the wheel, the figures, the week, the tools) are in home.css. Colours come only from the
+ * studio.css tokens, so both themes follow.
  */
 .st-today {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   color: var(--st-ink);
   font-family: var(--st-body);
 }
@@ -13,53 +14,7 @@
   outline-offset: 2px;
 }
 
-/* the band: a soft gold-to-violet wash with today's number, the date, the meaning and a new reading */
-.st-today-band {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 24px;
-  align-items: center;
-  padding: 20px 24px;
-  border: 1px solid var(--st-line-strong);
-  border-radius: 18px;
-  background: linear-gradient(120deg, var(--st-gold-wash), var(--st-panel-2) 60%, var(--st-panel));
-}
-.st-today-day {
-  display: grid;
-  justify-items: center;
-  line-height: 1;
-}
-.st-today-day small {
-  font-size: max(var(--ts-min, 0px), calc(11.5px * var(--ts, 1)));
-  letter-spacing: 0.08em;
-  color: var(--st-ink-soft);
-}
-.st-today-num {
-  font-family: var(--st-display);
-  font-size: 92px;
-  font-weight: 500;
-  color: var(--st-gold);
-  text-shadow: 0 0 34px var(--st-line-strong);
-  font-variant-numeric: tabular-nums;
-}
-.st-today-date {
-  margin: 0;
-  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
-  color: var(--st-ink-soft);
-}
-.st-today-meaning {
-  margin: 2px 0 0;
-  font-size: max(var(--ts-min, 0px), calc(19px * var(--ts, 1)));
-  font-weight: 300;
-  line-height: 1.5;
-  text-wrap: balance;
-}
-.st-today-meaning b {
-  font-weight: 500;
-  color: var(--st-gold-text);
-}
-
-/* buttons: a gold wash; the band's new reading is solid gold */
+/* buttons: a gold wash; the day's new reading is solid gold */
 .st-today-btn {
   display: inline-flex;
   align-items: center;
@@ -230,43 +185,4 @@
 .st-today-chip-gold {
   border-color: var(--st-line-strong);
   color: var(--st-gold-text);
-}
-.st-today-actions {
-  display: grid;
-  gap: 8px;
-}
-
-/* three columns: the birthdays carry the most per row (when, age, two numbers, a greeting), so they get the most room */
-@media (min-width: 1024px) {
-  .st-today-top {
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.85fr);
-  }
-}
-
-/* two columns: the quick actions take a row of their own, side by side */
-@media (min-width: 640px) and (max-width: 1023.98px) {
-  .st-today-quick {
-    grid-column: 1 / -1;
-  }
-  .st-today-quick .st-today-actions {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  }
-}
-
-/* phone: the button goes under the text and the number shrinks */
-@media (max-width: 639.98px) {
-  .st-today-band {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 14px 18px;
-    padding: 16px;
-  }
-  .st-today-go {
-    grid-column: 1 / -1;
-  }
-  .st-today-num {
-    font-size: 70px;
-  }
-  .st-today-meaning {
-    font-size: max(var(--ts-min, 0px), calc(16px * var(--ts, 1)));
-  }
 }

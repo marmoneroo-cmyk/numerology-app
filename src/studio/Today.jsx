@@ -1,21 +1,26 @@
 /**
- * The "היום" home: today's universal day with a way into a new reading, the
- * clients' birthdays this week, the most recently active clients, quick
- * actions, the follow-ups that are due (each can be marked done), the clients
- * worth a word, and today's card. It reads the client list and the summary
- * from the workspace store; the day, the numbers and the deck come in from the app.
+ * The "היום" home: today's energy (the universal day on the wheel of numbers, with the clients' life paths
+ * on it), four figures from the client files, the week ahead, the clients' birthdays, the follow-ups that
+ * are due (each can be marked done), the most recently active clients, the clients worth a word, every
+ * tool, and today's card. It reads the client list and the summary from the workspace store; the day, the
+ * numbers and the deck come in from the app. Nothing on it is made up: every figure is counted from the store.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useLoad } from "../workspace/ui.jsx";
 import { NotFoundError } from "../data/store.js";
 import {
   checkInText, followUpText, greetingLink, greetingText, initialsOf, isNewYearMonth, newYearText, quietClients,
   recentClients, shareLink, upcomingBirthdays,
 } from "./today.js";
+import { dueBy, lifePathCounts, weekAhead, weekEnd } from "./dashboard.js";
+import { TOOL_LINES } from "./screenHelp.js";
 import { formatDmy } from "../workspace/format.js";
 import HowButton from "../reading/HowButton.jsx";
 import Locked from "../demo/DemoLock.jsx";
+import AppIcon from "../ui/Icon.jsx";
+import NumberWheel from "./NumberWheel.jsx";
 import "./today.css";
+import "./home.css";
 
 const DATE_FORMAT = { weekday: "long", day: "numeric", month: "long", year: "numeric" };
 
@@ -32,12 +37,6 @@ const ICONS = {
     <>
       <rect x="3" y="4" width="18" height="12" rx="2" />
       <path d="M12 16v4M8 20h8" />
-    </>
-  ),
-  search: (
-    <>
-      <circle cx="11" cy="11" r="6.5" />
-      <path d="M20 20l-4.2-4.2" />
     </>
   ),
   gift: (
@@ -62,10 +61,13 @@ const Initials = ({ name }) => (
   </span>
 );
 
-/** A titled panel; with `titleRef`, the title can also take the focus. */
-function Panel({ title, titleRef, className = "", children }) {
+/**
+ * A titled panel; with `titleRef`, the title can also take the focus. `rise` is its place in the order the
+ * screen's parts come in (a short fade, held back a little more for each).
+ */
+function Panel({ title, titleRef, className = "", rise, children }) {
   return (
-    <section className={`st-panel ${className}`.trim()}>
+    <section className={`st-panel ${rise === undefined ? "" : "st-rise "}${className}`.trim()} style={rise === undefined ? undefined : { "--i": rise }}>
       <h3 ref={titleRef} tabIndex={titleRef ? -1 : undefined} className="st-today-title">
         {title}
       </h3>
@@ -92,28 +94,216 @@ function useRetry(load, target) {
   };
 }
 
-/** The band: the universal day, the date, the day's meaning and a new reading. */
-function DayBand({ he, today, day, onNewReading }) {
+/** Where a load stands: "loading", "failed" or "ready". */
+const stateOf = (load) => (load.loading ? "loading" : load.error ? "failed" : "ready");
+
+/** Today's energy: the universal day on the wheel, its meaning, and the day's first actions. */
+function Hero({ he, today, day, paths, onNewReading, onNewClient, onMeeting }) {
+  const titleId = useId();
   return (
-    <section className="st-today-band">
-      <div className="st-today-day">
-        <small>
-          {he ? "היום האוניברסלי" : "Universal day"}
-          <HowButton k="universal" ctx={{ now: today }} he={he} />
-        </small>
-        <span className="st-today-num">{day.number}</span>
-      </div>
-      <div>
+    <section className="st-hero st-rise" style={{ "--i": 0 }} aria-labelledby={titleId}>
+      <svg className="st-hero-grid" viewBox="0 0 90 90" aria-hidden="true" focusable="false">
+        {/* the Lo Shu square, faint behind the title */}
+        {[4, 9, 2, 3, 5, 7, 8, 1, 6].map((n, i) => (
+          <text key={n} x={15 + (i % 3) * 30} y={15 + Math.floor(i / 3) * 30} textAnchor="middle" dominantBaseline="central">
+            {n}
+          </text>
+        ))}
+        <path d="M30 0V90M60 0V90M0 30H90M0 60H90" />
+      </svg>
+      <div className="st-hero-text">
+        <h3 id={titleId} className="st-hero-title">
+          {he ? "האנרגיה של היום" : "Today's energy"}
+        </h3>
         <p className="st-today-date">{today.toLocaleDateString(he ? "he-IL" : "en-GB", DATE_FORMAT)}</p>
         <p className="st-today-meaning">
           {day.title && <b>{day.title}.</b>} <Locked he={he}>{day.text}</Locked>
         </p>
+        <div className="st-hero-actions">
+          <button type="button" className="st-today-btn st-today-solid fx" onClick={() => onNewReading()}>
+            <Icon name="plus" />
+            {he ? "קריאה חדשה" : "New reading"}
+          </button>
+          {onNewClient && (
+            <button type="button" className="st-today-btn fx" onClick={() => onNewClient()}>
+              <Icon name="client" />
+              {he ? "לקוח חדש" : "New client"}
+            </button>
+          )}
+          {onMeeting && (
+            <button type="button" className="st-today-btn fx" onClick={() => onMeeting()}>
+              <Icon name="meeting" />
+              {he ? "מצב פגישה" : "Meeting mode"}
+            </button>
+          )}
+        </div>
       </div>
-      <button type="button" className="st-today-btn st-today-solid st-today-go fx" onClick={() => onNewReading()}>
-        <Icon name="plus" />
-        {he ? "קריאה חדשה" : "New reading"}
-      </button>
+      <NumberWheel
+        he={he}
+        day={day.number}
+        paths={paths}
+        caption={
+          <p className="st-wheel-caption">
+            <span>{he ? "היום האוניברסלי" : "Universal day"}</span>
+            <HowButton k="universal" ctx={{ now: today }} he={he} />
+          </p>
+        }
+      />
     </section>
+  );
+}
+
+/** Each figure: its words, what a screen reader says for a count, and where pressing it goes. */
+const FIGURES = {
+  clients: {
+    he: ["לקוחות", "פעילים בתיק", (n) => (n === 1 ? "לקוח פעיל אחד" : `${n} לקוחות פעילים`), "לפתיחת הלקוחות"],
+    en: ["Clients", "active", (n) => (n === 1 ? "1 active client" : `${n} active clients`), "open the clients"],
+  },
+  readings: {
+    he: ["קריאות", "שמורות בתיקים", (n) => (n === 1 ? "קריאה שמורה אחת" : `${n} קריאות שמורות`), "לתיקי הלקוחות"],
+    en: ["Readings", "saved", (n) => (n === 1 ? "1 saved reading" : `${n} saved readings`), "open the client files"],
+  },
+  followUps: {
+    he: ["מעקבים", "שהגיע זמנם", (n) => (n === 1 ? "מעקב אחד שהגיע זמנו" : `${n} מעקבים שהגיע זמנם`), "לרשימת המעקבים"],
+    en: ["Follow-ups", "due", (n) => (n === 1 ? "1 follow-up due" : `${n} follow-ups due`), "go to the list"],
+  },
+  birthdays: {
+    he: ["ימי הולדת", "בשבוע הקרוב", (n) => (n === 1 ? "יום הולדת אחד בשבוע הקרוב" : `${n} ימי הולדת בשבוע הקרוב`), "לרשימת ימי ההולדת"],
+    en: ["Birthdays", "this week", (n) => (n === 1 ? "1 birthday this week" : `${n} birthdays this week`), "go to the list"],
+  },
+};
+
+/**
+ * One figure: a number counted from the store, with a quiet placeholder while it loads and a dash when it
+ * could not load. With somewhere to go it is a button.
+ */
+function Figure({ he, kind, value, state, onGo }) {
+  const [label, sub, spoken, goText] = FIGURES[kind][he ? "he" : "en"];
+  const ready = state === "ready";
+  const body = (
+    <>
+      <span className="st-stat-num">{state === "loading" ? <span className="st-skel" /> : ready ? value : "—"}</span>
+      <span className="st-stat-label">{label}</span>
+      <span className="st-stat-sub">{sub}</span>
+      {state === "failed" && <span className="st-sr">{he ? " (לא נטען)" : " (did not load)"}</span>}
+    </>
+  );
+  if (ready && onGo) {
+    return (
+      <button type="button" className="st-stat st-stat-go fx" aria-label={`${spoken(value)}, ${goText}`} onClick={() => onGo()}>
+        {body}
+      </button>
+    );
+  }
+  return (
+    <div className="st-stat" aria-busy={state === "loading" || undefined}>
+      {body}
+    </div>
+  );
+}
+
+/** The four figures: clients, saved readings, follow-ups due and birthdays this week. */
+function Figures({ he, load, due, today, onOpenClients, onFollowUps, onBirthdays }) {
+  const clients = stateOf(load);
+  const summary = stateOf(due);
+  const figures = [
+    { kind: "clients", state: clients, value: load.data?.length, onGo: onOpenClients },
+    { kind: "readings", state: summary, value: due.data?.readings, onGo: onOpenClients },
+    { kind: "followUps", state: summary, value: due.data && dueBy(due.data.followUps, today).length, onGo: onFollowUps },
+    { kind: "birthdays", state: clients, value: load.data && upcomingBirthdays(load.data, today).length, onGo: onBirthdays },
+  ];
+  return (
+    <section className="st-stats st-rise" style={{ "--i": 1 }} aria-label={he ? "נתונים מהתיק" : "From the client files"}>
+      {figures.map((f) => (
+        <Figure key={f.kind} he={he} kind={f.kind} value={f.value} state={f.state} onGo={f.onGo} />
+      ))}
+    </section>
+  );
+}
+
+const DAY_SHORT = { he: ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"], en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] };
+const DAY_LONG = {
+  he: ["יום ראשון", "יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "שבת"],
+  en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+};
+/** The names a day of the week strip shows; the rest are counted. */
+const DAY_NAMES_SHOWN = 3;
+
+/** A day of the week strip: its birthdays and follow-ups, named on a wide screen and dotted on a narrow one. */
+function WeekDay({ he, day }) {
+  const lang = he ? "he" : "en";
+  const { date, inDays } = day;
+  const dm = `${date.getDate()}.${date.getMonth() + 1}`;
+  const events = [
+    ...day.birthdays.map((b) => ({ key: `b${b.client.id}`, kind: "birthday", name: b.client.fullName })),
+    ...day.followUps.map((f) => ({ key: `f${f.readingId}`, kind: "follow", name: f.clientName })),
+  ];
+  const said = events.map((e) => {
+    if (e.kind === "birthday") return he ? `יום הולדת של ${e.name}` : `${e.name}'s birthday`;
+    return he ? `מעקב עם ${e.name}` : `a follow-up with ${e.name}`;
+  });
+  const when = `${DAY_LONG[lang][date.getDay()]} ${dm}${inDays === 0 ? (he ? ", היום" : ", today") : ""}`;
+  const what = said.length ? said.join(he ? ", " : "; ") : he ? "אין ימי הולדת או מעקבים" : "no birthdays or follow-ups";
+  const more = events.length - DAY_NAMES_SHOWN;
+  return (
+    <li className={`st-week-day${inDays === 0 ? " is-today" : ""}${events.length ? " has-events" : ""}`}>
+      <span className="st-week-head" aria-hidden="true">
+        <span className="st-week-name">{inDays === 0 ? (he ? "היום" : "Today") : DAY_SHORT[lang][date.getDay()]}</span>
+        <span className="st-week-date">{dm}</span>
+      </span>
+      <span className="st-week-events" aria-hidden="true">
+        {events.slice(0, DAY_NAMES_SHOWN).map((e) => (
+          <span key={e.key} className={`st-week-ev is-${e.kind}`}>
+            <span className="st-week-dot" />
+            <span className="st-week-who">{e.name}</span>
+          </span>
+        ))}
+        {more > 0 && <span className="st-week-more">{`+${more}`}</span>}
+      </span>
+      <span className="st-sr">{`${when}: ${what}.`}</span>
+    </li>
+  );
+}
+
+/** The week ahead: seven days from today, with the birthdays and the follow-ups on each. */
+function Week({ he, load, due, today }) {
+  const week = weekAhead(load.data || [], due.data?.followUps || [], today);
+  const busy = load.loading || due.loading;
+  return (
+    <Panel title={he ? "השבוע הקרוב" : "The week ahead"} className="st-week-panel" rise={2}>
+      <ol className="st-week" aria-busy={busy || undefined}>
+        {week.map((d) => (
+          <WeekDay key={d.inDays} he={he} day={d} />
+        ))}
+      </ol>
+      <p className="st-week-key" aria-hidden="true">
+        <span className="st-week-ev is-birthday">
+          <span className="st-week-dot" />
+          {he ? "יום הולדת" : "Birthday"}
+        </span>
+        <span className="st-week-ev is-follow">
+          <span className="st-week-dot" />
+          {he ? "מעקב" : "Follow-up"}
+        </span>
+      </p>
+      {(load.error || due.error) && <p className="st-today-quiet">{he ? "חלק מהנתונים של השבוע לא נטענו." : "Part of the week did not load."}</p>}
+    </Panel>
+  );
+}
+
+/** In place of the week while there are no clients: the three steps that fill this screen. */
+function Welcome({ he }) {
+  const steps = he
+    ? ["מוסיפים לקוח ב׳לקוח חדש׳: שם, תאריך לידה וטלפון.", "עושים קריאה ושומרים אותה בתיק של הלקוח.", "קובעים תאריך מעקב, והוא יופיע כאן ביום שלו."]
+    : ["Add a client with New client: a name, a birth date and a phone.", "Make a reading and save it in the client's file.", "Set a follow-up date, and it shows here on its day."];
+  return (
+    <Panel title={he ? "מתחילים כאן" : "Start here"} className="st-welcome" rise={2}>
+      <ol className="st-welcome-steps">
+        {steps.map((s) => (
+          <li key={s}>{s}</li>
+        ))}
+      </ol>
+    </Panel>
   );
 }
 
@@ -378,29 +568,71 @@ function Recent({ he, clients, lifePath, onOpenClient }) {
   );
 }
 
-/** The quick actions the app has wired; one without a handler is left out. */
-function QuickActions({ he, onNewClient, onMeeting, onSearch }) {
-  const actions = [
-    { key: "client", icon: "client", label: he ? "לקוח חדש" : "New client", run: onNewClient },
-    { key: "meeting", icon: "meeting", label: he ? "מצב פגישה" : "Meeting mode", run: onMeeting },
-    { key: "search", icon: "search", label: he ? "חיפוש מהיר" : "Quick search", run: onSearch, keys: "Ctrl K", shortcut: "Control+K Meta+K" },
-  ];
+/** A tool's name and line, named and described by id, so a screen reader says the name and then the line. */
+function ToolText({ id, label, line }) {
   return (
-    <div className="st-today-actions">
-      {actions
-        .filter((a) => a.run)
-        .map((a) => (
-          <button key={a.key} type="button" className="st-today-btn fx" aria-keyshortcuts={a.shortcut} onClick={() => a.run()}>
-            <Icon name={a.icon} />
-            {a.label}
-            {a.keys && (
-              <kbd className="st-today-kbd" dir="ltr" aria-hidden="true">
-                {a.keys}
-              </kbd>
-            )}
-          </button>
-        ))}
-    </div>
+    <>
+      <span className="st-tool-name" id={id}>
+        {label}
+      </span>
+      {line && (
+        <span className="st-tool-line" id={`${id}-line`}>
+          {line}
+        </span>
+      )}
+    </>
+  );
+}
+
+/** On a wide screen, as many columns as the tiles fill evenly: ten in two rows of five, eight in two of four. */
+const toolColumns = (count) => (count % 5 !== 0 && count % 4 === 0 ? 4 : 5);
+
+/**
+ * Every tool, as a tile with a line on what it is for, under a bar for quick search. `tools` are the app's
+ * tools ({k, i, he, en}, as the toolbar has them); "היום" itself is left out, and so is anything the app has
+ * not wired (no `onTool`, no `onSearch`).
+ */
+function Tools({ he, tools, onTool, onSearch }) {
+  const id = useId();
+  const lang = he ? "he" : "en";
+  const tiles = onTool ? tools.filter((t) => t.k !== "today") : [];
+  if (!tiles.length && !onSearch) return null;
+  const described = (key) => (TOOL_LINES[key] ? `${id}-${key}-line` : undefined);
+  return (
+    <Panel title={he ? "כל הכלים" : "All the tools"} className="st-tools" rise={5}>
+      {onSearch && (
+        <button
+          type="button"
+          className="st-tool-search fx"
+          aria-labelledby={`${id}-search`}
+          aria-describedby={described("search")}
+          aria-keyshortcuts="Control+K Meta+K"
+          onClick={() => onSearch()}
+        >
+          <span className="st-tool-icon" aria-hidden="true">
+            <AppIcon name="search" size={20} stroke={1.6} />
+          </span>
+          <ToolText id={`${id}-search`} label={he ? "חיפוש מהיר" : "Quick search"} line={TOOL_LINES.search[lang]} />
+          <kbd className="st-today-kbd" dir="ltr" aria-hidden="true">
+            Ctrl K
+          </kbd>
+        </button>
+      )}
+      {tiles.length > 0 && (
+        <ul className="st-tools-grid" style={{ "--cols": toolColumns(tiles.length) }}>
+          {tiles.map((t) => (
+            <li key={t.k}>
+              <button type="button" className="st-tool-tile fx" aria-labelledby={`${id}-${t.k}`} aria-describedby={described(t.k)} onClick={() => onTool(t.k)}>
+                <span className="st-tool-icon" aria-hidden="true">
+                  <AppIcon name={t.i} size={22} stroke={1.6} />
+                </span>
+                <ToolText id={`${id}-${t.k}`} label={t[lang]} line={TOOL_LINES[t.k]?.[lang]} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
   );
 }
 
@@ -410,13 +642,15 @@ function QuickActions({ he, onNewClient, onMeeting, onSearch }) {
  *   day: {number: number, title: string, text: string},
  *   lifePath: (isoDate: string) => number, personalYear: (isoDate: string, at: Date) => number,
  *   deck: import("react").ReactNode, onOpenClient: (id: string) => void, onNewReading: () => void,
+ *   tools?: {k: string, i: string, he: string, en: string}[], onTool?: (k: string) => void,
  *   onNewClient?: () => void, onMeeting?: () => void, onSearch?: () => void,
  *   greetAnyone?: boolean, signature?: string, onOpenReading?: (id: string) => void,
  * }} props `signature` ends each message to a client (the studio's name)
  */
-export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, deck, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch, onOpenReading, greetAnyone = false, signature = "" }) {
+export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, deck, tools = [], onTool, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch, onOpenReading, greetAnyone = false, signature = "" }) {
   const load = useLoad(() => store.clients.list(), [store]);
-  const due = useLoad(() => store.summary(now()), [store]);
+  // the follow-ups up to the week strip's last day; the panel lists the ones due by today
+  const due = useLoad(() => store.summary(weekEnd(now())), [store]);
   const firstTitle = useRef(null);
   const followTitle = useRef(null);
   const retry = useRetry(load, firstTitle);
@@ -424,31 +658,33 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
   const done = useMarkDone(store, due, followTitle);
   const today = now();
   const messages = { he, greetAnyone, signature };
+  const hasClients = load.data?.length > 0;
+  const paths = load.data ? lifePathCounts(load.data, lifePath) : null;
   return (
     <div className="st-today">
       <h2 className="st-sr">{he ? "היום" : "Today"}</h2>
-      <DayBand he={he} today={today} day={day} onNewReading={onNewReading} />
-      <div className="st-cols-3 st-today-top">
-        <Panel title={he ? "ימי הולדת השבוע" : "Birthdays this week"} titleRef={firstTitle}>
+      <Hero he={he} today={today} day={day} paths={paths} onNewReading={onNewReading} onNewClient={onNewClient} onMeeting={onMeeting} />
+      <Figures
+        he={he}
+        load={load}
+        due={due}
+        today={today}
+        onOpenClients={onTool && (() => onTool("clients"))}
+        onFollowUps={hasClients ? () => followTitle.current?.focus() : undefined}
+        onBirthdays={() => firstTitle.current?.focus()}
+      />
+      {load.data && !hasClients ? <Welcome he={he} /> : <Week he={he} load={load} due={due} today={today} />}
+      {/* the lists, two by two: birthdays and follow-ups, then the recent clients and the ones worth a word */}
+      <div className="st-today-lists">
+        <Panel title={he ? "ימי הולדת השבוע" : "Birthdays this week"} titleRef={firstTitle} rise={3}>
           <WithClients he={he} load={load} onRetry={retry} announce>
             {(clients) => <Birthdays he={he} clients={clients} today={today} lifePath={lifePath} personalYear={personalYear} greetAnyone={greetAnyone} signature={signature} />}
           </WithClients>
         </Panel>
-        <Panel title={he ? "לקוחות אחרונים" : "Recent clients"}>
-          <WithClients he={he} load={load} onRetry={retry}>
-            {(clients) => <Recent he={he} clients={clients} lifePath={lifePath} onOpenClient={onOpenClient} />}
-          </WithClients>
-        </Panel>
-        <Panel title={he ? "פעולות מהירות" : "Quick actions"} className="st-today-quick">
-          <QuickActions he={he} onNewClient={onNewClient} onMeeting={onMeeting} onSearch={onSearch} />
-        </Panel>
-      </div>
-      {/* once there are clients: the ones to follow up, and the ones worth a word */}
-      {load.data?.length > 0 && (
-        <div className="st-cols-2">
-          <Panel title={he ? "מעקבים שהגיע זמנם" : "Follow-ups due"} titleRef={followTitle}>
+        {hasClients && (
+          <Panel title={he ? "מעקבים שהגיע זמנם" : "Follow-ups due"} titleRef={followTitle} rise={3}>
             {due.data && (
-              <FollowUps {...messages} due={due.data.followUps} clients={load.data} onOpenReading={onOpenReading} onDone={done.markDone} failed={done.failed} />
+              <FollowUps {...messages} due={dueBy(due.data.followUps, today)} clients={load.data} onOpenReading={onOpenReading} onDone={done.markDone} failed={done.failed} />
             )}
             {due.error && (
               <div className="st-today-failed">
@@ -461,12 +697,22 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
               </div>
             )}
           </Panel>
-          <Panel title={isNewYearMonth(today) ? (he ? "השנה האישית החדשה" : "The new personal year") : he ? "כדאי לחזור אליהם" : "Worth getting back to"}>
+        )}
+        <Panel title={he ? "לקוחות אחרונים" : "Recent clients"} rise={4}>
+          <WithClients he={he} load={load} onRetry={retry}>
+            {(clients) => <Recent he={he} clients={clients} lifePath={lifePath} onOpenClient={onOpenClient} />}
+          </WithClients>
+        </Panel>
+        {hasClients && (
+          <Panel title={isNewYearMonth(today) ? (he ? "השנה האישית החדשה" : "The new personal year") : he ? "כדאי לחזור אליהם" : "Worth getting back to"} rise={4}>
             <Reconnect {...messages} clients={load.data} now={today} personalYear={personalYear} />
           </Panel>
-        </div>
-      )}
-      <Panel title={he ? "קלף היום" : "Today's card"}>{deck}</Panel>
+        )}
+      </div>
+      <Tools he={he} tools={tools} onTool={onTool} onSearch={onSearch} />
+      <Panel title={he ? "קלף היום" : "Today's card"} className="st-deck-panel" rise={6}>
+        {deck}
+      </Panel>
     </div>
   );
 }

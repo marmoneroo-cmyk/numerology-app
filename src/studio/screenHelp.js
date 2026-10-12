@@ -5,8 +5,8 @@
  */
 export const SCREEN_HELP = {
   today: {
-    he: "סקירה של היום: המספר האוניברסלי, ימי הולדת קרובים עם ברכה מוכנה, הלקוחות האחרונים, מעקבים שהגיע זמנם, לקוחות שכדאי לחזור אליהם, וקלף היום.",
-    en: "A look at the day: the universal number, birthdays coming up with a greeting ready, recent clients, follow-ups that are due, clients worth getting back to, and the card of the day.",
+    he: "סקירה של היום: האנרגיה של היום על גלגל המספרים, נתונים מהתיק והשבוע הקרוב, ימי הולדת עם ברכה מוכנה, מעקבים שהגיע זמנם, לקוחות שכדאי לחזור אליהם, כל הכלים וקלף היום.",
+    en: "A look at the day: today's energy on the wheel of numbers, figures from the client files and the week ahead, birthdays with a greeting ready, follow-ups that are due, clients worth getting back to, every tool and the card of the day.",
   },
   clients: {
     he: "תיק לכל לקוח: פרטים, הערות, תגיות, קבצים וכל הבדיקות שנשמרו. מכאן פותחים לקוח חדש או בדיקה חדשה, וקובעים מעקב.",
@@ -48,6 +48,21 @@ export const SCREEN_HELP = {
     he: "ניהול המנויים: פתיחת חשבון חדש, חיפוש, מסלול והרשאות, השעיה והחזרה של חשבון, והעתקת פרטי הכניסה כדי לשלוח אותם למנוי.",
     en: "Managing subscribers: opening an account, searching, the plan and permissions, suspending and restoring an account, and copying the sign-in details to send to the subscriber.",
   },
+};
+
+/** Each tool in a few words, for its tile in the home screen's "כל הכלים" (the long explanations are above). */
+export const TOOL_LINES = {
+  clients: { he: "תיק לכל לקוח, עם הקריאות והמעקבים", en: "A file per client, with readings and follow-ups" },
+  reading: { he: "מפה מלאה לפי שם ותאריך לידה", en: "A full map from a name and a birth date" },
+  leads: { he: "פניות מדף הלקוח, עם ייצוא ל-CSV", en: "Enquiries from the customer page, with a CSV export" },
+  tables: { he: "כל המספרים של אדם אחד בטבלה", en: "All of one person's numbers in a table" },
+  match: { he: "זוגיות, פרופיל אישי והורה-ילד", en: "Couples, a personal profile, parent and child" },
+  daily: { he: "המסר של היום וטקס קצר", en: "The day's message and a short ritual" },
+  cards: { he: "טארוט מלא וקלפי המספרים", en: "A full tarot deck and the number cards" },
+  calc: { he: "מחשבונים ממוקדים ומחשבוני התאמה", en: "Focused and compatibility calculators" },
+  account: { he: "הפרטים, הסיסמה ואבטחת החשבון", en: "Details, password and the account's security" },
+  admin: { he: "פתיחה וניהול של מנויים", en: "Opening and managing subscribers" },
+  search: { he: "לקוח, כלי או פעולה, מכל מסך", en: "A client, a tool or an action, from any screen" },
 };
 
 /** The התאמה tab's three comparisons, keyed like CompatWidget's tabs. */

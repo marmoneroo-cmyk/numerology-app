@@ -67,6 +67,20 @@ const PLACEHOLDER = {
   color: "var(--st-ink-faint)",
 };
 
+// the Studio's tools as the App passes them (App.jsx's STUDIO_TOOLS)
+const TOOLS = [
+  { k: "today", i: "sparkles", he: "היום", en: "Today" },
+  { k: "clients", i: "user", he: "לקוחות", en: "Clients" },
+  { k: "reading", i: "orb", he: "קריאה", en: "Reading" },
+  { k: "leads", i: "users", he: "לידים", en: "Leads" },
+  { k: "tables", i: "chart", he: "טבלאות", en: "Tables" },
+  { k: "match", i: "heart", he: "התאמה", en: "Match" },
+  { k: "daily", i: "sun", he: "יומי", en: "Daily" },
+  { k: "cards", i: "cards", he: "קלפים", en: "Cards" },
+  { k: "calc", i: "calculator", he: "מחשבונים", en: "Calculators" },
+  { k: "account", i: "user", he: "החשבון שלי", en: "My account" },
+];
+
 export default function TodaySection() {
   const store = useMemo(sampleStore, []);
   const [said, setSaid] = useState("לוחצים על כל דבר במסך, ומה שקרה יופיע כאן.");
@@ -101,6 +115,8 @@ export default function TodaySection() {
         onNewClient={() => setSaid("נלחץ: לקוח חדש")}
         onMeeting={() => setSaid("נלחץ: מצב פגישה")}
         onSearch={() => setSaid("נלחץ: חיפוש מהיר")}
+        tools={TOOLS}
+        onTool={(k) => setSaid(`נלחץ הכלי: ${TOOLS.find((t) => t.k === k)?.he}`)}
       />
     </div>
   );
