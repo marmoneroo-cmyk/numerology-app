@@ -161,6 +161,30 @@ describe("App inside Root", { timeout: 20000 }, () => {
       fireEvent.keyDown(search, { key: "Escape" });
     });
 
+    it("opens today's number on its page where the screens change with an animated transition (Chrome)", async () => {
+      // Chrome runs a view transition's update a frame later, not at once as the test DOM does without one
+      document.startViewTransition = (update) => {
+        setTimeout(update, 0);
+        return { ready: Promise.resolve(), finished: Promise.resolve() };
+      };
+      try {
+        demo();
+        await home();
+        const n = universalDay(new Date());
+        const panel = screen.getByRole("heading", { name: "המספר של היום" }).closest("section");
+        fireEvent.click(within(panel).getByRole("button", { name: `לעמוד של המספר ${n}` }));
+        expect(await screen.findByRole("heading", { level: 2, name: new RegExp(`^${n} · `) })).toBeTruthy();
+        expect(navButton("מספרים").getAttribute("aria-current")).toBe("page");
+        // and the tab itself opens on every number
+        fireEvent.click(navButton("היום"));
+        await home();
+        fireEvent.click(navButton("מספרים"));
+        await waitFor(() => expect(screen.getAllByRole("button", { name: /^\d+ · / })).toHaveLength(16));
+      } finally {
+        delete document.startViewTransition;
+      }
+    });
+
     it("opens each tool from its tile, and has no leads tile in the demo", async () => {
       demo();
       await home();
