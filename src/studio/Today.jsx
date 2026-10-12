@@ -153,23 +153,26 @@ function Hero({ he, today, day, paths, onNewReading, onNewClient, onMeeting }) {
   );
 }
 
-/** Each figure: its words, what a screen reader says for a count, and where pressing it goes. */
+/**
+ * Each figure's words, for one and for any other count, and where pressing it goes. A button's name is its
+ * visible text with where it goes after it, so a voice command can say what the screen shows.
+ */
 const FIGURES = {
   clients: {
-    he: ["לקוחות", "פעילים בתיק", (n) => (n === 1 ? "לקוח פעיל אחד" : `${n} לקוחות פעילים`), "לפתיחת הלקוחות"],
-    en: ["Clients", "active", (n) => (n === 1 ? "1 active client" : `${n} active clients`), "open the clients"],
+    he: { one: ["לקוח", "פעיל בתיק"], many: ["לקוחות", "פעילים בתיק"], go: "לפתיחת הלקוחות" },
+    en: { one: ["Client", "on file"], many: ["Clients", "on file"], go: "open the clients" },
   },
   readings: {
-    he: ["קריאות", "שמורות בתיקים", (n) => (n === 1 ? "קריאה שמורה אחת" : `${n} קריאות שמורות`), "לתיקי הלקוחות"],
-    en: ["Readings", "saved", (n) => (n === 1 ? "1 saved reading" : `${n} saved readings`), "open the client files"],
+    he: { one: ["קריאה", "שמורה בתיקים"], many: ["קריאות", "שמורות בתיקים"], go: "לתיקי הלקוחות" },
+    en: { one: ["Reading", "saved"], many: ["Readings", "saved"], go: "open the client files" },
   },
   followUps: {
-    he: ["מעקבים", "שהגיע זמנם", (n) => (n === 1 ? "מעקב אחד שהגיע זמנו" : `${n} מעקבים שהגיע זמנם`), "לרשימת המעקבים"],
-    en: ["Follow-ups", "due", (n) => (n === 1 ? "1 follow-up due" : `${n} follow-ups due`), "go to the list"],
+    he: { one: ["מעקב", "שהגיע זמנו"], many: ["מעקבים", "שהגיע זמנם"], go: "לרשימת המעקבים" },
+    en: { one: ["Follow-up", "due"], many: ["Follow-ups", "due"], go: "go to the list" },
   },
   birthdays: {
-    he: ["ימי הולדת", "בשבוע הקרוב", (n) => (n === 1 ? "יום הולדת אחד בשבוע הקרוב" : `${n} ימי הולדת בשבוע הקרוב`), "לרשימת ימי ההולדת"],
-    en: ["Birthdays", "this week", (n) => (n === 1 ? "1 birthday this week" : `${n} birthdays this week`), "go to the list"],
+    he: { one: ["יום הולדת", "בשבוע הקרוב"], many: ["ימי הולדת", "בשבוע הקרוב"], go: "לרשימת ימי ההולדת" },
+    en: { one: ["Birthday", "this week"], many: ["Birthdays", "this week"], go: "go to the list" },
   },
 };
 
@@ -178,20 +181,21 @@ const FIGURES = {
  * could not load. With somewhere to go it is a button.
  */
 function Figure({ he, kind, value, state, onGo }) {
-  const [label, sub, spoken, goText] = FIGURES[kind][he ? "he" : "en"];
+  const words = FIGURES[kind][he ? "he" : "en"];
+  const [label, sub] = value === 1 ? words.one : words.many;
   const ready = state === "ready";
   const body = (
     <>
-      <span className="st-stat-num">{state === "loading" ? <span className="st-skel" /> : ready ? value : "—"}</span>
-      <span className="st-stat-label">{label}</span>
-      <span className="st-stat-sub">{sub}</span>
+      <span className="st-stat-num">{state === "loading" ? <span className="st-skel" /> : ready ? value : "—"}</span>{" "}
+      <span className="st-stat-label">{label}</span> <span className="st-stat-sub">{sub}</span>
       {state === "failed" && <span className="st-sr">{he ? " (לא נטען)" : " (did not load)"}</span>}
     </>
   );
   if (ready && onGo) {
     return (
-      <button type="button" className="st-stat st-stat-go fx" aria-label={`${spoken(value)}, ${goText}`} onClick={() => onGo()}>
+      <button type="button" className="st-stat st-stat-go fx" onClick={() => onGo()}>
         {body}
+        <span className="st-sr">{`, ${words.go}`}</span>
       </button>
     );
   }
@@ -584,13 +588,15 @@ function Recent({ he, clients, lifePath, onOpenClient }) {
   );
 }
 
-/** A tool's name and line, named and described by id, so a screen reader says the name and then the line. */
+/** A tool's name and line; the button is named by both, so its name holds everything it shows. */
 function ToolText({ id, label, line }) {
   return (
     <>
       <span className="st-tool-name" id={id}>
         {label}
       </span>
+      {/* a space between the two, so the visible text reads as the name does (voice control matches the two) */}
+      {line && " "}
       {line && (
         <span className="st-tool-line" id={`${id}-line`}>
           {line}
@@ -616,18 +622,12 @@ function Tools({ he, tools, onTool, onSearch }) {
   const lang = he ? "he" : "en";
   const tiles = onTool ? tools.filter((t) => t.k !== "today") : [];
   if (!tiles.length && !onSearch) return null;
-  const described = (key) => (TOOL_LINES[key] ? `${id}-${key}-line` : undefined);
+  // named by the tool's name and its line together (the key hint is left out of the name)
+  const named = (key) => (TOOL_LINES[key] ? `${id}-${key} ${id}-${key}-line` : `${id}-${key}`);
   return (
     <Panel title={he ? "כל הכלים" : "All the tools"} className="st-tools" rise={5}>
       {onSearch && (
-        <button
-          type="button"
-          className="st-tool-search fx"
-          aria-labelledby={`${id}-search`}
-          aria-describedby={described("search")}
-          aria-keyshortcuts="Control+K Meta+K"
-          onClick={() => onSearch()}
-        >
+        <button type="button" className="st-tool-search fx" aria-labelledby={named("search")} aria-keyshortcuts="Control+K Meta+K" onClick={() => onSearch()}>
           <span className="st-tool-icon" aria-hidden="true">
             <AppIcon name="search" size={20} stroke={1.6} />
           </span>
@@ -641,7 +641,7 @@ function Tools({ he, tools, onTool, onSearch }) {
         <ul className="st-tools-grid" style={{ "--cols": toolColumns(tiles.length) }}>
           {tiles.map((t) => (
             <li key={t.k}>
-              <button type="button" className="st-tool-tile fx" aria-labelledby={`${id}-${t.k}`} aria-describedby={described(t.k)} onClick={() => onTool(t.k)}>
+              <button type="button" className="st-tool-tile fx" aria-labelledby={named(t.k)} onClick={() => onTool(t.k)}>
                 <span className="st-tool-icon" aria-hidden="true">
                   <AppIcon name={t.i} size={22} stroke={1.6} />
                 </span>

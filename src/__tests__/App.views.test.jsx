@@ -146,9 +146,10 @@ describe("App inside Root", { timeout: 20000 }, () => {
     it("opens each tool from its tile, and has no leads tile in the demo", async () => {
       demo();
       await home();
-      expect(within(tools()).queryByRole("button", { name: "לידים" })).toBeNull();
-      expect(within(tools()).queryByRole("button", { name: "היום" })).toBeNull();
-      fireEvent.click(within(tools()).getByRole("button", { name: "קלפים" }));
+      // a tile is named by the tool's name and then its line
+      expect(within(tools()).queryByRole("button", { name: /^לידים / })).toBeNull();
+      expect(within(tools()).queryByRole("button", { name: /^היום / })).toBeNull();
+      fireEvent.click(within(tools()).getByRole("button", { name: /^קלפים / }));
       expect(navButton("קלפים").getAttribute("aria-current")).toBe("page");
     });
 

@@ -110,9 +110,10 @@ export default function Lab() {
           </select>
         </label>
       </div>
-      <main className="st-root" dir="rtl" style={{ maxWidth: 1240, margin: "0 auto", padding: "22px 16px 80px" }}>
+      {/* a plain block: the full Studio section brings its own <main> */}
+      <div className="st-root" dir="rtl" style={{ maxWidth: 1240, margin: "0 auto", padding: "22px 16px 80px" }}>
         <Current />
-      </main>
+      </div>
     </ToastProvider>
   );
 }

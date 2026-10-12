@@ -346,7 +346,7 @@ describe("Today", () => {
     const energy = panel("האנרגיה של היום");
     fireEvent.click(within(energy).getByRole("button", { name: "לקוח חדש" }));
     fireEvent.click(within(energy).getByRole("button", { name: "מצב פגישה" }));
-    const search = within(panel("כל הכלים")).getByRole("button", { name: "חיפוש מהיר" });
+    const search = within(panel("כל הכלים")).getByRole("button", { name: /^חיפוש מהיר/ });
     expect(search.textContent).toContain("Ctrl K");
     expect(search.getAttribute("aria-keyshortcuts")).toContain("Control+K");
     fireEvent.click(search);
@@ -452,7 +452,7 @@ describe("Today", () => {
 
     expect(within(panel("Recent clients")).getByRole("button", { name: /דנה שמיר.*Life path 3/ })).toBeTruthy();
     for (const name of ["New client", "Meeting mode"]) expect(within(panel("Today's energy")).getByRole("button", { name })).toBeTruthy();
-    expect(within(panel("All the tools")).getByRole("button", { name: "Quick search" })).toBeTruthy();
+    expect(within(panel("All the tools")).getByRole("button", { name: /^Quick search/ })).toBeTruthy();
     expect(within(panel("Today's card")).getByText("החפיסה כאן")).toBeTruthy();
   });
 
@@ -475,7 +475,8 @@ describe("Today", () => {
       await store.readings.create(reading("id-3"));
       return store;
     }
-    const figure = (name) => within(screen.getByRole("region", { name: "נתונים מהתיק" })).findByRole("button", { name });
+    /** A figure's button by its name: what it shows, then where it goes (a test DOM may put a space before the comma). */
+    const figure = (shown, goes) => within(screen.getByRole("region", { name: "נתונים מהתיק" })).findByRole("button", { name: (name) => name.replace(" ,", ",") === `${shown}, ${goes}` });
 
     it("draws the clients' life paths on the wheel, a master path with the number it reduces to", async () => {
       // Arrange: the engine's paths, by birth date (NOA has no birth date, URI is archived)
@@ -510,12 +511,13 @@ describe("Today", () => {
     it("counts the clients, the saved readings, the follow-ups due and this week's birthdays, and each leads to its place", async () => {
       const onTool = vi.fn();
       renderToday(await busyStore(), { tools: TOOLS, onTool });
-      fireEvent.click(await figure("5 לקוחות פעילים, לפתיחת הלקוחות"));
-      fireEvent.click(await figure("3 קריאות שמורות, לתיקי הלקוחות"));
+      // each button is named by what it shows, then where it goes
+      fireEvent.click(await figure("5 לקוחות פעילים בתיק", "לפתיחת הלקוחות"));
+      fireEvent.click(await figure("3 קריאות שמורות בתיקים", "לתיקי הלקוחות"));
       expect(onTool.mock.calls).toEqual([["clients"], ["clients"]]);
-      fireEvent.click(await figure("מעקב אחד שהגיע זמנו, לרשימת המעקבים"));
+      fireEvent.click(await figure("1 מעקב שהגיע זמנו", "לרשימת המעקבים")); // one, in the singular
       expect(document.activeElement).toBe(screen.getByRole("heading", { name: "מעקבים שהגיע זמנם" }));
-      fireEvent.click(await figure("3 ימי הולדת בשבוע הקרוב, לרשימת ימי ההולדת"));
+      fireEvent.click(await figure("3 ימי הולדת בשבוע הקרוב", "לרשימת ימי ההולדת"));
       expect(document.activeElement).toBe(screen.getByRole("heading", { name: "ימי הולדת השבוע" }));
     });
 
@@ -598,12 +600,11 @@ describe("Today", () => {
       const onTool = vi.fn();
       renderToday(await storeWith([]), { tools: TOOLS, onTool });
       const tiles = within(panel("כל הכלים")).getAllByRole("button");
-      // quick search first, as a bar, then a tile for each tool
-      expect(tiles.map((t) => document.getElementById(t.getAttribute("aria-labelledby")).textContent)).toEqual(["חיפוש מהיר", "לקוחות", "קלפים"]);
-      expect(document.getElementById(tiles[0].getAttribute("aria-describedby")).textContent).toBe("לקוח, כלי או פעולה, מכל מסך");
-      const clients = within(panel("כל הכלים")).getByRole("button", { name: "לקוחות" });
-      expect(document.getElementById(clients.getAttribute("aria-describedby")).textContent).toBe("תיק לכל לקוח, עם הקריאות והמעקבים");
-      fireEvent.click(within(panel("כל הכלים")).getByRole("button", { name: "קלפים" }));
+      // quick search first, as a bar, then a tile for each tool; each named by its name and its line, as shown
+      expect(tiles.map((t) => t.querySelector(".st-tool-name").textContent)).toEqual(["חיפוש מהיר", "לקוחות", "קלפים"]);
+      expect(within(panel("כל הכלים")).getByRole("button", { name: "חיפוש מהיר לקוח, כלי או פעולה, מכל מסך" })).toBe(tiles[0]);
+      expect(within(panel("כל הכלים")).getByRole("button", { name: "לקוחות תיק לכל לקוח, עם הקריאות והמעקבים" })).toBe(tiles[1]);
+      fireEvent.click(within(panel("כל הכלים")).getByRole("button", { name: /^קלפים / }));
       expect(onTool).toHaveBeenCalledWith("cards");
       await screen.findAllByText(EMPTY_HE);
     });
@@ -613,10 +614,10 @@ describe("Today", () => {
       expect((await screen.findByRole("img", { name: /Clients by life path/ })).getAttribute("aria-label")).toBe(
         "The wheel of numbers 1 to 9. The universal day is 8. Clients by life path: 1: 1 client, 3: 1 client, 6: 1 client, 7: 1 client.",
       );
-      expect(await within(screen.getByRole("region", { name: "From the client files" })).findByRole("button", { name: "5 active clients, open the clients" })).toBeTruthy();
+      expect(await within(screen.getByRole("region", { name: "From the client files" })).findByRole("button", { name: (name) => name.replace(" ,", ",") === "5 Clients on file, open the clients" })).toBeTruthy();
       const days = await within(panel("The week ahead")).findAllByRole("listitem");
       await within(days[0]).findByText("Tuesday 6.10, today: יוסי לוי's birthday; a follow-up with רחל כהן.");
-      expect(within(panel("All the tools")).getByRole("button", { name: "Cards" })).toBeTruthy();
+      expect(within(panel("All the tools")).getByRole("button", { name: /^Cards / })).toBeTruthy();
     });
   });
 
