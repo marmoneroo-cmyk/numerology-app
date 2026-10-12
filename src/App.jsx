@@ -381,6 +381,19 @@ function PsychRadar({psych,dk,he}){
   <p data-testid="psych-note" style={{fontSize:fs(12),textAlign:"center",color:softText(dk),margin:"6px auto 0",maxWidth:420,lineHeight:1.6}}>{note}</p></>);
 }
 
+// ═══════════════════ THE LIFE MAP (chapter 4, and meeting mode) ═══════════════════
+/** The next ten years, the four life cycles with their pinnacle and challenge, and the Lo Shu grid. */
+function LifeMap({results,dk,he,studio=true}){
+  const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=softText(dk,studio);const isRtl=he;
+  return(<>
+    <YearWave proj={results.proj} dk={dk} he={he}/>
+    <div className="divider"/>
+    <div style={{textAlign:"center",marginBottom:14}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?600:400,color:ac}}>{he?"מחזורי חיים":"Life Cycles"}</h4></div>
+    {[he?"חיפוש":"Search",he?"מציאה":"Discovery",he?"יתד":"Anchor",he?"שיא":"Summit"].map((label,i)=>{const span=cycleSpans(results.exit)[i];const active=cycleAt(results.age,results.exit)===i;return(<div key={i} style={{padding:"14px 16px",background:active?`${ac}0a`:"transparent",border:`1px solid ${active?ac+"33":ac+"08"}`,borderRadius:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all .3s"}}><div><div style={{display:"flex",alignItems:"center",gap:8,fontSize:fs(15),fontWeight:600,color:active?ac:tm}}>{label}{active&&<span style={{padding:"2px 8px",background:`${ac}15`,border:`1px solid ${ac}33`,borderRadius:8,fontSize:fs(9),color:ac,letterSpacing:1,textTransform:"uppercase"}}>{he?"עכשיו":"NOW"}</span>}</div><div style={{fontSize:fs(10),color:ts}}>{he?"גילאים":"Ages"} {agesText(span)}</div></div><div style={{display:"flex",gap:8}}><div style={{textAlign:"center"}}><div style={{fontSize:fs(8),color:ts}}>{he?"פסגה":"Peak"}</div><div style={{fontSize:fs(20),fontWeight:700,color:ac}}>{results.pk[i]}</div></div><div style={{textAlign:"center"}}><div style={{fontSize:fs(8),color:ts}}>{he?"אתגר":"Chal."}</div><div style={{fontSize:fs(20),fontWeight:700,color:ts}}>{results.ch[i]}</div></div></div></div>);})}
+    <div className="divider"/><div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?600:400,color:ac}}>Lo Shu Grid</h4></div><LoShu ls={results.ls} dk={dk} he={he}/>
+  </>);
+}
+
 // ═══════════════════ YEARLY WAVE TIMELINE ═══════════════════
 function YearWave({proj,dk,he}){
   const ac=dk?"#c8a96a":"#937640";
@@ -391,7 +404,7 @@ function YearWave({proj,dk,he}){
   const areaD=pathD+` L${points[points.length-1].x},${h-pad} L${points[0].x},${h-pad} Z`;
   const[hover,setHover]=useState(null);
   return(<div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",padding:"8px 0"}}>
-    <svg width={w} height={h+30} viewBox={`0 0 ${w} ${h+30}`} style={{display:"block",minWidth:w}}>
+    <svg width={w} height={h+30} viewBox={`0 0 ${w} ${h+30}`} style={{display:"block",minWidth:w,width:"100%",maxWidth:760,height:"auto",margin:"0 auto"}}>
       {[.25,.5,.75].map(f=><line key={f} x1={pad} y1={h-pad-(f)*(h-pad*2)} x2={w-pad} y2={h-pad-(f)*(h-pad*2)} stroke={ac} strokeWidth=".3" opacity=".08"/>)}
       <path d={areaD} fill={`url(#waveGrad)`} opacity=".15"/><defs><linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={ac}/><stop offset="1" stopColor={ac} stopOpacity="0"/></linearGradient></defs>
       <path d={pathD} fill="none" stroke={ac} strokeWidth="2" opacity=".6" strokeLinecap="round"/>
@@ -1539,7 +1552,7 @@ export default function App({ view, navigate } = {}){
   // a saved map opens in meeting mode too (meetingFor is defined below; it runs only on a press)
   // the demo's interpretations stay blurred, so it makes no reports
   const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:view==="demo"?null:(r,n,h,i)=>exportReport(r,n,h,i,licensee),
-    openMeeting:(r,n)=>setMeeting(meetingFor(r,n))}),[licensee?.fullName,licensee?.phone,he,view]);
+    openMeeting:(r,n,at,add)=>setMeeting(meetingFor(r,n,at,add))}),[licensee?.fullName,licensee?.phone,he,view]);
   useEffect(()=>{AU.on=snd;},[snd]);
 
   // the shop is gone: a cart kept in this browser from before is forgotten (the owner/customer view preference is read in the useState initializer above)
@@ -1597,8 +1610,11 @@ export default function App({ view, navigate } = {}){
   useEffect(()=>(showOwnerUI?attachRipple(document,RIPPLE_TARGETS):undefined),[showOwnerUI]);
   const workspaceStore=showOwnerUI&&studioReady?accountStore(account):null;
   const lpBase = results ? R(results.lp) : 0; // reduced life path for D[] rich content (master carries base energy)
-  /** A reading in large type for the client: the life path, three more numbers and its meaning. */
-  const meetingFor=(r,who)=>{const info=D[R(r.lp)]||D[1];return{person:who,main:{value:r.lp,label:he?"שביל הגורל":"Life Path"},
+  /**
+   * A reading in large type for the client: the life path, three more numbers and its meaning, and then the whole
+   * map, made for `at` (a saved reading's own date and +1; a live reading's date otherwise).
+   */
+  const meetingFor=(r,who,at,add)=>{const info=D[R(r.lp)]||D[1];return{r,at:at||readingAt||new Date(),add,person:who,main:{value:r.lp,label:he?"שביל הגורל":"Life Path"},
     numbers:[{value:r.ex,label:he?"מספר הביטוי":"Expression"},{value:r.su,label:he?"קול הנשמה":"Soul Urge"},{value:r.py,label:he?"שנה אישית":"Personal Year"}],
     text:he?info.narrative:info.narrativeE};};
   const openMeeting=()=>{
@@ -1885,11 +1901,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         {/* CHAPTER 4 */}
         <Chapter index={4} title={chapterDefs[3]?.title} subtitle={chapterDefs[3]?.sub} icon={chapterDefs[3]?.icon} isActive={nextUnrevealed===3} isRevealed={chapters[3]} onReveal={()=>revealChapter(3)} dk={dk} he={he}>
           <p className="nar-line">{he?"גוללים קדימה כדי לראות את האנרגיה של 10 השנים הקרובות":"Scroll forward to see your energy over the next 10 years"}</p>
-          <YearWave proj={results.proj} dk={dk} he={he}/>
-          <div className="divider"/>
-          <div style={{textAlign:"center",marginBottom:14}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?600:400,color:ac}}>{he?"מחזורי חיים":"Life Cycles"}</h4></div>
-          {[he?"חיפוש":"Search",he?"מציאה":"Discovery",he?"יתד":"Anchor",he?"שיא":"Summit"].map((label,i)=>{const span=cycleSpans(results.exit)[i];const active=cycleAt(results.age,results.exit)===i;return(<div key={i} style={{padding:"14px 16px",background:active?`${ac}0a`:"transparent",border:`1px solid ${active?ac+"33":ac+"08"}`,borderRadius:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all .3s"}}><div><div style={{fontSize:fs(15),fontWeight:600,color:active?ac:tm}}>{label}</div><div style={{fontSize:fs(10),color:ts}}>{he?"גילאים":"Ages"} {agesText(span)}</div></div><div style={{display:"flex",gap:8}}><div style={{textAlign:"center"}}><div style={{fontSize:fs(8),color:ts}}>{he?"פסגה":"Peak"}</div><div style={{fontSize:fs(20),fontWeight:700,color:ac}}>{results.pk[i]}</div></div><div style={{textAlign:"center"}}><div style={{fontSize:fs(8),color:ts}}>{he?"אתגר":"Chal."}</div><div style={{fontSize:fs(20),fontWeight:700,color:ts}}>{results.ch[i]}</div></div></div>{active&&<div style={{padding:"2px 8px",background:`${ac}15`,border:`1px solid ${ac}33`,borderRadius:8,fontSize:fs(8),color:ac,letterSpacing:1,textTransform:"uppercase"}}>{he?"עכשיו":"NOW"}</div>}</div>);})}
-          <div className="divider"/><div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?600:400,color:ac}}>Lo Shu Grid</h4></div><LoShu ls={results.ls} dk={dk} he={he}/>
+          <LifeMap results={results} dk={dk} he={he} studio={showOwnerUI}/>
         </Chapter>
 
         {/* CHAPTER 5 */}
@@ -1933,8 +1945,12 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     {/* whose licence this Studio is: shown on every screen, like on the reports */}
     {showOwnerUI&&studioReady&&<div aria-hidden="true" style={{position:"fixed",bottom:8,insetInlineStart:10,zIndex:90,fontSize:fs(10),color:`${ac}99`,pointerEvents:"none",letterSpacing:.3}}>{he?"מורשה ל: ":"Licensed to: "}{licensee.fullName}{licensee.phone?` · ${licensee.phone}`:""}</div>}
 
-    {/* meeting mode: one reading in large type, for showing a client */}
-    {showOwnerUI&&studioReady&&<MeetingMode open={!!meeting} onClose={()=>setMeeting(null)} he={he} {...(meeting||{})}/>}
+    {/* meeting mode: a reading in large type for showing a client, then its whole map: the summary and the life map */}
+    {showOwnerUI&&studioReady&&<MeetingMode open={!!meeting} onClose={()=>setMeeting(null)} he={he} person={meeting?.person} main={meeting?.main} numbers={meeting?.numbers} text={meeting?.text}
+      sections={meeting?[
+        {id:"summary",title:he?"סיכום המפה":"Map summary",ownTitle:true,content:<ContentContext.Provider value={workspaceContent}><ReadingSummary r={meeting.r} name={meeting.person} now={meeting.at} add={meeting.add} he={he}/></ContentContext.Provider>},
+        {id:"life",title:he?"מפת החיים":"Life map",content:<div className="st-meet-narrow"><LifeMap results={meeting.r} dk={dk} he={he}/></div>},
+      ]:[]}/>}
 
     {/* quick search: tools, clients and actions, from the top bar or Ctrl+K */}
     <CommandPalette open={paletteOpen&&canSearch} onClose={()=>{setPaletteOpen(false);setTimeout(keepFocus,0);}} he={he} items={paletteItems}/>

@@ -105,7 +105,14 @@ describe("the Studio", () => {
     tool("היום");
     fireEvent.click(await screen.findByRole("button", { name: "מצב פגישה" }));
     const meeting = await screen.findByRole("dialog", { name: "מצב פגישה" });
-    expect(within(meeting).getByText("רחל כהן")).toBeTruthy();
+    expect(within(meeting).getAllByText("רחל כהן").length).toBeGreaterThan(0);
+    // the whole map in large type: the summary and the life map (the owner, 2026-10-12)
+    expect(within(meeting).getByRole("heading", { name: "סיכום המפה" })).toBeTruthy();
+    const lifeMap = within(within(meeting).getByRole("region", { name: "מפת החיים" }));
+    expect(lifeMap.getByRole("heading", { name: "מפת החיים" })).toBeTruthy();
+    expect(lifeMap.getByRole("heading", { name: "מחזורי חיים" })).toBeTruthy();
+    expect(lifeMap.getByRole("heading", { name: "Lo Shu Grid" })).toBeTruthy();
+    expect(within(meeting).getByTestId("rs-lp").textContent).toBe("7"); // 08.03.1985: 0+8+0+3+1+9+8+5 = 34 → 7
     fireEvent.keyDown(within(meeting).getByRole("button", { name: /סיום הפגישה/ }), { key: "Escape" });
     expect(screen.queryByRole("dialog", { name: "מצב פגישה" })).toBeNull();
     // a new reading starts empty, so meeting mode has nothing stale to show

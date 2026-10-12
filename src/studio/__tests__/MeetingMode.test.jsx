@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, onTestFinished } from "vitest";
 import { render, screen, fireEvent, within, cleanup } from "@testing-library/react";
 import MeetingMode from "../MeetingMode.jsx";
 
@@ -15,6 +15,21 @@ const READING = {
 };
 const CLOSE = "סיום הפגישה (Esc)";
 const OPENER = "פתיחת הפגישה";
+/** The whole map, as the Studio passes it: the summary brings its own title, the life map does not. */
+const SECTIONS = [
+  {
+    id: "summary",
+    title: "סיכום המפה",
+    ownTitle: true,
+    content: (
+      <section>
+        <h2>סיכום המפה</h2>
+        <button type="button">?</button>
+      </section>
+    ),
+  },
+  { id: "life", title: "מפת החיים", content: <p>מחזורי חיים</p> },
+];
 
 /** The device's reduced-motion setting. */
 const motion = (reduce) =>
@@ -98,7 +113,7 @@ describe("MeetingMode", () => {
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 
-  it("keeps the focus on its one button when Tab is pressed", () => {
+  it("keeps the focus on its one button when Tab is pressed and there is nothing else to reach", () => {
     render(<Page open />);
     const close = screen.getByRole("button", { name: CLOSE });
     screen.getByRole("button", { name: OPENER }).focus();
@@ -106,6 +121,53 @@ describe("MeetingMode", () => {
     expect(document.activeElement).toBe(close);
     expect(fireEvent.keyDown(close, { key: "Tab" })).toBe(false);
     expect(document.activeElement).toBe(close);
+  });
+
+  it("shows the whole map: each section under its title, reached by its own button (the owner, 2026-10-12)", () => {
+    // Arrange: jsdom has no scrollIntoView, so the test lends one that notes which section was asked for
+    const scrolled = [];
+    Element.prototype.scrollIntoView = function scrollIntoView() {
+      scrolled.push(this.id);
+    };
+    onTestFinished(() => {
+      delete Element.prototype.scrollIntoView;
+    });
+
+    // Act
+    render(<Page open sections={SECTIONS} />);
+    const dialog = within(screen.getByRole("dialog"));
+
+    // Assert: the summary brings its own title, the life map gets one
+    expect(dialog.getByRole("heading", { name: "סיכום המפה" })).toBeTruthy();
+    expect(dialog.getAllByRole("heading", { name: "סיכום המפה" })).toHaveLength(1);
+    expect(dialog.getByRole("heading", { name: "מפת החיים" })).toBeTruthy();
+    expect(dialog.getByText("מחזורי חיים")).toBeTruthy();
+    const jumps = within(dialog.getByRole("navigation", { name: "חלקי הפגישה" }));
+    fireEvent.click(jumps.getByRole("button", { name: "מפת החיים" }));
+    fireEvent.click(jumps.getByRole("button", { name: "סיכום המפה" }));
+    expect(scrolled).toEqual(["st-meet-life", "st-meet-summary"]);
+  });
+
+  it("keeps Tab inside the meeting: past the last control it comes back to the first, and the other way round", () => {
+    // Arrange
+    render(<Page open sections={SECTIONS} />);
+    const dialog = screen.getByRole("dialog");
+    const controls = [...dialog.querySelectorAll("button")];
+    const [first, last] = [controls[0], controls[controls.length - 1]];
+
+    // Act and assert
+    last.focus();
+    expect(fireEvent.keyDown(last, { key: "Tab" })).toBe(false);
+    expect(document.activeElement).toBe(first);
+    expect(fireEvent.keyDown(first, { key: "Tab", shiftKey: true })).toBe(false);
+    expect(document.activeElement).toBe(last);
+    // in between, Tab is the browser's own
+    first.focus();
+    expect(fireEvent.keyDown(first, { key: "Tab" })).toBe(true);
+    // from outside the meeting, the focus comes back to the close button
+    screen.getByRole("button", { name: OPENER }).focus();
+    expect(fireEvent.keyDown(document.activeElement, { key: "Tab" })).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: CLOSE }));
   });
 
   it("gives the focus back to where it was after closing", () => {

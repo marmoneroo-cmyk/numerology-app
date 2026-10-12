@@ -209,6 +209,9 @@ describe("workspace", () => {
     expect(openMeeting).toHaveBeenCalledTimes(1);
     expect(openMeeting.mock.calls[0][0]).toMatchObject({ lp: 33, nv: 4, py: 6 });
     expect(openMeeting.mock.calls[0][1]).toBe(SHANI.fullName);
+    // the date it was made for and its +1, so meeting mode shows the map as it was saved
+    expect(openMeeting.mock.calls[0][2]).toEqual(NOW);
+    expect(openMeeting.mock.calls[0][3]).toBe(false);
   });
 
   it("offers no meeting mode where the app has none", async () => {

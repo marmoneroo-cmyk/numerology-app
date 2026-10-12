@@ -120,7 +120,7 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
           )}
           {/* the Studio shows the map in large type for the client; the saved snapshot, as on this screen */}
           {reading.type === "map" && content.openMeeting && (
-            <button className="ghost" style={btnGhost} onClick={() => content.openMeeting(reading.result, reading.input.name || client.fullName)}>
+            <button className="ghost" style={btnGhost} onClick={() => content.openMeeting(reading.result, reading.input.name || client.fullName, new Date(reading.computedFor), reading.input.add)}>
               {he ? "מצב פגישה" : "Meeting mode"}
             </button>
           )}
