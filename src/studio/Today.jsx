@@ -7,12 +7,12 @@
  */
 import { useEffect, useId, useRef, useState } from "react";
 import { useLoad } from "../workspace/ui.jsx";
-import { NotFoundError } from "../data/store.js";
+import { NotFoundError, toYmd } from "../data/store.js";
 import {
   checkInText, followUpText, greetingLink, greetingText, initialsOf, isNewYearMonth, newYearText, quietClients,
   recentClients, shareLink, upcomingBirthdays,
 } from "./today.js";
-import { dueBy, lifePathCounts, weekAhead, weekEnd } from "./dashboard.js";
+import { WEEK_DAYS, dueBy, lifePathCounts, weekAhead, weekEnd } from "./dashboard.js";
 import { TOOL_LINES } from "./screenHelp.js";
 import { formatDmy } from "../workspace/format.js";
 import HowButton from "../reading/HowButton.jsx";
@@ -210,7 +210,7 @@ function Figures({ he, load, due, today, onOpenClients, onFollowUps, onBirthdays
     { kind: "clients", state: clients, value: load.data?.length, onGo: onOpenClients },
     { kind: "readings", state: summary, value: due.data?.readings, onGo: onOpenClients },
     { kind: "followUps", state: summary, value: due.data && dueBy(due.data.followUps, today).length, onGo: onFollowUps },
-    { kind: "birthdays", state: clients, value: load.data && upcomingBirthdays(load.data, today).length, onGo: onBirthdays },
+    { kind: "birthdays", state: clients, value: load.data && upcomingBirthdays(load.data, today, WEEK_DAYS).length, onGo: onBirthdays },
   ];
   return (
     <section className="st-stats st-rise" style={{ "--i": 1 }} aria-label={he ? "נתונים מהתיק" : "From the client files"}>
@@ -229,38 +229,54 @@ const DAY_LONG = {
 /** The names a day of the week strip shows; the rest are counted. */
 const DAY_NAMES_SHOWN = 3;
 
-/** A day of the week strip: its birthdays and follow-ups, named on a wide screen and dotted on a narrow one. */
-function WeekDay({ he, day }) {
-  const lang = he ? "he" : "en";
-  const { date, inDays } = day;
-  const dm = `${date.getDate()}.${date.getMonth() + 1}`;
-  const events = [
-    ...day.birthdays.map((b) => ({ key: `b${b.client.id}`, kind: "birthday", name: b.client.fullName })),
-    ...day.followUps.map((f) => ({ key: `f${f.readingId}`, kind: "follow", name: f.clientName })),
-  ];
+/** What a screen reader hears for a day: its events, "none" only when both kinds are in, and what did not load. */
+function daySaid(he, events, known) {
   const said = events.map((e) => {
     if (e.kind === "birthday") return he ? `יום הולדת של ${e.name}` : `${e.name}'s birthday`;
     return he ? `מעקב עם ${e.name}` : `a follow-up with ${e.name}`;
   });
-  const when = `${DAY_LONG[lang][date.getDay()]} ${dm}${inDays === 0 ? (he ? ", היום" : ", today") : ""}`;
-  const what = said.length ? said.join(he ? ", " : "; ") : he ? "אין ימי הולדת או מעקבים" : "no birthdays or follow-ups";
+  const settled = known.birthdays === "ready" && known.followUps === "ready";
+  const none = he ? "אין ימי הולדת או מעקבים" : "no birthdays or follow-ups";
+  const missing = [known.birthdays === "failed" && (he ? "ימי ההולדת" : "the birthdays"), known.followUps === "failed" && (he ? "המעקבים" : "the follow-ups")].filter(Boolean);
+  const notLoaded = missing.length ? (he ? `${missing.join(" ו")} לא נטענו` : `${missing.join(" and ")} did not load`) : "";
+  return [said.length ? said.join(he ? ", " : "; ") : settled ? none : "", notLoaded].filter(Boolean);
+}
+
+/**
+ * A day of the week strip: its birthdays and follow-ups, by name where there is room and by initials on a
+ * phone; a birthday's mark is round and a follow-up's square, so they differ by more than their colour.
+ * `known` says whether each kind is "ready", "loading" or "failed", so a failed load is never read as an empty day.
+ */
+function WeekDay({ he, day, known }) {
+  const lang = he ? "he" : "en";
+  const { date, inDays } = day;
+  const events = [
+    ...day.birthdays.map((b) => ({ key: `b${b.client.id}`, kind: "birthday", name: b.client.fullName })),
+    ...day.followUps.map((f) => ({ key: `f${f.readingId}`, kind: "follow", name: f.clientName })),
+  ];
+  const when = `${DAY_LONG[lang][date.getDay()]} ${date.getDate()}.${date.getMonth() + 1}${inDays === 0 ? (he ? ", היום" : ", today") : ""}`;
+  const parts = daySaid(he, events, known);
   const more = events.length - DAY_NAMES_SHOWN;
   return (
-    <li className={`st-week-day${inDays === 0 ? " is-today" : ""}${events.length ? " has-events" : ""}`}>
+    <li className={`st-week-day${inDays === 0 ? " is-today" : ""}`}>
       <span className="st-week-head" aria-hidden="true">
         <span className="st-week-name">{inDays === 0 ? (he ? "היום" : "Today") : DAY_SHORT[lang][date.getDay()]}</span>
-        <span className="st-week-date">{dm}</span>
+        <span className="st-week-date">
+          {date.getDate()}
+          <span className="st-week-month">{`.${date.getMonth() + 1}`}</span>
+        </span>
       </span>
       <span className="st-week-events" aria-hidden="true">
         {events.slice(0, DAY_NAMES_SHOWN).map((e) => (
           <span key={e.key} className={`st-week-ev is-${e.kind}`}>
             <span className="st-week-dot" />
+            <span className="st-week-initials">{initialsOf(e.name)}</span>
             <span className="st-week-who">{e.name}</span>
           </span>
         ))}
-        {more > 0 && <span className="st-week-more">{`+${more}`}</span>}
+        {more > 0 && <span className="st-week-more">{he ? `עוד ${more}` : `+${more}`}</span>}
       </span>
-      <span className="st-sr">{`${when}: ${what}.`}</span>
+      <span className="st-sr">{`${when}${parts.length ? `: ${parts.join(". ")}` : ""}.`}</span>
     </li>
   );
 }
@@ -268,12 +284,13 @@ function WeekDay({ he, day }) {
 /** The week ahead: seven days from today, with the birthdays and the follow-ups on each. */
 function Week({ he, load, due, today }) {
   const week = weekAhead(load.data || [], due.data?.followUps || [], today);
-  const busy = load.loading || due.loading;
+  const known = { birthdays: stateOf(load), followUps: stateOf(due) };
   return (
     <Panel title={he ? "השבוע הקרוב" : "The week ahead"} className="st-week-panel" rise={2}>
-      <ol className="st-week" aria-busy={busy || undefined}>
+      {(load.error || due.error) && <p className="st-today-quiet st-week-note">{he ? "חלק מהנתונים של השבוע לא נטענו." : "Part of the week did not load."}</p>}
+      <ol className="st-week" aria-busy={load.loading || due.loading || undefined}>
         {week.map((d) => (
-          <WeekDay key={d.inDays} he={he} day={d} />
+          <WeekDay key={d.inDays} he={he} day={d} known={known} />
         ))}
       </ol>
       <p className="st-week-key" aria-hidden="true">
@@ -286,7 +303,6 @@ function Week({ he, load, due, today }) {
           {he ? "מעקב" : "Follow-up"}
         </span>
       </p>
-      {(load.error || due.error) && <p className="st-today-quiet">{he ? "חלק מהנתונים של השבוע לא נטענו." : "Part of the week did not load."}</p>}
     </Panel>
   );
 }
@@ -389,7 +405,7 @@ function BirthdayRow({ he, birthday, lifePath, personalYear, greetAnyone, signat
 }
 
 function Birthdays({ he, clients, today, lifePath, personalYear, greetAnyone, signature }) {
-  const birthdays = upcomingBirthdays(clients, today);
+  const birthdays = upcomingBirthdays(clients, today, WEEK_DAYS);
   if (!birthdays.length) return <p className="st-today-quiet">{he ? "אין ימי הולדת השבוע." : "No birthdays this week."}</p>;
   return (
     <ul className="st-today-rows">
@@ -584,7 +600,10 @@ function ToolText({ id, label, line }) {
   );
 }
 
-/** On a wide screen, as many columns as the tiles fill evenly: ten in two rows of five, eight in two of four. */
+/**
+ * On a wide screen, the tiles to a row: ten in two rows of five, eight in two of four; any other count in rows
+ * of five, the last row centred under the others (home.css).
+ */
 const toolColumns = (count) => (count % 5 !== 0 && count % 4 === 0 ? 4 : 5);
 
 /**
@@ -649,8 +668,9 @@ function Tools({ he, tools, onTool, onSearch }) {
  */
 export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, deck, tools = [], onTool, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch, onOpenReading, greetAnyone = false, signature = "" }) {
   const load = useLoad(() => store.clients.list(), [store]);
-  // the follow-ups up to the week strip's last day; the panel lists the ones due by today
-  const due = useLoad(() => store.summary(weekEnd(now())), [store]);
+  // the follow-ups up to the week strip's last day (the panel lists the ones due by today), asked again on a new date
+  const dayKey = toYmd(now());
+  const due = useLoad(() => store.summary(weekEnd(now())), [store, dayKey]);
   const firstTitle = useRef(null);
   const followTitle = useRef(null);
   const retry = useRetry(load, firstTitle);

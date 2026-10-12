@@ -121,10 +121,10 @@ describe("the wheel's geometry", () => {
 
   it("sizes a bubble by its area: one client the smallest, the most clients the largest", () => {
     expect(bubbleRadius(0, 5)).toBe(0);
-    expect(bubbleRadius(1, 5)).toBe(7);
-    expect(bubbleRadius(5, 5)).toBe(12);
-    expect(bubbleRadius(3, 5)).toBeCloseTo(Math.sqrt(96.5), 6); // half way by area: 49 + (144 - 49) / 2
-    expect(bubbleRadius(1, 1)).toBe(7);
-    expect(bubbleRadius(9, 5)).toBe(12); // never past the largest
+    expect(bubbleRadius(1, 5)).toBe(10);
+    expect(bubbleRadius(5, 5)).toBe(15);
+    expect(bubbleRadius(3, 5)).toBeCloseTo(Math.sqrt(162.5), 6); // half way by area: 100 + (225 - 100) / 2
+    expect(bubbleRadius(1, 1)).toBe(10);
+    expect(bubbleRadius(9, 5)).toBe(15); // never past the largest
   });
 });

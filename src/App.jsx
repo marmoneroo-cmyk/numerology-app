@@ -7,7 +7,7 @@ import AccountScreen from "./account/AccountScreen.jsx";
 import LegalPage from "./legal/LegalPage.jsx";
 import StudioNav from "./StudioNav.jsx";
 import { flushSync } from "react-dom";
-import { attachRipple, withViewTransition } from "./studio/motion.js";
+import { attachRipple, withViewTransition, prefersReducedMotion } from "./studio/motion.js";
 import { useLayout } from "./studio/useMediaQuery.js";
 import Today from "./studio/Today.jsx";
 import MeetingMode from "./studio/MeetingMode.jsx";
@@ -42,6 +42,7 @@ import { SCREEN_HELP, MATCH_HELP } from "./studio/screenHelp.js";
 import { ScreenBoundary } from "./workspace/ui.jsx";
 import Particles from "./ui/Particles.jsx";
 import { storedStudioDark, rememberStudioTheme } from "./studio/theme.js";
+import { STUDIO_TOOLS, ADMIN_TOOL } from "./studio/tools.js";
 
 /**
  * The tarot deck and its art load with the קלפים tab only. A new lazy component on each try: React keeps a
@@ -60,22 +61,6 @@ const softText = (dk, studio = false) => studio ? (dk ? "rgba(232,224,208,.7)" :
 const MAX_INPUT = 120;
 /** The longest an email address can be. */
 const MAX_EMAIL = 254;
-
-/** The Studio's tools in toolbar order. Quick search lists them too, findable by their name in either language. */
-const STUDIO_TOOLS = [
-  { k: "today", i: "sparkles", he: "היום", en: "Today" },
-  { k: "clients", i: "user", he: "לקוחות", en: "Clients" },
-  { k: "reading", i: "orb", he: "קריאה", en: "Reading" },
-  { k: "leads", i: "users", he: "לידים", en: "Leads" },
-  { k: "tables", i: "chart", he: "טבלאות", en: "Tables" },
-  { k: "match", i: "heart", he: "התאמה", en: "Match" },
-  { k: "daily", i: "sun", he: "יומי", en: "Daily" },
-  { k: "cards", i: "cards", he: "קלפים", en: "Cards" },
-  { k: "calc", i: "calculator", he: "מחשבונים", en: "Calculators" },
-  { k: "account", i: "user", he: "החשבון שלי", en: "My account" },
-];
-/** Only an admin sees it. */
-const ADMIN_TOOL = { k: "admin", i: "users", he: "חשבונות", en: "Accounts" };
 
 /* ╔══════════════════════════════════════════════════════════════╗
    ║  N U M E R O L O G Y   O R A C L E   —   V 7              ║
@@ -1610,7 +1595,7 @@ export default function App({ view, navigate } = {}){
   const selectTool=(k)=>{AU.init();AU.p("click");withViewTransition(()=>{flushSync(()=>{setTab(k);if(k!=="reading")setShowRes(false);});keepFocus();});};
   const newReading=()=>{clearReading();setTab("reading");};
   // the top bar's "בית": in the Studio its home, "היום" (the owner, 2026-10-12); on the customer page an empty reading form, as before
-  const goHomeScreen=()=>{if(!showOwnerUI){goHome();return;}if(legalDoc)closeLegal();selectTool("today");};
+  const goHomeScreen=()=>{if(!showOwnerUI){goHome();return;}if(legalDoc)closeLegal();selectTool("today");window.scrollTo({top:0,behavior:prefersReducedMotion()?"auto":"smooth"});};
   // each view keeps its own theme; the Studio's is remembered for the next visit
   const toggleTheme=()=>{if(!showOwnerUI){setSiteDk(!dk);return;}setStudioDk(!dk);rememberStudioTheme(!dk);};
   // quick search (Ctrl+K): in the signed-in Studio only, and not over meeting mode

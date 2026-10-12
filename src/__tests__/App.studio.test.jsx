@@ -53,8 +53,8 @@ function studio() {
   );
 }
 const tool = (name) => fireEvent.click(within(screen.getByRole("navigation", { name: "כלי הסטודיו" })).getByRole("button", { name }));
-/** The first screen waits for the sign-in and the clients to load: generous, for a slow build machine. */
-const SIGNED_IN = { timeout: 5000 };
+/** The first screen waits for the sign-in and the clients to load: generous, for a slow build machine (a full run with coverage once took 6 s). */
+const SIGNED_IN = { timeout: 10000 };
 const signedIn = () => screen.findByText("לקוחות אחרונים", {}, SIGNED_IN);
 const setField = (input, value) => fireEvent.change(input, { target: { value } });
 

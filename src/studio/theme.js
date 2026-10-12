@@ -5,19 +5,25 @@
  */
 export const STUDIO_THEME_KEY = "studio-theme";
 
+/**
+ * The browser's storage, read inside the caller's try: where cookies and site data are blocked, merely
+ * reading `localStorage` throws, and that must never stop the app from opening.
+ */
+const browserStorage = () => globalThis.localStorage;
+
 /** Whether the Studio opens dark: yes, unless the light theme was the last one chosen there. */
-export function storedStudioDark(storage = globalThis.localStorage) {
+export function storedStudioDark(storage) {
   try {
-    return storage?.getItem(STUDIO_THEME_KEY) !== "light";
+    return (storage ?? browserStorage())?.getItem(STUDIO_THEME_KEY) !== "light";
   } catch {
     return true;
   }
 }
 
 /** Keeps the Studio's theme for the next visit; a storage that refuses only means it is not remembered. */
-export function rememberStudioTheme(dark, storage = globalThis.localStorage) {
+export function rememberStudioTheme(dark, storage) {
   try {
-    storage?.setItem(STUDIO_THEME_KEY, dark ? "dark" : "light");
+    (storage ?? browserStorage())?.setItem(STUDIO_THEME_KEY, dark ? "dark" : "light");
   } catch {
     // not remembered: the theme still changes for this visit
   }

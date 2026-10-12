@@ -10,6 +10,9 @@ import { WHEEL_NUMBERS, bubbleRadius, wheelPoint } from "./dashboard.js";
 /** The wheel's radii in its 240-unit square: the outer ring, the numbers, the inner ring, the bubbles, and today's ring and glow. */
 const R = { outer: 106, label: 89, inner: 72, bubble: 54, mark: 15, halo: 30 };
 
+/** A point of the wheel's square as a share of the disc, for what sits on it in HTML. */
+const at = (v) => `${((v + 120) / 240) * 100}%`;
+
 /** The three triangles that join every third number (3-6-9, 1-4-7, 2-5-8), drawn on the inner ring. */
 const TRIANGLES = [
   [3, 6, 9],
@@ -44,7 +47,7 @@ function Key({ he, paths }) {
         <span className="st-wheel-dot" />
         {he ? "לקוחות בכל שביל גורל" : "Clients on each life path"}
       </span>
-      {paths.masters > 0 && <span className="st-wheel-key-note">{he ? "11, 22 ו-33 נספרים עם 2, 4 ו-6" : "11, 22 and 33 count with 2, 4 and 6"}</span>}
+      {paths.masters > 0 && <span>{he ? "11, 22 ו-33 נספרים עם 2, 4 ו-6" : "11, 22 and 33 count with 2, 4 and 6"}</span>}
     </>
   );
 }
@@ -84,19 +87,30 @@ export default function NumberWheel({ he, day, paths, caption }) {
           {paths &&
             WHEEL_NUMBERS.filter((n) => paths.counts[n]).map((n) => {
               const p = wheelPoint(n, R.bubble);
-              const count = paths.counts[n];
               return (
                 <g key={n} className={`st-wheel-count${n === day ? " is-today" : ""}`} style={{ "--n": n }}>
-                  <title>{`${he ? "שביל גורל" : "Life path"} ${n}: ${clientsText(count, he)}`}</title>
-                  <circle cx={p.x} cy={p.y} r={bubbleRadius(count, most)} />
-                  <text x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central">
-                    {count}
-                  </text>
+                  <circle cx={p.x} cy={p.y} r={bubbleRadius(paths.counts[n], most)} />
                 </g>
               );
             })}
         </svg>
         <span className="st-today-num">{day}</span>
+        {/* the counts are text, not drawing, so they keep the Studio's text size at any width of the wheel */}
+        {paths &&
+          WHEEL_NUMBERS.filter((n) => paths.counts[n]).map((n) => {
+            const p = wheelPoint(n, R.bubble);
+            const count = paths.counts[n];
+            return (
+              <span
+                key={n}
+                className={`st-wheel-count-num${n === day ? " is-today" : ""}`}
+                style={{ left: at(p.x), top: at(p.y), "--n": n }}
+                title={`${he ? "שביל גורל" : "Life path"} ${n}: ${clientsText(count, he)}`}
+              >
+                {count}
+              </span>
+            );
+          })}
       </div>
       {caption}
       {/* the picture's label already says all this */}

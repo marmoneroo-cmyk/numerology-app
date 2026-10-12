@@ -157,9 +157,11 @@ describe("App inside Root", { timeout: 20000 }, () => {
       await home();
       fireEvent.click(navButton("קריאה"));
       expect(screen.queryByRole("heading", { name: "האנרגיה של היום" })).toBeNull();
+      const scroll = vi.spyOn(window, "scrollTo");
       fireEvent.click(document.querySelector(".home-btn"));
       expect(await home()).toBeTruthy();
       expect(navButton("היום").getAttribute("aria-current")).toBe("page");
+      expect(scroll).toHaveBeenCalledWith({ top: 0, behavior: "smooth" }); // home is the top of היום
       cleanup();
       show("customer");
       fireEvent.click(document.querySelector(".home-btn"));
@@ -184,6 +186,31 @@ describe("App inside Root", { timeout: 20000 }, () => {
       fireEvent.click(screen.getByRole("button", { name: "מצב בהיר" })); // the page's own switch
       expect(document.documentElement.dataset.stTheme).toBe("light");
       expect(localStorage.getItem("studio-theme")).toBe("light"); // still the Studio's choice, not the page's
+    });
+
+    it("opens Shani's page and the Studio where the browser blocks site data (reading localStorage throws)", async () => {
+      const before = Object.getOwnPropertyDescriptor(window, "localStorage");
+      const real = window.localStorage;
+      Object.defineProperty(window, "localStorage", {
+        configurable: true,
+        get() {
+          throw new Error("SecurityError: access is denied");
+        },
+      });
+      try {
+        show("customer");
+        expect(await screen.findByPlaceholderText("השם המלא…", {}, LONG)).toBeTruthy();
+        expect(document.documentElement.dataset.stTheme).toBe("dark");
+        cleanup();
+        demo();
+        await home();
+        expect(document.documentElement.dataset.stTheme).toBe("dark");
+        fireEvent.click(screen.getByRole("button", { name: "מצב בהיר" })); // not remembered, but it still changes
+        expect(document.documentElement.dataset.stTheme).toBe("light");
+      } finally {
+        if (before) Object.defineProperty(window, "localStorage", before);
+        else Object.defineProperty(window, "localStorage", { configurable: true, value: real });
+      }
     });
 
     it("lets the opening splash go after 5.2 seconds, however often the app renders meanwhile", () => {

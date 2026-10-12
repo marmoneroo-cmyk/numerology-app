@@ -489,10 +489,10 @@ describe("Today", () => {
       expect(wheel.getAttribute("aria-label")).toBe(
         "גלגל המספרים 1 עד 9. היום האוניברסלי הוא 8. לקוחות לפי שביל גורל: 2: לקוח אחד, 4: לקוח אחד, 6: 2 לקוחות. 11, 22 ו-33 נספרים עם 2, 4 ו-6.",
       );
-      const bubbles = [...document.querySelectorAll(".st-wheel-count")];
-      expect(bubbles.map((b) => b.querySelector("title").textContent)).toEqual(["שביל גורל 2: לקוח אחד", "שביל גורל 4: לקוח אחד", "שביל גורל 6: 2 לקוחות"]);
-      expect(bubbles.map((b) => b.querySelector("text").textContent)).toEqual(["1", "1", "2"]);
-      const [one, , two] = bubbles.map((b) => Number(b.querySelector("circle").getAttribute("r")));
+      const counts = [...document.querySelectorAll(".st-wheel-count-num")];
+      expect(counts.map((c) => c.getAttribute("title"))).toEqual(["שביל גורל 2: לקוח אחד", "שביל גורל 4: לקוח אחד", "שביל גורל 6: 2 לקוחות"]);
+      expect(counts.map((c) => c.textContent)).toEqual(["1", "1", "2"]);
+      const [one, , two] = [...document.querySelectorAll(".st-wheel-count circle")].map((c) => Number(c.getAttribute("r")));
       expect(two).toBeGreaterThan(one); // the bigger count, the bigger bubble
       expect(screen.getByText("לקוחות בכל שביל גורל")).toBeTruthy();
       expect(screen.getByText("11, 22 ו-33 נספרים עם 2, 4 ו-6")).toBeTruthy();
@@ -503,7 +503,7 @@ describe("Today", () => {
       renderToday(await storeWith([NOA]));
       const wheel = await screen.findByRole("img", { name: /עוד אין לקוחות עם תאריך לידה/ });
       expect(wheel.getAttribute("aria-label")).toBe("גלגל המספרים 1 עד 9. היום האוניברסלי הוא 8. עוד אין לקוחות עם תאריך לידה.");
-      expect(document.querySelectorAll(".st-wheel-count")).toHaveLength(0);
+      expect(document.querySelectorAll(".st-wheel-count, .st-wheel-count-num")).toHaveLength(0);
       expect(screen.getByText("כאן יופיע כמה לקוחות יש בכל שביל גורל.")).toBeTruthy();
     });
 
@@ -544,6 +544,34 @@ describe("Today", () => {
       expect(within(days[5]).getByText("יום ראשון 11.10: יום הולדת של מיכל אברהם.")).toBeTruthy();
       const due = panel("מעקבים שהגיע זמנם");
       expect(within(due).getAllByRole("listitem").map(nameIn)).toEqual(["רחל כהן"]); // DANA's is on Friday
+    });
+
+    it("never reads a day as empty while its data loads or when it failed to load", async () => {
+      // the clients fail once; the summary comes
+      const flaky = failingOnce(await storeWith([YOSSI]));
+      renderToday(flaky.store);
+      const week = panel("השבוע הקרוב");
+      expect(within(week).getAllByRole("listitem")[1].textContent).toContain("יום רביעי 7.10.");
+      await screen.findByRole("alert");
+      const days = within(panel("השבוע הקרוב")).getAllByRole("listitem");
+      expect(within(days[0]).getByText("יום שלישי 6.10, היום: ימי ההולדת לא נטענו.")).toBeTruthy();
+      expect(within(panel("השבוע הקרוב")).getByText("חלק מהנתונים של השבוע לא נטענו.")).toBeTruthy();
+      cleanup();
+      // now the summary fails: the birthdays are known, the follow-ups are not
+      const store = await storeWith([YOSSI]);
+      renderToday({ ...store, summary: () => Promise.reject(new Error("offline")) });
+      const today = (await within(panel("השבוע הקרוב")).findAllByRole("listitem"))[0];
+      expect(await within(today).findByText("יום שלישי 6.10, היום: יום הולדת של יוסי לוי. המעקבים לא נטענו.")).toBeTruthy();
+    });
+
+    it("names three on a day and counts the rest", async () => {
+      const born = (name, year) => ({ fullName: name, birthDate: `${year}-10-06` });
+      renderToday(await storeWith([born("אלה א", 1980), born("בני ב", 1981), born("גלי ג", 1982), born("דן ד", 1983)]));
+      const today = (await within(panel("השבוע הקרוב")).findAllByRole("listitem"))[0];
+      await within(today).findByText(/יום הולדת של דן ד/);
+      expect(today.querySelectorAll(".st-week-ev")).toHaveLength(3);
+      expect(today.querySelector(".st-week-more").textContent).toBe("עוד 1"); // "+1" would turn round in a right-to-left line
+      expect([...today.querySelectorAll(".st-week-initials")].map((i) => i.textContent)).toEqual(["אא", "בב", "גג"]);
     });
 
     it("asks the store for the follow-ups up to the week's last day", async () => {

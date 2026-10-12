@@ -82,12 +82,25 @@
   }
 }
 
-/* the panels */
+/* the panels: a gold title with a small diamond before it */
 .st-today-title {
-  margin: 0 0 10px;
-  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 12px;
+  font-size: max(var(--ts-min, 0px), calc(15.5px * var(--ts, 1)));
+  font-weight: 600;
   color: var(--st-gold-text);
+  scroll-margin-top: 150px;
+}
+.st-today-title::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: var(--st-gold);
+  opacity: 0.85;
 }
 .st-today-quiet {
   margin: 0;

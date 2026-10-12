@@ -37,6 +37,24 @@ describe("the Studio's theme", () => {
   it("opens dark, and forgets quietly, where the browser keeps nothing", () => {
     expect(storedStudioDark(refusing)).toBe(true);
     expect(() => rememberStudioTheme(false, refusing)).not.toThrow();
-    expect(storedStudioDark(undefined)).toBe(true);
+  });
+
+  it("opens dark where even reading the browser's storage throws (site data blocked)", () => {
+    // Arrange: a browser that blocks site data throws on the very read of localStorage
+    const before = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get() {
+        throw new Error("SecurityError: access is denied");
+      },
+    });
+    try {
+      // Act and Assert
+      expect(storedStudioDark()).toBe(true);
+      expect(() => rememberStudioTheme(false)).not.toThrow();
+    } finally {
+      if (before) Object.defineProperty(globalThis, "localStorage", before);
+      else delete globalThis.localStorage;
+    }
   });
 });

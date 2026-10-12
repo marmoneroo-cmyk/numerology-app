@@ -80,8 +80,11 @@ export function wheelPoint(n, r) {
   return { x: r * Math.sin(angle), y: -r * Math.cos(angle) };
 }
 
-/** The smallest and largest bubble on the wheel, in its units: one client, and the path with the most. */
-export const BUBBLE = { min: 7, max: 12 };
+/**
+ * The smallest and largest bubble on the wheel, in its 240-unit square: one client, and the path with the most.
+ * The smallest still holds a two-digit count at the Studio's 13px on a phone's 270px wheel.
+ */
+export const BUBBLE = { min: 10, max: 15 };
 
 /**
  * A count bubble's radius: its area grows with the count, from BUBBLE.min for one client to BUBBLE.max for
