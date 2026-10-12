@@ -60,7 +60,7 @@ export const SALES = {
         { icon: "sparkles", title: "השנה האישית החדשה", text: "ביולי, כשהשנה האישית מתחלפת, הודעה מוכנה לכל לקוח." },
       ],
       note: "כל הודעה נפתחת בוואטסאפ מוכנה לשליחה, ונשלחת רק כשמחליטים לשלוח.",
-      shotAlt: "מסך \"היום\" בסטודיו: ימי ההולדת של השבוע עם ברכה, מעקבים שהגיע זמנם, ולקוחות שכדאי לחזור אליהם",
+      shotAlt: "מסך \"היום\" בסטודיו: השבוע הקרוב, ימי ההולדת עם ברכה, מעקבים שהגיע זמנם, ולקוחות שכדאי לחזור אליהם",
     },
     worth: {
       title: "כמה פגישות צריך כדי שהמנוי ישתלם?",
@@ -196,7 +196,7 @@ export const SALES = {
         { icon: "sparkles", title: "The new personal year", text: "In July, when the personal year turns, a message ready for each client." },
       ],
       note: "Every message opens in WhatsApp ready to send, and goes only when you choose to send it.",
-      shotAlt: "The Studio's Today screen: this week's birthdays with a greeting, follow-ups due, and clients worth getting back to",
+      shotAlt: "The Studio's Today screen: the week ahead, the birthdays with a greeting, follow-ups due, and clients worth getting back to",
     },
     worth: {
       title: "How many sessions make the subscription worth it?",
