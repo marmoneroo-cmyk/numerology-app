@@ -5,7 +5,7 @@
  * from the number beside it.
  */
 import {
-  LV, VOW, R, reduce, isMaster, LP, LPm, NV, CA, addsOne, CH, cycleSpans, karmicDebt, reductionChain, loShu,
+  LV, VOW, R, reduce, isMaster, LP, LPm, NV, CA, CH, cycleSpans, karmicDebt, reductionChain, loShu,
   nameCounts, dominantNumbers, missingNumbers, charValue,
 } from "../engine/index.js";
 import { agesText } from "./ages.js";
@@ -124,25 +124,16 @@ function age({ d, m, y, now }, he) {
   return { steps, result };
 }
 
-/**
- * The personal year of calendar year `year`; `plus` is the +1. `inSeason` says whether the date it was made for
- * falls between July 1 and December 31: a reading saved with a +1 outside them added it by hand.
- */
-function personalYear({ d, m, year, plus, inSeason = true }, he) {
+/** The personal year of calendar year `year`: the digits of the birth day and month with those of the year. */
+function personalYear({ d, m, year }, he) {
   const ds = digitsOf(`${pad2(d)}${pad2(m)}${year}`);
   const base = reduceSteps(sum(ds), false, he);
   const steps = [step(he ? `ספרות יום וחודש הלידה, ועוד ספרות השנה ${year}` : `The digits of the birth day and month, plus those of ${year}`, addition(ds)), ...base.steps];
-  if (!plus) return { steps, result: base.result };
-  const after = reduceSteps(base.result + 1, false, he);
-  const why = inSeason
-    ? (he ? "מה-1.7 ועד ה-31.12 מוסיפים 1" : "From July 1 to December 31, add 1")
-    : (he ? "ה-1+ נוסף בבדיקה הזו" : "This reading added the +1");
-  steps.push(step(why, `${base.result}+1 = ${base.result + 1}`), ...after.steps);
-  return { steps, result: after.result };
+  return { steps, result: base.result };
 }
 
-/** The personal year on `now`, as a reading made then had it: its own +1 when it saved one, else the date's. */
-const yearOf = ({ d, m, now, add }, he) => personalYear({ d, m, year: now.getFullYear(), plus: add ?? addsOne(now), inSeason: addsOne(now) }, he);
+/** The personal year on `now`: that of its calendar year. */
+const yearOf = ({ d, m, now }, he) => personalYear({ d, m, year: now.getFullYear() }, he);
 
 /** The personal month: the personal year, plus the month. */
 function personalMonth(ctx, he) {
@@ -364,7 +355,7 @@ const BUILDERS = {
   ex: (ctx, he) => nameNumber("ex", ctx.name, he),
   lp: lifePath,
   age,
-  py: (ctx, he) => personalYear({ d: ctx.d, m: ctx.m, year: ctx.year ?? ctx.now.getFullYear(), plus: ctx.add ?? addsOne(ctx.now), inSeason: addsOne(ctx.now) }, he),
+  py: (ctx, he) => personalYear({ d: ctx.d, m: ctx.m, year: ctx.year ?? ctx.now.getFullYear() }, he),
   pm: personalMonth,
   pd: personalDay,
   hy: hiddenYear,
@@ -390,9 +381,9 @@ export const HOW_KEYS = Object.freeze(Object.keys(BUILDERS));
 /**
  * How a number was calculated.
  * @param {string} key one of HOW_KEYS ("lp", "py", "pk" ...)
- * @param {{d?: number, m?: number, y?: number, name?: string, now?: Date, add?: boolean, year?: number}} ctx
- *   the birth date and name the number was made from, and the date it was made for (`add` and `year`
- *   pin a personal year that a reading saved, or a year in the cycle table)
+ * @param {{d?: number, m?: number, y?: number, name?: string, now?: Date, year?: number}} ctx
+ *   the birth date and name the number was made from, and the date it was made for (`year` pins a year in
+ *   the cycle table)
  * @param {boolean} he Hebrew or English
  * @returns {{title: string, steps: {text: string, math: string}[], result: *} | null} null for an unknown key
  */

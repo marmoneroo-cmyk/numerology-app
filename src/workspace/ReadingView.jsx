@@ -3,7 +3,7 @@
  * the session summary, a follow-up date, the PDF report and deletion.
  */
 import { useEffect, useRef, useState } from "react";
-import { compatKey, getRecommendations, inTodaysWording } from "../engine/index.js";
+import { compatKey, getRecommendations, inTodaysWording, withoutPlusOne } from "../engine/index.js";
 import { ValidationError } from "../data/validation.js";
 import { useContent, numberTitle } from "./content.js";
 import { Card, Field, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, btnPrimary, btnGhost, display } from "./ui.jsx";
@@ -15,7 +15,8 @@ import { fs } from "../ui/type.js";
 export default function ReadingView({ store, go, he, c, now, readingId }) {
   const content = useContent();
   const data = useLoad(async () => {
-    const reading = await store.readings.get(readingId);
+    // a reading saved with the +1 is shown without it (the owner, 2026-10-12; engine saved.js)
+    const reading = withoutPlusOne(await store.readings.get(readingId));
     const client = await store.clients.get(reading.clientId);
     return { reading, client };
   }, [store, readingId]);
@@ -133,7 +134,7 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
           {exportFailed && <span role="status" style={{ fontSize: fs(13), color: c.danger }}>{he ? "לא הצלחנו להוריד את הדוח. אפשר לנסות שוב." : "The report could not be downloaded. Please try again."}</span>}
           {/* the Studio shows the map in large type for the client; the saved snapshot, as on this screen */}
           {reading.type === "map" && content.openMeeting && (
-            <button className="ghost" style={btnGhost} onClick={() => content.openMeeting(reading.result, reading.input.name || client.fullName, new Date(reading.computedFor), reading.input.add)}>
+            <button className="ghost" style={btnGhost} onClick={() => content.openMeeting(reading.result, reading.input.name || client.fullName, new Date(reading.computedFor))}>
               {he ? "מצב פגישה" : "Meeting mode"}
             </button>
           )}
@@ -158,8 +159,8 @@ function MapResult({ reading, he, c, content }) {
   const recs = r.insights ? inTodaysWording(r.insights[lang]) : getRecommendations(r, lang);
   return (
     <>
-      {/* every number on one screen, as saved: made for its own date, with the +1 it recorded */}
-      <ReadingSummary r={r} name={reading.input.name} now={new Date(reading.computedFor)} add={reading.input.add} he={he} />
+      {/* every number on one screen, as saved: made for its own date */}
+      <ReadingSummary r={r} name={reading.input.name} now={new Date(reading.computedFor)} he={he} />
 
       {r.kd.length > 0 && (
         <Card>

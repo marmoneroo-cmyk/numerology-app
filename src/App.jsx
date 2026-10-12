@@ -26,7 +26,6 @@ import {
 import Icon from "./ui/Icon.jsx";
 import { BUSINESS_EMAIL } from "./business.js";
 import DemoBanner from "./demo/DemoBanner.jsx";
-import PlusOneNote from "./ui/PlusOneNote.jsx";
 import ReadingSummary from "./reading/ReadingSummary.jsx";
 import Locked from "./demo/DemoLock.jsx";
 import HowButton from "./reading/HowButton.jsx";
@@ -495,7 +494,7 @@ function TablesWidget({he,dk}){
   const[animIn,setAnimIn]=useState(false);
   const[showExtra,setShowExtra]=useState(false);
   const doCalc=()=>{
-    try{setError("");const b=parseBirthDate(dob);if(!b)throw 0;const{d,m,y}=b;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,fullName,undefined,at);setHowCtx({d,m,y,name:fullName,now:at});setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"יש לוודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
+    try{setError("");const b=parseBirthDate(dob);if(!b)throw 0;const{d,m,y}=b;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,fullName,at);setHowCtx({d,m,y,name:fullName,now:at});setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"יש לוודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
   };
   const thStyle={padding:"11px 14px",fontSize:fs(12),fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`,letterSpacing:.3};
   const tdStyle={padding:"11px 14px",fontSize:fs(14),fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
@@ -511,7 +510,6 @@ function TablesWidget({he,dk}){
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:14}}>
         <div><label style={{display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}cc`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doCalc();}}/></div>
-        <PlusOneNote he={he} color={ts}/>
       </div>
       {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:fs(13),marginBottom:14,textAlign:"center"}}>{error}</div>}
       <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doCalc}>{he?"לחשב":"Calculate"}</button>
@@ -622,7 +620,7 @@ function CalculatorsWidget({he,dk}){
     AU.init();AU.p("reveal");
     const nm=(firstName+" "+lastName).trim();
     const at=new Date();
-    const r=fullCalc(d.d,d.m,d.y,nm,undefined,at);
+    const r=fullCalc(d.d,d.m,d.y,nm,at);
     r.lpm=LPm(d.d,d.m,d.y); // master-aware LP
     setHowCtx({d:d.d,m:d.m,y:d.y,name:nm,now:at});
     setResults(r);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);
@@ -689,7 +687,6 @@ function CalculatorsWidget({he,dk}){
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:12}}>
           <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
-          <PlusOneNote he={he} color={ts}/>
         </div>
         <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"לחשב מספרים":"Calculate Numbers"}</button>
       </div>
@@ -849,9 +846,8 @@ function CalculatorsWidget({he,dk}){
         <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="trending" size={26} stroke={1.3}/></div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:12}}>
           <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
-          <PlusOneNote he={he} color={ts}/>
         </div>
-        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const at=new Date();setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:at});setResults({proj:yearCycle(d.d,d.m,undefined,at)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"לחשב":"Calculate"}</button>
+        <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const at=new Date();setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:at});setResults({proj:yearCycle(d.d,d.m,at)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"לחשב":"Calculate"}</button>
       </div>
       {results&&animIn&&results.proj&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc" style={{padding:0,overflow:"hidden"}}>
         <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:fs(16),fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
@@ -1352,7 +1348,7 @@ function FloatingWhatsApp({ he }) {
 // ═══════════════════ SAMPLE MAP PREVIEW ═══════════════════
 function SampleMap({ he, dk, onStart }) {
   const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520"; const ts = dk ? "rgba(232,224,208,.6)" : "rgba(42,37,32,.6)";
-  let demo; try { demo = fullCalc(7, 3, 1988, "אורה לוי", false); } catch (e) { demo = null; }
+  let demo; try { demo = fullCalc(7, 3, 1988, "אורה לוי"); } catch (e) { demo = null; }
   if (!demo) return null;
   const nums = [
     { l: he ? "שביל הגורל" : "Life Path", v: demo.lp }, { l: he ? "ערך השם" : "Name", v: demo.nv },
@@ -1515,7 +1511,7 @@ export default function App({ view, navigate } = {}){
   // a saved map opens in meeting mode too (meetingFor is defined below; it runs only on a press)
   // the demo's interpretations stay blurred, so it makes no reports
   const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:view==="demo"?null:(r,n,h,i)=>exportReport(r,n,h,i,licensee),
-    openMeeting:(r,n,at,add)=>setMeeting(meetingFor(r,n,at,add))}),[licensee?.fullName,licensee?.phone,he,view]);
+    openMeeting:(r,n,at)=>setMeeting(meetingFor(r,n,at))}),[licensee?.fullName,licensee?.phone,he,view]);
   useEffect(()=>{AU.on=snd;},[snd]);
 
   // the shop is gone: a cart kept in this browser from before is forgotten (the owner/customer view preference is read in the useState initializer above)
@@ -1540,7 +1536,7 @@ export default function App({ view, navigate } = {}){
 
   const runReading=useCallback((nm,dobStr)=>{
     try{setError("");const b=parseBirthDate(String(dobStr));if(!b)throw 0;const{d,m,y}=b;
-      AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,nm,undefined,at);setResults(r);setReadingName(nm);setReadingAt(at);setShowRes(true);
+      AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,nm,at);setResults(r);setReadingName(nm);setReadingAt(at);setShowRes(true);
       setChapters([false,false,false,false,false,false]);
       setTimeout(()=>{setChapters(c=>{const n=[...c];n[0]=true;return n;});AU.p("chapter");},800);saveStreak();
       return true;
@@ -1578,7 +1574,7 @@ export default function App({ view, navigate } = {}){
    * A reading in large type for the client: the life path, three more numbers and its meaning, and then the whole
    * map, made for `at` (a saved reading's own date and +1; a live reading's date otherwise).
    */
-  const meetingFor=(r,who,at,add)=>{const info=D[R(r.lp)]||D[1];return{r,at:at||readingAt||new Date(),add,person:who,main:{value:r.lp,label:he?"שביל הגורל":"Life Path"},
+  const meetingFor=(r,who,at)=>{const info=D[R(r.lp)]||D[1];return{r,at:at||readingAt||new Date(),person:who,main:{value:r.lp,label:he?"שביל הגורל":"Life Path"},
     numbers:[{value:r.ex,label:he?"מספר הביטוי":"Expression"},{value:r.su,label:he?"קול הנשמה":"Soul Urge"},{value:r.py,label:he?"שנה אישית":"Personal Year"}],
     text:he?info.narrative:info.narrativeE};};
   const openMeeting=()=>{
@@ -1827,7 +1823,6 @@ button,a,input{-webkit-tap-highlight-color:transparent}
               </div>
               <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}${showOwnerUI?"cc":"99"}`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
               <input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{marginBottom:18,textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter"&&dob.trim())doCalc();}}/>
-              <PlusOneNote he={he} color={ts} style={{marginTop:-6,marginBottom:24,textAlign:"center"}}/>
               {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:fs(13),marginBottom:16,textAlign:"center"}}>{error}</div>}
               <div style={{display:"flex",gap:10}}>
                 <button className="ghost" onClick={()=>{setStep(1);AU.p("click");}}>{he?"→ חזרה":"← Back"}</button>
@@ -1942,7 +1937,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     {/* meeting mode: a reading in large type for showing a client, then its whole map: the summary and the life map */}
     {showOwnerUI&&studioReady&&<MeetingMode open={!!meeting} onClose={()=>setMeeting(null)} he={he} person={meeting?.person} main={meeting?.main} numbers={meeting?.numbers} text={meeting?.text}
       sections={meeting?[
-        {id:"summary",title:he?"סיכום המפה":"Map summary",ownTitle:true,content:<ContentContext.Provider value={workspaceContent}><ReadingSummary r={meeting.r} name={meeting.person} now={meeting.at} add={meeting.add} he={he}/></ContentContext.Provider>},
+        {id:"summary",title:he?"סיכום המפה":"Map summary",ownTitle:true,content:<ContentContext.Provider value={workspaceContent}><ReadingSummary r={meeting.r} name={meeting.person} now={meeting.at} he={he}/></ContentContext.Provider>},
         {id:"life",title:he?"מפת החיים":"Life map",content:<div className="st-meet-narrow"><LifeMap results={meeting.r} dk={dk} he={he} studio live={isToday(meeting.at)}/></div>},
       ]:[]}/>}
 

@@ -1,6 +1,6 @@
 /** A client's file: details, core numbers, the readings history and attached files. */
 import { useId, useRef, useState } from "react";
-import { LPm, NV, SU, CA, personalYearOn } from "../engine/index.js";
+import { LPm, NV, SU, CA, personalYearOn, withoutPlusOne } from "../engine/index.js";
 import { ValidationError, LIMITS } from "../data/validation.js";
 import { useContent, numberTitle } from "./content.js";
 import { Card, Num, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, rowButton, tilesGrid, btnPrimary, btnGhost } from "./ui.jsx";
@@ -16,8 +16,9 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
   const [fileMsgs, setFileMsgs] = useState([]);
   const data = useLoad(async () => {
     const client = await store.clients.get(clientId);
-    const [readings, files] = await Promise.all([store.readings.listByClient(clientId), store.attachments.listByClient(clientId)]);
-    return { client, readings, files };
+    const [saved, files] = await Promise.all([store.readings.listByClient(clientId), store.attachments.listByClient(clientId)]);
+    // readings saved with the +1 are listed without it, as the reading screen shows them (engine saved.js)
+    return { client, readings: saved.map(withoutPlusOne), files };
   }, [store, clientId]);
 
   if (data.loading) return <Loading he={he} c={c} />;

@@ -26,13 +26,13 @@ const START = Date.UTC(2026, 9, 5, 9, 0, 0);
 const COMPUTED = new Date(START);
 const SHANI = { d: 15, m: 8, y: 1990, name: "שני כהן" };
 const AVIR = { d: 3, m: 11, y: 1987, name: "אביר" };
-const MAP_RESULT = fullCalc(SHANI.d, SHANI.m, SHANI.y, SHANI.name, false, COMPUTED);
+const MAP_RESULT = fullCalc(SHANI.d, SHANI.m, SHANI.y, SHANI.name, COMPUTED);
 const meta = { engineVersion: ENGINE_VERSION, computedFor: COMPUTED.toISOString() };
 const mapReading = (clientId, over = {}) => ({
   clientId, type: "map", input: { name: SHANI.name, birthDate: "1990-08-15", add: false }, result: MAP_RESULT, ...meta, ...over,
 });
 const yearReading = (clientId) => ({
-  clientId, type: "yearCycle", input: { birthDate: "1990-08-15", add: false }, result: { proj: yearCycle(SHANI.d, SHANI.m, false, COMPUTED) }, ...meta,
+  clientId, type: "yearCycle", input: { birthDate: "1990-08-15", add: false }, result: { proj: yearCycle(SHANI.d, SHANI.m, COMPUTED) }, ...meta,
 });
 /** A love match saved in `clientId`'s file, with Avir as the other person (a client of their own when otherClientId is given). */
 const loveReading = (clientId, otherClientId = null) => ({

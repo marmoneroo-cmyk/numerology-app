@@ -50,7 +50,7 @@ describe("the page as search engines see it", () => {
     expect(llms).toContain(`${PRICE_MONTHLY} ₪ עם ${TRIAL_DAYS} ימי ניסיון`); // the sales page's price and trial
     // the address the legal pages give, and a date to renew it by (RFC 9116: at most a year ahead)
     const security = read("../../public/.well-known/security.txt");
-    expect(security).toContain(`Contact: mailto:${LEGAL_EMAIL}\n`);
+    expect(security).toMatch(new RegExp(`^Contact: mailto:${LEGAL_EMAIL.replace(/\./g, "\\.")}\\r?$`, "m"));
     expect(security).toMatch(/^Expires: \d{4}-\d\d-\d\dT00:00:00\.000Z$/m);
     for (const file of ["favicon.svg", "favicon.ico", "apple-touch-icon.png", "404.html"]) {
       expect([file, existsSync(new URL(`../../public/${file}`, import.meta.url))]).toEqual([file, true]);

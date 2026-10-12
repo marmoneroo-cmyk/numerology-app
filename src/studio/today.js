@@ -145,7 +145,7 @@ export function checkInText(fullName, he, { personalYear, signature } = {}) {
   return withSignature(text, signature);
 }
 
-/** In July, when the +1 moves every personal year on: the new year, and an offer to meet. */
+/** In January, when every personal year moves on: the new year, and an offer to meet. */
 export function newYearText(fullName, he, { personalYear, signature } = {}) {
   const wish = wishFor(personalYear);
   let text;
@@ -159,8 +159,8 @@ export function newYearText(fullName, he, { personalYear, signature } = {}) {
   return withSignature(text, signature);
 }
 
-/** July: the month the +1 (July 1 - December 31) moves every client's personal year on. */
-export const isNewYearMonth = (now) => now.getMonth() === 6;
+/** January: every client's personal year moves on with the calendar year (no +1 since 2026-10-12, the owner). */
+export const isNewYearMonth = (now) => now.getMonth() === 0;
 
 /** Half a year, in days: a client quiet this long is worth a word. */
 export const QUIET_DAYS = 182;

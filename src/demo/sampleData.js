@@ -4,7 +4,7 @@
  */
 import { toYmd } from "../data/store.js";
 import { validateReading } from "../data/validation.js";
-import { ENGINE_VERSION, addsOne, fullCalc, getRecommendations } from "../engine/index.js";
+import { ENGINE_VERSION, fullCalc, getRecommendations } from "../engine/index.js";
 
 const DAY_MS = 86400000;
 
@@ -38,13 +38,13 @@ function sampleClients() {
 function sampleReadings() {
   const at = new Date(Date.now() - 21 * DAY_MS);
   const name = "דנה שמיר";
-  const calc = fullCalc(3, 3, 1992, name, undefined, at);
+  const calc = fullCalc(3, 3, 1992, name, at);
   const value = validateReading(
     {
       clientId: "c4",
       type: "map",
       title: "פגישה ראשונה",
-      input: { name, birthDate: "1992-03-03", add: addsOne(at) },
+      input: { name, birthDate: "1992-03-03" },
       result: { ...calc, insights: { he: getRecommendations(calc, "he"), en: getRecommendations(calc, "en") } },
       engineVersion: ENGINE_VERSION,
       computedFor: at.toISOString(),

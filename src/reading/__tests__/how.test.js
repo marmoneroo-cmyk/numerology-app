@@ -8,7 +8,7 @@ import { howFor, reduction, HOW_KEYS } from "../how.js";
 import { fullCalc, PY, dailyRitualNumber, universalDay, maturity, birthdayNumber, dominantNumbers, missingNumbers, textNumber } from "../../engine/index.js";
 
 const CLOCKS = [
-  new Date(2026, 9, 5, 12), // autumn: the +1 season
+  new Date(2026, 9, 5, 12), // autumn (from 2026-10-10 to 2026-10-12, the +1 season)
   new Date(2026, 5, 30, 23, 59), // the last minute before it
   new Date(2026, 6, 1, 0, 0), // its first minute
   new Date(2025, 11, 31, 23, 59),
@@ -39,7 +39,7 @@ describe("every explanation ends in the engine's number", () => {
   it.each([true, false])("for 3,000 people and six clocks (Hebrew: %s)", (he) => {
     const mismatches = [];
     for (const c of CASES) {
-      const map = fullCalc(c.d, c.m, c.y, c.name, undefined, c.now);
+      const map = fullCalc(c.d, c.m, c.y, c.name, c.now);
       for (const key of MAP_KEYS) {
         const how = howFor(key, c, he);
         if (!isDeepStrictEqual(how.result, map[key])) mismatches.push({ key, c, got: how.result, want: map[key] });
@@ -62,11 +62,10 @@ describe("every explanation ends in the engine's number", () => {
     expect(mismatches.slice(0, 5)).toEqual([]);
   });
 
-  it("a saved reading's own +1 wins over the date, and a cycle row names its year", () => {
+  it("a cycle row names its year", () => {
     const now = new Date(2026, 9, 5, 12);
-    expect(howFor("py", { d: 15, m: 8, now, add: false }, true).result).toBe(PY(15, 8, 2026, false));
-    expect(howFor("py", { d: 15, m: 8, now, add: true }, true).result).toBe(PY(15, 8, 2026, true));
-    expect(howFor("py", { d: 15, m: 8, now, year: 2031, add: false }, true).result).toBe(PY(15, 8, 2031, false));
+    expect(howFor("py", { d: 15, m: 8, now }, true).result).toBe(PY(15, 8, 2026));
+    expect(howFor("py", { d: 15, m: 8, now, year: 2031 }, true).result).toBe(PY(15, 8, 2031));
   });
 });
 
@@ -84,11 +83,10 @@ describe("the explanations read as worked examples", () => {
     });
   });
 
-  it("the personal year, with the +1 of July to December", () => {
+  it("the personal year: the birth day and month with the year, in October as in any month (no +1)", () => {
     expect(howFor("py", SHANI, true).steps).toEqual([
       { text: "ספרות יום וחודש הלידה, ועוד ספרות השנה 2026", math: "1+5+0+8+2+0+2+6 = 24" },
       { text: "מצמצמים", math: "2+4 = 6" },
-      { text: "מה-1.7 ועד ה-31.12 מוסיפים 1", math: "6+1 = 7" },
     ]);
   });
 
@@ -102,13 +100,13 @@ describe("the explanations read as worked examples", () => {
   it("the personal month goes through the personal year, and the day through the month", () => {
     const month = howFor("pm", SHANI, true);
     expect(month.steps.slice(-2)).toEqual([
-      { text: "השנה האישית ועוד החודש (10)", math: "7+10 = 17" },
-      { text: "מצמצמים", math: "1+7 = 8" },
+      { text: "השנה האישית ועוד החודש (10)", math: "6+10 = 16" },
+      { text: "מצמצמים", math: "1+6 = 7" },
     ]);
     const day = howFor("pd", SHANI, true);
     expect(day.steps.slice(-2)).toEqual([
-      { text: "החודש האישי ועוד היום בחודש (5)", math: "8+5 = 13" },
-      { text: "מצמצמים", math: "1+3 = 4" },
+      { text: "החודש האישי ועוד היום בחודש (5)", math: "7+5 = 12" },
+      { text: "מצמצמים", math: "1+2 = 3" },
     ]);
   });
 
@@ -117,12 +115,6 @@ describe("the explanations read as worked examples", () => {
     expect(how.steps[2].math.endsWith("= 49 → 13 → 4 ← חוב קארמי 13")).toBe(true);
     expect(how.steps[3].math).toBe("1+5+6+1+1 = 14 → 5 ← חוב קארמי 14");
     expect(how.result).toEqual([13, 14]);
-  });
-
-  it("a reading saved with the +1 outside July to December says it added the +1 itself", () => {
-    const march = { ...SHANI, now: new Date(2026, 2, 5, 12) };
-    expect(howFor("py", { ...march, add: true }, true).steps.at(-1).text).toBe("ה-1+ נוסף בבדיקה הזו");
-    expect(howFor("py", march, true).steps.some((s) => s.text.includes("1+"))).toBe(false);
   });
 
   it("the pinnacles start from day, month and year in one digit", () => {
@@ -160,7 +152,7 @@ describe("the explanations read as worked examples", () => {
 
   it("speaks English too", () => {
     expect(howFor("lp", SHANI, false).title).toBe("Life path");
-    expect(howFor("py", SHANI, false).steps[2].text).toBe("From July 1 to December 31, add 1");
+    expect(howFor("py", SHANI, false).steps[0].text).toBe("The digits of the birth day and month, plus those of 2026");
   });
 
   it("every step has words, and every key has a title", () => {

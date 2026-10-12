@@ -514,12 +514,12 @@ function FollowUps({ he, due, clients, onOpenReading, onDone, failed, greetAnyon
   );
 }
 
-/** In July, the clients shown before "show all". */
+/** In January, the clients shown before "show all". */
 const NEW_YEAR_FIRST = 8;
 
 /**
- * Clients worth a word: the ones quiet for half a year, with their personal year now; in July, when the +1
- * moves every personal year on, every client with their new year (the most recent first, the rest on asking).
+ * Clients worth a word: the ones quiet for half a year, with their personal year now; in January, when every
+ * personal year moves on, every client with their new year (the most recent first, the rest on asking).
  */
 function Reconnect({ he, clients, now, personalYear, greetAnyone, signature }) {
   const [showAll, setShowAll] = useState(false);

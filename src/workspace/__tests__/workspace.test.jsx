@@ -135,26 +135,46 @@ describe("workspace", () => {
     });
     await openClient("שני כהן אזולאי");
     await tap("בדיקה חדשה");
-    // October: the +1 season (July 1 - December 31), so the personal year 6 becomes 7, by itself
-    expect((await screen.findByRole("note")).textContent).toMatch(/^נוסף 1 לשנה האישית/);
+    // October, and no +1 (the owner, 2026-10-12): the personal year is the date's own 6, and no note says otherwise
+    expect(await screen.findByRole("button", { name: "לחשב ולשמור" })).toBeTruthy();
+    expect(screen.queryByText(/נוסף 1/)).toBeNull();
     await tap("לחשב ולשמור");
     expect(await screen.findByText(`גרסת מנוע ${ENGINE_VERSION}`)).toBeTruthy();
     // the saved map opens on its summary: every number on one screen
     expect(screen.getByRole("heading", { name: "סיכום המפה" })).toBeTruthy();
     expect(screen.getByTestId("rs-lp").textContent).toBe("33");
-    expect(screen.getByTestId("rs-py").textContent).toBe("7");
+    expect(screen.getByTestId("rs-py").textContent).toBe("6");
     const [saved] = await store.readings.listByClient(client.id);
-    expect(saved).toMatchObject({ type: "map", input: { add: true }, engineVersion: ENGINE_VERSION, computedFor: NOW.toISOString(), result: { lp: 33, nv: 4, py: 7 } });
-    const calc = fullCalc(15, 8, 1990, SHANI.fullName, true, NOW);
+    expect(saved).toMatchObject({ type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: false }, engineVersion: ENGINE_VERSION, computedFor: NOW.toISOString(), result: { lp: 33, nv: 4, py: 6 } });
+    const calc = fullCalc(15, 8, 1990, SHANI.fullName, NOW);
     expect(saved.result.insights).toEqual({ he: getRecommendations(calc, "he"), en: getRecommendations(calc, "en") });
     click("חזרה לתיק");
-    expect(await screen.findByText("שביל הגורל 33 · ערך השם 4 · שנה אישית 7")).toBeTruthy();
+    expect(await screen.findByText("שביל הגורל 33 · ערך השם 4 · שנה אישית 6")).toBeTruthy();
+  });
+
+  it("shows a map saved with the +1 without it, in the file's list and on its screen (the owner, 2026-10-12)", async () => {
+    const store = await setup(async (s) => {
+      const c = await s.clients.create(SHANI);
+      const plain = fullCalc(15, 8, 1990, SHANI.fullName, NOW);
+      // as engine 2.2 saved it on 5.10.2026: the +1 made the year 7, the month 7+10 = 17 → 8, the day 8+5 = 13 → 4
+      const withPlus = { ...plain, py: 7, pm: 8, pd: 4, proj: plain.proj.map((p) => ({ ...p, py: p.py === 9 ? 1 : p.py + 1 })) };
+      await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: true }, result: { ...withPlus, insights: { he: [], en: [] } }, engineVersion: "2.2.0", computedFor: NOW.toISOString() });
+    });
+    await openClient("שני כהן אזולאי");
+    expect(await screen.findByText("שביל הגורל 33 · ערך השם 4 · שנה אישית 6")).toBeTruthy();
+    await tap(/שביל הגורל 33/);
+    // 6; 6+10 = 16 → 7; 7+5 = 12 → 3
+    expect((await screen.findByTestId("rs-py")).textContent).toBe("6");
+    expect(["rs-pm", "rs-pd"].map((id) => screen.getByTestId(id).textContent)).toEqual(["7", "3"]);
+    // shown, not rewritten: the saved row keeps what was saved
+    const [row] = await store.readings.listByClient((await store.clients.list())[0].id);
+    expect([row.input.add, row.result.py]).toEqual([true, 7]);
   });
 
   it("shows the insights saved with a map, not a fresh calculation", async () => {
     await setup(async (s) => {
       const c = await s.clients.create(SHANI);
-      const calc = fullCalc(15, 8, 1990, SHANI.fullName, false, NOW);
+      const calc = fullCalc(15, 8, 1990, SHANI.fullName, NOW);
       const saved = [{ icon: "✨", t: "תובנה שנשמרה", d: "נשמרה יחד עם הבדיקה" }];
       await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: false }, result: { ...calc, insights: { he: saved, en: saved } }, engineVersion: "1.0.0", computedFor: NOW.toISOString() });
     });
@@ -166,7 +186,7 @@ describe("workspace", () => {
   it("shows the insights saved before 2026-10-12 in today's wording, which never speaks to the reader in the singular", async () => {
     await setup(async (s) => {
       const c = await s.clients.create(SHANI);
-      const calc = fullCalc(15, 8, 1990, SHANI.fullName, false, NOW);
+      const calc = fullCalc(15, 8, 1990, SHANI.fullName, NOW);
       const saved = [{ icon: "sparkle", t: "יקיצה רוחנית", d: "אתה בנקודת שיא רוחנית." }]; // as engine 2.1 saved it
       await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: false }, result: { ...calc, insights: { he: saved, en: saved } }, engineVersion: "2.1.0", computedFor: NOW.toISOString() });
     });
@@ -198,7 +218,7 @@ describe("workspace", () => {
     await setup(
       async (s) => {
         const c = await s.clients.create(SHANI);
-        const calc = fullCalc(15, 8, 1990, SHANI.fullName, false, NOW);
+        const calc = fullCalc(15, 8, 1990, SHANI.fullName, NOW);
         await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: false }, result: { ...calc, insights: { he: [], en: [] } }, engineVersion: "1.0.0", computedFor: NOW.toISOString() });
       },
       { content: { ...CONTENT, openMeeting } },
@@ -209,9 +229,9 @@ describe("workspace", () => {
     expect(openMeeting).toHaveBeenCalledTimes(1);
     expect(openMeeting.mock.calls[0][0]).toMatchObject({ lp: 33, nv: 4, py: 6 });
     expect(openMeeting.mock.calls[0][1]).toBe(SHANI.fullName);
-    // the date it was made for and its +1, so meeting mode shows the map as it was saved
+    // the date it was made for, so meeting mode shows the map as it was saved
     expect(openMeeting.mock.calls[0][2]).toEqual(NOW);
-    expect(openMeeting.mock.calls[0][3]).toBe(false);
+    expect(openMeeting.mock.calls[0]).toHaveLength(3);
   });
 
   it("downloads a saved map as a PDF one at a time, and says so when it could not", async () => {
@@ -220,7 +240,7 @@ describe("workspace", () => {
     await setup(
       async (s) => {
         const c = await s.clients.create(SHANI);
-        const calc = fullCalc(15, 8, 1990, SHANI.fullName, false, NOW);
+        const calc = fullCalc(15, 8, 1990, SHANI.fullName, NOW);
         await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: false }, result: { ...calc, insights: { he: [], en: [] } }, engineVersion: "1.0.0", computedFor: NOW.toISOString() });
       },
       { content: { ...CONTENT, exportReport } },
@@ -243,7 +263,7 @@ describe("workspace", () => {
   it("offers no meeting mode where the app has none", async () => {
     await setup(async (s) => {
       const c = await s.clients.create(SHANI);
-      const calc = fullCalc(15, 8, 1990, SHANI.fullName, false, NOW);
+      const calc = fullCalc(15, 8, 1990, SHANI.fullName, NOW);
       await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: false }, result: { ...calc, insights: { he: [], en: [] } }, engineVersion: "1.0.0", computedFor: NOW.toISOString() });
     });
     await openClient("שני כהן אזולאי");

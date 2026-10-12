@@ -120,15 +120,15 @@ describe("hand-checked compatibility examples", () => {
 describe("cycle, ritual number and master base", () => {
   const CLOCKS = [new Date(2026, 9, 5, 12), new Date(2026, 0, 1, 0, 0, 30), new Date(2025, 11, 31, 23, 59), new Date(2024, 1, 29, 9)];
 
-  it.each(CLOCKS)("personal-year cycle for every birthday, on %s", (now) => {
+  it.each(CLOCKS)("personal-year cycle for every birthday, on %s (the shipped button with its +1 unticked: no +1 since 2026-10-12)", (now) => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(now);
     const wants = [];
-    for (let m = 1; m <= 12; m++) for (let d = 1; d <= 31; d++) for (const add of [true, false]) wants.push([d, m, add, handlers.yearCycleButton({ d, m }, add)]);
+    for (let m = 1; m <= 12; m++) for (let d = 1; d <= 31; d++) wants.push([d, m, handlers.yearCycleButton({ d, m }, false)]);
     vi.setSystemTime(new Date(1999, 2, 3, 4)); // a decoy clock: the engine must use `now`, not the system clock
-    const bad = wants.filter(([d, m, add, want]) => !isDeepStrictEqual(engine.yearCycle(d, m, add, now), want));
+    const bad = wants.filter(([d, m, want]) => !isDeepStrictEqual(engine.yearCycle(d, m, now), want));
     expect(bad.slice(0, 3)).toEqual([]);
-    expect(wants.length).toBe(744);
+    expect(wants.length).toBe(372);
   });
 
   it("daily ritual number for every day of 2024 (a leap year)", () => {

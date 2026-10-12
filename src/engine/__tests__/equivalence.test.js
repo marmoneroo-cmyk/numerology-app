@@ -4,8 +4,9 @@
  * ה, the personal month is the personal year plus the month and the personal day
  * adds the day, and karmic debts count every step of the reduction; then, as
  * temporary defaults, the live calculator keeps masters and the psychological map
- * drops its filler). Those are checked against small reference versions of the
- * new rules, written here apart from the engine.
+ * drops its filler), and since 2026-10-12 there is no +1 on the personal year: the
+ * shipped code is read with its +1 checkbox unticked. Those are checked against
+ * small reference versions of the new rules, written here apart from the engine.
  * Each sweep collects mismatches instead of asserting per item, so a failure
  * prints the first offending inputs and the sweep sizes stay large but fast.
  */
@@ -33,12 +34,9 @@ const isVowel = (c) => NEW_VOWELS.has(c);
 const refSU = (s) => reduce(letters(s, isVowel), true);
 const refEX = (s) => reduce(letters(s, (c) => !isVowel(c)), true);
 const pad = (n) => String(n).padStart(2, "0");
-const refPM = (d, m, now, add) => {
-  const base = reduce(digitSum(`${pad(d)}${pad(m)}${now.getFullYear()}`));
-  const py = (add ?? now.getMonth() >= 6) ? reduce(base + 1) : base;
-  return reduce(py + now.getMonth() + 1);
-};
-const refPD = (d, m, now, add) => reduce(refPM(d, m, now, add) + now.getDate());
+// the personal year on `now` with no +1 (the owner, 2026-10-12), plus the month; the day adds the day
+const refPM = (d, m, now) => reduce(reduce(digitSum(`${pad(d)}${pad(m)}${now.getFullYear()}`)) + now.getMonth() + 1);
+const refPD = (d, m, now) => reduce(refPM(d, m, now) + now.getDate());
 const chain = (n) => {
   const out = [n];
   for (let x = n; x >= 10; ) out.push((x = digitSum(x)));
@@ -160,8 +158,9 @@ describe("engine matches the shipped code", () => {
 
   it("date numbers, Lo Shu, karmic debts and personal years for every day 1900–2030", () => {
     const res = sweep(everyDate(), ([d, m, y]) => [
-      [engine.LP(d, m, y), engine.LPm(d, m, y), engine.loShu(d, m, y), engine.karmicDebt(d, m, y, ""), engine.PY(d, m, y, false), engine.PY(d, m, y, true)],
-      [legacy.LP(d, m, y), legacy.LPm(d, m, y), legacy.loShu(d, m, y), legacy.karmicDebt(d, m, y, ""), legacy.PY(d, m, y, false), legacy.PY(d, m, y, true)],
+      [engine.LP(d, m, y), engine.LPm(d, m, y), engine.loShu(d, m, y), engine.karmicDebt(d, m, y, ""), engine.PY(d, m, y)],
+      // the personal year as the shipped code made it without its +1 checkbox (no +1 since 2026-10-12)
+      [legacy.LP(d, m, y), legacy.LPm(d, m, y), legacy.loShu(d, m, y), legacy.karmicDebt(d, m, y, ""), legacy.PY(d, m, y, false)],
     ]);
     expect(res.mismatches).toEqual([]);
     expect(res.checked).toBe(31 * 12 * 131);
@@ -190,7 +189,6 @@ describe("engine matches the shipped code", () => {
 // a clock no test date shares: anything the engine reads from the system
 // clock instead of its `now` argument shows up as a mismatch
 const DECOY = new Date(1999, 2, 3, 4, 5);
-const ADD_VALUES = [true, false, 1, 0, "yes", "", undefined, null];
 const LANGS = ["he", "en", "EN", undefined, "fr"];
 
 describe.each(CLOCKS.map(([label, now], i) => [label, now, i]))("engine matches the shipped code on %s", (_, now, i) => {
@@ -208,26 +206,24 @@ describe.each(CLOCKS.map(([label, now], i) => [label, now, i]))("engine matches 
     expect(res.checked).toBe(31 * 12 * 111);
   });
 
-  it("full maps and recommendations for 1,500 readings, with every kind of `add` and `lang`", () => {
+  it("full maps and recommendations for 1,500 readings, with every kind of `lang`", () => {
     const r = rng(1000 + i);
     const cases = Array.from({ length: 1500 }, () => [
-      1 + Math.floor(r() * 31), 1 + Math.floor(r() * 12), 1900 + Math.floor(r() * 131), pick(r, NAMES), pick(r, ADD_VALUES), pick(r, LANGS),
+      1 + Math.floor(r() * 31), 1 + Math.floor(r() * 12), 1900 + Math.floor(r() * 131), pick(r, NAMES), pick(r, LANGS),
     ]);
     freeze(now);
-    const wants = cases.map(([d, m, y, nm, add, lang]) => {
-      // since 2026-10-10 a reading that leaves the +1 out lets the date decide it (July 1 - December 31);
-      // the shipped code had only the checkbox, so it gets the same +1 explicitly
-      const map = legacy.fullCalc(d, m, y, nm, add ?? engine.addsOne(now));
+    const wants = cases.map(([d, m, y, nm, lang]) => {
+      // no +1 (the owner, 2026-10-12): the shipped code with its +1 checkbox left unticked
+      const map = legacy.fullCalc(d, m, y, nm, false);
       return { map, recs: legacy.getRecommendations(map, lang) };
     });
-    const defaults = cases.map(([d, m, y, nm, add]) => engine.fullCalc(d, m, y, nm, add));
+    const defaults = cases.map(([d, m, y, nm]) => engine.fullCalc(d, m, y, nm));
     freeze(DECOY);
     const res = sweep(cases.keys(), (k) => {
-      const [d, m, y, nm, add, lang] = cases[k];
-      const got = engine.fullCalc(d, m, y, nm, add, now);
-      const plus = add ?? engine.addsOne(now);
+      const [d, m, y, nm, lang] = cases[k];
+      const got = engine.fullCalc(d, m, y, nm, now);
       const changed = { su: got.su, ex: got.ex, pm: got.pm, pd: got.pd, kd: got.kd };
-      const wanted = { su: refSU(nm), ex: refEX(nm), pm: refPM(d, m, now, plus), pd: refPD(d, m, now, plus), kd: refKarmic(d, m, y, nm) };
+      const wanted = { su: refSU(nm), ex: refEX(nm), pm: refPM(d, m, now), pd: refPD(d, m, now), kd: refKarmic(d, m, y, nm) };
       // the recommendation rules did not change: both read the engine's own map
       return [
         [kept(got), kept(defaults[k]), changed, defaults[k].pm, engine.getRecommendations(got, lang)],
@@ -242,11 +238,11 @@ describe.each(CLOCKS.map(([label, now], i) => [label, now, i]))("engine matches 
     const r = rng(2000 + i);
     const cases = Array.from({ length: 800 }, () => [1 + Math.floor(r() * 31), 1 + Math.floor(r() * 12), 1900 + Math.floor(r() * 131), pick(r, NAMES)]).filter(([, , , nm]) => !nm.includes("ה"));
     freeze(now);
-    const shipped = cases.map(([d, m, y, nm]) => legacy.fullCalc(d, m, y, nm, engine.addsOne(now)).psych);
+    const shipped = cases.map(([d, m, y, nm]) => legacy.fullCalc(d, m, y, nm, false).psych);
     freeze(DECOY);
     const res = sweep(cases.keys(), (k) => {
       const [d, m, y, nm] = cases[k];
-      const got = engine.fullCalc(d, m, y, nm, undefined, now);
+      const got = engine.fullCalc(d, m, y, nm, now);
       const want = refPsych({ nv: reduce(got.nv), lp: reduce(got.lp), su: reduce(got.su), ex: reduce(got.ex), py: got.py });
       // the shipped filler only ever replaced a 0
       const kept = Object.fromEntries(Object.keys(want).map((t) => [t, want[t] === 0 ? 0 : shipped[k][t]]));
@@ -291,9 +287,9 @@ describe("an explicit `now` makes results independent of the system clock", () =
   it("the map for 5.10.2026 is the same under two unrelated system clocks", () => {
     const now = new Date(2026, 9, 5, 12);
     freeze(new Date(2001, 0, 1));
-    const a = engine.fullCalc(15, 8, 1990, "שני כהן אזולאי", false, now);
+    const a = engine.fullCalc(15, 8, 1990, "שני כהן אזולאי", now);
     freeze(new Date(2039, 5, 30));
-    const b = engine.fullCalc(15, 8, 1990, "שני כהן אזולאי", false, now);
+    const b = engine.fullCalc(15, 8, 1990, "שני כהן אזולאי", now);
     expect(a).toEqual(b);
     // and it is the 5.10.2026 map, not one for either system clock: personal year 6, month 6 + 10 = 16 -> 7, day 7 + 5 = 12 -> 3
     expect({ age: a.age, py: a.py, pm: a.pm, pd: a.pd, current: a.proj.find((p) => p.isCurrent).year }).toEqual({

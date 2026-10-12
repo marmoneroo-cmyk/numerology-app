@@ -21,7 +21,10 @@
 // 2.2.0: the owner's answers of 2026-10-12: compatibility compares the name, soul and expression in one digit
 //        too (their originals come back beside them), and the Hebrew recommendations speak of the numbers,
 //        not to the reader in the singular (same rules)
-export const ENGINE_VERSION = "2.2.0";
+// 3.0.0: no +1 (the owner, 2026-10-12): the personal year is the birth day and month with the current year all
+//        year round, and so are the personal month and day and the years table built on it; saved readings
+//        that had it are shown without it (saved.js)
+export const ENGINE_VERSION = "3.0.0";
 
 /** Hebrew letter values, final forms included. Any other character counts 0. Frozen: shared by every reading. */
 export const LV = Object.freeze({
@@ -91,38 +94,34 @@ export function CA(d, m, y, now = new Date()) {
   return age;
 }
 
-/** Personal year for calendar year `yr`; `add` is the "+1" that moves it on a year. */
-export function PY(d, m, yr, add) {
-  const p = R(sumChars(dateDigits(d, m, yr)));
-  return add ? R(p + 1) : p;
-}
+/**
+ * Personal year for calendar year `yr`: the birth day and month with that year, reduced. No +1 (the owner,
+ * 2026-10-12): it changes on January 1.
+ */
+export const PY = (d, m, yr) => R(sumChars(dateDigits(d, m, yr)));
 
-/** The method adds 1 to the personal year from July 1 to December 31 (the owner, 2026-10-10). */
-export const addsOne = (now = new Date()) => now.getMonth() >= 6;
+/** The personal year on a date: that of its calendar year. */
+export const personalYearOn = (d, m, now = new Date()) => PY(d, m, now.getFullYear());
 
-/** The personal year on a date, with the +1 when the date falls between July 1 and December 31. */
-export const personalYearOn = (d, m, now = new Date()) => PY(d, m, now.getFullYear(), addsOne(now));
-
-/** Personal years from two years before `now`'s year to ten after it. Leave `add` out to let `now` decide it. */
-export function yearCycle(d, m, add, now = new Date()) {
-  const plus = add ?? addsOne(now);
+/** Personal years from two years before `now`'s year to ten after it. */
+export function yearCycle(d, m, now = new Date()) {
   const cy = now.getFullYear();
   const proj = [];
   for (let i = -2; i <= 10; i++) {
     const yr = cy + i;
-    proj.push({ year: yr, py: PY(d, m, yr, plus), isCurrent: yr === cy });
+    proj.push({ year: yr, py: PY(d, m, yr), isCurrent: yr === cy });
   }
   return proj;
 }
 
 /**
  * Personal month: the personal year on `now` plus its calendar month (the owner, 2026-10-11; before, the
- * birth day and month plus the month, without the year). `add` is the +1, left out for the date to decide.
+ * birth day and month plus the month, without the year).
  */
-export const PM = (d, m, now = new Date(), add) => R(PY(d, m, now.getFullYear(), add ?? addsOne(now)) + now.getMonth() + 1);
+export const PM = (d, m, now = new Date()) => R(personalYearOn(d, m, now) + now.getMonth() + 1);
 
 /** Personal day: the personal month plus the day of the month of `now`. */
-export const PD = (d, m, now = new Date(), add) => R(PM(d, m, now, add) + now.getDate());
+export const PD = (d, m, now = new Date()) => R(PM(d, m, now) + now.getDate());
 
 /** Challenge between two numbers: their reduced difference, 0 when equal. */
 export const CH = (a, b) => (a === b ? 0 : R(Math.abs(a - b)));
@@ -194,7 +193,7 @@ export const cycleAt = (age, exit) => cycleSpans(exit).findIndex(({ from, to }) 
  * The psychological map: six traits on 0-10, from points the numbers (in one digit) give. A trait no number
  * gives points to shows 0 (the owner, 2026-10-11; it used to get a filler of 2-4 that came from no number).
  */
-function psychMap({ nv, lp, su, ex, py }) {
+export function psychMap({ nv, lp, su, ex, py }) {
   return {
     leadership: Math.min(10, (nv === 1 || nv === 8 ? 3 : 0) + (lp === 1 || lp === 8 ? 3 : 0) + (su === 1 ? 2 : 0) + (ex === 8 ? 2 : 0)),
     intuition: Math.min(10, (nv === 2 || nv === 7 ? 3 : 0) + (lp === 2 || lp === 7 ? 3 : 0) + (su === 7 ? 2 : 0) + (su === 2 ? 2 : 0)),
@@ -211,7 +210,6 @@ function psychMap({ nv, lp, su, ex, py }) {
  * @param {number} m birth month
  * @param {number} y birth year
  * @param {string} nm full name (Hebrew letters carry the values)
- * @param {boolean} [add] the "+1" on the personal year; left out, `now` decides it (July 1 - December 31)
  * @param {Date} [now] the date the reading is made for (must be a Date)
  * @returns {{nv:number, lp:number, age:number, py:number, hy:number, su:number, ex:number, pm:number, pd:number,
  *   pk:number[], ch:number[], hp:number[], hc:number[], exit:number, kd:number[],
@@ -222,11 +220,10 @@ function psychMap({ nv, lp, su, ex, py }) {
  *   the first cycle ends 9 years later, see cycleSpans), karmic debts, Lo Shu, the personal-year
  *   cycle, the psychological map, and the birth date echoed back
  */
-export function fullCalc(d, m, y, nm, add, now = new Date()) {
-  const plus = add ?? addsOne(now);
-  const nv = NV(nm), lp = LPm(d, m, y), age = CA(d, m, y, now), cy = now.getFullYear();
-  const py = PY(d, m, cy, plus), hy = R(lp + age), su = SU(nm), ex = EX(nm);
-  const pm = PM(d, m, now, plus), pd = PD(d, m, now, plus);
+export function fullCalc(d, m, y, nm, now = new Date()) {
+  const nv = NV(nm), lp = LPm(d, m, y), age = CA(d, m, y, now);
+  const py = personalYearOn(d, m, now), hy = R(lp + age), su = SU(nm), ex = EX(nm);
+  const pm = PM(d, m, now), pd = PD(d, m, now);
 
   const rd = R(d), rm = R(m), ry = R(y);
   const pk = [R(rd + rm), R(rd + ry), 0, R(rm + ry)];
@@ -238,7 +235,7 @@ export function fullCalc(d, m, y, nm, add, now = new Date()) {
 
   const kd = karmicDebt(d, m, y, nm);
   const ls = loShu(d, m, y);
-  const proj = yearCycle(d, m, plus, now);
+  const proj = yearCycle(d, m, now);
 
   const reduced = { nv: R(nv), lp: R(lp), su: R(su), ex: R(ex) };
   const psych = psychMap({ ...reduced, py });

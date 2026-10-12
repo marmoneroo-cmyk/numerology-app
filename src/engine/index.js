@@ -18,7 +18,6 @@ export {
   LPm,
   CA,
   PY,
-  addsOne,
   personalYearOn,
   PM,
   PD,
@@ -38,3 +37,4 @@ export {
 export { nameCounts, dominantNumbers, missingNumbers, maturity, birthdayNumber, charValue, textNumber } from "./extras.js";
 export { getRecommendations, HEBREW_REWORDING, inTodaysWording } from "./recommendations.js";
 export { COMPAT_RULES, compatKey, matchReading, coupleReading, parentChildReading } from "./compat.js";
+export { withoutPlusOne } from "./saved.js";

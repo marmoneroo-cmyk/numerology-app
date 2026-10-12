@@ -101,7 +101,8 @@ describe("the day's three numbers, each under its own name", { timeout: 20000 },
       if (next) fireEvent.click(next);
       expect(byTestId("psych-note")).toBeTruthy();
     }, LONG);
-    expect(byTestId("ritual-basis").textContent).toContain("לפי היום האישי: 1"); // 8 + 11 = 19 → 10 → 1
+    // 11.10.2026: personal year 24 → 6 (no +1), month 6 + 10 = 16 → 7, day 7 + 11 = 18 → 9
+    expect(byTestId("ritual-basis").textContent).toContain("לפי היום האישי: 9");
     expect(byTestId("loshu-sources").textContent).toBe("נכנסים לרשת: ספרות תאריך הלידה בלי 0, שביל הגורל בספרה אחת ויום הלידה בספרה אחת.");
     expect(byTestId("psych-note").textContent).toBe("הגרף יחסי לתכונה החזקה ביותר: היא מגיעה עד הקצה, והשאר לפי היחס אליה. ״לא מודגש״ פירושו שאף מספר לא נותן לתכונה נקודות.");
     // the owner, 2026-10-12: words, not a score out of 10. ערך השם 3 and שביל הגורל 11 (2 in one digit) give

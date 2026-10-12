@@ -43,11 +43,10 @@ export const SALES = {
       points: [
         "כל המפה במסך אחד: מספרי הליבה, התקופה עכשיו, מחזורי החיים, הקארמה ומבנה השם.",
         "\"איך זה חושב?\" ליד כל מספר, עם החישוב המלא.",
-        "ה-1+ לשנה האישית, מה-1.7 ועד ה-31.12, נוסף אוטומטית.",
         "דוח PDF מעוצב בשם שלכם.",
       ],
       shotAlt: "טבלת סיכום המפה: שביל הגורל, מספרי השם, השנה האישית, מחזורי החיים ועוד, כל מספר עם כפתור הסבר",
-      howAlt: "החלון \"איך זה חושב\" של השנה האישית: סכום הספרות, הצמצום, וה-1+ שמוסיפים מה-1.7 ועד ה-31.12",
+      howAlt: "החלון \"איך זה חושב\" של השנה האישית: ספרות יום וחודש הלידה ועוד ספרות השנה, והצמצום",
     },
     care: {
       kicker: "אחרי הפגישה",
@@ -57,7 +56,7 @@ export const SALES = {
         { icon: "gift", title: "ימי הולדת עם ברכה אישית", text: "ברכה נומרולוגית עם השנה האישית של הלקוח, שנפתחת בוואטסאפ למספר שלו." },
         { icon: "calendar", title: "מעקבים בזמן", text: "קריאות שהגיע מועד המעקב שלהן, עם הודעה מוכנה ששואלת מה שלום הלקוח." },
         { icon: "refresh", title: "חידוש קשר", text: "לקוחות בלי פעילות בחצי השנה האחרונה, עם הודעה שמזכירה את השנה האישית שלהם עכשיו." },
-        { icon: "sparkles", title: "השנה האישית החדשה", text: "ביולי, כשהשנה האישית מתחלפת, הודעה מוכנה לכל לקוח." },
+        { icon: "sparkles", title: "השנה האישית החדשה", text: "בינואר, כשהשנה האישית מתחלפת, הודעה מוכנה לכל לקוח." },
       ],
       note: "כל הודעה נפתחת בוואטסאפ מוכנה לשליחה, ונשלחת רק כשמחליטים לשלוח.",
       shotAlt: "מסך \"היום\" בסטודיו: השבוע הקרוב, ימי ההולדת עם ברכה, מעקבים שהגיע זמנם, ולקוחות שכדאי לחזור אליהם",
@@ -179,11 +178,10 @@ export const SALES = {
       points: [
         "The whole map on one screen: the core numbers, this season, the life cycles, karma and the name's make-up.",
         "\"How was this calculated?\" beside every number, with the full arithmetic.",
-        "The +1 on the personal year, from July 1 to December 31, added automatically.",
         "A designed PDF report in your name.",
       ],
       shotAlt: "The map summary table: life path, name numbers, personal year, life cycles and more, each number with an explain button",
-      howAlt: "The \"how was this calculated\" window for the personal year: the digits, the reduction, and the +1 added from July 1 to December 31",
+      howAlt: "The \"how was this calculated\" window for the personal year: the digits of the birth day and month with those of the year, and the reduction",
     },
     care: {
       kicker: "After the session",
@@ -193,7 +191,7 @@ export const SALES = {
         { icon: "gift", title: "Birthdays with a personal greeting", text: "A numerology greeting with the client's personal year, opened in WhatsApp to their number." },
         { icon: "calendar", title: "Follow-ups on time", text: "Readings whose follow-up date has come, with a message ready to ask how the client is." },
         { icon: "refresh", title: "Getting back in touch", text: "Clients with no activity for half a year, with a message naming their personal year now." },
-        { icon: "sparkles", title: "The new personal year", text: "In July, when the personal year turns, a message ready for each client." },
+        { icon: "sparkles", title: "The new personal year", text: "In January, when the personal year turns, a message ready for each client." },
       ],
       note: "Every message opens in WhatsApp ready to send, and goes only when you choose to send it.",
       shotAlt: "The Studio's Today screen: the week ahead, the birthdays with a greeting, follow-ups due, and clients worth getting back to",

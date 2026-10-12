@@ -28,13 +28,13 @@ describe("messages that bring clients back", () => {
     expect(checkInText("Rachel", false, { personalYear: 1 })).toContain("your personal year now is 1 — a year of new beginnings");
   });
 
-  it("in July: the new personal year", () => {
+  it("in January: the new personal year (it changes with the calendar year: no +1 since 2026-10-12)", () => {
     expect(newYearText("רחל כהן", true, { personalYear: 2, signature: "שני" })).toBe(
       "היי רחל, שנה אישית חדשה התחילה: 2 — שנה של שיתוף, קשרים וסבלנות שמשתלמת. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.\nשני",
     );
     // without a birth date there is no year to name, and no "it has been a while" to a client seen yesterday
     expect(newYearText("רחל כהן", true, {})).toBe("היי רחל, שנה אישית חדשה התחילה. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.");
-    expect([isNewYearMonth(new Date(2026, 6, 1)), isNewYearMonth(new Date(2026, 6, 31)), isNewYearMonth(new Date(2026, 7, 1))]).toEqual([true, true, false]);
+    expect([isNewYearMonth(new Date(2027, 0, 1)), isNewYearMonth(new Date(2027, 0, 31)), isNewYearMonth(new Date(2027, 1, 1)), isNewYearMonth(new Date(2026, 6, 1))]).toEqual([true, true, false, false]);
   });
 });
 

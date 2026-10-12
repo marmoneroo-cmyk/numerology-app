@@ -119,16 +119,16 @@ function NameStructure({ r, name, ctx, he, title, none }) {
 const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 /**
- * @param {{ r: object, name: string, now: Date, add?: boolean, he: boolean, today?: Date }} props
- *   `r` is a full map (engine fullCalc), made for `name` on `now`; `add` is the +1 a saved reading recorded.
- *   A reading made on another day than `today` speaks of its own date, not of "now".
+ * @param {{ r: object, name: string, now: Date, he: boolean, today?: Date }} props
+ *   `r` is a full map (engine fullCalc), made for `name` on `now`. A reading made on another day than `today`
+ *   speaks of its own date, not of "now".
  */
-export default function ReadingSummary({ r, name, now, add, he, today = new Date() }) {
+export default function ReadingSummary({ r, name, now, he, today = new Date() }) {
   const content = useContent();
   const titleId = useId();
   const live = sameDay(now, today);
   const madeOn = `${pad2(now.getDate())}.${pad2(now.getMonth() + 1)}.${now.getFullYear()}`;
-  const ctx = { d: r.d, m: r.m, y: r.y, name, now, add };
+  const ctx = { d: r.d, m: r.m, y: r.y, name, now };
   const title = (n) => numberTitle(content, n, he);
   const year = content.YEAR_ENERGY?.[r.py];
   const none = he ? "אין" : "None";

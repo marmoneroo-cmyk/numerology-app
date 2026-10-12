@@ -4,7 +4,8 @@
  * doubles as documentation of how the numbers are made. What the method still
  * shares with the shipped code runs against both (the oracle and the engine);
  * what the owner changed on 2026-10-11 (the soul's vowels, the personal month and
- * day, karmic debts) has its own examples for each.
+ * day, karmic debts) has its own examples for each. No +1 since 2026-10-12: the
+ * oracle runs with its +1 checkbox unticked.
  */
 import { describe, it, expect } from "vitest";
 import * as legacy from "./legacy.js";
@@ -36,9 +37,9 @@ describe.each(IMPLEMENTATIONS)("known values (%s)", (_, E) => {
     expect([E.LP(19, 9, 1999), E.LPm(19, 9, 1999)]).toEqual([2, 11]);
   });
 
-  it("personal year; the +1 toggle moves it on by one", () => {
-    // 1+5+0+8+2+0+2+6 = 24 -> 6
-    expect([E.PY(15, 8, 2026, false), E.PY(15, 8, 2026, true)]).toEqual([6, 7]);
+  it("personal year: the digits of the birth day and month with those of the year", () => {
+    // 1+5+0+8+2+0+2+6 = 24 -> 6; 1+5+0+8+2+0+2+7 = 25 -> 7
+    expect([E.PY(15, 8, 2026), E.PY(15, 8, 2027)]).toEqual([6, 7]);
   });
 
   it("challenge is the reduced difference", () => {
@@ -74,7 +75,8 @@ describe.each(IMPLEMENTATIONS)("known values that depend on today (%s)", (name, 
   });
 
   it("the full map for שני כהן אזולאי, 15.08.1990, on 5.10.2026", () => {
-    const r = at((now) => E.fullCalc(15, 8, 1990, "שני כהן אזולאי", false, now));
+    // the oracle takes its +1 checkbox where the engine takes the date
+    const r = at((now) => (name === "oracle" ? E.fullCalc(15, 8, 1990, "שני כהן אזולאי", false) : E.fullCalc(15, 8, 1990, "שני כהן אזולאי", now)));
     expect({ nv: r.nv, lp: r.lp, age: r.age, py: r.py, hy: r.hy }).toEqual({ nv: 4, lp: 33, age: 36, py: 6, hy: 6 });
     // day 6, month 8, year 1 (1+9+9+0 = 19 -> 1)
     expect(r.pk).toEqual([5, 7, 3, 9]); // pinnacles
@@ -107,11 +109,9 @@ describe("the method since 2026-10-11 (the owner's answers to the calculation au
   });
 
   it("the personal month is the personal year plus the month; the personal day adds the day", () => {
-    // October: personal year 6 + the +1 = 7; 7 + 10 = 17 -> 8; 8 + 5 = 13 -> 4
-    expect([engine.PM(15, 8, OCT_5_2026), engine.PD(15, 8, OCT_5_2026)]).toEqual([8, 4]);
-    // a reading that leaves the +1 out: 6 + 10 = 16 -> 7; 7 + 5 = 12 -> 3
-    expect([engine.PM(15, 8, OCT_5_2026, false), engine.PD(15, 8, OCT_5_2026, false)]).toEqual([7, 3]);
-    // March has no +1: 6 + 3 = 9; 9 + 5 = 14 -> 5
+    // October: personal year 6 (no +1); 6 + 10 = 16 -> 7; 7 + 5 = 12 -> 3
+    expect([engine.PM(15, 8, OCT_5_2026), engine.PD(15, 8, OCT_5_2026)]).toEqual([7, 3]);
+    // March: 6 + 3 = 9; 9 + 5 = 14 -> 5
     expect([engine.PM(15, 8, MARCH_5_2026), engine.PD(15, 8, MARCH_5_2026)]).toEqual([9, 5]);
   });
 
@@ -122,11 +122,9 @@ describe("the method since 2026-10-11 (the owner's answers to the calculation au
     expect(legacy.karmicDebt(1, 1, 2000, "אברהם גולדשטיין")).toEqual([]);
   });
 
-  it("the full map follows: soul 6, consonants 7, month 7 and day 3 for a reading without the +1", () => {
-    const r = engine.fullCalc(15, 8, 1990, "שני כהן אזולאי", false, OCT_5_2026);
+  it("the full map follows: soul 6, consonants 7, year 6, month 7 and day 3", () => {
+    const r = engine.fullCalc(15, 8, 1990, "שני כהן אזולאי", OCT_5_2026);
     expect({ su: r.su, ex: r.ex, pm: r.pm, pd: r.pd, py: r.py }).toEqual({ su: 6, ex: 7, pm: 7, pd: 3, py: 6 });
-    const auto = engine.fullCalc(15, 8, 1990, "שני כהן אזולאי", undefined, OCT_5_2026);
-    expect({ pm: auto.pm, pd: auto.pd, py: auto.py }).toEqual({ pm: 8, pd: 4, py: 7 });
   });
 });
 

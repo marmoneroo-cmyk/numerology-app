@@ -10,12 +10,13 @@ const TODAY = new Date(2026, 9, 5, 12);
 const SHANI = { d: 15, m: 8, y: 1990, name: "שני כהן" };
 const AVIR = { d: 3, m: 11, y: 1987, name: "אביר" };
 const asPerson = (p) => ({ name: p.name, birthDate: `${p.y}-${String(p.m).padStart(2, "0")}-${String(p.d).padStart(2, "0")}`, clientId: null });
-const MAP = fullCalc(15, 8, 1990, SHANI.name, false, TODAY);
+const MAP = fullCalc(15, 8, 1990, SHANI.name, TODAY);
 const SNAP = {
   map: { input: { name: SHANI.name, birthDate: "1990-08-15", add: false }, result: { ...MAP, insights: { he: getRecommendations(MAP, "he"), en: getRecommendations(MAP, "en") } } },
   match: { input: { person: asPerson(SHANI), other: asPerson(AVIR), matchType: "love" }, result: matchReading(SHANI, AVIR, "love") },
   parentChild: { input: { person: asPerson(SHANI), other: asPerson(AVIR), role: "parent" }, result: parentChildReading(SHANI, AVIR) },
-  yearCycle: { input: { birthDate: "1990-08-15", add: true }, result: { proj: yearCycle(15, 8, true, TODAY) } },
+  // a years table saved with the +1 (before 2026-10-12) is still valid data: the workspace shows it without it
+  yearCycle: { input: { birthDate: "1990-08-15", add: true }, result: { proj: yearCycle(15, 8, TODAY) } },
 };
 const reading = (type, over = {}) => ({ clientId: "c1", type, ...SNAP[type], engineVersion: "1.0.0", computedFor: TODAY.toISOString(), ...over });
 const codes = (fn) => {

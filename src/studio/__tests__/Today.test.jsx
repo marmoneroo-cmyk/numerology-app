@@ -264,10 +264,10 @@ describe("Today", () => {
       expect(within(screen.getByRole("heading", { name: "מעקבים שהגיע זמנם" }).closest("section")).getByText("אין מעקבים שהגיע זמנם.")).toBeTruthy();
     });
 
-    it("in July, offers every client their new year: eight first, the rest on asking", async () => {
-      const JULY = new Date(2026, 6, 3, 10);
-      const many = Array.from({ length: 11 }, (_, i) => ({ id: `c${i}`, fullName: `לקוח ${i + 1}`, birthDate: "1990-03-06", phone: "050-7654321", updatedAt: ago(i + 1, JULY), lastActivityAt: ago(i + 1, JULY) }));
-      renderToday(fakeStore(many), { now: () => JULY });
+    it("in January, offers every client their new year: eight first, the rest on asking", async () => {
+      const JANUARY = new Date(2027, 0, 3, 10);
+      const many = Array.from({ length: 11 }, (_, i) => ({ id: `c${i}`, fullName: `לקוח ${i + 1}`, birthDate: "1990-03-06", phone: "050-7654321", updatedAt: ago(i + 1, JANUARY), lastActivityAt: ago(i + 1, JANUARY) }));
+      renderToday(fakeStore(many), { now: () => JANUARY });
       const panel = (await screen.findByRole("heading", { name: "השנה האישית החדשה" })).closest("section");
       expect(within(panel).getAllByRole("listitem")).toHaveLength(8);
       fireEvent.click(within(panel).getByRole("button", { name: "להציג את כל 11 הלקוחות" }));
@@ -275,9 +275,9 @@ describe("Today", () => {
       expect(within(panel).queryByRole("button", { name: /להציג את כל/ })).toBeNull();
     });
 
-    it("in July, offers every recent client their new personal year", async () => {
-      const JULY = new Date(2026, 6, 3, 10);
-      renderToday(fakeStore([{ ...YOSSI_NOW, phone: "050-7654321", updatedAt: ago(2, JULY), lastActivityAt: ago(2, JULY) }]), { now: () => JULY });
+    it("in January, offers every recent client their new personal year", async () => {
+      const JANUARY = new Date(2027, 0, 3, 10);
+      renderToday(fakeStore([{ ...YOSSI_NOW, phone: "050-7654321", updatedAt: ago(2, JANUARY), lastActivityAt: ago(2, JANUARY) }]), { now: () => JANUARY });
       const panel = (await screen.findByRole("heading", { name: "השנה האישית החדשה" })).closest("section");
       expect(within(panel).getByText("שנה אישית חדשה: 5")).toBeTruthy();
       const href = within(panel).getByRole("link", { name: "הודעה ליוסי לוי" }).getAttribute("href");
@@ -293,8 +293,9 @@ describe("Today", () => {
     expect(within(screen.getByRole("dialog")).getByText("1+7 = 8")).toBeTruthy();
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "סגירה" }));
     fireEvent.click(await screen.findByRole("button", { name: "איך זה חושב: השנה האישית של רחל כהן" }));
-    // her birthday, 7.10.2026, is in the +1 season
-    expect(within(screen.getByRole("dialog")).getByText("מה-1.7 ועד ה-31.12 מוסיפים 1")).toBeTruthy();
+    // born 7.10: the digits of the day and month with those of 2026, and no +1
+    expect(within(screen.getByRole("dialog")).getByText("0+7+1+0+2+0+2+6 = 18")).toBeTruthy();
+    expect(within(screen.getByRole("dialog")).getByText("1+8 = 9")).toBeTruthy();
   });
 
   it("signs the greeting with the studio's name", async () => {

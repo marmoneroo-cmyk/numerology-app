@@ -8,14 +8,14 @@ import { fullCalc } from "../../engine/index.js";
 
 afterEach(cleanup);
 
-const NOW = new Date(2026, 9, 5, 12); // October: the +1 season
+const NOW = new Date(2026, 9, 5, 12); // October: personal year 6 (no +1 since 2026-10-12)
 const NAME = "שני כהן אזולאי";
-const MAP = fullCalc(15, 8, 1990, NAME, undefined, NOW);
+const MAP = fullCalc(15, 8, 1990, NAME, NOW);
 const CONTENT = {
   ...EMPTY_CONTENT,
   D: { 1: { t: "המנהיג", te: "The Leader" }, 3: { t: "היוצר", te: "The Creator" }, 4: { t: "הבונה", te: "The Builder" } },
   MASTER: { 33: { t: "המורה הגדול", te: "The Master Teacher" } },
-  YEAR_ENERGY: { 7: { he: "שנת התבוננות פנימית. צלול פנימה.", en: "Year of inner reflection. Dive within." } },
+  YEAR_ENERGY: { 6: { he: "שנת אחריות ובית. זמן לטפל.", en: "Year of responsibility and home. Time to care." } },
 };
 
 const show = (props = {}) =>
@@ -32,7 +32,7 @@ describe("the map summary", () => {
     expect(screen.getByRole("heading", { level: 2, name: "סיכום המפה" })).toBeTruthy();
     expect(screen.getByText(/שני כהן אזולאי/).textContent).toContain("15.08.1990");
     expect([cell("rs-lp"), cell("rs-nv"), cell("rs-su"), cell("rs-ex")]).toEqual(["33", "4", "6", "7"]);
-    expect([cell("rs-py"), cell("rs-age")]).toEqual(["7", "36"]);
+    expect([cell("rs-py"), cell("rs-age")]).toEqual(["6", "36"]);
     expect([cell("rs-pm"), cell("rs-pd"), cell("rs-hy")]).toEqual([MAP.pm, MAP.pd, MAP.hy].map(String));
     expect([0, 1, 2, 3].map((i) => cell(`rs-pk-${i}`))).toEqual(MAP.pk.map(String));
     expect([0, 1, 2, 3].map((i) => cell(`rs-ch-${i}`))).toEqual(MAP.ch.map(String));
@@ -46,7 +46,7 @@ describe("the map summary", () => {
     const row = (id) => screen.getByTestId(id).closest("tr");
     expect(within(row("rs-lp")).getByText("המורה הגדול")).toBeTruthy();
     expect(within(row("rs-nv")).getByText("הבונה")).toBeTruthy();
-    expect(within(row("rs-py")).getByText("שנת התבוננות פנימית")).toBeTruthy();
+    expect(within(row("rs-py")).getByText("שנת אחריות ובית")).toBeTruthy();
   });
 
   it("marks the life cycle the person is in now", () => {
@@ -60,7 +60,7 @@ describe("the map summary", () => {
   it("lists the four periods in order, the first at the top and the fourth last, each with its own numbers", () => {
     // מאיה לוי, 19.04.1986 (made up), on 11.10.2026: life path 11 → 2, so the periods are 0–34, 34–43, 43–52, 52+
     const at = new Date(2026, 9, 11, 10);
-    show({ r: fullCalc(19, 4, 1986, "מאיה לוי", undefined, at), name: "מאיה לוי", now: at, today: at });
+    show({ r: fullCalc(19, 4, 1986, "מאיה לוי", at), name: "מאיה לוי", now: at, today: at });
     const values = (key) => [0, 1, 2, 3].map((i) => cell(`rs-${key}-${i}`));
     expect([values("pk"), values("ch"), values("hp"), values("hc")]).toEqual([
       ["5", "7", "3", "1"], ["3", "5", "2", "2"], ["8", "3", "5", "3"], ["1", "5", "7", "5"],
@@ -74,7 +74,7 @@ describe("the map summary", () => {
 
   it("starts the first cycle at birth and leaves the last open, so a young person is in one", () => {
     // life path 33 -> 6: the cycles turn at 30, 39 and 48
-    const young = fullCalc(15, 8, 2016, NAME, undefined, NOW); // 10 years old
+    const young = fullCalc(15, 8, 2016, NAME, NOW); // 10 years old
     show({ r: young });
     const rows = screen.getAllByRole("row").filter((row) => row.querySelector(".rs-ages"));
     expect(rows.map((row) => row.querySelector(".rs-ages").textContent)).toEqual([`0–${young.exit + 9}`, `${young.exit + 9}–${young.exit + 18}`, `${young.exit + 18}–${young.exit + 27}`, `${young.exit + 27}+`]);
@@ -95,9 +95,9 @@ describe("the map summary", () => {
     const how = screen.getByRole("button", { name: "איך זה חושב: שנה אישית" });
     fireEvent.click(how);
     const dialog = screen.getByRole("dialog", { name: "איך זה חושב: שנה אישית" });
-    expect(within(dialog).getByText("מה-1.7 ועד ה-31.12 מוסיפים 1")).toBeTruthy();
-    expect(within(dialog).getByText("6+1 = 7")).toBeTruthy();
-    expect(within(dialog).getByText("7").tagName).toBe("B");
+    expect(within(dialog).getByText("1+5+0+8+2+0+2+6 = 24")).toBeTruthy();
+    expect(within(dialog).getByText("2+4 = 6")).toBeTruthy();
+    expect(within(dialog).getByText("6").tagName).toBe("B");
     expect(document.activeElement).toBe(within(dialog).getByRole("button", { name: "סגירה" }));
     // Tab stays in the window, even after a click moved the focus off its button
     document.body.focus();
@@ -139,20 +139,11 @@ describe("the map summary", () => {
     expect([cell("rs-mat"), cell("rs-bday"), cell("rs-dom"), cell("rs-name-miss")]).toEqual(["1", "6", "1", "4 · 8 · 9"]);
   });
 
-  it("follows a saved reading's own +1 rather than the date", () => {
-    const saved = fullCalc(15, 8, 1990, NAME, false, NOW);
-    show({ r: saved, add: false });
-    fireEvent.click(screen.getByRole("button", { name: "איך זה חושב: שנה אישית" }));
-    const dialog = screen.getByRole("dialog");
-    expect(within(dialog).queryByText("מה-1.7 ועד ה-31.12 מוסיפים 1")).toBeNull();
-    expect(cell("rs-py")).toBe("6");
-  });
-
   it("says why a name in Latin letters gets 0 for its name numbers, and only then", () => {
     show();
     expect(screen.queryByRole("note")).toBeNull();
     cleanup();
-    show({ r: fullCalc(15, 8, 1990, "John Smith", undefined, NOW), name: "John Smith" });
+    show({ r: fullCalc(15, 8, 1990, "John Smith", NOW), name: "John Smith" });
     expect(screen.getByRole("note").textContent).toContain("בשם אין אותיות עבריות");
     expect(cell("rs-nv")).toBe("0");
   });

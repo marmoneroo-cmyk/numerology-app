@@ -22,7 +22,7 @@ describe("life cycle ages", () => {
   });
 
   it("a 20-year-old with life path 4 is in the first cycle (the screens showed none)", () => {
-    const r = fullCalc(15, 8, 2006, "", false, new Date(2026, 9, 11));
+    const r = fullCalc(15, 8, 2006, "", new Date(2026, 9, 11));
     expect([r.age, r.exit]).toEqual([20, 23]);
     expect(cycleAt(r.age, r.exit)).toBe(0);
   });
@@ -31,7 +31,7 @@ describe("life cycle ages", () => {
     const now = new Date(2026, 9, 11);
     let outside = 0;
     for (let y = 1900; y <= 2026; y += 1) for (let m = 1; m <= 12; m += 1) {
-      const r = fullCalc(15, m, y, "", false, now);
+      const r = fullCalc(15, m, y, "", now);
       if (r.age >= 0 && cycleAt(r.age, r.exit) === -1) outside += 1;
     }
     expect(outside).toBe(0);

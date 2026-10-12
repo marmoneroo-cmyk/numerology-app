@@ -67,21 +67,21 @@ describe("master numbers: kept in the name, soul, expression, life path, maturit
 
   it("reduces the personal year, month and day, the hidden year, the pinnacles and the challenges to one digit", () => {
     // June 30, 2026: personal year 6, month 6+6 = 12 → 3, day 3+30 = 33 → 6 (no master here)
-    const june30 = E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, undefined, ON(30, 6));
+    const june30 = E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, ON(30, 6));
     expect([june30.py, june30.pm, june30.pd]).toEqual([6, 3, 6]);
     // born 2.9: the first pinnacle 2+9 = 11 → 2 (the owner: pinnacles stay reduced)
-    expect(E.fullCalc(2, 9, 1980, "", undefined, NOW).pk).toEqual([2, 2, 4, 9]); // 2+9, 2+9 (1980 → 18 → 9), 2+2, 9+9 → 9
-    const map = E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, undefined, NOW);
+    expect(E.fullCalc(2, 9, 1980, "", NOW).pk).toEqual([2, 2, 4, 9]); // 2+9, 2+9 (1980 → 18 → 9), 2+2, 9+9 → 9
+    const map = E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, NOW);
     expect(map.hy).toBe(6); // 11 + 40 = 51 → 6
     for (const n of [map.py, map.pm, map.pd, map.hy, ...map.pk, ...map.hp, ...map.hc]) expect(n).toBeLessThanOrEqual(9);
   });
 });
 
 describe("the three numbers of a day, each its own calculation", () => {
-  it("on 11.10.2026: the day of the month gives 2, the universal day 4, and Maya's personal day 1", () => {
+  it("on 11.10.2026: the day of the month gives 2, the universal day 4, and Maya's personal day 9", () => {
     expect(E.dailyRitualNumber(NOW)).toBe(2); // 11 mod 9
     expect(E.universalDay(NOW)).toBe(4); // 1+1+1+0+2+0+2+6 = 13 → 4
-    expect(E.PD(MAYA.d, MAYA.m, NOW)).toBe(1); // personal month 8 + 11 = 19 → 10 → 1
+    expect(E.PD(MAYA.d, MAYA.m, NOW)).toBe(9); // personal year 24 → 6, month 6 + 10 = 16 → 7, day 7 + 11 = 18 → 9
   });
 
   it("sums every digit of the date for the universal day, reduced to one digit", () => {
@@ -92,33 +92,34 @@ describe("the three numbers of a day, each its own calculation", () => {
   });
 
   it("gives Maya's personal day on the 9th, 10th, 29th and 31st of October 2026", () => {
-    // the personal month in October is 7 + 10 = 17 → 8
-    expect([9, 10, 29, 31].map((day) => E.PD(MAYA.d, MAYA.m, ON(day, 10)))).toEqual([8, 9, 1, 3]); // 17→8, 18→9, 37→10→1, 39→12→3
+    // the personal month in October is 6 + 10 = 16 → 7
+    expect([9, 10, 29, 31].map((day) => E.PD(MAYA.d, MAYA.m, ON(day, 10)))).toEqual([7, 8, 9, 2]); // 16→7, 17→8, 36→9, 38→11→2
     expect([9, 10, 29, 31].map((day) => E.dailyRitualNumber(ON(day, 10)))).toEqual([9, 1, 2, 4]);
   });
 
-  it("moves the personal year from June 30 to July 1", () => {
+  it("keeps the personal year from June 30 to July 1 (no +1, the owner, 2026-10-12), and moves it on January 1", () => {
     const at = (date) => [E.personalYearOn(MAYA.d, MAYA.m, date), E.PM(MAYA.d, MAYA.m, date), E.PD(MAYA.d, MAYA.m, date)];
     expect(at(ON(30, 6))).toEqual([6, 3, 6]); // 24 → 6; 6+6 = 12 → 3; 3+30 = 33 → 6
-    expect(at(ON(1, 7))).toEqual([7, 5, 6]); // 6+1 = 7; 7+7 = 14 → 5; 5+1 = 6
+    expect(at(ON(1, 7))).toEqual([6, 4, 5]); // still 6; 6+7 = 13 → 4; 4+1 = 5
+    expect(at(ON(1, 1, 2027))).toEqual([7, 8, 9]); // 1+9+0+4+2+0+2+7 = 25 → 7; 7+1 = 8; 8+1 = 9
   });
 });
 
 describe("age and the life cycles at their edges", () => {
   it("turns 40 on the birthday itself, and the hidden year moves with it", () => {
     expect([E.CA(MAYA.d, MAYA.m, MAYA.y, ON(18, 4)), E.CA(MAYA.d, MAYA.m, MAYA.y, ON(19, 4))]).toEqual([39, 40]);
-    const hidden = (date) => E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, undefined, date).hy;
+    const hidden = (date) => E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, date).hy;
     expect([hidden(ON(18, 4)), hidden(ON(19, 4))]).toEqual([5, 6]); // 11+39 = 50 → 5; 11+40 = 51 → 6
   });
 
   it("starts the second, third and fourth cycles at 34, 43 and 52 for a life path of 11", () => {
     const exit = 27 - 2; // the life path in one digit: 11 → 2
-    expect(E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, undefined, NOW).exit).toBe(exit);
+    expect(E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, NOW).exit).toBe(exit);
     expect([33, 34, 42, 43, 51, 52, 90].map((age) => E.cycleAt(age, exit))).toEqual([0, 1, 1, 2, 2, 3, 3]);
   });
 
   it("gives Maya's four pinnacles, challenges and hidden numbers in the order of the four periods", () => {
-    const map = E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, undefined, NOW);
+    const map = E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, NOW);
     // day 19 → 1, month 4, year 1986 → 24 → 6
     expect(map.pk).toEqual([5, 7, 3, 1]); // 1+4, 1+6, 5+7 = 12 → 3, 4+6 = 10 → 1
     expect(map.ch).toEqual([3, 5, 2, 2]); // |1−4|, |1−6|, |3−5|, |4−6|
@@ -145,7 +146,7 @@ describe("Lo Shu: the birth date's digits without zeros, plus the life path and 
 
 describe("the psychological map: points from the numbers only, 0 when there are none", () => {
   it("gives Maya 3 for intuition (life path 2) and creativity (name 3), and 0 for the rest", () => {
-    const map = E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, undefined, NOW);
+    const map = E.fullCalc(MAYA.d, MAYA.m, MAYA.y, MAYA.name, NOW);
     expect(map.psych).toEqual({ leadership: 0, intuition: 3, creativity: 3, stability: 0, ambition: 0, wisdom: 0 });
   });
 
