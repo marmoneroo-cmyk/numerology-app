@@ -6,8 +6,8 @@ import { LEGAL_DOCS, LEGAL_EMAIL, LEGAL_UPDATED, OPERATOR_NAME, buildLegalDocs }
 
 const DOCS = ["terms", "privacy", "refunds"];
 const LANGUAGES = [
-  { he: true, key: "he", name: "Hebrew", dir: "rtl", date: "11.10.2026", updated: "עודכן לאחרונה" },
-  { he: false, key: "en", name: "English", dir: "ltr", date: "11 October 2026", updated: "Last updated" },
+  { he: true, key: "he", name: "Hebrew", dir: "rtl", date: "13.10.2026", updated: "עודכן לאחרונה" },
+  { he: false, key: "en", name: "English", dir: "ltr", date: "13 October 2026", updated: "Last updated" },
 ];
 
 /** Every string a page shows: its title, and each section's title, paragraphs and items. */
@@ -116,7 +116,10 @@ describe("legal pages", () => {
 
   it("names on the privacy page the providers, where the data is kept, and the right to inspect and correct it", () => {
     const he = render(<LegalPage doc="privacy" />).container.textContent;
-    for (const name of ["Supabase", "Vercel", "WhatsApp", "Google Fonts", "Unsplash", "Gmail", "פרנקפורט", "סעיף 13", "סעיף 14", "התחזית החודשית"]) expect(he).toContain(name);
+    for (const name of ["Supabase", "Vercel", "WhatsApp", "Unsplash", "Gmail", "פרנקפורט", "סעיף 13", "סעיף 14", "התחזית החודשית"]) expect(he).toContain(name);
+    // the fonts are the site's own since 2026-10-12 (the owner approved the wording): no request goes to Google for them
+    expect(he).toContain("הגופנים נשמרים באתר עצמו");
+    expect(he).not.toContain("Google Fonts");
     expect(he).not.toContain("אינה שולחת"); // the account emails go out now (custom SMTP)
     // analytics keeps the page's own name after # (#demo), and nothing else from the fragment
     expect(he).toContain("רק שם העמוד");
@@ -127,7 +130,9 @@ describe("legal pages", () => {
     expect(he).toContain("לתקן אותו");
     cleanup();
     const en = render(<LegalPage doc="privacy" he={false} />).container.textContent;
-    for (const name of ["Supabase", "Vercel", "WhatsApp", "Google Fonts", "Unsplash", "Gmail", "Frankfurt", "European Union", "monthly forecast"]) expect(en).toContain(name);
+    for (const name of ["Supabase", "Vercel", "WhatsApp", "Unsplash", "Gmail", "Frankfurt", "European Union", "monthly forecast"]) expect(en).toContain(name);
+    expect(en).toContain("The fonts are stored on the website itself");
+    expect(en).not.toContain("Google Fonts");
     expect(en).toContain("inspect");
     expect(en).toContain("corrected");
   });

@@ -21,13 +21,14 @@ const LISTED = {
   "fonts/noto-sans-hebrew-latin.woff2": "27fd789f4089b6aa",
   "sales/hero-bg-960.webp": "3453f457e77c756c",
   "sales/hero-bg.webp": "c60bd2ef4093f291",
-  "sales/og.jpg": "8a1724e964f941a5",
-  "sales/shot-how-560.webp": "fcc0ecc61eebe5bf",
-  "sales/shot-how.webp": "284de4b171423d0a",
-  "sales/shot-summary-720.webp": "9f2c0f77cb05b784",
-  "sales/shot-summary.webp": "5cad1fc1527f65fe",
-  "sales/shot-today-720.webp": "b8ee2fde74eaa394",
-  "sales/shot-today.webp": "e7618e2846471813",
+  // v2 (2026-10-13): the pictures taken again without the +1, under new names
+  "sales/og-v2.jpg": "966a40eb3bf69dd4",
+  "sales/shot-how-v2-560.webp": "d9bc310c36e59103",
+  "sales/shot-how-v2.webp": "f8de43df332d28c8",
+  "sales/shot-summary-v2-720.webp": "c341bf6166acbb8b",
+  "sales/shot-summary-v2.webp": "7cb54702019a4f20",
+  "sales/shot-today-v2-720.webp": "58231487d7c18d32",
+  "sales/shot-today-v2.webp": "7c65b78e60b77c6f",
 };
 
 const PUBLIC = join(process.cwd(), "public"); // the tests run from the project folder

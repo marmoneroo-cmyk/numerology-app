@@ -9,9 +9,10 @@ import { PRICE_MONTHLY, TRIAL_DAYS } from "./config.js";
  * Browsers keep /sales/ files for 30 days (vercel.json): a replaced picture needs a new file name.
  */
 const SHOTS = {
-  summary: { src: "/sales/shot-summary.webp", width: 1280, height: 1124, small: "/sales/shot-summary-720.webp", smallWidth: 720 },
-  how: { src: "/sales/shot-how.webp", width: 1040, height: 558, small: "/sales/shot-how-560.webp", smallWidth: 560 },
-  today: { src: "/sales/shot-today.webp", width: 1400, height: 874, small: "/sales/shot-today-720.webp", smallWidth: 720 },
+  // v2 (2026-10-13): taken again without the +1
+  summary: { src: "/sales/shot-summary-v2.webp", width: 1280, height: 1123, small: "/sales/shot-summary-v2-720.webp", smallWidth: 720 },
+  how: { src: "/sales/shot-how-v2.webp", width: 1040, height: 494, small: "/sales/shot-how-v2-560.webp", smallWidth: 560 },
+  today: { src: "/sales/shot-today-v2.webp", width: 1400, height: 874, small: "/sales/shot-today-v2-720.webp", smallWidth: 720 },
 };
 /** How wide a screenshot is shown: the column's width on a phone, at most ~600px beside the text on a computer. */
 const SHOT_SIZES = "(max-width: 959px) 92vw, 600px";
