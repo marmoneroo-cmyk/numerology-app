@@ -1,5 +1,5 @@
 /**
- * A tarot card that turns over in 3D. Face down it shows the gold back; face
+ * A number card that turns over in 3D. Face down it shows the gold back; face
  * up, the number, the art, the title and the subtitle, with a glow, a shine
  * and a burst of sparks. On a computer, a closed card leans toward the mouse.
  *

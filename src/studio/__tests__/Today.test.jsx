@@ -53,7 +53,7 @@ function renderToday(store, props = {}) {
       day={DAY}
       lifePath={(iso) => Number(iso.slice(-1))}
       personalYear={personalYear}
-      deck={<div>החפיסה כאן</div>}
+      dayNumber={<div>המספר כאן</div>}
       {...handlers}
       {...props}
     />,
@@ -364,9 +364,9 @@ describe("Today", () => {
     await screen.findAllByText(EMPTY_HE);
   });
 
-  it("shows today's card under the panels", async () => {
+  it("shows today's number under the panels", async () => {
     renderToday(await storeWith([]));
-    expect(within(panel("קלף היום")).getByText("החפיסה כאן")).toBeTruthy();
+    expect(within(panel("המספר של היום")).getByText("המספר כאן")).toBeTruthy();
     await screen.findAllByText(EMPTY_HE);
   });
 
@@ -454,14 +454,14 @@ describe("Today", () => {
     expect(within(panel("Recent clients")).getByRole("button", { name: /דנה שמיר.*Life path 3/ })).toBeTruthy();
     for (const name of ["New client", "Meeting mode"]) expect(within(panel("Today's energy")).getByRole("button", { name })).toBeTruthy();
     expect(within(panel("All the tools")).getByRole("button", { name: /^Quick search/ })).toBeTruthy();
-    expect(within(panel("Today's card")).getByText("החפיסה כאן")).toBeTruthy();
+    expect(within(panel("Today's number")).getByText("המספר כאן")).toBeTruthy();
   });
 
   describe("the dashboard", () => {
     const TOOLS = [
       { k: "today", i: "sparkles", he: "היום", en: "Today" },
       { k: "clients", i: "user", he: "לקוחות", en: "Clients" },
-      { k: "cards", i: "cards", he: "קלפים", en: "Cards" },
+      { k: "numbers", i: "book", he: "מספרים", en: "Numbers" },
     ];
     /** A saved reading of `clientId`, with this follow-up date or none. */
     const reading = (clientId, followUp = null) => ({
@@ -602,11 +602,11 @@ describe("Today", () => {
       renderToday(await storeWith([]), { tools: TOOLS, onTool });
       const tiles = within(panel("כל הכלים")).getAllByRole("button");
       // quick search first, as a bar, then a tile for each tool; each named by its name and its line, as shown
-      expect(tiles.map((t) => t.querySelector(".st-tool-name").textContent)).toEqual(["חיפוש מהיר", "לקוחות", "קלפים"]);
+      expect(tiles.map((t) => t.querySelector(".st-tool-name").textContent)).toEqual(["חיפוש מהיר", "לקוחות", "מספרים"]);
       expect(within(panel("כל הכלים")).getByRole("button", { name: "חיפוש מהיר לקוח, כלי או פעולה, מכל מסך" })).toBe(tiles[0]);
       expect(within(panel("כל הכלים")).getByRole("button", { name: "לקוחות תיק לכל לקוח, עם הקריאות והמעקבים" })).toBe(tiles[1]);
-      fireEvent.click(within(panel("כל הכלים")).getByRole("button", { name: /^קלפים / }));
-      expect(onTool).toHaveBeenCalledWith("cards");
+      fireEvent.click(within(panel("כל הכלים")).getByRole("button", { name: /^מספרים / }));
+      expect(onTool).toHaveBeenCalledWith("numbers");
       await screen.findAllByText(EMPTY_HE);
     });
 
@@ -618,7 +618,7 @@ describe("Today", () => {
       expect(await within(screen.getByRole("region", { name: "From the client files" })).findByRole("button", { name: (name) => name.replace(" ,", ",") === "5 Clients on file, open the clients" })).toBeTruthy();
       const days = await within(panel("The week ahead")).findAllByRole("listitem");
       await within(days[0]).findByText("Tuesday 6.10, today: יוסי לוי's birthday; a follow-up with רחל כהן.");
-      expect(within(panel("All the tools")).getByRole("button", { name: /^Cards / })).toBeTruthy();
+      expect(within(panel("All the tools")).getByRole("button", { name: /^Numbers / })).toBeTruthy();
     });
   });
 

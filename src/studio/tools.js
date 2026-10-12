@@ -10,7 +10,7 @@ export const STUDIO_TOOLS = [
   { k: "tables", i: "chart", he: "טבלאות", en: "Tables" },
   { k: "match", i: "heart", he: "התאמה", en: "Match" },
   { k: "daily", i: "sun", he: "יומי", en: "Daily" },
-  { k: "cards", i: "cards", he: "קלפים", en: "Cards" },
+  { k: "numbers", i: "book", he: "מספרים", en: "Numbers" },
   { k: "calc", i: "calculator", he: "מחשבונים", en: "Calculators" },
   { k: "account", i: "user", he: "החשבון שלי", en: "My account" },
 ];

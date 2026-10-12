@@ -64,7 +64,7 @@ const TOOLS = [
   ["טבלאות", "tables"],
   ["התאמה", "match"],
   ["יומי", "daily"],
-  ["קלפים", "cards"],
+  ["מספרים", "numbers"],
   ["מחשבונים", "calc"],
   ["החשבון שלי", "account"],
   ["חשבונות", "admin"],
@@ -96,20 +96,26 @@ describe("the explanation on every Studio screen", () => {
     }
   });
 
-  it("opens the קלפים tab on the tarot, with the number cards a press away (the owner, 2026-10-12)", async () => {
+  it("opens the מספרים tab on the number library, each number on its page with the Studio's own texts (the owner, 2026-10-12)", async () => {
     // Arrange
     studio();
-    fireEvent.click(within(await screen.findByRole("navigation", { name: "כלי הסטודיו" })).getByRole("button", { name: "קלפים" }));
+    fireEvent.click(within(await screen.findByRole("navigation", { name: "כלי הסטודיו" })).getByRole("button", { name: "מספרים" }));
 
-    // Assert: the tarot loads with the tab, every card of it in the gallery
-    expect(await screen.findByRole("button", { name: "לשלוף קלף" }, { timeout: 8000 })).toBeTruthy();
-    expect(within(screen.getByRole("list", { name: "כל הקלפים" })).getAllByRole("button")).toHaveLength(78);
-    expect(screen.getByRole("button", { name: "טארוט" }).getAttribute("aria-pressed")).toBe("true");
+    // Assert: every number, the masters and the debts, and no tarot anywhere
+    const numbers = await screen.findAllByRole("button", { name: /^\d+ · / });
+    expect(numbers.map((b) => Number(b.getAttribute("data-number")))).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33, 13, 14, 16, 19]);
+    expect(screen.queryByText(/טארוט/)).toBeNull();
 
-    // Act and assert: the number cards
-    fireEvent.click(screen.getByRole("button", { name: "קלפי המספרים" }));
-    expect(screen.getByText("לוחצים על קלף כדי להפוך אותו.")).toBeTruthy();
-    expect(screen.queryByRole("list", { name: "כל הקלפים" })).toBeNull();
+    // Act: open 7
+    fireEvent.click(screen.getByRole("button", { name: /^7 · / }));
+
+    // Assert: its page, from the texts the rest of the Studio shows
+    const page = screen.getByRole("heading", { level: 2, name: /^7 · / }).closest("article");
+    for (const part of ["המהות", "הסיפור של אנשי 7", "חוזקות", "אתגרים", "השיעור", "צל וצמיחה", "כשנה אישית", "מאפיינים", "טקס"]) {
+      expect(within(page).getByRole("heading", { level: 3, name: part })).toBeTruthy();
+    }
+    fireEvent.click(within(page).getByRole("button", { name: "לכל המספרים" }));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: /^7 · / }));
   });
 
   it("explains the comparison that is chosen in the התאמה tab", async () => {

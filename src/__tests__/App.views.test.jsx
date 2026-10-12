@@ -7,6 +7,7 @@ import { AccountProvider } from "../account/AccountContext.jsx";
 import { ToastProvider } from "../studio/Toasts.jsx";
 import { demoService } from "../demo/sampleAccount.js";
 import { SALES_WHATSAPP } from "../sales/config.js";
+import { universalDay } from "../engine/index.js";
 
 /** A 2D context that accepts every drawing call: the background canvases draw stars the tests do not look at. */
 const canvas2d = new Proxy({}, { get: (store, key) => (key in store ? store[key] : () => canvas2d), set: (store, key, value) => ((store[key] = value), true) });
@@ -143,14 +144,31 @@ describe("App inside Root", { timeout: 20000 }, () => {
     const tools = () => screen.getByRole("heading", { name: "כל הכלים" }).closest("section");
     const navButton = (name) => within(screen.getByRole("navigation", { name: "כלי הסטודיו" })).getByRole("button", { name });
 
+    it("shows today's number (the universal day) and opens it on its page in the number library (the owner, 2026-10-12)", async () => {
+      demo();
+      await home();
+      // the universal day of the date: every digit of it, reduced
+      const n = universalDay(new Date());
+      const panel = screen.getByRole("heading", { name: "המספר של היום" }).closest("section");
+      expect(within(panel).getByText(String(n))).toBeTruthy();
+      fireEvent.click(within(panel).getByRole("button", { name: `לעמוד של המספר ${n}` }));
+      expect(navButton("מספרים").getAttribute("aria-current")).toBe("page");
+      expect(screen.getByRole("heading", { level: 2, name: new RegExp(`^${n} · `) })).toBeTruthy();
+      // and from quick search
+      fireEvent.click(screen.getAllByRole("button", { name: "חיפוש מהיר" })[0]);
+      const search = await screen.findByRole("dialog");
+      expect(within(search).getByRole("option", { name: /המספר של היום/ })).toBeTruthy();
+      fireEvent.keyDown(search, { key: "Escape" });
+    });
+
     it("opens each tool from its tile, and has no leads tile in the demo", async () => {
       demo();
       await home();
       // a tile is named by the tool's name and then its line
       expect(within(tools()).queryByRole("button", { name: /^לידים / })).toBeNull();
       expect(within(tools()).queryByRole("button", { name: /^היום / })).toBeNull();
-      fireEvent.click(within(tools()).getByRole("button", { name: /^קלפים / }));
-      expect(navButton("קלפים").getAttribute("aria-current")).toBe("page");
+      fireEvent.click(within(tools()).getByRole("button", { name: /^מספרים / }));
+      expect(navButton("מספרים").getAttribute("aria-current")).toBe("page");
     });
 
     it("goes home to 'היום' from the top bar in the Studio; on Shani's page the button stays as it was", async () => {

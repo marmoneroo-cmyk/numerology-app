@@ -3,7 +3,7 @@
  * on it), four figures from the client files, the week ahead, the clients' birthdays, the follow-ups that
  * are due (each can be marked done), the most recently active clients, the clients worth a word, every
  * tool, and today's card. It reads the client list and the summary from the workspace store; the day, the
- * numbers and the deck come in from the app. Nothing on it is made up: every figure is counted from the store.
+ * numbers and today's number come in from the app. Nothing on it is made up: every figure is counted from the store.
  */
 import { useEffect, useId, useRef, useState } from "react";
 import { useLoad } from "../workspace/ui.jsx";
@@ -660,13 +660,13 @@ function Tools({ he, tools, onTool, onSearch }) {
  *   he: boolean, store: object, now?: () => Date,
  *   day: {number: number, title: string, text: string},
  *   lifePath: (isoDate: string) => number, personalYear: (isoDate: string, at: Date) => number,
- *   deck: import("react").ReactNode, onOpenClient: (id: string) => void, onNewReading: () => void,
+ *   dayNumber: import("react").ReactNode, onOpenClient: (id: string) => void, onNewReading: () => void,
  *   tools?: {k: string, i: string, he: string, en: string}[], onTool?: (k: string) => void,
  *   onNewClient?: () => void, onMeeting?: () => void, onSearch?: () => void,
  *   greetAnyone?: boolean, signature?: string, onOpenReading?: (id: string) => void,
  * }} props `signature` ends each message to a client (the studio's name)
  */
-export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, deck, tools = [], onTool, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch, onOpenReading, greetAnyone = false, signature = "" }) {
+export default function Today({ he, store, now = () => new Date(), day, lifePath, personalYear, dayNumber, tools = [], onTool, onOpenClient, onNewReading, onNewClient, onMeeting, onSearch, onOpenReading, greetAnyone = false, signature = "" }) {
   const load = useLoad(() => store.clients.list(), [store]);
   // the follow-ups up to the week strip's last day (the panel lists the ones due by today), asked again on a new date
   const dayKey = toYmd(now());
@@ -730,8 +730,8 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
         )}
       </div>
       <Tools he={he} tools={tools} onTool={onTool} onSearch={onSearch} />
-      <Panel title={he ? "קלף היום" : "Today's card"} className="st-deck-panel" rise={6}>
-        {deck}
+      <Panel title={he ? "המספר של היום" : "Today's number"} className="st-day-number-panel" rise={6}>
+        {dayNumber}
       </Panel>
     </div>
   );

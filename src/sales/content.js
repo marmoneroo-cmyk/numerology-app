@@ -80,7 +80,7 @@ export const SALES = {
         { icon: "users", title: "השוואת שמות", text: "שם נוכחי מול שם מוצע, כל המספרים זה לצד זה, והשינויים מסומנים." },
         { icon: "sparkle", title: "מחולל שמות", text: "שמות נפוצים שמסתכמים במספר המבוקש." },
         { icon: "chart", title: "טבלאות ומחזורים", text: "מחזור השנים האישי, פסגות ואתגרים, ומפת לו-שו." },
-        { icon: "cards", title: "קלפים והיום האוניברסלי", text: "קלף היום והיום האוניברסלי, לפתיחה של כל יום עבודה." },
+        { icon: "book", title: "ספריית המספרים", text: "כל מספר, כולל מספרי המאסטר והחובות הקארמיים, בעמוד משלו. והמספר של היום, לפתיחה של כל יום עבודה." },
       ],
     },
     privacy: {
@@ -215,7 +215,7 @@ export const SALES = {
         { icon: "users", title: "Compare names", text: "A current name against a proposed one, every number side by side, the changes marked." },
         { icon: "sparkle", title: "Name generator", text: "Common names that add up to the number you want." },
         { icon: "chart", title: "Tables and cycles", text: "The personal year cycle, pinnacles and challenges, and the Lo Shu grid." },
-        { icon: "cards", title: "Cards and the universal day", text: "Today's card and the universal day, to open each working day." },
+        { icon: "book", title: "The number library", text: "Every number, the master numbers and the karmic debts included, on its own page. And today's number, to open each working day." },
       ],
     },
     privacy: {

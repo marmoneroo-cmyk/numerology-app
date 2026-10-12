@@ -1,5 +1,5 @@
 /*
- * The 3D tarot card (Card.jsx). The button holds the perspective; .st-card-tilt
+ * The 3D number card (Card.jsx). The button holds the perspective; .st-card-tilt
  * leans toward the mouse; .st-card-inner turns over with a little overshoot.
  * Opening adds st-open: the flip, then a glow and one sweep of shine, while
  * Card.jsx sends out the sparks. 132px wide (md) or 190px (lg), always 2:3,

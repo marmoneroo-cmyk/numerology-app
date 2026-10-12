@@ -1,5 +1,5 @@
 /**
- * What the Studio's full-window dialogs (MeetingMode, TarotDetail) share: the page behind stays still, and Tab
+ * What the Studio's full-window dialogs (MeetingMode) share: the page behind stays still, and Tab
  * goes round the dialog's own controls. The quick search (CommandPalette) has its own, for its list.
  */
 

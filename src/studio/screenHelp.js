@@ -32,9 +32,9 @@ export const SCREEN_HELP = {
     he: "המסר של היום וטקס קצר לפי מספר היום בחודש, לשיתוף עם לקוחות או לפתיחת היום.",
     en: "The message of the day and a short ritual by the day-of-month number, to share with clients or to open the day.",
   },
-  cards: {
-    he: "חפיסת טארוט מלאה של 78 קלפים, עם משמעות רגילה והפוכה לכל קלף ושליפה של קלף, ולצידה קלפי המספרים 1 עד 9.",
-    en: "A full tarot deck of 78 cards, each with its upright and reversed meaning and a card to draw, beside the number cards 1 to 9.",
+  numbers: {
+    he: "ספריית המספרים: 1 עד 9, מספרי המאסטר 11, 22 ו-33 והחובות הקארמיים 13, 14, 16 ו-19. לוחצים על מספר ונפתח עמוד עם כל מה שהסטודיו אומר עליו.",
+    en: "The number library: 1 to 9, the master numbers 11, 22 and 33, and the karmic debts 13, 14, 16 and 19. A number opens a page with everything the Studio says about it.",
   },
   calc: {
     he: "מחשבונים ממוקדים: כל המספרים של אדם, נומרוסקופ יומי, מחזורי חיים, רשת לו שו, חובות קארמיים, מחזור שנים, השוואת שמות, מספרים מעשיים ומחשבוני התאמה.",
@@ -58,7 +58,7 @@ export const TOOL_LINES = {
   tables: { he: "כל המספרים של אדם אחד בטבלה", en: "All of one person's numbers in a table" },
   match: { he: "זוגיות, פרופיל אישי, הורה וילד", en: "Couples, a personal profile, parent and child" },
   daily: { he: "המסר של היום וטקס קצר", en: "The day's message and a short ritual" },
-  cards: { he: "טארוט מלא וקלפי המספרים", en: "A full tarot deck and the number cards" },
+  numbers: { he: "כל מספר בעמוד משלו", en: "Every number on its own page" },
   calc: { he: "מחשבונים ממוקדים ומחשבוני התאמה", en: "Focused and compatibility calculators" },
   account: { he: "הפרטים, הסיסמה ואבטחת החשבון", en: "Details, password and the account's security" },
   admin: { he: "פתיחה וניהול של מנויים", en: "Opening and managing subscribers" },

@@ -16,7 +16,6 @@ import { labService } from "./labAccount.js";
 import CardsSection from "./sections/CardsSection.jsx";
 import MeetingSection from "./sections/MeetingSection.jsx";
 import PaletteSection from "./sections/PaletteSection.jsx";
-import TarotSection from "./sections/TarotSection.jsx";
 import TodaySection from "./sections/TodaySection.jsx";
 
 /** The whole Studio, signed in as the sample admin with sample clients (see labAccount.js). */
@@ -66,7 +65,6 @@ export const SECTIONS = [
   ["cards", "קלפים", CardsSection],
   ["meeting", "מצב פגישה", MeetingSection],
   ["palette", "חיפוש מהיר", PaletteSection],
-  ["tarot", "טארוט", TarotSection],
   ["studio", "הסטודיו המלא", StudioPreview],
 ];
 

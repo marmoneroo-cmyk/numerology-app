@@ -14,7 +14,7 @@ const realScrollIntoView = Element.prototype.scrollIntoView; // jsdom has none; 
 const makeItems = () =>
   [
     { id: "reading", label: "קריאה", hint: "כלי", keywords: ["Reading"] },
-    { id: "cards", label: "קלפים", hint: "כלי", keywords: ["cards", "טארוט"] },
+    { id: "numbers", label: "מספרים", hint: "כלי", keywords: ["numbers", "ספרייה"] },
     { id: "money", label: "כסף ושפע", hint: "כלי" },
     { id: "rachel", label: "רחל כהן", hint: "מסלול חיים 7", keywords: ["לקוח"] },
     { id: "rachel-a", label: "רחל אברהם", hint: "מסלול חיים 3", keywords: ["לקוח"] },
@@ -122,8 +122,8 @@ describe("CommandPalette", () => {
     expect(labels()).toEqual(["קריאה", "קריאה חדשה"]);
     type("READING");
     expect(labels()).toEqual(["קריאה"]);
-    type("טארוט");
-    expect(labels()).toEqual(["קלפים"]);
+    type("ספרייה");
+    expect(labels()).toEqual(["מספרים"]);
     type("  לקוח ");
     expect(labels()).toEqual(["רחל כהן", "רחל אברהם", "שלומית לוי"]);
     type("");
@@ -170,7 +170,7 @@ describe("CommandPalette", () => {
     const { items, onClose } = showPalette({ items: makeItems().slice(0, 3) });
     expect(activeLabel()).toBe("קריאה");
     expect(press("ArrowDown")).toBe(false);
-    expect(activeLabel()).toBe("קלפים");
+    expect(activeLabel()).toBe("מספרים");
     expect(scrolled.at(-1).element).toBe(screen.getAllByRole("option")[1]);
     expect(scrolled.at(-1).options).toEqual({ block: "nearest" });
     press("ArrowDown");
@@ -180,7 +180,7 @@ describe("CommandPalette", () => {
     expect(press("ArrowUp")).toBe(false);
     expect(activeLabel()).toBe("כסף ושפע");
     press("ArrowUp");
-    expect(activeLabel()).toBe("קלפים");
+    expect(activeLabel()).toBe("מספרים");
     expect(screen.getAllByRole("option").map((o) => o.getAttribute("aria-selected"))).toEqual(["false", "true", "false"]);
 
     expect(press("Enter")).toBe(false);
@@ -194,7 +194,7 @@ describe("CommandPalette", () => {
   it("starts again from the first result when the query changes, and stays valid when the items change", () => {
     const { items, onClose, rerender } = showPalette();
     press("ArrowDown");
-    expect(activeLabel()).toBe("קלפים");
+    expect(activeLabel()).toBe("מספרים");
     type("קריאה");
     expect(activeLabel()).toBe("קריאה");
     press("ArrowUp");
@@ -214,7 +214,7 @@ describe("CommandPalette", () => {
     items.forEach((item) => expect(item.run).not.toHaveBeenCalled());
     expect(activeLabel()).toBe("קריאה");
     press("ArrowDown", { repeat: true }); // a held arrow still moves
-    expect(activeLabel()).toBe("קלפים");
+    expect(activeLabel()).toBe("מספרים");
   });
 
   it("closes on Escape without letting the key reach the page, and gives the focus back", () => {
@@ -242,7 +242,7 @@ describe("CommandPalette", () => {
   it("gives the focus back after Enter too, unless the chosen item moved it somewhere else", () => {
     const elsewhere = () => screen.getByRole("button", { name: "elsewhere" });
     const items = [
-      { id: "stay", label: "קלפים", run: vi.fn() },
+      { id: "stay", label: "מספרים", run: vi.fn() },
       { id: "move", label: "לקוחות", run: () => elsewhere().focus() },
     ];
     render(<Page items={items} />);
@@ -341,7 +341,7 @@ describe("CommandPalette", () => {
     expect(document.activeElement).toBe(input());
     expect(pageOverflow()).toBe("hidden");
     press("ArrowDown");
-    expect(activeLabel()).toBe("קלפים");
+    expect(activeLabel()).toBe("מספרים");
     press("Escape");
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(opener);

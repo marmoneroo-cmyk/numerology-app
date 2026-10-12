@@ -1,0 +1,187 @@
+/* The number library and today's number (NumberLibrary.jsx). Each number carries its colour as --nl-accent. */
+
+.nl-groups {
+  display: grid;
+  gap: 22px;
+}
+
+.nl-group h2 {
+  margin: 0 0 10px;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
+  font-weight: 600;
+  color: var(--st-gold-text);
+}
+
+.nl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nl-num {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 112px;
+  padding: 14px 8px;
+  border: 1px solid var(--st-line);
+  border-top: 3px solid var(--nl-accent);
+  border-radius: 14px;
+  background: var(--st-panel);
+  color: var(--st-ink);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.nl-num:hover {
+  transform: translateY(-2px);
+  border-color: var(--st-line-strong);
+  box-shadow: var(--st-shadow-soft);
+}
+.nl-num:focus-visible {
+  outline: 2px solid var(--st-gold);
+  outline-offset: 2px;
+}
+.nl-num-value {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--nl-accent);
+}
+.nl-num-title {
+  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.nl-page {
+  display: grid;
+  gap: 16px;
+}
+.nl-back {
+  justify-self: start;
+}
+.nl-head {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 18px 12px 16px;
+  border: 1px solid var(--st-line);
+  border-top: 4px solid var(--nl-accent);
+  border-radius: 16px;
+  background: var(--st-panel);
+  text-align: center;
+}
+.nl-head-value {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--nl-accent);
+}
+.nl-head h2 {
+  margin: 0;
+  font-size: max(var(--ts-min, 0px), calc(22px * var(--ts, 1)));
+  color: var(--st-ink);
+}
+.nl-head h2:focus {
+  outline: none;
+}
+.nl-head h2:focus-visible {
+  outline: 2px solid var(--st-gold);
+  outline-offset: 4px;
+}
+.nl-keywords {
+  margin: 0;
+  color: var(--st-ink-soft);
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
+}
+
+.nl-part {
+  padding: 14px 18px;
+  border: 1px solid var(--st-line);
+  border-radius: 14px;
+  background: var(--st-panel);
+}
+.nl-part h3 {
+  margin: 0 0 8px;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
+  color: var(--st-gold-text);
+}
+.nl-part p {
+  margin: 0;
+  line-height: 1.75;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
+}
+.nl-list {
+  margin: 0;
+  padding-inline-start: 20px;
+  line-height: 1.8;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
+}
+.nl-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 18px;
+  margin: 0;
+}
+.nl-facts dt {
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
+  color: var(--st-ink-soft);
+}
+.nl-facts dd {
+  margin: 2px 0 0;
+  line-height: 1.6;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
+}
+.nl-digit {
+  margin: 0;
+}
+
+/* today's number on the home screen */
+.nl-day {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 8px 0 4px;
+  text-align: center;
+}
+.nl-day-value {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--nl-accent);
+}
+.nl-day-title {
+  font-size: max(var(--ts-min, 0px), calc(18px * var(--ts, 1)));
+  font-weight: 600;
+}
+.nl-day-words {
+  color: var(--st-ink-soft);
+  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
+}
+
+/* the numbers' colours are drawn for the dark theme: on cream, the same colour darkened, so a silver 2 or a gold 1
+   still reads (large text, 3:1 or more) */
+:root[data-st-theme="light"] .nl-num-value,
+:root[data-st-theme="light"] .nl-head-value,
+:root[data-st-theme="light"] .nl-day-value {
+  color: color-mix(in oklab, var(--nl-accent) 50%, black);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nl-num {
+    transition: none;
+  }
+  .nl-num:hover {
+    transform: none;
+  }
+}

@@ -1,10 +1,9 @@
 /**
- * Lab section (dev only): today's card ritual and the nine cards in a grid,
+ * Lab section (dev only): the nine number cards in a grid,
  * with sample titles and simple line drawings. No sign-in and no network.
  */
 import { useState } from "react";
 import Card from "../../studio/cards/Card.jsx";
-import Deck from "../../studio/cards/Deck.jsx";
 
 /** Line drawings in a 100 by 100 box; the card gives them their gold stroke. */
 const SHAPES = {
@@ -86,10 +85,6 @@ export default function CardsSection() {
         <input type="checkbox" checked={!he} onChange={(e) => setHe(!e.target.checked)} />
         English
       </label>
-      <section className="st-panel">
-        <h3 style={heading}>{he ? "קלף היום" : "Today's card"}</h3>
-        <Deck key={he ? "he" : "en"} pool={cards} he={he} />
-      </section>
       <section>
         <h3 style={heading}>{he ? "תשעת הקלפים" : "The nine cards"}</h3>
         <div className="st-cards">

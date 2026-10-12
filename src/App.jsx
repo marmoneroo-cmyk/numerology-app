@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import WorkspaceApp from "./workspace/WorkspaceApp.jsx";
 import { ContentContext } from "./workspace/content.js";
 import { useAccount, AccountGate } from "./account/AccountContext.jsx";
@@ -12,7 +12,7 @@ import Today from "./studio/Today.jsx";
 import MeetingMode from "./studio/MeetingMode.jsx";
 import CommandPalette, { useCommandShortcut } from "./studio/CommandPalette.jsx";
 import Card from "./studio/cards/Card.jsx";
-import Deck from "./studio/cards/Deck.jsx";
+import NumberLibrary, { DayNumber } from "./studio/library/NumberLibrary.jsx";
 import { useToast } from "./studio/Toasts.jsx";
 import { personOf, parseBirthDate, comparedText } from "./workspace/format.js";
 import { whatsappLink } from "./studio/today.js";
@@ -37,16 +37,9 @@ import { fs } from "./ui/type.js";
 import ScreenIntro from "./studio/ScreenIntro.jsx";
 import { psychLevels, PSYCH_NAMES, LEVEL_WORDS } from "./reading/psych.js";
 import { SCREEN_HELP, MATCH_HELP } from "./studio/screenHelp.js";
-import { ScreenBoundary } from "./workspace/ui.jsx";
 import Particles from "./ui/Particles.jsx";
 import { storedStudioDark, rememberStudioTheme } from "./studio/theme.js";
 import { STUDIO_TOOLS, ADMIN_TOOL } from "./studio/tools.js";
-
-/**
- * The tarot deck and its art load with the קלפים tab only. A new lazy component on each try: React keeps a
- * failed import's error, so trying again needs a fresh one.
- */
-const loadTarot = () => lazy(() => import("./studio/tarot/TarotScreen.jsx"));
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
@@ -276,7 +269,8 @@ function CardArt({number,size=140}){
   return <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`}>{arts[number]||arts[1]}</svg>;
 }
 
-function TarotCard({number,dk,flipped:ext,size="sm"}){
+/** The life path's card in a reading on Shani's page: the number's archetype, element and drawing. */
+function LifePathCard({number,dk,flipped:ext,size="sm"}){
   const[f,setF]=useState(ext||false);const info=D[number]||D[1];
   const sm=size==="sm";const w=sm?115:190;const h=sm?165:275;const ac=dk?"#c8a96a":"#937640";
   return(<div onClick={()=>{setF(!f);AU.init();AU.p("card");}} style={{perspective:800,cursor:"pointer",width:w,height:h,flexShrink:0}}>
@@ -295,7 +289,7 @@ function TarotCard({number,dk,flipped:ext,size="sm"}){
   </div>);
 }
 
-/** The Studio's nine cards (Card and Deck): number, archetype, keywords, the number's colour and its drawing. */
+/** The Studio's nine number cards (Card): number, archetype, keywords, the number's colour and its drawing. */
 const studioDeck=(he)=>[1,2,3,4,5,6,7,8,9].map(n=>({number:n,title:he?D[n].t:D[n].te,subtitle:he?D[n].s:D[n].se,accent:D[n].c,art:<CardArt number={n} size={100}/>}));
 /** A card's chime as it turns face up. */
 const chimeOnOpen=(next)=>{if(next){AU.init();AU.p("card");}};
@@ -1491,11 +1485,8 @@ export default function App({ view, navigate } = {}){
   const[openRequest,setOpenRequest]=useState(null);
   const[meeting,setMeeting]=useState(null);
   const[paletteOpen,setPaletteOpen]=useState(false);
-  const[cardDeck,setCardDeck]=useState("tarot"); // the קלפים tab: the tarot, or the number cards 1-9
-  const[TarotScreen,setTarotScreen]=useState(loadTarot);const[tarotTry,setTarotTry]=useState(0);
+  const[openNumber,setOpenNumber]=useState(null); // the number library's open page (the מספרים tab)
   const[paletteClients,setPaletteClients]=useState([]);
-  // quick search's "today's card": a new number remounts the deck in "היום", which then deals at once
-  const[deckDeal,setDeckDeal]=useState(0);
   const licensee=studioReady?{fullName:account.profile.fullName||account.profile.email,phone:account.profile.phone}:null;
   const[workspaceKey,setWorkspaceKey]=useState(0);
   // another account in the Studio (or none) starts clean: nothing of the previous subscriber's client stays on screen.
@@ -1505,9 +1496,8 @@ export default function App({ view, navigate } = {}){
   const lastStudioUser=useRef(studioUser);
   useLayoutEffect(()=>{if(lastStudioUser.current===studioUser)return;lastStudioUser.current=studioUser;clearReading();setTab("today");
     // and nothing of theirs in quick search, meeting mode or a client waiting to open
-    setPaletteOpen(false);setPaletteClients([]);setMeeting(null);setOpenRequest(null);setDeckDeal(0);},[studioUser]);
+    setPaletteOpen(false);setPaletteClients([]);setMeeting(null);setOpenRequest(null);setOpenNumber(null);},[studioUser]);
   useEffect(()=>{if(tab==="admin"&&account.profile?.role!=="admin")setTab("today");},[tab,account.profile?.role]);
-  useEffect(()=>{if(tab!=="today")setDeckDeal(0);},[tab]); // the next visit to "היום" waits for a press again
   // a saved map opens in meeting mode too (meetingFor is defined below; it runs only on a press)
   // the demo's interpretations stay blurred, so it makes no reports
   const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:view==="demo"?null:(r,n,h,i)=>exportReport(r,n,h,i,licensee),
@@ -1585,7 +1575,6 @@ export default function App({ view, navigate } = {}){
   /** Opens a view of the workspace (a client, the new-client form) from another screen. */
   const openClient=(view)=>{setTab("clients");setOpenRequest({view,nonce:Date.now()});};
   const dayNum=universalDay(); // "היום" shows the universal day (the owner, 2026-10-11); "יומי" keeps the day-of-month number
-  const deckPool=useMemo(()=>studioDeck(he),[he]);
   // the demo has no Leads: they are this browser's real ones (Shani's page saves them here)
   const studioTools=account.profile?.role==="admin"?[...STUDIO_TOOLS,ADMIN_TOOL]:demo?STUDIO_TOOLS.filter(tb=>tb.k!=="leads"):STUDIO_TOOLS;
   /** When the focused element went away with the screen it was on, the keyboard focus goes to the current tool's button. */
@@ -1593,6 +1582,8 @@ export default function App({ view, navigate } = {}){
   // the screens cross-fade where the browser can (view transitions), and simply change elsewhere or under reduced motion
   const selectTool=(k)=>{AU.init();AU.p("click");withViewTransition(()=>{flushSync(()=>{setTab(k);if(k!=="reading")setShowRes(false);});keepFocus();});};
   const newReading=()=>{clearReading();setTab("reading");};
+  /** Opens a number's page in the library (the מספרים tab), as today's number does. */
+  const openNumberPage=(n)=>{setOpenNumber(n);selectTool("numbers");};
   // the top bar's "בית": in the Studio its home, "היום" (the owner, 2026-10-12); on the customer page an empty reading form, as before
   const goHomeScreen=()=>{if(!showOwnerUI){goHome();return;}if(legalDoc)closeLegal();selectTool("today");window.scrollTo({top:0,behavior:prefersReducedMotion()?"auto":"smooth"});};
   // each view keeps its own theme; the Studio's is remembered for the next visit
@@ -1613,7 +1604,7 @@ export default function App({ view, navigate } = {}){
     ...studioTools.map(tb=>({id:`tool-${tb.k}`,label:he?tb.he:tb.en,hint:he?"כלי":"Tool",keywords:[tb.he,tb.en],run:()=>selectTool(tb.k)})),
     {id:"new-reading",label:he?"קריאה חדשה":"New reading",hint:he?"פעולה":"Action",keywords:["קריאה","reading"],run:newReading},
     {id:"new-client",label:he?"לקוח חדש":"New client",hint:he?"פעולה":"Action",keywords:["לקוח","client"],run:()=>openClient({name:"clientForm"})},
-    {id:"today-card",label:he?"קלף היום":"Today's card",hint:he?"ערבוב וחלוקה":"Shuffle and deal",keywords:["קלף","קלפים","card","deck"],run:()=>{setDeckDeal(n=>n+1);selectTool("today");}},
+    {id:"today-number",label:he?"המספר של היום":"Today's number",hint:`${dayNum} · ${he?D[dayNum].t:D[dayNum].te}`,keywords:["מספר","מספרים","number","numbers"],run:()=>openNumberPage(dayNum)},
     ...(results&&readingName?[{id:"meeting",label:he?"מצב פגישה":"Meeting mode",hint:readingName,keywords:["פגישה","meeting"],run:openMeeting}]:[]),
     ...paletteClients.map(c=>{const p=c.birthDate?personOf("",c.birthDate):null;return{id:`client-${c.id}`,label:c.fullName,
       hint:p?`${he?"לקוח · מסלול":"Client · life path"} ${LPm(p.d,p.m,p.y)}`:(he?"לקוח":"Client"),
@@ -1735,7 +1726,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           day={{number:dayNum,title:he?D[dayNum].t:D[dayNum].te,text:he?D[dayNum].s:D[dayNum].se}}
           lifePath={(iso)=>{const p=personOf("",iso);return LPm(p.d,p.m,p.y);}}
           personalYear={(iso,at)=>{const p=personOf("",iso);return personalYearOn(p.d,p.m,at);}}
-          deck={<Deck key={deckDeal} pool={deckPool} he={he} shuffleOnMount={deckDeal>0} onPick={()=>chimeOnOpen(true)}/>}
+          dayNumber={<DayNumber he={he} texts={libraryTexts} n={dayNum} onOpen={openNumberPage}/>}
           onOpenClient={(id)=>openClient({name:"client",clientId:id})}
           onOpenReading={(id)=>openClient({name:"reading",readingId:id})}
           onNewReading={newReading}
@@ -1771,36 +1762,10 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           </div>
         )}
 
-        {tab==="cards"&&(
+        {tab==="numbers"&&(
           <div className="st-tool-wide" style={{animation:"fadeInUp .5s ease-out"}}>
-            {/* two decks (the owner, 2026-10-12): the full tarot, and the number cards 1-9 */}
-            <div className="st-switch" role="group" aria-label={he?"החפיסה":"The deck"}>
-              {[["tarot",he?"טארוט":"Tarot"],["numbers",he?"קלפי המספרים":"Number cards"]].map(([k,l])=>(
-                <button key={k} type="button" className={`fx st-switch-b${cardDeck===k?" act":""}`} aria-pressed={cardDeck===k} onClick={()=>setCardDeck(k)}>{l}</button>
-              ))}
-            </div>
-            {cardDeck==="tarot"?(
-              // a deck that fails to load stays in this tab: a way to try again, and the number cards, instead of the whole Studio failing
-              <ScreenBoundary key={tarotTry} fallback={
-                <div className="st-panel" role="alert" style={{padding:24,textAlign:"center",display:"grid",gap:12,justifyItems:"center"}}>
-                  <p style={{margin:0,fontSize:fs(15)}}>{he?"החפיסה לא נטענה. אולי החיבור לאינטרנט נקטע.":"The deck did not load. The connection may have dropped."}</p>
-                  <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
-                    <button type="button" className="fx st-switch-b" onClick={()=>{setTarotScreen(()=>loadTarot());setTarotTry(n=>n+1);}}>{he?"לנסות שוב":"Try again"}</button>
-                    <button type="button" className="fx st-switch-b" onClick={()=>setCardDeck("numbers")}>{he?"לקלפי המספרים":"To the number cards"}</button>
-                  </div>
-                </div>}>
-                <Suspense fallback={<p role="status" style={{textAlign:"center",color:"var(--st-ink-soft)",fontSize:fs(14)}}>{he?"טוענים את החפיסה…":"Loading the deck…"}</p>}>
-                  <TarotScreen he={he}/>
-                </Suspense>
-              </ScreenBoundary>
-            ):(
-              <div className="st-panel" style={{padding:24}}>
-                <p style={{textAlign:"center",fontSize:fs(13),color:"var(--st-ink-soft)",marginBottom:18}}>{he?"לוחצים על קלף כדי להפוך אותו.":"Press a card to turn it over."}</p>
-                <div className="st-cards">
-                  {studioDeck(he).map(card=><Card key={card.number} {...card} he={he} onToggle={chimeOnOpen}/>)}
-                </div>
-              </div>
-            )}
+            {/* the number library (the owner, 2026-10-12, in place of the tarot): every number, each with its page */}
+            <NumberLibrary he={he} texts={libraryTexts} open={openNumber} onOpen={setOpenNumber} onClose={()=>setOpenNumber(null)}/>
           </div>
         )}
 
@@ -1851,7 +1816,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {/* CHAPTER 1 */}
         <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk} he={he} studio={showOwnerUI}>
-          <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>{showOwnerUI?<RevealCard {...studioDeck(he)[(lpBase||1)-1]} he={he} size="lg"/>:<TarotCard number={lpBase||1} dk={dk} flipped={true} size="lg"/>}</div>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>{showOwnerUI?<RevealCard {...studioDeck(he)[(lpBase||1)-1]} he={he} size="lg"/>:<LifePathCard number={lpBase||1} dk={dk} flipped={true} size="lg"/>}</div>
           <p className="nar-line"><Locked he={he} chip>{he?D[lpBase]?.narrative:D[lpBase]?.narrativeE}</Locked></p>
           {results.lp>9&&MASTER[results.lp]&&<div style={{textAlign:"center",marginTop:-6,marginBottom:8}}><span className="badge" style={{borderColor:`${ac}55`}}>{he?`מספר מאסטר ${results.lp} · ${MASTER[results.lp].t}`:`Master ${results.lp} · ${MASTER[results.lp].te}`}</span><p style={{fontSize:fs(12.5),lineHeight:1.8,color:ts,marginTop:8}}><Locked he={he}>{he?MASTER[results.lp].he:MASTER[results.lp].en}</Locked></p></div>}
           <div className="divider"/>
@@ -2334,3 +2299,6 @@ function RitualWidget({number,basis,how,he,dk,studio=false}){
     </div>
   </div>);
 }
+
+/** What the number library shows of each number: the app's own interpretations, nothing new. */
+const libraryTexts={D,MASTER,KARMA,YEAR_ENERGY,NUM_LIB,TRAITS};
