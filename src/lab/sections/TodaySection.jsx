@@ -96,7 +96,7 @@ export default function TodaySection() {
         day={DAY}
         lifePath={lifePath}
         personalYear={personalYear}
-        deck={<div style={PLACEHOLDER}>כאן תופיע החפיסה</div>}
+        dayNumber={<div style={PLACEHOLDER}>כאן יופיע המספר של היום</div>}
         onOpenClient={openClient}
         onNewReading={() => setSaid("נלחץ: קריאה חדשה")}
         onNewClient={() => setSaid("נלחץ: לקוח חדש")}

@@ -7,6 +7,7 @@ export {
   LV,
   VOW,
   MASTER_NUMBERS,
+  KARMIC_DEBTS,
   isMaster,
   reduce,
   R,

@@ -116,6 +116,13 @@ describe("the explanation on every Studio screen", () => {
     }
     fireEvent.click(within(page).getByRole("button", { name: "לכל המספרים" }));
     expect(document.activeElement).toBe(screen.getByRole("button", { name: /^7 · / }));
+
+    // a page left open: coming back to the tab shows every number again
+    fireEvent.click(screen.getByRole("button", { name: /^7 · / }));
+    fireEvent.click(within(nav()).getByRole("button", { name: "היום" }));
+    fireEvent.click(within(nav()).getByRole("button", { name: "מספרים" }));
+    expect(screen.queryByRole("heading", { level: 2, name: /^7 · / })).toBeNull();
+    expect(screen.getAllByRole("button", { name: /^\d+ · / })).toHaveLength(16);
   });
 
   it("explains the comparison that is chosen in the התאמה tab", async () => {

@@ -2,7 +2,7 @@
  * The "היום" home: today's energy (the universal day on the wheel of numbers, with the clients' life paths
  * on it), four figures from the client files, the week ahead, the clients' birthdays, the follow-ups that
  * are due (each can be marked done), the most recently active clients, the clients worth a word, every
- * tool, and today's card. It reads the client list and the summary from the workspace store; the day, the
+ * tool, and today's number. It reads the client list and the summary from the workspace store; the day, the
  * numbers and today's number come in from the app. Nothing on it is made up: every figure is counted from the store.
  */
 import { useEffect, useId, useRef, useState } from "react";

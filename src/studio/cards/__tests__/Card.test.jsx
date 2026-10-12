@@ -159,25 +159,6 @@ describe("Card", () => {
     expect(buzz).not.toHaveBeenCalled();
   });
 
-  it("dims when asked: it steps back, is announced as unavailable, and ignores presses and the mouse", () => {
-    const onToggle = vi.fn();
-    const { rerender } = render(<Card {...seeker} he dimmed onToggle={onToggle} />);
-    const card = screen.getByRole("button", { name: "קלף סגור" });
-    vi.spyOn(card, "getBoundingClientRect").mockReturnValue(box);
-    expect(card.classList.contains("st-dim")).toBe(true);
-    expect(card.disabled).toBe(true);
-    fireEvent.click(card);
-    expect(onToggle).not.toHaveBeenCalled();
-    expect(card.getAttribute("aria-pressed")).toBe("false");
-    fireEvent.pointerMove(card, { pointerType: "mouse", clientX: 100, clientY: 0 });
-    expect(card.style.getPropertyValue("--tx")).toBe("");
-    rerender(<Card {...seeker} he onToggle={onToggle} />);
-    expect(card.classList.contains("st-dim")).toBe(false);
-    expect(card.disabled).toBe(false);
-    fireEvent.click(card);
-    expect(onToggle).toHaveBeenCalledWith(true);
-  });
-
   it("stops its timer when it goes away while the sparks are flying", () => {
     vi.useFakeTimers();
     const { unmount } = render(<Card {...seeker} he />);
@@ -243,8 +224,5 @@ describe("Card", () => {
     rerender(<Card {...seeker} he open={false} />);
     fireEvent.pointerMove(card, corner);
     expect(card.style.getPropertyValue("--tx")).not.toBe("");
-    rerender(<Card {...seeker} he open={false} dimmed />);
-    expect(card.style.getPropertyValue("--tx")).toBe("");
-    expect(card.style.getPropertyValue("--ty")).toBe("");
   });
 });

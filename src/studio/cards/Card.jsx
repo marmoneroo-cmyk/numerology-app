@@ -4,9 +4,7 @@
  * and a burst of sparks. On a computer, a closed card leans toward the mouse.
  *
  * Without `open` the card keeps its own state. With `open` the parent decides,
- * and a press only asks for the change through `onToggle(next)`. A `dimmed`
- * card has stepped back (one of the cards not chosen): it is also disabled, so a
- * screen reader announces it as unavailable and a press does nothing.
+ * and a press only asks for the change through `onToggle(next)`.
  */
 import { useEffect, useRef, useState } from "react";
 import { prefersReducedMotion, vibrate } from "../motion.js";
@@ -96,8 +94,8 @@ function letGo(el) {
 }
 
 /**
- * The lean, while the card may lean (closed and not dimmed). When it opens or steps
- * back, whoever caused it, the card lets go: the mouse may still rest on it, and no
+ * The lean, while the card may lean (closed). When it opens, whoever caused it,
+ * the card lets go: the mouse may still rest on it, and no
  * pointer event would come to put it straight.
  */
 function useLean(canLean) {
@@ -110,14 +108,14 @@ function useLean(canLean) {
 
 /**
  * @param {{ number: number, title: string, subtitle?: string, art?: import("react").ReactNode, accent?: string,
- *   open?: boolean, onToggle?: (next: boolean) => void, dimmed?: boolean, he?: boolean, size?: "md" | "lg" }} props
+ *   open?: boolean, onToggle?: (next: boolean) => void, he?: boolean, size?: "md" | "lg" }} props
  */
-export default function Card({ number, title, subtitle, art, accent, open, onToggle, dimmed = false, he = true, size = "md" }) {
+export default function Card({ number, title, subtitle, art, accent, open, onToggle, he = true, size = "md" }) {
   const controlled = typeof open === "boolean";
   const [ownOpen, setOwnOpen] = useState(false);
   const isOpen = controlled ? open : ownOpen;
   const sparks = useSparkBurst(isOpen);
-  const tilt = useLean(!isOpen && !dimmed);
+  const tilt = useLean(!isOpen);
 
   const toggle = (e) => {
     letGo(e.currentTarget);
@@ -128,7 +126,7 @@ export default function Card({ number, title, subtitle, art, accent, open, onTog
 
   let label = he ? "קלף סגור" : "Face-down card";
   if (isOpen) label = he ? `קלף ${number}: ${title}` : `Card ${number}: ${title}`;
-  const className = ["st-card", size === "lg" ? "st-card-lg" : "st-card-md", isOpen && "st-open", dimmed && "st-dim"].filter(Boolean).join(" ");
+  const className = ["st-card", size === "lg" ? "st-card-lg" : "st-card-md", isOpen && "st-open"].filter(Boolean).join(" ");
 
   return (
     <button
@@ -137,7 +135,6 @@ export default function Card({ number, title, subtitle, art, accent, open, onTog
       className={className}
       aria-pressed={isOpen}
       aria-label={label}
-      disabled={dimmed}
       style={accent ? { "--st-accent": accent } : undefined}
       onClick={toggle}
       onPointerMove={tilt.onPointerMove}

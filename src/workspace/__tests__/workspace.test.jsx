@@ -79,6 +79,8 @@ describe("workspace", () => {
     expect(await screen.findByRole("heading", { name: "שני כהן אזולאי" })).toBeTruthy();
     expect(screen.getByTestId("num-lp").textContent).toContain("33");
     expect(screen.getByTestId("num-nv").textContent).toContain("4");
+    // 5.10.2026, and no +1 (the owner, 2026-10-12): 1+5+0+8+2+0+2+6 = 24 → 6
+    expect(screen.getByTestId("num-py").textContent).toContain("6");
     expect(screen.getByText(/גיל 36/)).toBeTruthy();
   });
 
@@ -152,23 +154,49 @@ describe("workspace", () => {
     expect(await screen.findByText("שביל הגורל 33 · ערך השם 4 · שנה אישית 6")).toBeTruthy();
   });
 
-  it("shows a map saved with the +1 without it, in the file's list and on its screen (the owner, 2026-10-12)", async () => {
-    const store = await setup(async (s) => {
-      const c = await s.clients.create(SHANI);
-      const plain = fullCalc(15, 8, 1990, SHANI.fullName, NOW);
-      // as engine 2.2 saved it on 5.10.2026: the +1 made the year 7, the month 7+10 = 17 → 8, the day 8+5 = 13 → 4
-      const withPlus = { ...plain, py: 7, pm: 8, pd: 4, proj: plain.proj.map((p) => ({ ...p, py: p.py === 9 ? 1 : p.py + 1 })) };
-      await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: true }, result: { ...withPlus, insights: { he: [], en: [] } }, engineVersion: "2.2.0", computedFor: NOW.toISOString() });
-    });
+  it("shows a map saved with the +1 without it, in the file's list, on its screen, in meeting mode and in its PDF (the owner, 2026-10-12)", async () => {
+    const openMeeting = vi.fn();
+    const exportReport = vi.fn();
+    const store = await setup(
+      async (s) => {
+        const c = await s.clients.create(SHANI);
+        const plain = fullCalc(15, 8, 1990, SHANI.fullName, NOW);
+        // as engine 2.2 saved it on 5.10.2026: the +1 made the year 7, the month 7+10 = 17 → 8, the day 8+5 = 13 → 4
+        const withPlus = { ...plain, py: 7, pm: 8, pd: 4, proj: plain.proj.map((p) => ({ ...p, py: p.py === 9 ? 1 : p.py + 1 })) };
+        await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: true }, result: { ...withPlus, insights: { he: [], en: [] } }, engineVersion: "2.2.0", computedFor: NOW.toISOString() });
+      },
+      { content: { ...CONTENT, openMeeting, exportReport } },
+    );
     await openClient("שני כהן אזולאי");
     expect(await screen.findByText("שביל הגורל 33 · ערך השם 4 · שנה אישית 6")).toBeTruthy();
     await tap(/שביל הגורל 33/);
     // 6; 6+10 = 16 → 7; 7+5 = 12 → 3
     expect((await screen.findByTestId("rs-py")).textContent).toBe("6");
     expect(["rs-pm", "rs-pd"].map((id) => screen.getByTestId(id).textContent)).toEqual(["7", "3"]);
+    // the screen says the numbers were worked out again
+    expect(screen.getByText(/המספרים שתלויים בשנה האישית חושבו מחדש בלי ה-\+1/)).toBeTruthy();
+    // meeting mode and the PDF get the same numbers
+    click("מצב פגישה");
+    expect(openMeeting.mock.calls[0][0]).toMatchObject({ py: 6, pm: 7, pd: 3 });
+    click("הורדת דוח PDF");
+    expect(exportReport.mock.calls[0][0]).toMatchObject({ py: 6, pm: 7, pd: 3 });
     // shown, not rewritten: the saved row keeps what was saved
     const [row] = await store.readings.listByClient((await store.clients.list())[0].id);
     expect([row.input.add, row.result.py]).toEqual([true, 7]);
+  });
+
+  it("shows a years table saved with the +1 without it", async () => {
+    await setup(async (s) => {
+      const c = await s.clients.create(SHANI);
+      // saved on 5.10.2026 with the +1: 2026 was 7, where 1+5+0+8+2+0+2+6 = 24 gives 6
+      await s.readings.create(yearReadingOf(c.id, { input: { birthDate: SHANI.birthDate, add: true }, result: { proj: [{ year: 2026, py: 7, isCurrent: true }] } }));
+    });
+    await openClient("שני כהן אזולאי");
+    await tap(/שנים אישיות/);
+    const table = (await screen.findByRole("heading", { name: "מחזור השנים האישיות" })).closest("div").parentElement;
+    const row = within(table).getByText("2026").parentElement;
+    expect(within(row).getByText("6")).toBeTruthy();
+    expect(within(table).getAllByText(/^20\d\d$/)).toHaveLength(13); // worked out again: two years back, ten ahead
   });
 
   it("shows the insights saved with a map, not a fresh calculation", async () => {

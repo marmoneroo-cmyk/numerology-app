@@ -99,7 +99,11 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
         <div style={{ fontSize: fs(13), color: c.ts, marginTop: 4 }}>
           {client.fullName} · {he ? `חושב ל-${formatStamp(reading.computedFor)}` : `computed for ${formatStamp(reading.computedFor)}`}
         </div>
-        <div style={{ fontSize: fs(11), color: c.ts, marginTop: 2 }}>{he ? `גרסת מנוע ${reading.engineVersion}` : `Engine version ${reading.engineVersion}`}</div>
+        <div style={{ fontSize: fs(11), color: c.ts, marginTop: 2 }}>
+          {he ? `גרסת מנוע ${reading.engineVersion}` : `Engine version ${reading.engineVersion}`}
+          {/* saved with the +1, shown without it (engine saved.js): the numbers differ from what was saved */}
+          {reading.recalculated && (he ? " · המספרים שתלויים בשנה האישית חושבו מחדש בלי ה-+1" : " · the numbers that rest on the personal year were worked out again without the +1")}
+        </div>
       </Card>
 
       {reading.type === "map" && <MapResult reading={reading} he={he} c={c} content={content} />}

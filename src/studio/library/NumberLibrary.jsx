@@ -7,17 +7,17 @@
  */
 import { useEffect, useId, useRef } from "react";
 import Locked from "../../demo/DemoLock.jsx";
-import { R } from "../../engine/index.js";
+import { R, isMaster, MASTER_NUMBERS, KARMIC_DEBTS } from "../../engine/index.js";
+import { numberTitle as titleOf } from "../../workspace/content.js";
 import "./library.css";
 
 export const LIBRARY_GROUPS = [
   { key: "base", he: "המספרים 1–9", en: "Numbers 1–9", numbers: [1, 2, 3, 4, 5, 6, 7, 8, 9] },
-  { key: "master", he: "מספרי מאסטר", en: "Master numbers", numbers: [11, 22, 33] },
-  { key: "karmic", he: "חובות קארמיים", en: "Karmic debts", numbers: [13, 14, 16, 19] },
+  { key: "master", he: "מספרי מאסטר", en: "Master numbers", numbers: [...MASTER_NUMBERS] },
+  { key: "karmic", he: "חובות קארמיים", en: "Karmic debts", numbers: [...KARMIC_DEBTS] },
 ];
 
-const isMaster = (n) => n === 11 || n === 22 || n === 33;
-const isDebt = (n) => n === 13 || n === 14 || n === 16 || n === 19;
+const isDebt = (n) => KARMIC_DEBTS.includes(n);
 
 /** A karmic debt's text in two: its name before the dash and its lesson after ("חוב של עצלות — ..."). */
 function debtParts(texts, n, he) {
@@ -26,11 +26,10 @@ function debtParts(texts, n, he) {
   return dash > 0 ? { name: text.slice(0, dash), lesson: text.slice(dash + 3) } : { name: "", lesson: text };
 }
 
-/** The title a number goes by: its archetype, a master number's own, or the name of a debt. */
+/** The title a number goes by: its archetype or a master number's own (as everywhere), or the name of a debt. */
 export function numberTitle(texts, n, he) {
   if (isDebt(n)) return debtParts(texts, n, he).name || (he ? `חוב קארמי ${n}` : `Karmic debt ${n}`);
-  const entry = isMaster(n) ? texts.MASTER?.[n] : texts.D?.[n];
-  return (he ? entry?.t : entry?.te) ?? "";
+  return titleOf(texts, n, he);
 }
 
 const nameOf = (texts, n, he) => {
@@ -121,14 +120,17 @@ function Page({ he, texts, n, onOpen, onClose }) {
       ))}
     </ul>
   );
-  const text = (value) => (
+  // `chip`: in the demo, the first interpretation on the page says where the full one is
+  const text = (value, chip = false) => (
     <p>
-      <Locked he={he}>{value}</Locked>
+      <Locked he={he} chip={chip}>
+        {value}
+      </Locked>
     </p>
   );
   return (
     <article className="nl-page" style={{ "--nl-accent": accentOf(texts, n) }} aria-labelledby={headingId}>
-      <button type="button" className="fx st-switch-b nl-back" onClick={onClose}>
+      <button type="button" className="fx nl-btn nl-back" onClick={onClose}>
         <span aria-hidden="true">{he ? "→" : "←"}</span> {he ? "לכל המספרים" : "All the numbers"}
       </button>
       <header className="nl-head">
@@ -144,17 +146,17 @@ function Page({ he, texts, n, onOpen, onClose }) {
         {text(master)}
       </Part>
       <Part title={he ? "החוב" : "The debt"} show={Boolean(debt)}>
-        {text(debt)}
+        {text(debt, true)}
       </Part>
       {digit != null && (
         <p className="nl-digit">
-          <button type="button" className="fx st-switch-b" onClick={() => onOpen(digit)}>
+          <button type="button" className="fx nl-btn" onClick={() => onOpen(digit)}>
             {`${he ? "בספרה אחת" : "In one digit"}: ${nameOf(texts, digit, he)}`}
           </button>
         </p>
       )}
       <Part title={he ? "המהות" : "Essence"} show={Boolean(lib?.p)}>
-        {text(lib?.p)}
+        {text(lib?.p, true)}
       </Part>
       <Part title={he ? `הסיפור של אנשי ${n}` : `The story of the ${n}s`} show={Boolean(d?.narrative)}>
         {text(he ? d?.narrative : d?.narrativeE)}
@@ -226,7 +228,7 @@ export function DayNumber({ he, texts, n, onOpen }) {
       <span className="nl-day-value">{n}</span>
       <span className="nl-day-title">{numberTitle(texts, n, he)}</span>
       {d && <span className="nl-day-words">{he ? d.s : d.se}</span>}
-      <button type="button" className="fx st-switch-b" onClick={() => onOpen(n)}>
+      <button type="button" className="fx nl-btn" onClick={() => onOpen(n)}>
         {he ? `לעמוד של המספר ${n}` : `Open number ${n}`}
       </button>
     </div>

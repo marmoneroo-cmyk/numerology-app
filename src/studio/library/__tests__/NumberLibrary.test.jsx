@@ -112,6 +112,8 @@ describe("the number library", () => {
     expect(screen.queryByText("אנשי 7 מחפשים את האמת.")).toBeNull();
     expect(screen.queryByText("שנת התבוננות פנימית.")).toBeNull();
     expect(screen.getAllByText("הפירוש המלא נפתח במנוי").length).toBeGreaterThan(0);
+    // and says so where it shows: the first interpretation carries the visible note
+    expect(within(section("המהות")).getByText("הפירוש המלא נפתח במנוי").closest(".demo-lock-chip")).toBeTruthy();
   });
 
   it("speaks English", () => {

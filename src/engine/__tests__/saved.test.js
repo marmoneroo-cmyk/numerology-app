@@ -91,6 +91,20 @@ describe("other readings", () => {
     expect(withoutPlusOne(match)).toBe(match);
   });
 
+  it("marks what it worked out again, so the screen can say so; a reading shown as saved has no mark", () => {
+    expect(withoutPlusOne(savedMap()).recalculated).toBe(true);
+    expect(withoutPlusOne(savedMap({ input: { name: NAME, birthDate: "1990-09-15", add: false } })).recalculated).toBeUndefined();
+  });
+
+  it("shows a map it can't work out again as it is, rather than failing the client's whole file", () => {
+    const saved = savedMap();
+    const { kd, ...rest } = saved.result; // a row damaged before it was saved: no karmic debts, which the insights read
+    const damaged = { ...saved, result: rest };
+    expect(kd).toBeTruthy();
+    expect(() => withoutPlusOne(damaged)).not.toThrow();
+    expect(withoutPlusOne(damaged)).toBe(damaged);
+  });
+
   it("a damaged reading (no usable birth date or date made for) is shown as it is, for the screen to say so", () => {
     for (const reading of [savedMap({ input: { name: NAME, birthDate: "15.09.1990", add: true } }), savedMap({ computedFor: "not a date" }), { type: "map", input: null, result: null }]) {
       expect(withoutPlusOne(reading)).toBe(reading);

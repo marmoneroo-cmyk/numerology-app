@@ -3,7 +3,7 @@
  * leans toward the mouse; .st-card-inner turns over with a little overshoot.
  * Opening adds st-open: the flip, then a glow and one sweep of shine, while
  * Card.jsx sends out the sparks. 132px wide (md) or 190px (lg), always 2:3,
- * unless a parent sets --st-card-w (a grid cell, a deck slot). The text
+ * unless a parent sets --st-card-w (a grid cell). The text
  * follows the card's own width. Motion is transform and opacity only, plus
  * the one filter glow on an opened card.
  */
@@ -68,8 +68,7 @@
 }
 
 /*
- * the gold diagonal pattern on a deep ground, lighter in the middle; the deck's
- * stacked backs wear it too. The light theme orders its panels the other way.
+ * the gold diagonal pattern on a deep ground, lighter in the middle. The light theme orders its panels the other way.
  * Colour and image are separate properties, so the plain colour stays if the
  * image fails (a later shorthand with var() would replace it and fail to transparent).
  */
@@ -226,14 +225,6 @@
   100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.15); }
 }
 
-/* the cards not chosen step back; Card.jsx also disables them, so they no longer invite a press */
-.st-card.st-dim {
-  opacity: 0.38;
-  transform: scale(0.92);
-}
-.st-card:disabled {
-  cursor: default;
-}
 
 /* a grid of cards that fill their cells: as many as fit at 150px or more, three in a row on a phone */
 .st-cards {

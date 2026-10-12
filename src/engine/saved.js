@@ -15,21 +15,8 @@ function birthOf(input) {
   return match ? { d: Number(match[3]), m: Number(match[2]) } : null;
 }
 
-/**
- * The reading as today's rules show it. A map gets its personal year, month and day, years table, psychological map
- * (its ambition reads the year) and saved insights (some read the year) without the +1; a years table gets its
- * table. Any other reading, one saved without the +1, or one that can't be read comes back as it is.
- */
-export function withoutPlusOne(reading) {
-  if (reading?.input?.add !== true || !reading.result || !["map", "yearCycle"].includes(reading.type)) return reading;
-  const birth = birthOf(reading.input);
-  const at = new Date(reading.computedFor);
-  if (!birth || Number.isNaN(at.getTime())) return reading;
-  const { d, m } = birth;
-  const input = { ...reading.input, add: false };
-  if (reading.type === "yearCycle") return { ...reading, input, result: { ...reading.result, proj: yearCycle(d, m, at) } };
-
-  const saved = reading.result;
+/** A saved map's numbers that rest on the personal year, worked out again for `at` without the +1. */
+function mapWithoutPlusOne(saved, d, m, at) {
   const py = personalYearOn(d, m, at);
   const result = {
     ...saved,
@@ -40,5 +27,26 @@ export function withoutPlusOne(reading) {
     psych: psychMap({ nv: R(saved.nv), lp: R(saved.lp), su: R(saved.su), ex: R(saved.ex), py }),
   };
   if (saved.insights) result.insights = { he: getRecommendations(result, "he"), en: getRecommendations(result, "en") };
-  return { ...reading, input, result };
+  return result;
+}
+
+/**
+ * The reading as today's rules show it. A map gets its personal year, month and day, years table, psychological map
+ * (its ambition reads the year) and saved insights (some read the year) without the +1; a years table gets its
+ * table. Either comes back marked `recalculated`, for the screen to say so. Any other reading, one saved without the
+ * +1, or one that can't be read or worked out again comes back as it is (the screen then shows it, or says it is
+ * damaged, instead of failing the client's whole file).
+ */
+export function withoutPlusOne(reading) {
+  if (reading?.input?.add !== true || !reading.result || !["map", "yearCycle"].includes(reading.type)) return reading;
+  const birth = birthOf(reading.input);
+  const at = new Date(reading.computedFor);
+  if (!birth || Number.isNaN(at.getTime())) return reading;
+  const { d, m } = birth;
+  try {
+    const result = reading.type === "yearCycle" ? { ...reading.result, proj: yearCycle(d, m, at) } : mapWithoutPlusOne(reading.result, d, m, at);
+    return { ...reading, input: { ...reading.input, add: false }, result, recalculated: true };
+  } catch {
+    return reading;
+  }
 }

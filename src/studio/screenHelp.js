@@ -5,8 +5,8 @@
  */
 export const SCREEN_HELP = {
   today: {
-    he: "סקירה של היום: האנרגיה של היום על גלגל המספרים, נתונים מהתיק והשבוע הקרוב, ימי הולדת עם ברכה מוכנה, מעקבים שהגיע זמנם, הלקוחות האחרונים, לקוחות שכדאי לחזור אליהם, כל הכלים וקלף היום.",
-    en: "A look at the day: today's energy on the wheel of numbers, figures from the client files and the week ahead, birthdays with a greeting ready, follow-ups that are due, recent clients, clients worth getting back to, every tool and the card of the day.",
+    he: "סקירה של היום: האנרגיה של היום על גלגל המספרים, נתונים מהתיק והשבוע הקרוב, ימי הולדת עם ברכה מוכנה, מעקבים שהגיע זמנם, הלקוחות האחרונים, לקוחות שכדאי לחזור אליהם, כל הכלים והמספר של היום.",
+    en: "A look at the day: today's energy on the wheel of numbers, figures from the client files and the week ahead, birthdays with a greeting ready, follow-ups that are due, recent clients, clients worth getting back to, every tool and today's number.",
   },
   clients: {
     he: "תיק לכל לקוח: פרטים, הערות, תגיות, קבצים וכל הבדיקות שנשמרו. מכאן פותחים לקוח חדש או בדיקה חדשה, וקובעים מעקב.",

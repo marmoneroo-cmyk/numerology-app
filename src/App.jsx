@@ -1498,6 +1498,7 @@ export default function App({ view, navigate } = {}){
     // and nothing of theirs in quick search, meeting mode or a client waiting to open
     setPaletteOpen(false);setPaletteClients([]);setMeeting(null);setOpenRequest(null);setOpenNumber(null);},[studioUser]);
   useEffect(()=>{if(tab==="admin"&&account.profile?.role!=="admin")setTab("today");},[tab,account.profile?.role]);
+  useEffect(()=>{if(tab!=="numbers")setOpenNumber(null);},[tab]); // the library opens on every number next time
   // a saved map opens in meeting mode too (meetingFor is defined below; it runs only on a press)
   // the demo's interpretations stay blurred, so it makes no reports
   const workspaceContent=useMemo(()=>({D,MASTER,KARMA,YEAR_ENERGY,LP_COMPAT,getCompat,exportReport:view==="demo"?null:(r,n,h,i)=>exportReport(r,n,h,i,licensee),
@@ -1562,7 +1563,7 @@ export default function App({ view, navigate } = {}){
   const isToday=(d)=>{const n=new Date();return !!d&&d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();};
   /**
    * A reading in large type for the client: the life path, three more numbers and its meaning, and then the whole
-   * map, made for `at` (a saved reading's own date and +1; a live reading's date otherwise).
+   * map, made for `at` (a saved reading's own date; a live reading's date otherwise).
    */
   const meetingFor=(r,who,at)=>{const info=D[R(r.lp)]||D[1];return{r,at:at||readingAt||new Date(),person:who,main:{value:r.lp,label:he?"שביל הגורל":"Life Path"},
     numbers:[{value:r.ex,label:he?"מספר הביטוי":"Expression"},{value:r.su,label:he?"קול הנשמה":"Soul Urge"},{value:r.py,label:he?"שנה אישית":"Personal Year"}],

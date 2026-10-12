@@ -65,6 +65,26 @@
   display: grid;
   gap: 16px;
 }
+/* the library's own buttons: back to every number, a debt's or a master's digit, and today's number's page */
+.nl-btn {
+  min-height: 42px;
+  padding: 8px 18px;
+  border: 1px solid var(--st-line-strong);
+  border-radius: 999px;
+  background: var(--st-panel);
+  color: var(--st-gold-text);
+  font: inherit;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
+  font-weight: 700;
+  cursor: pointer;
+}
+.nl-btn:hover {
+  border-color: var(--st-gold);
+}
+.nl-btn:focus-visible {
+  outline: 2px solid var(--st-gold);
+  outline-offset: 2px;
+}
 .nl-back {
   justify-self: start;
 }

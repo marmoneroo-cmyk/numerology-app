@@ -1,6 +1,6 @@
 /*
  * The home screen (Today.jsx, NumberWheel.jsx): today's energy with the wheel of numbers, the four figures,
- * the week ahead, the lists, every tool and today's card. Depth comes from the surfaces, a soft shadow and a
+ * the week ahead, the lists, every tool and today's number. Depth comes from the surfaces, a soft shadow and a
  * violet glow; gold is kept for titles, numbers and today. Every colour is a studio.css token, so the light
  * theme follows. Motion only shows what is new (the wheel drawn once, the parts coming in, a slow glow on
  * today's number), and none of it runs under reduced motion.

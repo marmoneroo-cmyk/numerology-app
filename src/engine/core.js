@@ -142,7 +142,8 @@ export const dailyRitualNumber = (now = new Date()) => now.getDate() % 9 || 9;
  */
 export const universalDay = (now = new Date()) => R(sumChars(dateDigits(now.getDate(), now.getMonth() + 1, now.getFullYear())));
 
-const KARMIC = [13, 14, 16, 19];
+/** The karmic debts: the one list every screen uses (the number library groups them too). */
+export const KARMIC_DEBTS = Object.freeze([13, 14, 16, 19]);
 
 /** A sum and every step of its reduction: 49 -> [49, 13, 4]. */
 export function reductionChain(n) {
@@ -158,8 +159,8 @@ export function reductionChain(n) {
  */
 export function karmicDebt(d, m, y, nm) {
   const sums = [sumChars(`${d}${m}${y}`), letterSum(nm), letterSum(nm, (c) => VOW.has(c)), letterSum(nm, (c) => !VOW.has(c))];
-  const found = KARMIC.filter((k) => sums.some((s) => reductionChain(s).includes(k)));
-  if (KARMIC.includes(d)) found.push(d);
+  const found = KARMIC_DEBTS.filter((k) => sums.some((s) => reductionChain(s).includes(k)));
+  if (KARMIC_DEBTS.includes(d)) found.push(d);
   return [...new Set(found)];
 }
 
