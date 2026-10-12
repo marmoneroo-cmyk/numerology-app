@@ -1,0 +1,4 @@
+Contact: mailto:shlomi.cohen4444@gmail.com
+Expires: 2027-10-12T00:00:00.000Z
+Preferred-Languages: he, en
+Canonical: https://studio.shani-cohen.com/.well-known/security.txt

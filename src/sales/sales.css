@@ -3,8 +3,10 @@
  * (data-st-theme on the root) never repaints it. Text keeps 4.5:1 or more on the page and the cards
  * (src/sales/__tests__/content.test.js reads these tokens).
  * The hero's background was made with ChatGPT for the owner (2026-10-11); the screenshots are the real demo.
+ * The fonts (Frank Ruhl Libre, Heebo, Cormorant Garamond) are the site's own, in src/fonts.css. index.html's first-screen
+ * script starts the hero's background early, the same file for the same screen widths as the rules below
+ * (src/__tests__/firstScreen.test.js holds the two equal).
  */
-@import url("https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Heebo:wght@400;500;700&family=Cormorant+Garamond:wght@600;700&display=swap");
 
 .sales {
   --s-bg: #080812;

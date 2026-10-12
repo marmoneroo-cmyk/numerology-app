@@ -3,12 +3,18 @@ import { useId, useState } from "react";
 import Icon from "../ui/Icon.jsx";
 import { PRICE_MONTHLY, TRIAL_DAYS } from "./config.js";
 
-/** Real screenshots of the demo (public/sales), sample clients only; sizes keep the page from jumping. */
+/**
+ * Real screenshots of the demo (public/sales), sample clients only; sizes keep the page from jumping. Each has a
+ * half-size copy (`small`) that phones and ordinary screens load instead, since none is shown wider than ~600px.
+ * Browsers keep /sales/ files for 30 days (vercel.json): a replaced picture needs a new file name.
+ */
 const SHOTS = {
-  summary: { src: "/sales/shot-summary.webp", width: 1280, height: 1124 },
-  how: { src: "/sales/shot-how.webp", width: 1040, height: 558 },
-  today: { src: "/sales/shot-today.webp", width: 1400, height: 874 },
+  summary: { src: "/sales/shot-summary.webp", width: 1280, height: 1124, small: "/sales/shot-summary-720.webp", smallWidth: 720 },
+  how: { src: "/sales/shot-how.webp", width: 1040, height: 558, small: "/sales/shot-how-560.webp", smallWidth: 560 },
+  today: { src: "/sales/shot-today.webp", width: 1400, height: 874, small: "/sales/shot-today-720.webp", smallWidth: 720 },
 };
+/** How wide a screenshot is shown: the column's width on a phone, at most ~600px beside the text on a computer. */
+const SHOT_SIZES = "(max-width: 959px) 92vw, 600px";
 
 /** A link to the owner: WhatsApp (in a new tab) or an email. Nothing without a contact. */
 export function ContactButton({ contact, label, className = "sales-btn sales-btn-ghost" }) {
@@ -31,7 +37,16 @@ function Shot({ shot, alt, lazy = true, className = "" }) {
         <i />
         <i />
       </span>
-      <img src={shot.src} alt={alt} width={shot.width} height={shot.height} loading={lazy ? "lazy" : undefined} decoding="async" />
+      <img
+        src={shot.src}
+        srcSet={`${shot.small} ${shot.smallWidth}w, ${shot.src} ${shot.width}w`}
+        sizes={SHOT_SIZES}
+        alt={alt}
+        width={shot.width}
+        height={shot.height}
+        loading={lazy ? "lazy" : undefined}
+        decoding="async"
+      />
     </figure>
   );
 }
@@ -57,7 +72,9 @@ export function Hero({ t, contact, price = PRICE_MONTHLY, trialDays = TRIAL_DAYS
             ))}
           </ul>
         </div>
-        <Shot shot={SHOTS.summary} alt={t.shotAlt} lazy={false} className="sales-hero-shot" />
+        {/* lazy like the others: the page is drawn into every address, and an app address must not fetch it (the
+            hero's background, not this, is the first screen's largest element) */}
+        <Shot shot={SHOTS.summary} alt={t.shotAlt} className="sales-hero-shot" />
       </div>
     </section>
   );

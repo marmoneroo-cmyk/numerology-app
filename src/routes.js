@@ -41,11 +41,29 @@ export function nextRoute(current, hash, { initial = false, signedIn = false } =
   return { world: "app", view, legal: null };
 }
 
+/**
+ * Whether the first screen is the sales page itself (no legal page over it): only then can the browser take over
+ * the sales page that the build drew into index.html (main.jsx), instead of clearing it for the app.
+ */
+export function opensOnSalesPage(hash, storage) {
+  const first = nextRoute(null, hash, { initial: true, signedIn: hasSavedLogin(storage) });
+  return first.world === "sales" && !first.legal;
+}
+
 /** The address of a view: the sales page has none. */
 export const hashFor = (view) => (view === "home" ? "" : `#${view}`);
 
 /** supabase-js keeps a login under this key (its default for the project); only whether it is there is read. */
 export const SAVED_LOGIN_KEY = `sb-${new URL(SUPABASE_URL).hostname.split(".")[0]}-auth-token`;
+
+/** The browser's localStorage, or null where it is blocked (some private windows and embedded browsers). */
+export function browserStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
 
 /** Whether this browser keeps a Studio login. Storage that throws (blocked, private mode) means no. */
 export function hasSavedLogin(storage) {

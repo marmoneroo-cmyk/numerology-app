@@ -1,5 +1,4 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
-import { jsPDF } from "jspdf";
 import WorkspaceApp from "./workspace/WorkspaceApp.jsx";
 import { ContentContext } from "./workspace/content.js";
 import { useAccount, AccountGate } from "./account/AccountContext.jsx";
@@ -421,7 +420,7 @@ function Intro({onDone,he,dk}){
   return(<div style={{position:"fixed",inset:0,zIndex:9999,background:dk?"#080812":"#f5f0e8",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",transition:"opacity 1s ease",opacity:p>=4?0:1,pointerEvents:p>=4?"none":"all"}}>
     <div style={{fontSize:80,color:ac,opacity:p>=1?1:0,transform:`scale(${p>=1?1:.2})`,transition:"all 1.2s cubic-bezier(.34,1.56,.64,1)",textShadow:`0 0 80px ${ac}33`,marginBottom:30}}>✦</div>
     <h1 style={{fontSize:52,fontWeight:300,letterSpacing:10,color:ac,opacity:p>=2?1:0,transform:`translateY(${p>=2?0:25}px)`,transition:"all 1s ease .3s",fontFamily:"'Cormorant Garamond',serif",textTransform:"uppercase"}}>{he?"נומרולוגיה":"Numerology"}</h1>
-    <p style={{fontSize:fs(16),fontWeight:300,color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)",opacity:p>=3?1:0,transition:"all .8s ease",marginTop:14,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",letterSpacing:2}}>{he?"המספרים מדברים... מוכנים?":"The numbers speak... Are you ready?"}</p>
+    <p style={{fontSize:fs(16),fontWeight:300,color:dk?"rgba(232,224,208,.7)":"rgba(0,0,0,.62)",opacity:p>=3?1:0,transition:"all .8s ease",marginTop:14,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",letterSpacing:2}}>{he?"המספרים מדברים... מוכנים?":"The numbers speak... Are you ready?"}</p>
   </div>);
 }
 
@@ -452,8 +451,9 @@ function exportReport(r,name,he,interp,licensee){
   ctx.fillStyle="rgba(232,224,208,.5)";ctx.font="22px sans-serif";ctx.fillText(licensee?(licensee.phone||""):"wa.me/"+WHATSAPP_PHONE,w/2,h-110);
   if(licensee){ctx.fillStyle="rgba(232,224,208,.3)";ctx.font="17px sans-serif";ctx.fillText((he?"מורשה ל: ":"Licensed to: ")+licensee.fullName+(licensee.phone?` · ${licensee.phone}`:""),w/2,h-26);}
   ctx.fillStyle="rgba(200,169,106,.22)";ctx.font="18px serif";ctx.fillText("✦  ✦  ✦",w/2,h-66);
-  try{const pdf=new jsPDF({orientation:"portrait",unit:"px",format:[w,h]});pdf.addImage(c.toDataURL("image/jpeg",0.92),"JPEG",0,0,w,h);pdf.save(`numerology-${(name||"map").trim()}.pdf`);}
-  catch(e){const link=document.createElement("a");link.download=`numerology-${name||"map"}.png`;link.href=c.toDataURL("image/png");link.click();}
+  const savePng=()=>{const link=document.createElement("a");link.download=`numerology-${name||"map"}.png`;link.href=c.toDataURL("image/png");link.click();};
+  // the PDF library is large and only this needs it, so it loads when a report is saved; if it cannot, the map is saved as an image
+  return import("jspdf").then(({jsPDF})=>{const pdf=new jsPDF({orientation:"portrait",unit:"px",format:[w,h]});pdf.addImage(c.toDataURL("image/jpeg",0.92),"JPEG",0,0,w,h);pdf.save(`numerology-${(name||"map").trim()}.pdf`);}).catch(savePng);
 }
 
 // ═══════════════════ MASTER NUMBERS ═══════════════════
@@ -1057,7 +1057,7 @@ function CalculatorsWidget({he,dk}){
 
 // ═══════════════════ CONTACT ═══════════════════
 // Nothing is sold on the site: contact is WhatsApp and email.
-const WHATSAPP_PHONE = "972547640203"; // שני כהן אזולאי — 054-764-0203
+const WHATSAPP_PHONE = "972547640203"; // Shani's page: her WhatsApp, its public contact
 const CONTACT_URL = `https://wa.me/${WHATSAPP_PHONE}`;
 /** A lead's phone as the gate keeps it: digits, +, (, ), - and spaces, 6 to 25 characters. */
 const PHONE_SHAPE = /^[+]?[-0-9() ]{6,25}$/;
@@ -1466,6 +1466,7 @@ export default function App({ view, navigate } = {}){
   const[lang,setLang]=useState("he");const[siteDk,setSiteDk]=useState(true);const[studioDk,setStudioDk]=useState(storedStudioDark);const[snd,setSnd]=useState(true);const[intro,setIntro]=useState(true);
   const[step,setStep]=useState(1);const[tab,setTab]=useState("today");const[name,setName]=useState("");const[dob,setDob]=useState("");
   const[results,setResults]=useState(null);const[showRes,setShowRes]=useState(false);const[error,setError]=useState("");
+  const[savingReport,setSavingReport]=useState(false); // the PDF library loads before a report is saved: one save at a time
   const[readingName,setReadingName]=useState(""); // whom `results` were made for: the name field may change after
   const[readingAt,setReadingAt]=useState(null); // and the date they were made for (the summary explains its numbers by it)
   const[chapters,setChapters]=useState([false,false,false,false,false,false]);
@@ -1625,7 +1626,7 @@ export default function App({ view, navigate } = {}){
   ];
 
   return(<div dir={isRtl?"rtl":"ltr"} style={{minHeight:"100vh",background:dk?"linear-gradient(170deg,#080812 0%,#0f0f28 35%,#0a0a1a 65%,#080812 100%)":"linear-gradient(170deg,#f5f0e8 0%,#ede5d8 35%,#f0ebe0 65%,#f5f0e8 100%)",color:tm,fontFamily:isRtl?"'Noto Sans Hebrew','Heebo',sans-serif":"'Cormorant Garamond','Georgia',serif",position:"relative",overflow:"clip",transition:"background .7s,color .4s"}}>
-    <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+Hebrew:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700&display=swap');
+    <style>{`/* the fonts (Cormorant Garamond, Noto Sans Hebrew, Heebo) are the site's own, in src/fonts.css */
 *{box-sizing:border-box;margin:0;padding:0}html,body{overflow-x:hidden;max-width:100%}@supports (overflow-x:clip){html,body{overflow-x:clip}}::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:${ac}33;border-radius:3px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 :focus-visible{outline:2px solid ${ac};outline-offset:2px;border-radius:6px}
@@ -1703,7 +1704,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       </div>
     </div>
 
-    <div className={showOwnerUI?"st-root":undefined} style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?1360:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
+    <main className={showOwnerUI?"st-root":undefined} style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?1360:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
       {legalDoc?<LegalPage doc={legalDoc} he={he} dk={dk} onBack={closeLegal}/>:showOwnerUI&&!studioReady?<><AccountGate he={he} dk={dk} onLeave={exitOwner}/><LegalLinks he={he} dk={dk}/></>:(<>
       {demo&&<DemoBanner he={he} onExit={exitOwner}/>}
 
@@ -1914,7 +1915,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {chapters[5]&&(<SR delay={250}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
           {/* the demo keeps its interpretations blurred, so it makes no report */}
-          {!demo&&<button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);if(showOwnerUI)toast(he?"הדו״ח נשמר בתיקיית ההורדות.":"The report is in your downloads.");}} style={{width:"auto",padding:"12px 24px",fontSize:fs(14)}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמירת דו״ח PDF":"Save PDF"}</span></button>}
+          {!demo&&<button className="gb" disabled={savingReport} aria-busy={savingReport||undefined} onClick={()=>{AU.init();AU.p("chapter");setSavingReport(true);exportReport(results,name,he,D,showOwnerUI?licensee:null).then(()=>{if(showOwnerUI)toast(he?"הדו״ח נשמר בתיקיית ההורדות.":"The report is in your downloads.");},()=>toast(he?"לא הצלחנו לשמור את הדו״ח. אפשר לנסות שוב.":"The report could not be saved. Please try again.")).finally(()=>setSavingReport(false));}} style={{width:"auto",padding:"12px 24px",fontSize:fs(14)}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמירת דו״ח PDF":"Save PDF"}</span></button>}
           {showOwnerUI&&<button className="ghost" onClick={()=>setMeeting(meetingFor(results,readingName||name))} style={{width:"auto",padding:"12px 24px",fontSize:fs(14)}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="eye" size={15}/>{he?"מצב פגישה":"Meeting mode"}</span></button>}
           <button className="ghost" onClick={goHome}>{he?"קריאה חדשה":"New Reading"}</button>
         </div></SR>)}
@@ -1933,7 +1934,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
       {showOwnerUI&&<div style={{marginTop:40,textAlign:"center",fontSize:fs(10),color:`${ac}15`,letterSpacing:3}}>✦ ✦ ✦</div>}
       </>)}
-    </div>
+    </main>
 
     {/* whose licence this Studio is: shown on every screen, like on the reports */}
     {showOwnerUI&&studioReady&&<div aria-hidden="true" style={{position:"fixed",bottom:8,insetInlineStart:10,zIndex:90,fontSize:fs(10),color:`${ac}cc`,pointerEvents:"none",letterSpacing:.3}}>{he?"מורשה ל: ":"Licensed to: "}{licensee.fullName}{licensee.phone?` · ${licensee.phone}`:""}</div>}

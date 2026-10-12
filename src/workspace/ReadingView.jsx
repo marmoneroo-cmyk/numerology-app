@@ -24,6 +24,9 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
   const [followUp, setFollowUp] = useState("");
   const [followUpError, setFollowUpError] = useState(null);
   const [status, setStatus] = useState(null);
+  /** A PDF report is being made (its library loads first), and whether the last one failed. */
+  const [exporting, setExporting] = useState(false);
+  const [exportFailed, setExportFailed] = useState(false);
   /** The summary as last saved, to tell whether leaving needs a save first. */
   const saved = useRef("");
 
@@ -44,6 +47,15 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
   const edited = (setter) => (e) => {
     setter(e.target.value);
     setStatus(null);
+  };
+
+  /** Downloads the saved map as a PDF, one at a time. */
+  const exportMap = () => {
+    setExporting(true);
+    setExportFailed(false);
+    Promise.resolve(content.exportReport(reading.result, reading.input.name, he, content.D))
+      .catch(() => setExportFailed(true))
+      .finally(() => setExporting(false));
   };
 
   /** Saves the summary; false (with the reason shown) when it could not be saved. */
@@ -114,10 +126,11 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
       <Card style={{ padding: 16 }}>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           {reading.type === "map" && content.exportReport && (
-            <button className="ghost" style={btnGhost} onClick={() => content.exportReport(reading.result, reading.input.name, he, content.D)}>
+            <button className="ghost" style={btnGhost} disabled={exporting} aria-busy={exporting || undefined} onClick={exportMap}>
               {he ? "הורדת דוח PDF" : "Download PDF report"}
             </button>
           )}
+          {exportFailed && <span role="status" style={{ fontSize: fs(13), color: c.danger }}>{he ? "לא הצלחנו להוריד את הדוח. אפשר לנסות שוב." : "The report could not be downloaded. Please try again."}</span>}
           {/* the Studio shows the map in large type for the client; the saved snapshot, as on this screen */}
           {reading.type === "map" && content.openMeeting && (
             <button className="ghost" style={btnGhost} onClick={() => content.openMeeting(reading.result, reading.input.name || client.fullName, new Date(reading.computedFor), reading.input.add)}>

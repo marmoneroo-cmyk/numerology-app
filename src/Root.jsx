@@ -3,20 +3,12 @@
  * page, loaded on demand). The rules are in routes.js.
  */
 import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
-import { nextRoute, hasSavedLogin, hashFor } from "./routes.js";
+import { nextRoute, hasSavedLogin, hashFor, browserStorage } from "./routes.js";
 import { countView } from "./analytics.js";
 import SalesPage from "./sales/SalesPage.jsx";
 import LegalPage from "./legal/LegalPage.jsx";
 
 const AppWorld = lazy(() => import("./AppWorld.jsx"));
-
-const browserStorage = () => {
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-};
 
 /** The app failed to load (offline, or a deploy replaced its files): a way to try again, not a blank page. */
 class LoadFailure extends Component {
@@ -98,6 +90,13 @@ export default function Root({ storage = browserStorage() }) {
       </LoadFailure>
     );
   }
-  if (route.legal) return <LegalPage doc={route.legal} he={he} dk onBack={closeLegal} />;
+  if (route.legal) {
+    // the page's main landmark (inside the app, App.jsx's <main> holds it)
+    return (
+      <main>
+        <LegalPage doc={route.legal} he={he} dk onBack={closeLegal} />
+      </main>
+    );
+  }
   return <SalesPage he={he} onLanguage={() => setHe((value) => !value)} />;
 }

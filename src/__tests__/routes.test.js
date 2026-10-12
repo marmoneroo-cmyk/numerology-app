@@ -1,6 +1,6 @@
 /* Which screen an address shows: the rules, apart from React. */
 import { describe, it, expect } from "vitest";
-import { viewOf, nextRoute, hashFor, hasSavedLogin, SAVED_LOGIN_KEY, ROUTE_HASHES } from "../routes.js";
+import { viewOf, nextRoute, hashFor, hasSavedLogin, opensOnSalesPage, SAVED_LOGIN_KEY, ROUTE_HASHES } from "../routes.js";
 
 const HOME = { world: "sales", view: "home", legal: null };
 const app = (view) => ({ world: "app", view, legal: null });
@@ -56,5 +56,18 @@ describe("routes", () => {
     expect(hasSavedLogin(store(null))).toBe(false);
     expect(hasSavedLogin({ getItem: () => { throw new Error("blocked"); } })).toBe(false);
     expect(hasSavedLogin(undefined)).toBe(false);
+  });
+
+  it("takes over the pre-drawn sales page only when the first screen is the sales page itself", () => {
+    // Arrange
+    const loggedIn = { getItem: (key) => (key === SAVED_LOGIN_KEY ? "{}" : null) };
+    const none = { getItem: () => null };
+
+    // Act and Assert
+    expect(opensOnSalesPage("", none)).toBe(true);
+    expect(opensOnSalesPage("#sales-faq", none)).toBe(true); // an anchor on the page
+    expect(opensOnSalesPage("", null)).toBe(true); // storage blocked: no kept login
+    expect(opensOnSalesPage("", loggedIn)).toBe(false); // a kept login opens the Studio
+    for (const hash of ["#demo", "#studio", "#customer", "#owner", "#terms", "#privacy", "#refunds"]) expect([hash, opensOnSalesPage(hash, none)]).toEqual([hash, false]);
   });
 });

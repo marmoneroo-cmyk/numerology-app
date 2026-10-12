@@ -3,30 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>הסטודיו · תוכנה לנומרולוגים</title>
-    <meta name="description" content="סביבת העבודה לנומרולוגיה מקצועית: תיקי לקוחות, מפה מלאה עם הסבר לכל חישוב, מצב פגישה, ומסך שעוזר לחזור ללקוחות. הדגמה פתוחה, בלי הרשמה." />
+    <title>תוכנה לנומרולוגים: ניהול לקוחות ומפה מלאה | הסטודיו</title>
+    <meta name="description" content="תוכנה לנומרולוגים: תיקי לקוחות, מפה מלאה עם הסבר לכל חישוב, מצב פגישה ומסך שעוזר לחזור ללקוחות. ₪149 לחודש, 7 ימי ניסיון חינם. הדגמה פתוחה, בלי הרשמה." />
     <meta name="theme-color" content="#0f0f28" />
     <meta name="robots" content="index, follow" />
 
     <!-- Open Graph (WhatsApp / Facebook / LinkedIn share preview) -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="הסטודיו · תוכנה לנומרולוגים" />
-    <meta property="og:description" content="סביבת העבודה לנומרולוגיה מקצועית: תיקי לקוחות, מפה מלאה עם הסבר לכל חישוב, מצב פגישה, ומסך שעוזר לחזור ללקוחות. הדגמה פתוחה, בלי הרשמה." />
+    <meta property="og:title" content="תוכנה לנומרולוגים: ניהול לקוחות ומפה מלאה | הסטודיו" />
+    <meta property="og:description" content="תוכנה לנומרולוגים: תיקי לקוחות, מפה מלאה עם הסבר לכל חישוב, מצב פגישה ומסך שעוזר לחזור ללקוחות. ₪149 לחודש, 7 ימי ניסיון חינם. הדגמה פתוחה, בלי הרשמה." />
     <meta property="og:locale" content="he_IL" />
+    <meta property="og:site_name" content="הסטודיו" />
+    <meta property="og:url" content="https://studio.shani-cohen.com/" />
     <meta property="og:image" content="https://studio.shani-cohen.com/sales/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="canonical" href="https://studio.shani-cohen.com/" />
+    <!-- for search engines: what the site is and its price, only facts the page states (the price and the trial
+         follow src/sales/config.js; src/__tests__/seo.test.js keeps them equal). Data, never run as a script. -->
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://studio.shani-cohen.com/#site","url":"https://studio.shani-cohen.com/","name":"הסטודיו","alternateName":"הסטודיו · תוכנה לנומרולוגים","inLanguage":"he"},{"@type":"WebApplication","name":"הסטודיו","url":"https://studio.shani-cohen.com/","description":"תוכנה לנומרולוגים: תיקי לקוחות, מפה מלאה עם הסבר לכל חישוב, מצב פגישה ומסך שעוזר לחזור ללקוחות.","applicationCategory":"BusinessApplication","operatingSystem":"Web browser","inLanguage":"he","isPartOf":{"@id":"https://studio.shani-cohen.com/#site"},"offers":{"@type":"Offer","price":"149","priceCurrency":"ILS","priceSpecification":{"@type":"UnitPriceSpecification","price":"149","priceCurrency":"ILS","unitCode":"MON"},"description":"מנוי חודשי, 7 ימי ניסיון חינם, ביטול בתוך 14 ימים לפי מדיניות הביטולים"}}]}</script>
 
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- the fonts are the site's own (src/fonts.css, public/fonts); Hebrew text in every view starts at once (the sales
+         page's heading font is asked for by the first-screen script below, only where it shows) -->
+    <link rel="preload" href="/fonts/heebo-hebrew.woff2" as="font" type="font/woff2" crossorigin />
 
-    <!-- ANALYTICS — the IDs live in public/analytics.js (empty = off). No inline scripts here: the
-         Content-Security-Policy in vercel.json allows only the site's own script files. -->
-    <script src="/analytics.js"></script>
+    <!-- ANALYTICS — the IDs live in public/analytics.js (empty = off). A file, not inline: the Content-Security-Policy in
+         vercel.json allows the site's own script files and, by its hash, only the one inline script below. Deferred, so
+         it never holds up the page. -->
+    <script src="/analytics.js" defer></script>
 
+    <!-- the first screen, decided before anything is drawn (the rules of src/routes.js; src/__tests__/firstScreen.test.js
+         keeps the two equal): an address that opens the app or a legal page, or a kept login, hides the sales page the
+         build drew into #root; the sales page itself starts its hero image and heading font at once, and Shani's page
+         (#customer) its background picture (HERO_IMG in src/App.jsx), there only. The Content-Security-Policy allows
+         this one inline script by its hash (vercel.json). -->
+    <script>(function(){var h=location.hash,d=document.documentElement;function pre(o){var l=document.createElement("link");l.rel="preload";for(var k in o)l[k]=o[k];document.head.appendChild(l)}if(/^#(studio|owner|admin|customer|demo|terms|privacy|refunds)$/.test(h)){d.setAttribute("data-first-screen","app");if(h==="#customer")pre({as:"image",fetchPriority:"high",href:"https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1600&q=68&auto=format&fit=crop"});return}try{if(!h&&localStorage.getItem("sb-kcgjdxubcdmbrjlftxyv-auth-token")){d.setAttribute("data-first-screen","app");return}}catch(e){}pre({as:"image",fetchPriority:"high",href:matchMedia("(max-width: 959px)").matches?"/sales/hero-bg-960.webp":"/sales/hero-bg.webp"});pre({as:"font",type:"font/woff2",crossOrigin:"anonymous",href:"/fonts/frank-ruhl-libre-hebrew.woff2"})})()</script>
     <style>
       body { margin: 0; background: #080812; }
+      html[data-first-screen="app"] #root > .sales { display: none; }
     </style>
   </head>
   <body>

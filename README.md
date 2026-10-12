@@ -14,7 +14,7 @@ Every push to `main` deploys to Vercel. Its build runs `npm test && npm run buil
 ## Project Structure
 ```
 numerology-app/
-├── index.html          ← HTML entry point (no inline scripts: the CSP forbids them)
+├── index.html          ← HTML entry point (one inline script, the first screen's, which the CSP allows by its hash)
 ├── package.json        ← Dependencies & scripts
 ├── vite.config.js      ← Vite build config
 ├── vercel.json         ← Vercel build (runs the tests first), SPA rewrite, security headers (CSP)

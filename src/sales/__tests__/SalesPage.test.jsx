@@ -32,7 +32,10 @@ describe("the sales page", () => {
     render(<SalesPage he onLanguage={() => {}} />);
     const hero = screen.getByRole("img", { name: SALES.he.hero.shotAlt });
     expect(hero.getAttribute("src")).toBe("/sales/shot-summary.webp");
-    expect(hero.getAttribute("loading")).toBeNull(); // the first picture is not deferred
+    // lazy too (2026-10-12): the page is pre-drawn into every address, and the demo must not fetch it; the hero's
+    // background is the first screen's largest element, and that one starts early (index.html)
+    expect(hero.getAttribute("loading")).toBe("lazy");
+    expect(hero.getAttribute("srcset")).toBe("/sales/shot-summary-720.webp 720w, /sales/shot-summary.webp 1280w");
     expect(screen.getByRole("img", { name: SALES.he.map.howAlt }).getAttribute("src")).toBe("/sales/shot-how.webp");
     const today = screen.getByRole("img", { name: SALES.he.care.shotAlt });
     expect(today.getAttribute("src")).toBe("/sales/shot-today.webp");
@@ -96,7 +99,8 @@ describe("the sales page", () => {
     const onLanguage = vi.fn();
     const { container, rerender } = render(<SalesPage he onLanguage={onLanguage} />);
     expect(container.firstChild.getAttribute("dir")).toBe("rtl");
-    fireEvent.click(screen.getByRole("button", { name: SALES.he.languageLabel }));
+    // named by what it shows ("EN") and then the language in full
+    fireEvent.click(screen.getByRole("button", { name: `${SALES.he.language} ${SALES.he.languageLabel}` }));
     expect(onLanguage).toHaveBeenCalled();
     rerender(<SalesPage he={false} onLanguage={onLanguage} />);
     expect(container.firstChild.getAttribute("dir")).toBe("ltr");

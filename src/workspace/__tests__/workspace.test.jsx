@@ -214,6 +214,32 @@ describe("workspace", () => {
     expect(openMeeting.mock.calls[0][3]).toBe(false);
   });
 
+  it("downloads a saved map as a PDF one at a time, and says so when it could not", async () => {
+    let finish;
+    const exportReport = vi.fn(() => new Promise((resolve, reject) => (finish = { resolve, reject })));
+    await setup(
+      async (s) => {
+        const c = await s.clients.create(SHANI);
+        const calc = fullCalc(15, 8, 1990, SHANI.fullName, false, NOW);
+        await s.readings.create({ clientId: c.id, type: "map", input: { name: SHANI.fullName, birthDate: SHANI.birthDate, add: false }, result: { ...calc, insights: { he: [], en: [] } }, engineVersion: "1.0.0", computedFor: NOW.toISOString() });
+      },
+      { content: { ...CONTENT, exportReport } },
+    );
+    await openClient("שני כהן אזולאי");
+    await tap(/שביל הגורל 33/);
+    const download = await screen.findByRole("button", { name: "הורדת דוח PDF" });
+    fireEvent.click(download);
+    fireEvent.click(download); // the PDF library is still loading: a second press does nothing
+    expect(exportReport).toHaveBeenCalledTimes(1);
+    expect(exportReport.mock.calls[0][1]).toBe(SHANI.fullName);
+    finish.resolve();
+    await waitFor(() => expect(download.disabled).toBe(false));
+    fireEvent.click(download);
+    finish.reject(new Error("no downloads here"));
+    expect(await screen.findByText("לא הצלחנו להוריד את הדוח. אפשר לנסות שוב.")).toBeTruthy();
+    expect(download.disabled).toBe(false);
+  });
+
   it("offers no meeting mode where the app has none", async () => {
     await setup(async (s) => {
       const c = await s.clients.create(SHANI);

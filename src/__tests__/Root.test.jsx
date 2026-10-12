@@ -81,7 +81,8 @@ describe("Root", { timeout: 25000 }, () => {
   it("opens a legal page asked for directly, and goes to the sales page from it", async () => {
     history.replaceState(null, "", "/#terms");
     render(<Root storage={localStorage} />);
-    expect(await screen.findByRole("heading", { level: 1, name: "תנאי שימוש" })).toBeTruthy();
+    const title = await screen.findByRole("heading", { level: 1, name: "תנאי שימוש" });
+    expect(screen.getAllByRole("main")).toEqual([title.closest("main")]); // one main landmark, holding the page
     fireEvent.click(screen.getByRole("button", { name: "חזרה לאתר" }));
     expect(await salesTitle()).toBeTruthy();
     expect(location.hash).toBe("");

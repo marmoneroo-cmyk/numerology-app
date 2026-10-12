@@ -17,7 +17,11 @@ export default function SalesPage({ he = true, onLanguage }) {
       <header className="sales-bar">
         <span className="sales-brand"><span aria-hidden="true">✦ </span>{t.brand}</span>
         <div className="sales-bar-actions">
-          <button type="button" className="sales-lang" onClick={onLanguage} aria-label={t.languageLabel}>{t.language}</button>
+          {/* the visible "EN" / "עב" is part of the name, and the full language name follows for screen readers */}
+          <button type="button" className="sales-lang" onClick={onLanguage}>
+            {t.language}
+            <span className="st-sr" lang={he ? "en" : "he"}>{` ${t.languageLabel}`}</span>
+          </button>
           <a className="sales-btn sales-btn-ghost sales-btn-small" href="#studio">{t.signIn}</a>
         </div>
       </header>
