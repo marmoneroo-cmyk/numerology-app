@@ -10,6 +10,7 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { prefersReducedMotion } from "./motion.js";
+import { keepTabInside, lockPage } from "./dialog.js";
 import Locked from "../demo/DemoLock.jsx";
 import "./meeting.css";
 
@@ -17,8 +18,6 @@ const COPY = {
   he: { title: "מצב פגישה", close: "סיום הפגישה", eyebrow: "מפת נומרולוגיה", sections: "חלקי הפגישה" },
   en: { title: "Meeting mode", close: "End the meeting", eyebrow: "Numerology map", sections: "Parts of the meeting" },
 };
-
-const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Values are shown as given, so master numbers (11, 22, 33) and "11/2" style strings work.
@@ -48,18 +47,14 @@ export default function MeetingMode({ open, onClose, he = true, person, eyebrow,
     return () => window.removeEventListener("resize", measure);
   }, [open]);
 
-  // while open: the page behind stays still and the focus moves in; both go back on close.
-  // The lock goes on <html>: the app clips overflow on html and body, so <html> scrolls the
-  // window, and locking <body> would only turn it into a scroll box that moves sticky bars.
+  // while open: the page behind stays still (dialog.js) and the focus moves in; both go back on close
   useEffect(() => {
     if (!open) return undefined;
     const before = document.activeElement;
-    const page = document.documentElement;
-    const { overflow } = page.style;
-    page.style.overflow = "hidden";
+    const unlock = lockPage();
     closeRef.current?.focus();
     return () => {
-      page.style.overflow = overflow;
+      unlock();
       if (before?.isConnected) before.focus();
     };
   }, [open]);
@@ -75,22 +70,7 @@ export default function MeetingMode({ open, onClose, he = true, person, eyebrow,
         onClose();
         return;
       }
-      if (e.key !== "Tab") return;
-      const dialog = dialogRef.current;
-      const controls = dialog ? [...dialog.querySelectorAll(FOCUSABLE)] : [];
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      const inside = dialog?.contains(document.activeElement);
-      if (!inside || controls.length <= 1) {
-        e.preventDefault();
-        closeRef.current?.focus();
-      } else if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
+      keepTabInside(e, dialogRef.current, closeRef.current);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);

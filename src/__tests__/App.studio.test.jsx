@@ -73,8 +73,8 @@ describe("the Studio", () => {
     studio();
     await signedIn();
     tool("לקוחות");
-    const row = (await screen.findAllByRole("button", { name: /דנה שמיר/ }, SIGNED_IN)).find((b) => b.textContent.includes("03.03.1992"));
-    fireEvent.click(row);
+    // her row in the clients list, which loads after the tab opens (her name is on "היום" too, without the date)
+    fireEvent.click(await screen.findByRole("button", { name: (name, el) => /דנה שמיר/.test(name) && el.textContent.includes("03.03.1992") }, SIGNED_IN));
     fireEvent.click(await screen.findByRole("button", { name: /^\d{1,2}\.\d{1,2}\.\d{4} · מפה נומרולוגית/ }, SIGNED_IN));
 
     // Act

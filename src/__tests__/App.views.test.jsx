@@ -76,6 +76,9 @@ describe("App inside Root", { timeout: 20000 }, () => {
     localStorage.setItem("numerology_lead_done", "1");
     show("customer");
     expect(document.documentElement.dataset.stView).toBe("site");
+    // the form's gold labels keep their own strength (the Studio's are stronger)
+    const nameLabel = await screen.findByText("שם מלא", { selector: "label" }, LONG);
+    expect(nameLabel.style.color).toBe("rgba(200, 169, 106, 0.6)");
     fireEvent.change(await screen.findByPlaceholderText("השם המלא בעברית...", {}, LONG), { target: { value: "מאיה לוי" } });
     fireEvent.click(screen.getByRole("button", { name: "המשך ←" }));
     const date = await screen.findByPlaceholderText("dd.mm.yyyy", {}, LONG);

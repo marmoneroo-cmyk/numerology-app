@@ -110,7 +110,57 @@ describe("a card opened large", () => {
   });
 });
 
+describe("the large card's manners", () => {
+  it("leaves the browser's own shortcuts alone: Alt+arrow does not step the cards", () => {
+    render(<TarotScreen he />);
+    fireEvent.click(gallery().getByRole("button", { name: "הקוסם" }));
+    expect(fireEvent.keyDown(document.activeElement, { key: "ArrowLeft", altKey: true })).toBe(true);
+    expect(screen.getByRole("dialog", { name: "הקוסם" })).toBeTruthy();
+  });
+
+  it("stays open when a press starts on the card and ends on the backdrop, as when selecting text", () => {
+    // Arrange
+    render(<TarotScreen he />);
+    fireEvent.click(gallery().getByRole("button", { name: "הקוסם" }));
+    const backdrop = document.querySelector(".td-backdrop");
+
+    // Act: pressed on the text, released on the backdrop
+    fireEvent.pointerDown(screen.getByRole("heading", { name: "הקוסם" }));
+    fireEvent.click(backdrop);
+
+    // Assert
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    fireEvent.pointerDown(backdrop);
+    fireEvent.click(backdrop);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("marks the way a drawn card came out, and nothing on a card opened from the deck", () => {
+    // Arrange: a reversed draw of the Death card
+    const numbers = [13.5 / 78, 0.2];
+    render(<TarotScreen he random={() => numbers.shift()} />);
+    fireEvent.click(screen.getByRole("button", { name: "לשלוף קלף" }));
+
+    // Act
+    fireEvent.click(screen.getByRole("button", { name: "לקריאה המלאה" }));
+
+    // Assert
+    const dialog = within(screen.getByRole("dialog", { name: "המוות" }));
+    expect(dialog.getByRole("heading", { name: /משמעות הפוכה/ }).textContent).toContain("כך יצא הקלף");
+    expect(dialog.getByRole("heading", { name: /משמעות רגילה/ }).textContent).not.toContain("כך יצא הקלף");
+    fireEvent.click(dialog.getByRole("button", { name: "הקלף הבא" }));
+    expect(within(screen.getByRole("dialog")).queryByText("כך יצא הקלף")).toBeNull();
+  });
+});
+
 describe("a card drawn at random", () => {
+  it("tells a screen reader which card came out, and which way up", () => {
+    const numbers = [13.5 / 78, 0.2];
+    render(<TarotScreen he random={() => numbers.shift()} />);
+    fireEvent.click(screen.getByRole("button", { name: "לשלוף קלף" }));
+    expect(document.querySelector("[aria-live=polite]").textContent).toBe("הקלף שנשלף: המוות, הפוך");
+  });
+
   it("draws the card the random number points to, upright or reversed, and says which", () => {
     // Arrange: the first number picks the card, the second its way up
     const numbers = [13.5 / 78, 0.2];

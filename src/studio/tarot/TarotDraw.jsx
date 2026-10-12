@@ -35,6 +35,10 @@ export default function TarotDraw({ he, random = Math.random, onOpen }) {
           <p className="tdr-note">{t.random}</p>
         </div>
       </div>
+      {/* a screen reader hears which card came out, and which way up */}
+      <p className="tdr-live" aria-live="polite">
+        {drawn ? `${t.drawn}: ${drawn.card.name[lang]}, ${drawn.reversed ? t.reversed : t.upright}` : ""}
+      </p>
       {drawn && (
         <section key={round} className="tdr-result" aria-label={t.drawn}>
           <div className="tdr-card">

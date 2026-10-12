@@ -19,7 +19,7 @@ const cardsOf = (group) => (group === "all" ? TAROT : group === "major" ? TAROT.
 
 export default function TarotScreen({ he, random = Math.random }) {
   const [group, setGroup] = useState("all");
-  const [open, setOpen] = useState(null); // { id, reversed, pool: the ids the arrows step through }
+  const [open, setOpen] = useState(null); // { id, drawnAs: "upright"|"reversed"|null, pool: the ids the arrows step through }
   const lang = he ? "he" : "en";
   const t = TEXT[lang];
   const cards = useMemo(() => cardsOf(group), [group]);
@@ -30,7 +30,7 @@ export default function TarotScreen({ he, random = Math.random }) {
       setOpen((o) => {
         if (!o) return o;
         const at = o.pool.indexOf(o.id);
-        return { ...o, id: o.pool[(at + by + o.pool.length) % o.pool.length], reversed: false };
+        return { ...o, id: o.pool[(at + by + o.pool.length) % o.pool.length], drawnAs: null };
       }),
     [],
   );
@@ -38,7 +38,7 @@ export default function TarotScreen({ he, random = Math.random }) {
 
   return (
     <div className="tarot" dir={he ? "rtl" : "ltr"}>
-      <TarotDraw he={he} random={random} onOpen={(id, reversed) => setOpen({ id, reversed, pool: ALL_IDS })} />
+      <TarotDraw he={he} random={random} onOpen={(id, reversed) => setOpen({ id, drawnAs: reversed ? "reversed" : "upright", pool: ALL_IDS })} />
 
       <div className="tg-groups" role="group" aria-label={t.groups}>
         {GROUPS.map((g) => (
@@ -52,7 +52,7 @@ export default function TarotScreen({ he, random = Math.random }) {
       <ul className="tg-grid" aria-label={t.gallery}>
         {cards.map((card) => (
           <li key={card.id} className="tg-item">
-            <button type="button" className="tg-open" aria-label={card.name[lang]} onClick={() => setOpen({ id: card.id, reversed: false, pool: cards.map((c) => c.id) })}>
+            <button type="button" className="tg-open" aria-label={card.name[lang]} onClick={() => setOpen({ id: card.id, drawnAs: null, pool: cards.map((c) => c.id) })}>
               <TarotFace card={card} size="sm" />
               <span className="tg-name" aria-hidden="true">
                 {card.name[lang]}
@@ -62,7 +62,7 @@ export default function TarotScreen({ he, random = Math.random }) {
         ))}
       </ul>
 
-      {open && <TarotDetail card={cardById(open.id)} reversed={open.reversed} he={he} onClose={close} onStep={step} />}
+      {open && <TarotDetail card={cardById(open.id)} drawnAs={open.drawnAs} he={he} onClose={close} onStep={step} />}
     </div>
   );
 }

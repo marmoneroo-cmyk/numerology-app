@@ -167,8 +167,21 @@ describe("MeetingMode", () => {
   });
 
   it("tells its sections how tall the bar is, so a section reached from it starts below it", () => {
+    // Arrange: jsdom lays nothing out, so the bar reports the height it has on a phone, where it wraps
+    const height = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight");
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get() {
+        return this.classList.contains("st-meet-bar") ? 126 : 0;
+      },
+    });
+    onTestFinished(() => Object.defineProperty(HTMLElement.prototype, "offsetHeight", height));
+
+    // Act
     render(<Page open sections={SECTIONS} />);
-    expect(screen.getByRole("dialog").style.getPropertyValue("--st-meet-bar-h")).toMatch(/^\d+px$/);
+
+    // Assert
+    expect(screen.getByRole("dialog").style.getPropertyValue("--st-meet-bar-h")).toBe("126px");
   });
 
   it("keeps Tab inside the meeting: past the last control it comes back to the first, and the other way round", () => {

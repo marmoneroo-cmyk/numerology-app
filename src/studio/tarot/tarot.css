@@ -180,6 +180,8 @@
 .tdr-name {
   margin: 0;
   font-family: var(--st-display);
+  /* lining figures: Cormorant's old-style "10" reads as "IO" */
+  font-variant-numeric: lining-nums;
   font-size: clamp(28px, 3.2vw, 38px);
   line-height: 1.15;
   color: var(--st-gold);
@@ -257,8 +259,6 @@
 .tg-item {
   display: flex;
   justify-content: center;
-  content-visibility: auto;
-  contain-intrinsic-size: 132px 260px;
 }
 .tg-open {
   display: grid;
@@ -320,11 +320,14 @@
 .td-name {
   margin: 0;
   font-family: var(--st-display);
+  font-variant-numeric: lining-nums;
   font-size: clamp(32px, 4vw, 48px);
   line-height: 1.1;
   color: var(--st-gold);
 }
 .td-other {
+  /* its own direction is the other language's; under the title it still starts where the title starts */
+  justify-self: start;
   margin: -4px 0 0;
   color: var(--st-ink-soft);
   font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
@@ -355,6 +358,25 @@
   border-color: var(--st-gold);
   background: var(--st-gold-wash);
 }
+.td-came {
+  margin-inline-start: 8px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--st-gold-solid);
+  color: var(--st-on-gold);
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
+  font-weight: 700;
+  vertical-align: middle;
+}
+/* heard, not seen: which card a draw gave */
+.tdr-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .td-meaning h3 {
   margin: 0 0 4px;
   color: var(--st-gold-text);
@@ -382,10 +404,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tf-card,
-  .tf-shine,
-  .tdr-result,
-  .tdr-card,
+  /* as specific as the rules that start the motion (.tf-lg .tf-shine), so these win */
+  .tf .tf-card,
+  .tf .tf-shine,
+  .tf-lg .tf-shine,
+  .tf-md .tf-shine,
+  .tdr .tdr-result,
+  .tdr .tdr-card,
   .td-backdrop {
     transition: none;
     animation: none;

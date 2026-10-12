@@ -38,9 +38,14 @@ import NameCompare from "./studio/calcs/NameCompare.jsx";
 import { fs } from "./ui/type.js";
 import ScreenIntro from "./studio/ScreenIntro.jsx";
 import { psychLevels, PSYCH_NAMES, LEVEL_WORDS } from "./reading/psych.js";
-/** The tarot deck and its art load with the קלפים tab only. */
-const TarotScreen = lazy(() => import("./studio/tarot/TarotScreen.jsx"));
 import { SCREEN_HELP, MATCH_HELP } from "./studio/screenHelp.js";
+import { ScreenBoundary } from "./workspace/ui.jsx";
+
+/**
+ * The tarot deck and its art load with the קלפים tab only. A new lazy component on each try: React keeps a
+ * failed import's error, so trying again needs a fresh one.
+ */
+const loadTarot = () => lazy(() => import("./studio/tarot/TarotScreen.jsx"));
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
@@ -446,7 +451,7 @@ function LoShu({ls,dk,he}){
 }
 
 // ═══════════════════ CHAPTER SYSTEM ═══════════════════
-function Chapter({index,title,subtitle,icon,children,isActive,isRevealed,onReveal,dk,he}){
+function Chapter({index,title,subtitle,icon,children,isActive,isRevealed,onReveal,dk,he,studio=false}){
   const ac=dk?"#c8a96a":"#937640";
   if(!isRevealed)return(
     <div style={{textAlign:"center",padding:"40px 20px",opacity:isActive?1:.3,transition:"opacity .8s",cursor:isActive?"pointer":"default"}} onClick={isActive?onReveal:undefined}>
@@ -457,7 +462,7 @@ function Chapter({index,title,subtitle,icon,children,isActive,isRevealed,onRevea
     </div>);
   return(<div style={{animation:"fadeInUp .8s ease-out",padding:"12px 0"}}>
     <div style={{textAlign:"center",marginBottom:20}}>
-      <div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:4,marginBottom:4}}>{`— ${index < 10 ? "0" : ""}${index} —`}</div>
+      <div style={{fontSize:fs(10),color:`${ac}${studio?"aa":"55"}`,textTransform:"uppercase",letterSpacing:4,marginBottom:4}}>{`— ${index < 10 ? "0" : ""}${index} —`}</div>
       <div style={{marginBottom:8,color:ac,display:"flex",justifyContent:"center"}}><Icon name={icon} size={26} stroke={1.3}/></div>
       <h3 style={{fontSize:fs(22),fontWeight:600,color:ac,marginBottom:4,fontFamily:"'Cormorant Garamond',serif"}}>{title}</h3>
       <div style={{fontSize:fs(13),color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)"}}>{subtitle}</div>
@@ -1546,6 +1551,7 @@ export default function App({ view, navigate } = {}){
   const[meeting,setMeeting]=useState(null);
   const[paletteOpen,setPaletteOpen]=useState(false);
   const[cardDeck,setCardDeck]=useState("tarot"); // the קלפים tab: the tarot, or the number cards 1-9
+  const[TarotScreen,setTarotScreen]=useState(loadTarot);const[tarotTry,setTarotTry]=useState(0);
   const[paletteClients,setPaletteClients]=useState([]);
   // quick search's "today's card": a new number remounts the deck in "היום", which then deals at once
   const[deckDeal,setDeckDeal]=useState(0);
@@ -1762,7 +1768,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <>
           <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}} onReveal={(n,d)=>{setName(n);setDob(d);setStep(2);const ok=runReading(n,d);if(ok)setTimeout(()=>scrollToId("reading-section"),90);}}/>
           <HowItWorks he={he} dk={dk}/>
-          <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:fs(11),color:`${ac}cc`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · אפשר לנסות עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
+          <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:fs(11),color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · אפשר לנסות עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
         </>
       )}
       <div id="reading-section" style={{scrollMarginTop:70}}/>
@@ -1825,9 +1831,19 @@ button,a,input{-webkit-tap-highlight-color:transparent}
               ))}
             </div>
             {cardDeck==="tarot"?(
-              <Suspense fallback={<p role="status" style={{textAlign:"center",color:"var(--st-ink-soft)",fontSize:fs(14)}}>{he?"טוענים את החפיסה…":"Loading the deck…"}</p>}>
-                <TarotScreen he={he}/>
-              </Suspense>
+              // a deck that fails to load stays in this tab: a way to try again, and the number cards, instead of the whole Studio failing
+              <ScreenBoundary key={tarotTry} fallback={
+                <div className="st-panel" role="alert" style={{padding:24,textAlign:"center",display:"grid",gap:12,justifyItems:"center"}}>
+                  <p style={{margin:0,fontSize:fs(15)}}>{he?"החפיסה לא נטענה. אולי החיבור לאינטרנט נקטע.":"The deck did not load. The connection may have dropped."}</p>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
+                    <button type="button" className="fx st-switch-b" onClick={()=>{setTarotScreen(()=>loadTarot());setTarotTry(n=>n+1);}}>{he?"לנסות שוב":"Try again"}</button>
+                    <button type="button" className="fx st-switch-b" onClick={()=>setCardDeck("numbers")}>{he?"לקלפי המספרים":"To the number cards"}</button>
+                  </div>
+                </div>}>
+                <Suspense fallback={<p role="status" style={{textAlign:"center",color:"var(--st-ink-soft)",fontSize:fs(14)}}>{he?"טוענים את החפיסה…":"Loading the deck…"}</p>}>
+                  <TarotScreen he={he}/>
+                </Suspense>
+              </ScreenBoundary>
             ):(
               <div className="st-panel" style={{padding:24}}>
                 <p style={{textAlign:"center",fontSize:fs(13),color:"var(--st-ink-soft)",marginBottom:18}}>{he?"לוחצים על קלף כדי להפוך אותו.":"Press a card to turn it over."}</p>
@@ -1844,19 +1860,19 @@ button,a,input{-webkit-tap-highlight-color:transparent}
             <div className="si"><div className={`sd ${step>=1?"act":""}`}/><div className="sl"/><div className={`sd ${step>=2?"act":""}`}/></div>
             {step===1&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
               <div style={{textAlign:"center",marginBottom:24}}>
-                <div style={{fontSize:fs(10),color:`${ac}bb`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 1":"Step 1"}</div>
+                <div style={{fontSize:fs(10),color:`${ac}${showOwnerUI?"bb":"66"}`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 1":"Step 1"}</div>
                 <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"השם המלא":"Who are you?"}</h2>
               </div>
-              <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}cc`,fontWeight:500}}>{he?"שם מלא":"Full Name"}</label>
+              <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}${showOwnerUI?"cc":"99"}`,fontWeight:500}}>{he?"שם מלא":"Full Name"}</label>
               <input className="gi" maxLength={MAX_INPUT} placeholder={he?"השם המלא בעברית...":"Enter your name in Hebrew..."} value={name} onChange={e=>setName(e.target.value)} dir="rtl" style={{marginBottom:24,textAlign:"right"}} onKeyDown={e=>{if(e.key==="Enter"&&name.trim()){setStep(2);AU.init();AU.p("click");}}}/>
               <button className="gb" disabled={!name.trim()} onClick={()=>{setStep(2);AU.init();AU.p("click");}}>{he?"המשך ←":"Continue →"}</button>
             </div>)}
             {step===2&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
               <div style={{textAlign:"center",marginBottom:24}}>
-                <div style={{fontSize:fs(10),color:`${ac}bb`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 2":"Step 2"}</div>
+                <div style={{fontSize:fs(10),color:`${ac}${showOwnerUI?"bb":"66"}`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 2":"Step 2"}</div>
                 <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"תאריך הלידה":"When were you born?"}</h2>
               </div>
-              <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}cc`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
+              <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}${showOwnerUI?"cc":"99"}`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
               <input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{marginBottom:18,textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter"&&dob.trim())doCalc();}}/>
               <PlusOneNote he={he} color={ts} style={{marginTop:-6,marginBottom:24,textAlign:"center"}}/>
               {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:fs(13),marginBottom:16,textAlign:"center"}}>{error}</div>}
@@ -1875,7 +1891,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       )}
       {showRes&&results&&(showOwnerUI||!LEAD_GATE||leadDone)&&(<div className={showOwnerUI?"st-results":undefined} style={{maxWidth:showOwnerUI?undefined:640,margin:"0 auto"}}>
         <SR><div style={{textAlign:"center",marginBottom:8}}>
-          <div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:5,marginBottom:6}}>{he?"הקריאה של":"The reading of"}</div>
+          <div style={{fontSize:fs(10),color:`${ac}${showOwnerUI?"aa":"55"}`,textTransform:"uppercase",letterSpacing:5,marginBottom:6}}>{he?"הקריאה של":"The reading of"}</div>
           <div style={{fontSize:isRtl?26:30,fontWeight:isRtl?700:400,color:ac,fontFamily:"'Cormorant Garamond',serif",letterSpacing:isRtl?0:3}}>{name}</div>
         </div></SR>
         <SR><div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:28}}>
@@ -1886,7 +1902,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         {showOwnerUI&&readingAt&&<ContentContext.Provider value={workspaceContent}><ReadingSummary r={results} name={readingName} now={readingAt} he={he}/></ContentContext.Provider>}
 
         {/* CHAPTER 1 */}
-        <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk} he={he}>
+        <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk} he={he} studio={showOwnerUI}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>{showOwnerUI?<RevealCard {...studioDeck(he)[(lpBase||1)-1]} he={he} size="lg"/>:<TarotCard number={lpBase||1} dk={dk} flipped={true} size="lg"/>}</div>
           <p className="nar-line"><Locked he={he} chip>{he?D[lpBase]?.narrative:D[lpBase]?.narrativeE}</Locked></p>
           {results.lp>9&&MASTER[results.lp]&&<div style={{textAlign:"center",marginTop:-6,marginBottom:8}}><span className="badge" style={{borderColor:`${ac}55`}}>{he?`מספר מאסטר ${results.lp} · ${MASTER[results.lp].t}`:`Master ${results.lp} · ${MASTER[results.lp].te}`}</span><p style={{fontSize:fs(12.5),lineHeight:1.8,color:ts,marginTop:8}}><Locked he={he}>{he?MASTER[results.lp].he:MASTER[results.lp].en}</Locked></p></div>}
@@ -1897,7 +1913,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </Chapter>
 
         {/* CHAPTER 2 */}
-        <Chapter index={2} title={chapterDefs[1]?.title} subtitle={chapterDefs[1]?.sub} icon={chapterDefs[1]?.icon} isActive={nextUnrevealed===1} isRevealed={chapters[1]} onReveal={()=>revealChapter(1)} dk={dk} he={he}>
+        <Chapter index={2} title={chapterDefs[1]?.title} subtitle={chapterDefs[1]?.sub} icon={chapterDefs[1]?.icon} isActive={nextUnrevealed===1} isRevealed={chapters[1]} onReveal={()=>revealChapter(1)} dk={dk} he={he} studio={showOwnerUI}>
           <p className="nar-line">{he?"שביל הגורל, מספר "+results.lp+", חושף את הייעוד העמוק":"Your Life Path "+results.lp+" reveals your deepest purpose"}</p>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,margin:"16px 0"}}>
             <div style={{padding:"16px",background:dk?"rgba(180,50,50,.06)":"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.12)",borderRadius:14,textAlign:"center"}}><div style={{color:"#d98a8a",marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="moon" size={18}/></div><div style={{fontSize:fs(11),fontWeight:600,color:"#e88",marginBottom:4}}>{he?"צד צל":"Shadow"}</div><div style={{fontSize:fs(12),lineHeight:1.7,color:ts}}><Locked he={he}>{he?D[lpBase]?.shadow:D[lpBase]?.shadowE}</Locked></div></div>
@@ -1913,7 +1929,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </Chapter>
 
         {/* CHAPTER 3 */}
-        <Chapter index={3} title={chapterDefs[2]?.title} subtitle={chapterDefs[2]?.sub} icon={chapterDefs[2]?.icon} isActive={nextUnrevealed===2} isRevealed={chapters[2]} onReveal={()=>revealChapter(2)} dk={dk} he={he}>
+        <Chapter index={3} title={chapterDefs[2]?.title} subtitle={chapterDefs[2]?.sub} icon={chapterDefs[2]?.icon} isActive={nextUnrevealed===2} isRevealed={chapters[2]} onReveal={()=>revealChapter(2)} dk={dk} he={he} studio={showOwnerUI}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
             {[{l:he?"יום":"Day",v:results.pd},{l:he?"חודש":"Month",v:results.pm},{l:he?"שנה":"Year",v:results.py}].map((it,i)=>(
               <div key={i} style={{textAlign:"center",padding:"18px 8px",background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}0a`,borderRadius:14}}><div style={{fontSize:fs(9),color:ts,textTransform:"uppercase",letterSpacing:1}}>{it.l}</div><div style={{fontSize:32,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif",margin:"4px 0"}}><AN value={it.v} delay={i*200}/></div><div style={{fontSize:fs(11),color:D[it.v]?.c||ac,opacity:.7}}>{he?D[it.v]?.t:D[it.v]?.te}</div></div>
@@ -1924,20 +1940,20 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         </Chapter>
 
         {/* CHAPTER 4 */}
-        <Chapter index={4} title={chapterDefs[3]?.title} subtitle={chapterDefs[3]?.sub} icon={chapterDefs[3]?.icon} isActive={nextUnrevealed===3} isRevealed={chapters[3]} onReveal={()=>revealChapter(3)} dk={dk} he={he}>
+        <Chapter index={4} title={chapterDefs[3]?.title} subtitle={chapterDefs[3]?.sub} icon={chapterDefs[3]?.icon} isActive={nextUnrevealed===3} isRevealed={chapters[3]} onReveal={()=>revealChapter(3)} dk={dk} he={he} studio={showOwnerUI}>
           <p className="nar-line">{he?"גוללים קדימה כדי לראות את האנרגיה של 10 השנים הקרובות":"Scroll forward to see your energy over the next 10 years"}</p>
           <LifeMap results={results} dk={dk} he={he} studio={showOwnerUI}/>
         </Chapter>
 
         {/* CHAPTER 5 */}
-        <Chapter index={5} title={chapterDefs[4]?.title} subtitle={chapterDefs[4]?.sub} icon={chapterDefs[4]?.icon} isActive={nextUnrevealed===4} isRevealed={chapters[4]} onReveal={()=>revealChapter(4)} dk={dk} he={he}>
+        <Chapter index={5} title={chapterDefs[4]?.title} subtitle={chapterDefs[4]?.sub} icon={chapterDefs[4]?.icon} isActive={nextUnrevealed===4} isRevealed={chapters[4]} onReveal={()=>revealChapter(4)} dk={dk} he={he} studio={showOwnerUI}>
           <p className="nar-line">{he?"המפה הפסיכולוגית":"Your psychological map"}</p>
           <PsychRadar psych={results.psych} dk={dk} he={he} studio={showOwnerUI}/>
           {(()=>{const{dominant}=psychLevels(results.psych);const names=PSYCH_NAMES[he?"he":"en"];return(<div style={{textAlign:"center",marginTop:14,padding:"14px",background:`${ac}06`,borderRadius:12}}><div style={{fontSize:fs(13),fontWeight:600,color:ac,marginBottom:4}}>{dominant.length>1?(he?"הכוחות הדומיננטיים":"The dominant strengths"):(he?"הכוח הדומיננטי":"The dominant strength")}</div><div data-testid="psych-dominant" style={{fontSize:fs(22),fontWeight:700,color:ac}}>{dominant.map(k=>names[k]).join(" · ")||"—"}</div></div>);})()}
         </Chapter>
 
         {/* CHAPTER 6 */}
-        <Chapter index={6} title={chapterDefs[5]?.title} subtitle={chapterDefs[5]?.sub} icon={chapterDefs[5]?.icon} isActive={nextUnrevealed===5} isRevealed={chapters[5]} onReveal={()=>revealChapter(5)} dk={dk} he={he}>
+        <Chapter index={6} title={chapterDefs[5]?.title} subtitle={chapterDefs[5]?.sub} icon={chapterDefs[5]?.icon} isActive={nextUnrevealed===5} isRevealed={chapters[5]} onReveal={()=>revealChapter(5)} dk={dk} he={he} studio={showOwnerUI}>
           <p className="nar-line">{he?"תובנות מותאמות אישית":"Personalized insights"}</p>
           {getRecommendations(results,lang).map((rec,i)=>(<div key={i} className="rec-card"><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name={rec.icon} size={20}/></span><span style={{fontSize:fs(15),fontWeight:600,color:ac}}>{rec.t}</span></div><p style={{fontSize:fs(13),lineHeight:1.8,color:ts}}><Locked he={he}>{rec.d}</Locked></p></div>))}
           <div className="divider"/>
