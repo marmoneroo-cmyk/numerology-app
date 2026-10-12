@@ -428,7 +428,7 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
     <div className="st-today">
       <h2 className="st-sr">{he ? "היום" : "Today"}</h2>
       <DayBand he={he} today={today} day={day} onNewReading={onNewReading} />
-      <div className="st-cols-3">
+      <div className="st-cols-3 st-today-top">
         <Panel title={he ? "ימי הולדת השבוע" : "Birthdays this week"} titleRef={firstTitle}>
           <WithClients he={he} load={load} onRetry={retry} announce>
             {(clients) => <Birthdays he={he} clients={clients} today={today} lifePath={lifePath} personalYear={personalYear} greetAnyone={greetAnyone} signature={signature} />}

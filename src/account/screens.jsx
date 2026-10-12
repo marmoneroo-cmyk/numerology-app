@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card, Field, ScreenTitle, colors, btnPrimary, btnGhost } from "../workspace/ui.jsx";
 import PasswordInput from "./PasswordInput.jsx";
 import { isEmail, MIN_PASSWORD, MAX_PASSWORD, NEW_PASSWORD_PROBLEMS } from "./labels.js";
+import { fs } from "../ui/type.js";
 
 const narrow = { maxWidth: 440, margin: "24px auto" };
 const SIGN_IN_ERRORS = {
@@ -29,7 +30,7 @@ export function SignInScreen({ he, dk, account, onLeave }) {
   return (
     <Card style={narrow}>
       <ScreenTitle c={c} size={26} style={{ marginBottom: 8 }}>{he ? "כניסה לסטודיו" : "Sign in to the Studio"}</ScreenTitle>
-      <p style={{ margin: "0 0 18px", fontSize: 13, color: c.ts, lineHeight: 1.7 }}>
+      <p style={{ margin: "0 0 18px", fontSize: fs(13), color: c.ts, lineHeight: 1.7 }}>
         {he ? "הסטודיו פתוח למנויים. נכנסים עם האימייל והסיסמה שקיבלתם." : "The Studio is for subscribers. Sign in with the email and password you were given."}
       </p>
       <form onSubmit={submit} noValidate>
@@ -39,11 +40,11 @@ export function SignInScreen({ he, dk, account, onLeave }) {
         <Field label={he ? "סיסמה" : "Password"} c={c}>
           {(id) => <PasswordInput id={id} he={he} c={c} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />}
         </Field>
-        {error && <p role="alert" style={{ color: c.danger, fontSize: 13, margin: "0 0 12px" }}>{error}</p>}
+        {error && <p role="alert" style={{ color: c.danger, fontSize: fs(13), margin: "0 0 12px" }}>{error}</p>}
         <button className="gb" type="submit" style={btnPrimary} disabled={busy || !email.trim() || !password}>{he ? "כניסה" : "Sign in"}</button>
       </form>
       {!account.selfServiceReset && (
-        <p style={{ margin: "16px 0 0", fontSize: 12, color: c.ts, lineHeight: 1.7 }}>
+        <p style={{ margin: "16px 0 0", fontSize: fs(12), color: c.ts, lineHeight: 1.7 }}>
           {he ? "שכחתם את הסיסמה? פנו למנהלת המערכת, והיא תקבע לכם סיסמה חדשה." : "Forgot your password? Ask the administrator to set a new one."}
         </p>
       )}
@@ -83,7 +84,7 @@ export function ForgotScreen({ he, dk, account }) {
   return (
     <Card style={narrow}>
       <ScreenTitle c={c} size={24} style={{ marginBottom: 8 }}>{he ? "שכחתי סיסמה" : "Forgot password"}</ScreenTitle>
-      <p style={{ margin: "0 0 16px", fontSize: 13, color: c.ts, lineHeight: 1.7 }}>
+      <p style={{ margin: "0 0 16px", fontSize: fs(13), color: c.ts, lineHeight: 1.7 }}>
         {he ? "נשלח לאימייל שלכם קוד בן 6 ספרות, ואיתו בוחרים סיסמה חדשה." : "We email you a 6-digit code, and with it you choose a new password."}
       </p>
       <form onSubmit={submit} noValidate>
@@ -125,7 +126,7 @@ export function ResetScreen({ he, dk, account }) {
   return (
     <Card style={narrow}>
       <ScreenTitle c={c} size={24} style={{ marginBottom: 8 }}>{he ? "הקוד מהאימייל" : "The code from the email"}</ScreenTitle>
-      <p style={{ margin: "0 0 16px", fontSize: 13, color: c.ts, lineHeight: 1.7 }}>
+      <p style={{ margin: "0 0 16px", fontSize: fs(13), color: c.ts, lineHeight: 1.7 }}>
         {he ? "אם לכתובת " : "If "}<span dir="ltr">{account.email}</span>
         {he ? " יש חשבון, נשלח אליה עכשיו קוד בן 6 ספרות. הקוד בתוקף לשעה." : " has an account, a 6-digit code is on its way to it. The code is valid for an hour."}
       </p>
@@ -135,13 +136,13 @@ export function ResetScreen({ he, dk, account }) {
         </Field>
         <button className="gb" type="submit" style={btnPrimary} disabled={busy || code.length < 6}>{he ? "המשך" : "Continue"}</button>
       </form>
-      <p style={{ margin: "16px 0 0", fontSize: 12, color: c.ts, lineHeight: 1.7 }}>
+      <p style={{ margin: "16px 0 0", fontSize: fs(12), color: c.ts, lineHeight: 1.7 }}>
         {he ? "לא הגיע תוך כמה דקות? בדקו בתיקיית הספאם, בקשו קוד חדש, או פנו למנהלת המערכת." : "Nothing after a few minutes? Check the spam folder, ask for a new code, or contact the administrator."}
       </p>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
         <button className="ghost" style={btnGhost} onClick={resend}>{he ? "שליחת קוד חדש" : "Send a new code"}</button>
         <button className="ghost" style={btnGhost} onClick={account.toSignIn}>{he ? "חזרה למסך הכניסה" : "Back to sign in"}</button>
-        <span role="status" style={{ fontSize: 12, color: c.ok }}>{resent ? (he ? "נשלח קוד חדש" : "A new code was sent") : ""}</span>
+        <span role="status" style={{ fontSize: fs(12), color: c.ok }}>{resent ? (he ? "נשלח קוד חדש" : "A new code was sent") : ""}</span>
       </div>
     </Card>
   );
@@ -212,7 +213,7 @@ export function CodeScreen({ he, dk, account }) {
   return (
     <Card style={narrow}>
       <ScreenTitle c={c} size={24} style={{ marginBottom: 8 }}>{he ? "אימות דו-שלבי" : "Two-step verification"}</ScreenTitle>
-      <p style={{ margin: "0 0 16px", fontSize: 13, color: c.ts, lineHeight: 1.7 }}>
+      <p style={{ margin: "0 0 16px", fontSize: fs(13), color: c.ts, lineHeight: 1.7 }}>
         {he ? "הקלידו את הקוד בן 6 הספרות מאפליקציית האימות בטלפון." : "Type the 6-digit code from the authenticator app on your phone."}
       </p>
       <form onSubmit={submit} noValidate>
@@ -248,7 +249,7 @@ export function BlockedScreen({ he, dk, account }) {
   return (
     <Card style={narrow}>
       <ScreenTitle c={c} size={24} style={{ marginBottom: 10 }}>{he ? "אי אפשר לפתוח את החשבון כאן" : "The account cannot open here"}</ScreenTitle>
-      <p role="alert" style={{ margin: "0 0 18px", lineHeight: 1.8, fontSize: 14 }}>{text}</p>
+      <p role="alert" style={{ margin: "0 0 18px", lineHeight: 1.8, fontSize: fs(14) }}>{text}</p>
       <button className="ghost" style={btnGhost} onClick={account.toSignIn}>{he ? "חזרה למסך הכניסה" : "Back to sign in"}</button>
     </Card>
   );
@@ -259,7 +260,7 @@ export function ReplacedScreen({ he, dk, account }) {
   return (
     <Card style={narrow}>
       <ScreenTitle c={c} size={24} style={{ marginBottom: 10 }}>{he ? "החשבון נפתח במכשיר אחר" : "The account was opened on another device"}</ScreenTitle>
-      <p role="alert" style={{ margin: "0 0 18px", lineHeight: 1.8, fontSize: 14 }}>
+      <p role="alert" style={{ margin: "0 0 18px", lineHeight: 1.8, fontSize: fs(14) }}>
         {he
           ? "החשבון נפתח במכשיר אחר. החשבון עובד במכשיר אחד בכל רגע, ולכן החיבור כאן נסגר. כל מה שנשמר נשאר בחשבון."
           : "The account was opened on another device. It works on one device at a time, so this one was signed out. Everything saved stays in the account."}

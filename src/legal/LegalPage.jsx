@@ -5,6 +5,7 @@
  */
 import { useEffect, useRef } from "react";
 import { LEGAL_DOCS, LEGAL_EMAIL, LEGAL_UPDATED } from "./content.js";
+import { fs } from "../ui/type.js";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const BODY_FONT = "'Heebo','Noto Sans Hebrew',Arial,sans-serif";
@@ -53,7 +54,7 @@ function BackButton({ he, colors, onBack }) {
     gap: 8,
     marginBottom: 28,
     padding: "9px 16px",
-    fontSize: 14,
+    fontSize: fs(14),
     fontFamily: "inherit",
     color: colors.goldText,
     background: "transparent",
@@ -72,7 +73,7 @@ function BackButton({ he, colors, onBack }) {
 function Section({ section, colors, link }) {
   return (
     <section style={{ marginTop: 32 }}>
-      <h2 style={{ margin: "0 0 10px", fontSize: 20, fontWeight: 700, lineHeight: 1.4, color: colors.gold }}>{section.title}</h2>
+      <h2 style={{ margin: "0 0 10px", fontSize: fs(20), fontWeight: 700, lineHeight: 1.4, color: colors.gold }}>{section.title}</h2>
       {section.paragraphs.map((text, i) => (
         <p key={i} style={{ margin: "0 0 12px" }}>
           {withEmailLinks(text, link)}
@@ -120,14 +121,14 @@ export default function LegalPage({ doc, he = true, dk = true, onBack }) {
     <div
       dir={he ? "rtl" : "ltr"}
       lang={he ? "he" : "en"}
-      style={{ minHeight: "100vh", boxSizing: "border-box", padding: "24px 16px 64px", backgroundColor: colors.page, color: colors.text, fontFamily: BODY_FONT, fontSize: 16, lineHeight: 1.8 }}
+      style={{ minHeight: "100vh", boxSizing: "border-box", padding: "24px 16px 64px", backgroundColor: colors.page, color: colors.text, fontFamily: BODY_FONT, fontSize: fs(16), lineHeight: 1.8 }}
     >
       <article style={{ maxWidth: 760, margin: "0 auto" }}>
         {onBack && <BackButton he={he} colors={colors} onBack={onBack} />}
         <h1 ref={titleRef} tabIndex={-1} style={title}>
           {page.title}
         </h1>
-        <p style={{ margin: "8px 0 0", fontSize: 14, color: colors.muted }}>
+        <p style={{ margin: "8px 0 0", fontSize: fs(14), color: colors.muted }}>
           {he ? "עודכן לאחרונה: " : "Last updated: "}
           <time dateTime={LEGAL_UPDATED}>{formatDate(LEGAL_UPDATED, he)}</time>
         </p>

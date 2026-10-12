@@ -5,7 +5,7 @@ export default function DemoBanner({ he, onExit }) {
   const contact = contactLink(he);
   const external = contact?.kind === "whatsapp";
   return (
-    <div role="note" className="demo-banner">
+    <div role="note" aria-label={he ? "הדגמה" : "Demo"} className="demo-banner">
       <span>
         {he
           ? "זו הדגמה עם לקוחות לדוגמה. שום דבר לא נשמר, והפירושים המלאים מטושטשים: הם נפתחים במנוי."

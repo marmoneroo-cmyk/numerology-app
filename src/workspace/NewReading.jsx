@@ -10,6 +10,7 @@ import { ENGINE_VERSION, addsOne, fullCalc, yearCycle, matchReading, parentChild
 import PlusOneNote from "../ui/PlusOneNote.jsx";
 import { Card, Field, Loading, ErrorCard, ScreenTitle, BackButton, useLoad, btnPrimary } from "./ui.jsx";
 import { parseBirthDate, formatDmy, personOf, readingTypeLabel, matchTypeLabel } from "./format.js";
+import { fs } from "../ui/type.js";
 
 const TYPES = ["map", "match", "parentChild", "yearCycle"];
 const MATCH_TYPES = ["love", "twin", "biz", "parent"];
@@ -105,7 +106,7 @@ export default function NewReading({ store, go, he, c, now, clientId }) {
         </div>
 
         {client.birthName && (
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13, marginBottom: 14 }}>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: fs(13), marginBottom: 14 }}>
             <label style={{ cursor: "pointer" }}>
               <input type="radio" name="nameKind" checked={!useBirthName} onChange={() => setUseBirthName(false)} /> {he ? `לפי השם הנוכחי (${client.fullName})` : `Current name (${client.fullName})`}
             </label>
@@ -161,7 +162,7 @@ export default function NewReading({ store, go, he, c, now, clientId }) {
           </div>
         )}
 
-        {error && <p role="alert" style={{ color: c.danger, fontSize: 13 }}>{error}</p>}
+        {error && <p role="alert" style={{ color: c.danger, fontSize: fs(13) }}>{error}</p>}
         <button className="gb" style={btnPrimary} onClick={run} disabled={busy}>{he ? "לחשב ולשמור" : "Calculate and save"}</button>
       </Card>
     </div>

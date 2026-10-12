@@ -121,7 +121,7 @@
 .st-deck-note {
   margin: 0;
   text-align: center;
-  font-size: 12px;
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
   color: var(--st-ink-faint);
   text-wrap: balance;
 }

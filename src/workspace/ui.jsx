@@ -1,5 +1,6 @@
 /** Small shared pieces for the workspace screens. Styling follows App.jsx's global classes. */
 import { Component, cloneElement, createContext, useCallback, useContext, useEffect, useId, useRef, useState } from "react";
+import { fs } from "../ui/type.js";
 
 /** Theme colours, the same pair App.jsx uses (dark: champagne gold on night blue). */
 export function colors(dk) {
@@ -15,8 +16,8 @@ export function colors(dk) {
   };
 }
 
-export const btnPrimary = { width: "auto", padding: "11px 20px", fontSize: 14 };
-export const btnGhost = { padding: "9px 16px", fontSize: 13, borderRadius: 12, cursor: "pointer" };
+export const btnPrimary = { width: "auto", padding: "11px 20px", fontSize: fs(14) };
+export const btnGhost = { padding: "9px 16px", fontSize: fs(13), borderRadius: 12, cursor: "pointer" };
 export const display = "'Cormorant Garamond',serif";
 
 /**
@@ -83,12 +84,12 @@ export function Field({ label, error, hint, children, c }) {
   const control = cloneElement(children(id), { "aria-invalid": error ? true : undefined, "aria-describedby": note ? noteId : undefined });
   return (
     <div style={{ marginBottom: 14 }}>
-      <label htmlFor={id} style={{ display: "block", marginBottom: 6, fontSize: 12, color: c.ac, fontWeight: 500 }}>{label}</label>
+      <label htmlFor={id} style={{ display: "block", marginBottom: 6, fontSize: fs(12), color: c.ac, fontWeight: 500 }}>{label}</label>
       {control}
       {error ? (
-        <div id={noteId} role="alert" style={{ fontSize: 12, color: c.danger, marginTop: 5 }}>{error}</div>
+        <div id={noteId} role="alert" style={{ fontSize: fs(12), color: c.danger, marginTop: 5 }}>{error}</div>
       ) : (
-        hint && <div id={noteId} style={{ fontSize: 11, color: c.ts, marginTop: 4 }}>{hint}</div>
+        hint && <div id={noteId} style={{ fontSize: fs(11), color: c.ts, marginTop: 4 }}>{hint}</div>
       )}
     </div>
   );
@@ -121,7 +122,7 @@ export function ConfirmAction({ c, label, ariaLabel, question, confirmLabel, con
   }
   return (
     <>
-      <span style={{ fontSize: 13, color: c.danger, lineHeight: 1.6, ...(stacked ? { flexBasis: "100%" } : null) }}>{question}</span>
+      <span style={{ fontSize: fs(13), color: c.danger, lineHeight: 1.6, ...(stacked ? { flexBasis: "100%" } : null) }}>{question}</span>
       <button className="ghost" style={{ ...danger, borderColor: c.danger }} aria-label={confirmAriaLabel} onClick={onConfirm} disabled={busy}>
         {confirmLabel}
       </button>
@@ -153,12 +154,12 @@ export function ScreenTitle({ children, c, size = 26, style }) {
 export function Num({ label, value, title, testId, c, how }) {
   return (
     <div style={{ textAlign: "center", padding: "12px 8px", background: c.soft, border: `1px solid ${c.line}`, borderRadius: 14, minWidth: 0 }}>
-      <div style={{ fontSize: 11, color: c.ts }}>{label}</div>
+      <div style={{ fontSize: fs(11), color: c.ts }}>{label}</div>
       <div style={{ fontSize: 30, fontFamily: display, color: c.ac, lineHeight: 1.15 }}>
         <span data-testid={testId}>{value}</span>
         {how}
       </div>
-      {title && <div style={{ fontSize: 11, color: c.tm, opacity: 0.8 }}>{title}</div>}
+      {title && <div style={{ fontSize: fs(11), color: c.tm, opacity: 0.8 }}>{title}</div>}
     </div>
   );
 }
@@ -171,7 +172,7 @@ export function rowButton(c) {
 }
 
 export function SectionTitle({ children, c }) {
-  return <h3 style={{ margin: "0 0 12px", fontSize: 15, color: c.ac, fontWeight: 600 }}>{children}</h3>;
+  return <h3 style={{ margin: "0 0 12px", fontSize: fs(15), color: c.ac, fontWeight: 600 }}>{children}</h3>;
 }
 
 export function BackButton({ children, onClick }) {

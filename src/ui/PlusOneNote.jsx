@@ -3,6 +3,7 @@
  * (engine/core.js addsOne), and this note says so wherever the checkbox was.
  */
 import { addsOne } from "../engine/index.js";
+import { fs } from "./type.js";
 
 /** The note's words: whether the 1 was added on `now`, and the rule. */
 export function plusOneNote(he, now = new Date()) {
@@ -18,7 +19,7 @@ export function plusOneNote(he, now = new Date()) {
 
 export default function PlusOneNote({ he, now, color, style }) {
   return (
-    <p role="note" style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color, ...style }}>
+    <p role="note" style={{ margin: 0, fontSize: fs(11.5), lineHeight: 1.5, color, ...style }}>
       {plusOneNote(he, now)}
     </p>
   );

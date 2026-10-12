@@ -9,6 +9,7 @@ import { useState } from "react";
 import { openWorkspaceStore } from "../data/open.js";
 import { Card, useLoad, colors, btnPrimary, btnGhost } from "../workspace/ui.jsx";
 import { countLabel } from "../workspace/format.js";
+import { fs } from "../ui/type.js";
 
 const FLAG = "numerology_device_data_copied";
 function copiedBefore() {
@@ -60,15 +61,15 @@ export default function LocalDataOffer({ store, userId, he, dk, logEvent, onUplo
   return (
     <Card style={{ borderColor: c.ac }}>
       {result?.ok ? (
-        <p role="status" style={{ margin: 0, color: c.ok, fontSize: 14 }}>{result.text}</p>
+        <p role="status" style={{ margin: 0, color: c.ok, fontSize: fs(14) }}>{result.text}</p>
       ) : (
         <>
-          <p style={{ margin: "0 0 12px", lineHeight: 1.7, fontSize: 14 }}>
+          <p style={{ margin: "0 0 12px", lineHeight: 1.7, fontSize: fs(14) }}>
             {he
               ? `נמצאו במכשיר הזה ${found.data.count} תיקי לקוחות שנשמרו לפני שהיה חשבון. להעתיק אותם לחשבון, כדי שיהיו זמינים בכל מכשיר?`
               : `This device holds ${found.data.count} client files saved before the account. Copy them into the account, so every device has them?`}
           </p>
-          {result && <p role="alert" style={{ color: c.danger, fontSize: 13 }}>{result.text}</p>}
+          {result && <p role="alert" style={{ color: c.danger, fontSize: fs(13) }}>{result.text}</p>}
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <button className="gb" style={btnPrimary} onClick={upload} disabled={busy}>{he ? "העתקה לחשבון" : "Copy to the account"}</button>
             <button className="ghost" style={btnGhost} onClick={() => setHidden(true)} disabled={busy}>{he ? "לא עכשיו" : "Not now"}</button>

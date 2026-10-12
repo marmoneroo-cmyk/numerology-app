@@ -47,7 +47,7 @@
   background-color: var(--st-panel);
   color: var(--st-ink);
   font: inherit;
-  font-size: 14px;
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
   cursor: pointer;
 }
 .st-meet .st-meet-close:focus-visible {
@@ -76,7 +76,7 @@
 }
 .st-meet-eyebrow {
   margin: 0;
-  font-size: 13px;
+  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--st-gold-text);
@@ -107,7 +107,7 @@
 }
 .st-meet-label {
   margin: clamp(8px, 1.6vh, 14px) 0 0;
-  font-size: 15px;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
   letter-spacing: 0.04em;
   color: var(--st-ink-soft);
 }
@@ -141,7 +141,7 @@
   color: var(--st-gold);
 }
 .st-meet-chip-label {
-  font-size: 13px;
+  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
   color: var(--st-ink-soft);
 }
 

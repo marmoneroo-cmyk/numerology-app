@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ValidationError, validateClient } from "../data/validation.js";
 import { Card, Field, Loading, ErrorCard, ScreenTitle, BackButton, ConfirmAction, useLoad, btnPrimary, btnGhost } from "./ui.jsx";
 import { parseBirthDate, formatDmy, errorText } from "./format.js";
+import { fs } from "../ui/type.js";
 
 const EMPTY = { fullName: "", birthName: "", birthDate: "", phone: "", email: "", tags: "", notes: "", consent: false };
 
@@ -92,11 +93,11 @@ export default function ClientForm({ store, go, he, c, now, clientId }) {
         <Field label={he ? "הערות" : "Notes"} error={errors.notes} c={c}>
           {(id) => <textarea id={id} className="gi" rows={4} value={form.notes} onChange={set("notes")} style={{ resize: "vertical", fontFamily: "inherit" }} />}
         </Field>
-        <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: c.tm, marginBottom: 16, cursor: "pointer" }}>
+        <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: fs(13), color: c.tm, marginBottom: 16, cursor: "pointer" }}>
           <input type="checkbox" checked={form.consent} onChange={set("consent")} />
           {he ? "התקבלה הסכמה לשמירת הפרטים" : "Consent to keep these details was given"}
         </label>
-        {errors.form && <p role="alert" style={{ color: c.danger, fontSize: 13 }}>{errors.form}</p>}
+        {errors.form && <p role="alert" style={{ color: c.danger, fontSize: fs(13) }}>{errors.form}</p>}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button className="gb" style={btnPrimary} onClick={save} disabled={busy}>{he ? "שמירה" : "Save"}</button>
           <button className="ghost" style={btnGhost} onClick={back} disabled={busy}>{he ? "ביטול" : "Cancel"}</button>

@@ -17,7 +17,7 @@
   background: var(--st-panel-2);
   color: var(--st-ink);
   font-family: var(--st-body);
-  font-size: 14px;
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   animation: st-toast-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }

@@ -2,7 +2,7 @@
 /*
  * The owner's decisions of 2026-10-11 (second round, temporary defaults) where the whole Studio shows
  * them: the day's three numbers each under its own name, one score for a couple on every screen, a master
- * life path beside its base in the profile, what goes into Lo Shu, what a 0 in the psychological map means,
+ * life path beside its base in the profile, what goes into Lo Shu, how the psychological map reads (2026-10-12),
  * and the four periods in order. Signed in as the lab's sample admin, all in memory, on 11.10.2026.
  * מאיה לוי (19.04.1986), יוסי לוי and רחל כהן are made up; their numbers are worked out in
  * src/engine/__tests__/decisions.test.js.
@@ -86,7 +86,7 @@ describe("the day's three numbers, each under its own name", { timeout: 20000 },
     expect(within(basis).getByRole("button", { name: "איך זה חושב: מספר היום בחודש" })).toBeTruthy();
   });
 
-  it("bases a reading's ritual on the personal day, and says what goes into Lo Shu and what a 0 means", async () => {
+  it("bases a reading's ritual on the personal day, says what goes into Lo Shu, and shows the psychological map relative to the strongest trait", async () => {
     studio();
     await signedIn();
     tool("קריאה");
@@ -103,7 +103,13 @@ describe("the day's three numbers, each under its own name", { timeout: 20000 },
     }, LONG);
     expect(byTestId("ritual-basis").textContent).toContain("לפי היום האישי: 1"); // 8 + 11 = 19 → 10 → 1
     expect(byTestId("loshu-sources").textContent).toBe("נכנסים לרשת: ספרות תאריך הלידה בלי 0, שביל הגורל בספרה אחת ויום הלידה בספרה אחת.");
-    expect(byTestId("psych-note").textContent).toBe("תכונה שאף מספר לא נותן לה נקודות מוצגת 0.");
+    expect(byTestId("psych-note").textContent).toBe("הגרף יחסי לתכונה החזקה ביותר: היא מגיעה עד הקצה, והשאר לפי היחס אליה. ״לא מודגש״ פירושו שאף מספר לא נותן לתכונה נקודות.");
+    // the owner, 2026-10-12: words, not a score out of 10. ערך השם 3 and שביל הגורל 11 (2 in one digit) give
+    // 3 points each to יצירתיות and אינטואיציה, and no other number of מאיה לוי gives any trait points
+    const chart = screen.getByRole("img", { name: /אינטואיציה: בולט/ });
+    expect(chart.getAttribute("aria-label")).toBe("מנהיגות: לא מודגש, אינטואיציה: בולט, יצירתיות: בולט, יציבות: לא מודגש, שאיפה: לא מודגש, חכמה: לא מודגש");
+    expect(chart.textContent).not.toContain("/10");
+    expect(byTestId("psych-dominant").textContent).toBe("אינטואיציה · יצירתיות");
   });
 });
 

@@ -6,6 +6,7 @@ import { ValidationError } from "../data/validation.js";
 import { Card, Loading, ErrorCard, SectionTitle, ScreenTitle, useLoad, rowButton, btnPrimary, btnGhost } from "./ui.jsx";
 import { formatDmy, formatStamp, personOf, readingTypeLabel, countLabel } from "./format.js";
 import { readFileText, saveJson } from "./files.js";
+import { fs } from "../ui/type.js";
 
 const LAST_BACKUP_KEY = "numerology_workspace_last_backup";
 const BACKUP_REMINDER_DAYS = 14;
@@ -129,7 +130,7 @@ export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {
           <div>
             <ScreenTitle c={c} size={28}>{he ? "הלקוחות שלי" : "My clients"}</ScreenTitle>
             {summary && (
-              <div style={{ fontSize: 12, color: c.ts }}>
+              <div style={{ fontSize: fs(12), color: c.ts }}>
                 {`${countLabel(summary.clients, "clients", he)} · ${countLabel(summary.readings, "savedReadings", he)}`}
               </div>
             )}
@@ -153,7 +154,7 @@ export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {
           {summary.followUps.length > 0 && (
             <div ref={followUpsRef} data-testid="follow-ups" style={{ marginBottom: summary.birthdays.length ? 14 : 0 }}>
               <SectionTitle c={c}>{he ? "מעקבים להיום" : "Follow-ups due"}</SectionTitle>
-              {followMsg && <p role="alert" style={{ color: c.danger, fontSize: 13, margin: "0 0 8px" }}>{followMsg}</p>}
+              {followMsg && <p role="alert" style={{ color: c.danger, fontSize: fs(13), margin: "0 0 8px" }}>{followMsg}</p>}
               {summary.followUps.map((f) => (
                 <div key={f.readingId} className="rrow" style={{ padding: "8px 8px", gap: 10 }}>
                   <button
@@ -161,7 +162,7 @@ export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {
                     onClick={() => go({ name: "reading", readingId: f.readingId })}
                   >
                     <span style={{ flex: 1 }}>{f.clientName}</span>
-                    <span style={{ fontSize: 12, color: c.ts }}>{readingTypeLabel(f.type, he)} · {formatDmy(f.followUp)}</span>
+                    <span style={{ fontSize: fs(12), color: c.ts }}>{readingTypeLabel(f.type, he)} · {formatDmy(f.followUp)}</span>
                   </button>
                   <button
                     data-done
@@ -182,7 +183,7 @@ export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {
               {summary.birthdays.map((b) => (
                 <button key={b.clientId} className="rrow" style={rowButton(c)} onClick={() => go({ name: "client", clientId: b.clientId })}>
                   <span style={{ flex: 1 }}>{b.fullName}</span>
-                  <span style={{ fontSize: 12, color: c.ts }}>
+                  <span style={{ fontSize: fs(12), color: c.ts }}>
                     {he ? `ב-${b.day} לחודש · ${b.turning} · שנה אישית חדשה` : `on the ${b.day} · turning ${b.turning} · a new personal year`}
                   </span>
                 </button>
@@ -221,14 +222,14 @@ export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {
                 onClick={() => go({ name: "client", clientId: cl.id })}
               >
                 <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: "block", fontSize: 15, color: c.tm }}>{cl.fullName}</span>
-                  <span style={{ display: "block", fontSize: 12, color: c.ts }}>
+                  <span style={{ display: "block", fontSize: fs(15), color: c.tm }}>{cl.fullName}</span>
+                  <span style={{ display: "block", fontSize: fs(12), color: c.ts }}>
                     {cl.birthDate ? formatDmy(cl.birthDate) : he ? "בלי תאריך לידה" : "No birth date"}
                     {cl.tags.length > 0 && ` · ${cl.tags.join(", ")}`}
                   </span>
                 </span>
                 {lp !== null && <span className="badge" title={he ? "שביל הגורל" : "Life path"}>{lp}</span>}
-                <span style={{ fontSize: 11, color: c.ts, whiteSpace: "nowrap" }}>{formatStamp(lastActive(cl))}</span>
+                <span style={{ fontSize: fs(11), color: c.ts, whiteSpace: "nowrap" }}>{formatStamp(lastActive(cl))}</span>
               </button>
             );
           })}
@@ -240,13 +241,13 @@ export default function ClientsScreen({ store, go, he, c, now, onEvent = () => {
           <button className="ghost" style={btnGhost} onClick={backup}>{he ? "גיבוי" : "Back up"}</button>
           <input id={restoreId} className="ws-file" type="file" accept="application/json,.json" onChange={restore} />
           <label htmlFor={restoreId} className="ghost" style={{ ...btnGhost, display: "inline-block" }}>{he ? "שחזור מגיבוי" : "Restore from backup"}</label>
-          <span style={{ fontSize: 12, color: remind ? c.warn : c.ts }}>
+          <span style={{ fontSize: fs(12), color: remind ? c.warn : c.ts }}>
             {daysSinceBackup === null
               ? he ? "עוד לא נעשה גיבוי במכשיר הזה." : "No backup on this device yet."
               : he ? `גיבוי אחרון לפני ${daysSinceBackup} ימים.` : `Last backup ${daysSinceBackup} days ago.`}
           </span>
         </div>
-        {msg && <p role="status" style={{ margin: "10px 0 0", fontSize: 13, color: msg.ok ? c.ok : c.danger }}>{msg.text}</p>}
+        {msg && <p role="status" style={{ margin: "10px 0 0", fontSize: fs(13), color: msg.ok ? c.ok : c.danger }}>{msg.text}</p>}
       </Card>
     </div>
   );

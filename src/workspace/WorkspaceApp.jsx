@@ -14,6 +14,7 @@ import ClientForm from "./ClientForm.jsx";
 import ClientFile from "./ClientFile.jsx";
 import NewReading from "./NewReading.jsx";
 import ReadingView from "./ReadingView.jsx";
+import { fs } from "../ui/type.js";
 
 /** File inputs stay focusable for the keyboard but invisible; their label (styled as a button) shows the focus. */
 const fileInputCss = (ac) =>
@@ -81,7 +82,7 @@ export default function WorkspaceApp({ he = true, dk = true, store: injected = n
     <div ref={top} dir={he ? "rtl" : "ltr"} style={{ color: c.tm, scrollMarginTop: 80 }}>
       <style>{fileInputCss(c.ac)}</style>
       {!store.persistent && (
-        <Card style={{ borderColor: c.warn, color: c.warn, fontSize: 13, padding: 14 }}>
+        <Card style={{ borderColor: c.warn, color: c.warn, fontSize: fs(13), padding: 14 }}>
           <span role="status">
             {he
               ? "שימו לב: הנתונים לא נשמרים בדפדפן הזה (למשל בגלישה בסתר). לפני שסוגרים, גבו לקובץ."

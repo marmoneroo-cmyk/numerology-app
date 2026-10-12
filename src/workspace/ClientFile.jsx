@@ -7,6 +7,7 @@ import { Card, Num, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, C
 import { formatDmy, formatStamp, formatBytes, personOf, readingTypeLabel, summarizeReading, errorText } from "./format.js";
 import { readFileBytes, saveFile } from "./files.js";
 import HowButton from "../reading/HowButton.jsx";
+import { fs } from "../ui/type.js";
 
 export default function ClientFile({ store, go, he, c, now, clientId }) {
   const content = useContent();
@@ -86,18 +87,18 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div style={{ minWidth: 0 }}>
             <ScreenTitle c={c} size={30}>{client.fullName}</ScreenTitle>
-            {client.birthName && <div style={{ fontSize: 13, color: c.ts }}>{he ? `שם לידה: ${client.birthName}` : `Birth name: ${client.birthName}`}</div>}
-            <div style={{ fontSize: 13, color: c.ts, marginTop: 4 }}>
+            {client.birthName && <div style={{ fontSize: fs(13), color: c.ts }}>{he ? `שם לידה: ${client.birthName}` : `Birth name: ${client.birthName}`}</div>}
+            <div style={{ fontSize: fs(13), color: c.ts, marginTop: 4 }}>
               {p ? `${formatDmy(client.birthDate)} · ${he ? `גיל ${nums.age}` : `age ${nums.age}`}` : he ? "עוד אין תאריך לידה" : "No birth date yet"}
             </div>
             {(client.phone || client.email) && (
-              <div style={{ fontSize: 13, color: c.tm, marginTop: 6, direction: "ltr", textAlign: he ? "right" : "left" }}>
+              <div style={{ fontSize: fs(13), color: c.tm, marginTop: 6, direction: "ltr", textAlign: he ? "right" : "left" }}>
                 {[client.phone, client.email].filter(Boolean).join(" · ")}
               </div>
             )}
             {client.tags.length > 0 && (
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                {client.tags.map((t) => <span key={t} className="chip" style={{ fontSize: 11 }}>{t}</span>)}
+                {client.tags.map((t) => <span key={t} className="chip" style={{ fontSize: fs(11) }}>{t}</span>)}
               </div>
             )}
           </div>
@@ -115,30 +116,30 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
 
         <div style={{ marginTop: 16 }}>
           <button className="gb" style={btnPrimary} disabled={!p} onClick={() => go({ name: "newReading", clientId })}>{he ? "בדיקה חדשה" : "New reading"}</button>
-          {!p && <div style={{ fontSize: 12, color: c.warn, marginTop: 8 }}>{he ? "כדי לחשב צריך תאריך לידה. אפשר להוסיף אותו בעריכה." : "A reading needs a birth date. Add it under Edit."}</div>}
+          {!p && <div style={{ fontSize: fs(12), color: c.warn, marginTop: 8 }}>{he ? "כדי לחשב צריך תאריך לידה. אפשר להוסיף אותו בעריכה." : "A reading needs a birth date. Add it under Edit."}</div>}
         </div>
       </Card>
 
       {client.notes && (
         <Card>
           <SectionTitle c={c}>{he ? "הערות" : "Notes"}</SectionTitle>
-          <p style={{ margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.7, fontSize: 14 }}>{client.notes}</p>
+          <p style={{ margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.7, fontSize: fs(14) }}>{client.notes}</p>
         </Card>
       )}
 
       <Card style={{ padding: "16px 14px" }}>
         <SectionTitle c={c}>{he ? `הבדיקות (${readings.length})` : `Readings (${readings.length})`}</SectionTitle>
-        {readings.length === 0 && <p style={{ margin: 0, fontSize: 13, color: c.ts }}>{he ? "עוד אין בדיקות שמורות ללקוח הזה." : "No saved readings for this client yet."}</p>}
+        {readings.length === 0 && <p style={{ margin: 0, fontSize: fs(13), color: c.ts }}>{he ? "עוד אין בדיקות שמורות ללקוח הזה." : "No saved readings for this client yet."}</p>}
         {readings.map((r) => (
           <button key={r.id} className="rrow" style={rowButton(c)} onClick={() => go({ name: "reading", readingId: r.id })}>
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: "block", fontSize: 12, color: c.ts }}>
+              <span style={{ display: "block", fontSize: fs(12), color: c.ts }}>
                 {formatStamp(r.computedFor)} · {readingTypeLabel(r.type, he)}{r.title ? ` · ${r.title}` : ""}
               </span>
-              <span style={{ display: "block", fontSize: 14 }}>{summarizeReading(r, he)}</span>
+              <span style={{ display: "block", fontSize: fs(14) }}>{summarizeReading(r, he)}</span>
             </span>
-            {r.followUp && <span className="badge" style={{ fontSize: 11 }}>{he ? `מעקב ${formatDmy(r.followUp)}` : `follow-up ${formatDmy(r.followUp)}`}</span>}
-            {r.notes && <span style={{ fontSize: 11, color: c.ts }}>{he ? "יש סיכום" : "has notes"}</span>}
+            {r.followUp && <span className="badge" style={{ fontSize: fs(11) }}>{he ? `מעקב ${formatDmy(r.followUp)}` : `follow-up ${formatDmy(r.followUp)}`}</span>}
+            {r.notes && <span style={{ fontSize: fs(11), color: c.ts }}>{he ? "יש סיכום" : "has notes"}</span>}
           </button>
         ))}
       </Card>
@@ -152,16 +153,16 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
           </span>
         </div>
         {fileMsgs.length > 0 && (
-          <div role="alert" style={{ color: c.danger, fontSize: 13, margin: "0 0 8px" }}>
+          <div role="alert" style={{ color: c.danger, fontSize: fs(13), margin: "0 0 8px" }}>
             {fileMsgs.map((m, i) => <p key={i} style={{ margin: "0 0 4px" }}>{m}</p>)}
           </div>
         )}
-        {files.length === 0 && <p style={{ margin: 0, fontSize: 13, color: c.ts }}>{he ? "אפשר לצרף מפות, תמונות, הקלטות ומסמכים, עד 20MB לקובץ." : "Attach maps, photos, recordings or documents, up to 20 MB each."}</p>}
+        {files.length === 0 && <p style={{ margin: 0, fontSize: fs(13), color: c.ts }}>{he ? "אפשר לצרף מפות, תמונות, הקלטות ומסמכים, עד 20MB לקובץ." : "Attach maps, photos, recordings or documents, up to 20 MB each."}</p>}
         {files.map((f) => (
           <div key={f.id} className="rrow" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <span style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>
-              <span style={{ fontSize: 14 }}>{f.name}</span>
-              <span style={{ display: "block", fontSize: 11, color: c.ts }}>{formatBytes(f.size)} · {formatStamp(f.createdAt)}</span>
+              <span style={{ fontSize: fs(14) }}>{f.name}</span>
+              <span style={{ display: "block", fontSize: fs(11), color: c.ts }}>{formatBytes(f.size)} · {formatStamp(f.createdAt)}</span>
             </span>
             <button className="ghost" style={btnGhost} aria-label={he ? `פתיחת ${f.name}` : `Open ${f.name}`} onClick={() => open(f)}>{he ? "פתיחה" : "Open"}</button>
             <ConfirmAction

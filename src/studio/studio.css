@@ -18,9 +18,9 @@
   /* gold for small text (labels, eyebrows, chips): readable at 4.5:1 or more in both themes */
   --st-gold-text: #c8a96a;
   --st-ink: #ece4d4;
-  /* text contrast on --st-void: soft about 7:1, faint about 4.9:1 (still 4.5:1 or more for small text) */
-  --st-ink-soft: rgba(236, 228, 212, 0.7);
-  --st-ink-faint: rgba(236, 228, 212, 0.55);
+  /* text contrast on --st-void: soft about 10:1, faint about 7:1 (the owner, 2026-10-12: the text read too pale) */
+  --st-ink-soft: rgba(236, 228, 212, 0.84);
+  --st-ink-faint: rgba(236, 228, 212, 0.7);
   --st-ok: #9fd8b8;
   --st-danger: #f0a8a8;
   --st-shadow: rgba(0, 0, 0, 0.45);
@@ -39,12 +39,54 @@
   --st-gold-solid: #7a6033;
   --st-on-gold: #fffaf2;
   --st-gold-text: #6f5629;
-  --st-ink: #2a2520;
-  --st-ink-soft: rgba(42, 37, 32, 0.8);
-  --st-ink-faint: rgba(42, 37, 32, 0.7);
+  --st-ink: #1f1b17;
+  --st-ink-soft: rgba(31, 27, 23, 0.9);
+  --st-ink-faint: rgba(31, 27, 23, 0.8);
   --st-ok: #2d6e4e;
   --st-danger: #a33a3a;
   --st-shadow: rgba(60, 40, 10, 0.18);
+}
+
+/*
+ * The Studio's text size (src/ui/type.js): every font size in the Studio is multiplied by --ts and never
+ * drops below --ts-min. App.jsx marks <html data-st-view="studio"> while the Studio is on screen; the
+ * customer page leaves both unset and keeps its own sizes. The owner, 2026-10-12: the text was too small.
+ */
+:root[data-st-view="studio"] {
+  --ts: 1.2;
+  --ts-min: 13px;
+}
+
+/* what a screen is for (ScreenIntro.jsx, screenHelp.js): one quiet line under the tools */
+.st-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 980px;
+  margin: 0 auto 18px;
+  padding: 10px 16px;
+  border: 1px solid var(--st-line);
+  border-radius: 12px;
+  background: var(--st-gold-wash);
+  color: var(--st-ink-soft);
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+.st-intro-icon {
+  display: inline-flex;
+  flex: none;
+  margin-top: 2px;
+  color: var(--st-gold-text);
+}
+/* the same, for the comparison chosen in the התאמה tab */
+.st-subtab-help {
+  margin: 8px 6px 2px;
+  color: var(--st-ink-soft);
+  font-size: max(var(--ts-min, 0px), calc(13.5px * var(--ts, 1)));
+  line-height: 1.6;
+  text-align: center;
+  text-wrap: pretty;
 }
 
 /* a pressable element: it gives a little, and the gold ripple (motion.js) shows where it was pressed */
@@ -106,7 +148,7 @@
 }
 .st-search-text kbd {
   font: inherit;
-  font-size: 10px;
+  font-size: max(var(--ts-min, 0px), calc(10px * var(--ts, 1)));
   font-weight: 500;
   padding: 1px 5px;
   border: 1px solid var(--st-line-strong);
@@ -242,12 +284,12 @@
   color: var(--st-ink);
 }
 .st-lead-date {
-  font-size: 12px;
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
   color: var(--st-ink-soft);
 }
 .st-lead-phone {
   justify-self: start;
-  font-size: 14px;
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
   color: var(--st-gold-text);
   text-decoration: none;
 }
@@ -255,7 +297,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  font-size: 12px;
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
   color: var(--st-ink-soft);
 }
 .st-lead-nums b {
@@ -339,7 +381,7 @@
   background: var(--st-gold-wash);
   border: 1px solid var(--st-line-strong);
   color: var(--st-ink);
-  font-size: 14px;
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
 }
 .demo-banner-actions {
   display: inline-flex;

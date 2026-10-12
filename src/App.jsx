@@ -35,9 +35,18 @@ import { nameIdeas } from "./reading/nameIdeas.js";
 import { agesText } from "./reading/ages.js";
 import PracticalNumbers from "./studio/calcs/PracticalNumbers.jsx";
 import NameCompare from "./studio/calcs/NameCompare.jsx";
+import { fs } from "./ui/type.js";
+import ScreenIntro from "./studio/ScreenIntro.jsx";
+import { psychLevels, PSYCH_NAMES, LEVEL_WORDS } from "./reading/psych.js";
+import { SCREEN_HELP, MATCH_HELP } from "./studio/screenHelp.js";
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
 const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
+/**
+ * Secondary text. The Studio's is strong enough to read on both themes (the owner, 2026-10-12: the light theme
+ * looked washed out); the customer page keeps the pale one it was designed with.
+ */
+const softText = (dk, studio = true) => studio ? (dk ? "rgba(232,224,208,.7)" : "rgba(31,27,23,.78)") : (dk ? "rgba(232,224,208,.4)" : "rgba(42,37,32,.4)");
 /** The longest text a field takes: any real name or date fits, and a runaway paste is cut short. */
 const MAX_INPUT = 120;
 /** The longest an email address can be. */
@@ -355,21 +364,21 @@ function RevealCard({delay=450,...card}){
 // ═══════════════════ PSYCHOLOGICAL RADAR ═══════════════════
 function PsychRadar({psych,dk,he}){
   const ac=dk?"#c8a96a":"#937640";const s=300;const cx=s/2;const cy=s/2;const r=110;
-  const axes=he?["מנהיגות","אינטואיציה","יצירתיות","יציבות","שאיפה","חכמה"]:["Leadership","Intuition","Creativity","Stability","Ambition","Wisdom"];
-  const keys=["leadership","intuition","creativity","stability","ambition","wisdom"];
-  const cols=["#FFD700","#9B59B6","#FF6B6B","#4ECDC4","#E67E22","#45B7D1"];
-  const pts=keys.map((k,i)=>{const a=Math.PI*2/6*i-Math.PI/2;const v=psych[k]/10;return{x:cx+r*v*Math.cos(a),y:cy+r*v*Math.sin(a),ax:cx+r*Math.cos(a),ay:cy+r*Math.sin(a),lx:cx+(r+20)*Math.cos(a),ly:cy+(r+20)*Math.sin(a),v:psych[k],col:cols[i]};});
+  const lang=he?"he":"en";const{items}=psychLevels(psych);
+  // the trait colours, deeper on the light theme so the words stay readable on cream
+  const cols=dk?["#FFD700","#B57EDC","#FF6B6B","#4ECDC4","#E67E22","#45B7D1"]:["#8a6d00","#7d3c98","#b03a2e","#117a65","#a0600a","#1f6f8b"];
+  const pts=items.map((t,i)=>{const a=Math.PI*2/6*i-Math.PI/2;return{x:cx+r*t.ratio*Math.cos(a),y:cy+r*t.ratio*Math.sin(a),ax:cx+r*Math.cos(a),ay:cy+r*Math.sin(a),lx:cx+(r+22)*Math.cos(a),ly:cy+(r+22)*Math.sin(a),col:cols[i],name:PSYCH_NAMES[lang][t.key],word:LEVEL_WORDS[lang][t.level],level:t.level};});
   const poly=pts.map(p=>`${p.x},${p.y}`).join(" ");
-  // a 0 is the numbers' own answer (the owner, 2026-10-11: no filler), and the chart says so
-  const note=he?"תכונה שאף מספר לא נותן לה נקודות מוצגת 0.":"A trait no number gives points to shows 0.";
-  return(<><svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{display:"block",margin:"0 auto"}}>
-    {[.25,.5,.75,1].map(f=><polygon key={f} points={keys.map((_,i)=>{const a=Math.PI*2/6*i-Math.PI/2;return`${cx+r*f*Math.cos(a)},${cy+r*f*Math.sin(a)}`;}).join(" ")} fill="none" stroke={ac} strokeWidth=".4" opacity={f===1?.2:.1}/>)}
-    {pts.map((p,i)=><line key={i} x1={cx} y1={cy} x2={p.ax} y2={p.ay} stroke={ac} strokeWidth=".3" opacity=".15"/>)}
-    <polygon points={poly} fill={ac} fillOpacity=".08" stroke={ac} strokeWidth="1.5" strokeOpacity=".5"><animate attributeName="opacity" values=".7;1;.7" dur="4s" repeatCount="indefinite"/></polygon>
-    {pts.map((p,i)=><g key={i}><circle cx={p.x} cy={p.y} r={4} fill={p.col} opacity=".7"><animate attributeName="r" values="3;5;3" dur={`${3+i*.5}s`} repeatCount="indefinite"/></circle></g>)}
-    {pts.map((p,i)=><text key={`l${i}`} x={p.lx} y={p.ly} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill={p.col} opacity=".7" fontFamily="sans-serif">{axes[i]}<tspan x={p.lx} dy="13" fontSize="12" fontWeight="700" fill={p.col}>{p.v}/10</tspan></text>)}
+  // relative to the person's strongest trait, in words (the owner, 2026-10-12); a trait no number gives points to is "not emphasized"
+  const note=he?"הגרף יחסי לתכונה החזקה ביותר: היא מגיעה עד הקצה, והשאר לפי היחס אליה. ״לא מודגש״ פירושו שאף מספר לא נותן לתכונה נקודות.":"The chart is relative to the strongest trait: it reaches the edge and the others follow in proportion. \"Not emphasized\" means no number gives the trait points.";
+  return(<><svg width={s+56} height={s+44} viewBox={`-28 -18 ${s+56} ${s+44}`} style={{display:"block",margin:"0 auto",maxWidth:"100%",height:"auto"}} role="img" aria-label={pts.map(p=>`${p.name}: ${p.word}`).join(", ")}>
+    {[.25,.5,.75,1].map(f=><polygon key={f} points={items.map((_,i)=>{const a=Math.PI*2/6*i-Math.PI/2;return`${cx+r*f*Math.cos(a)},${cy+r*f*Math.sin(a)}`;}).join(" ")} fill="none" stroke={ac} strokeWidth=".5" opacity={f===1?.3:.15}/>)}
+    {pts.map((p,i)=><line key={i} x1={cx} y1={cy} x2={p.ax} y2={p.ay} stroke={ac} strokeWidth=".4" opacity=".2"/>)}
+    <polygon points={poly} fill={ac} fillOpacity=".12" stroke={ac} strokeWidth="1.6" strokeOpacity=".65"><animate attributeName="opacity" values=".75;1;.75" dur="4s" repeatCount="indefinite"/></polygon>
+    {pts.map((p,i)=><g key={i}><circle cx={p.x} cy={p.y} r={4.5} fill={p.col} opacity=".85"><animate attributeName="r" values="3.5;5.5;3.5" dur={`${3+i*.5}s`} repeatCount="indefinite"/></circle></g>)}
+    {pts.map((p,i)=><text key={`l${i}`} x={p.lx} y={p.ly} textAnchor="middle" dominantBaseline="middle" fontSize="13" fontWeight="600" fill={p.col} fontFamily="Heebo, sans-serif">{p.name}<tspan x={p.lx} dy="16" fontSize="13" fontWeight="700" fill={p.col} opacity={p.level==="none"?.7:1} data-level={p.level}>{p.word}</tspan></text>)}
   </svg>
-  <p data-testid="psych-note" style={{fontSize:11,textAlign:"center",color:dk?"rgba(232,224,208,.55)":"rgba(42,37,32,.6)",margin:"6px 0 0"}}>{note}</p></>);
+  <p data-testid="psych-note" style={{fontSize:fs(12),textAlign:"center",color:softText(dk),margin:"6px auto 0",maxWidth:420,lineHeight:1.6}}>{note}</p></>);
 }
 
 // ═══════════════════ YEARLY WAVE TIMELINE ═══════════════════
@@ -390,7 +399,7 @@ function YearWave({proj,dk,he}){
         <circle cx={p.x} cy={p.y} r={p.isCurrent?7:hover===i?6:3.5} fill={p.isCurrent?ac:hover===i?ac:`${ac}88`} opacity={p.isCurrent?1:hover===i?.9:.6}>{p.isCurrent&&<animate attributeName="r" values="6;9;6" dur="3s" repeatCount="indefinite"/>}</circle>
         <text x={p.x} y={h-pad+16} textAnchor="middle" fontSize="9" fill={p.isCurrent?ac:`${ac}55`} fontWeight={p.isCurrent?"700":"400"}>{p.year}</text>
         <text x={p.x} y={p.y-12} textAnchor="middle" fontSize="11" fontWeight="700" fill={ac} opacity={p.isCurrent||hover===i?1:0} style={{transition:"opacity .3s"}}>{p.py}</text>
-        {hover===i&&!p.isCurrent&&(<foreignObject x={p.x-80} y={p.y-65} width={160} height={50}><div style={{background:dk?"rgba(15,15,30,.95)":"rgba(255,255,255,.95)",border:`1px solid ${ac}33`,borderRadius:8,padding:"6px 10px",textAlign:"center",fontSize:10,color:dk?"#e8e0d0":"#2a2520",backdropFilter:"blur(10px)"}}><div style={{fontWeight:700,color:ac}}>{p.year} — {he?D[p.py]?.t:D[p.py]?.te}</div><div style={{opacity:.6,marginTop:2}}><Locked he={he}>{p.energy[he?"he":"en"]}</Locked></div></div></foreignObject>)}
+        {hover===i&&!p.isCurrent&&(<foreignObject x={p.x-80} y={p.y-65} width={160} height={50}><div style={{background:dk?"rgba(15,15,30,.95)":"rgba(255,255,255,.95)",border:`1px solid ${ac}33`,borderRadius:8,padding:"6px 10px",textAlign:"center",fontSize:fs(10),color:dk?"#e8e0d0":"#2a2520",backdropFilter:"blur(10px)"}}><div style={{fontWeight:700,color:ac}}>{p.year} — {he?D[p.py]?.t:D[p.py]?.te}</div><div style={{opacity:.6,marginTop:2}}><Locked he={he}>{p.energy[he?"he":"en"]}</Locked></div></div></foreignObject>)}
       </g>))}
     </svg>
   </div>);
@@ -406,12 +415,12 @@ function LoShu({ls,dk,he}){
   return(<><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,maxWidth:260,margin:"0 auto"}}>
     {layout.flat().map((num,i)=>{const ct=ls.g[num];const miss=ct===0;return(
       <div key={i} style={{aspectRatio:"1",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",borderRadius:12,border:`1.5px solid ${miss?`${ac}12`:ac+"44"}`,background:miss?(dk?"rgba(10,10,20,.3)":"rgba(200,200,200,.15)"):`${ac}${ct>1?"18":"08"}`,position:"relative",transition:"all .3s"}}>
-        {ct>1&&<div style={{position:"absolute",top:3,right:5,fontSize:8,color:ac,opacity:.5}}>×{ct}</div>}
+        {ct>1&&<div style={{position:"absolute",top:3,right:5,fontSize:fs(8),color:ac,opacity:.5}}>×{ct}</div>}
         <div style={{fontSize:26,fontWeight:700,color:miss?(dk?"rgba(232,224,208,.12)":"rgba(0,0,0,.08)"):ac,fontFamily:"'Cormorant Garamond',serif"}}>{num}</div>
-        <div style={{fontSize:7.5,color:dk?"rgba(232,224,208,.25)":"rgba(0,0,0,.2)",textAlign:"center"}}>{meanings[num]}</div>
+        <div style={{fontSize:fs(7.5),color:dk?"rgba(232,224,208,.25)":"rgba(0,0,0,.2)",textAlign:"center"}}>{meanings[num]}</div>
       </div>);})}
   </div>
-  <p data-testid="loshu-sources" style={{maxWidth:300,margin:"10px auto 0",fontSize:11,lineHeight:1.6,textAlign:"center",color:dk?"rgba(232,224,208,.55)":"rgba(42,37,32,.6)"}}>{sources}</p></>);
+  <p data-testid="loshu-sources" style={{maxWidth:300,margin:"10px auto 0",fontSize:fs(11),lineHeight:1.6,textAlign:"center",color:dk?"rgba(232,224,208,.55)":"rgba(42,37,32,.6)"}}>{sources}</p></>);
 }
 
 // ═══════════════════ CHAPTER SYSTEM ═══════════════════
@@ -420,16 +429,16 @@ function Chapter({index,title,subtitle,icon,children,isActive,isRevealed,onRevea
   if(!isRevealed)return(
     <div style={{textAlign:"center",padding:"40px 20px",opacity:isActive?1:.3,transition:"opacity .8s",cursor:isActive?"pointer":"default"}} onClick={isActive?onReveal:undefined}>
       <div style={{marginBottom:12,opacity:isActive?.55:.3,filter:isActive?"none":"blur(3px)",transition:"filter .5s,opacity .5s",color:ac,display:"flex",justifyContent:"center"}}><Icon name={icon} size={34} stroke={1.3}/></div>
-      <div style={{fontSize:18,fontWeight:600,color:ac,opacity:isActive?1:.3,transition:"opacity .5s"}}>{title}</div>
-      <div style={{fontSize:13,color:dk?"rgba(232,224,208,.3)":"rgba(0,0,0,.2)",marginTop:4}}>{subtitle}</div>
-      {isActive&&<div style={{marginTop:16,fontSize:13,color:ac,opacity:.6,animation:"pulse 2s ease-in-out infinite"}}>{he?"לחצו לחשיפה ▾":"Tap to reveal ▾"}</div>}
+      <div style={{fontSize:fs(18),fontWeight:600,color:ac,opacity:isActive?1:.3,transition:"opacity .5s"}}>{title}</div>
+      <div style={{fontSize:fs(13),color:dk?"rgba(232,224,208,.3)":"rgba(0,0,0,.2)",marginTop:4}}>{subtitle}</div>
+      {isActive&&<div style={{marginTop:16,fontSize:fs(13),color:ac,opacity:.6,animation:"pulse 2s ease-in-out infinite"}}>{he?"לחצו לחשיפה ▾":"Tap to reveal ▾"}</div>}
     </div>);
   return(<div style={{animation:"fadeInUp .8s ease-out",padding:"12px 0"}}>
     <div style={{textAlign:"center",marginBottom:20}}>
-      <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:4,marginBottom:4}}>{`— ${index < 10 ? "0" : ""}${index} —`}</div>
+      <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:4,marginBottom:4}}>{`— ${index < 10 ? "0" : ""}${index} —`}</div>
       <div style={{marginBottom:8,color:ac,display:"flex",justifyContent:"center"}}><Icon name={icon} size={26} stroke={1.3}/></div>
-      <h3 style={{fontSize:22,fontWeight:600,color:ac,marginBottom:4,fontFamily:"'Cormorant Garamond',serif"}}>{title}</h3>
-      <div style={{fontSize:13,color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)"}}>{subtitle}</div>
+      <h3 style={{fontSize:fs(22),fontWeight:600,color:ac,marginBottom:4,fontFamily:"'Cormorant Garamond',serif"}}>{title}</h3>
+      <div style={{fontSize:fs(13),color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)"}}>{subtitle}</div>
     </div>
     <div className="gc">{children}</div>
   </div>);
@@ -442,7 +451,7 @@ function Intro({onDone,he,dk}){
   return(<div style={{position:"fixed",inset:0,zIndex:9999,background:dk?"#080812":"#f5f0e8",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",transition:"opacity 1s ease",opacity:p>=4?0:1,pointerEvents:p>=4?"none":"all"}}>
     <div style={{fontSize:80,color:ac,opacity:p>=1?1:0,transform:`scale(${p>=1?1:.2})`,transition:"all 1.2s cubic-bezier(.34,1.56,.64,1)",textShadow:`0 0 80px ${ac}33`,marginBottom:30}}>✦</div>
     <h1 style={{fontSize:52,fontWeight:300,letterSpacing:10,color:ac,opacity:p>=2?1:0,transform:`translateY(${p>=2?0:25}px)`,transition:"all 1s ease .3s",fontFamily:"'Cormorant Garamond',serif",textTransform:"uppercase"}}>{he?"נומרולוגיה":"Numerology"}</h1>
-    <p style={{fontSize:16,fontWeight:300,color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)",opacity:p>=3?1:0,transition:"all .8s ease",marginTop:14,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",letterSpacing:2}}>{he?"המספרים מדברים... מוכנים?":"The numbers speak... Are you ready?"}</p>
+    <p style={{fontSize:fs(16),fontWeight:300,color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)",opacity:p>=3?1:0,transition:"all .8s ease",marginTop:14,fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",letterSpacing:2}}>{he?"המספרים מדברים... מוכנים?":"The numbers speak... Are you ready?"}</p>
   </div>);
 }
 
@@ -505,7 +514,7 @@ const NUM_LIB={
 function TablesWidget({he,dk}){
   const ac=dk?"#c8a96a":"#937640";
   const tm=dk?"#e8e0d0":"#2a2520";
-  const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
+  const ts=softText(dk);
   const isRtl=he;
   const[firstName,setFirstName]=useState("");
   const[lastName,setLastName]=useState("");
@@ -518,28 +527,28 @@ function TablesWidget({he,dk}){
   const doCalc=()=>{
     try{setError("");const b=parseBirthDate(dob);if(!b)throw 0;const{d,m,y}=b;const fullName=(firstName+" "+lastName).trim();AU.init();AU.p("reveal");const at=new Date();const r=fullCalc(d,m,y,fullName,undefined,at);setHowCtx({d,m,y,name:fullName,now:at});setResults(r);setShowExtra(false);setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}catch{setError(he?"יש לוודא שכל הנתונים הוזנו כהלכה":"Please check all data is entered correctly");}
   };
-  const thStyle={padding:"11px 14px",fontSize:12,fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`,letterSpacing:.3};
-  const tdStyle={padding:"11px 14px",fontSize:14,fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
-  const tdLabel={...tdStyle,fontWeight:600,color:ts,fontSize:13,textAlign:isRtl?"right":"left"};
-  const tdValue={...tdStyle,fontSize:20,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"};
+  const thStyle={padding:"11px 14px",fontSize:fs(12),fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`,letterSpacing:.3};
+  const tdStyle={padding:"11px 14px",fontSize:fs(14),fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
+  const tdLabel={...tdStyle,fontWeight:600,color:ts,fontSize:fs(13),textAlign:isRtl?"right":"left"};
+  const tdValue={...tdStyle,fontSize:fs(20),fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"};
   const cycleLabels=he?["חיפוש","מציאה","יתד","שיא"]:["Search","Discovery","Anchor","Summit"];
   return(<div style={{animation:"fadeInUp .5s ease-out"}}>
     <div className="gc" style={{marginBottom:20}}>
-      <div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:4,marginBottom:6}}>{he?"פרטים למילוי":"Enter Details"}</div></div>
+      <div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:4,marginBottom:6}}>{he?"פרטים למילוי":"Enter Details"}</div></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} placeholder={he?"שם פרטי...":"First name..."} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
-        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"שם משפחה":"Last Name"}</label><input className="gi" maxLength={MAX_INPUT} placeholder={he?"שם משפחה...":"Last name..."} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}99`,fontWeight:500}}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} placeholder={he?"שם פרטי...":"First name..."} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}99`,fontWeight:500}}>{he?"שם משפחה":"Last Name"}</label><input className="gi" maxLength={MAX_INPUT} placeholder={he?"שם משפחה...":"Last name..."} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:14}}>
-        <div><label style={{display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doCalc();}}/></div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doCalc();}}/></div>
         <PlusOneNote he={he} color={ts}/>
       </div>
-      {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:14,textAlign:"center"}}>{error}</div>}
+      {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:fs(13),marginBottom:14,textAlign:"center"}}>{error}</div>}
       <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doCalc}>{he?"לחשב":"Calculate"}</button>
     </div>
     {results&&animIn&&(<div style={{animation:"fadeInUp .7s ease-out"}}>
       <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
-        <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"תוצאות כלליות":"General Results"}</h4></div>
+        <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"תוצאות כלליות":"General Results"}</h4></div>
         <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
           <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}><th style={{...thStyle,textAlign:isRtl?"right":"left",paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{he?"קטגוריה":"Category"}</th><th style={thStyle}>{he?"ערך":"Value"}</th></tr></thead>
           <tbody>{[{k:"nv",l:he?"ערך השם":"Name Value",v:results.nv},{k:"lp",l:he?"שביל הגורל":"Life Path",v:results.lp},{k:"py",l:he?"שנה אישית":"Personal Year",v:results.py},{k:"hy",l:he?"שנה נסתרת":"Hidden Year",v:results.hy},{k:"age",l:he?"גיל נוכחי":"Current Age",v:results.age}].map((row,i)=>(
@@ -548,39 +557,39 @@ function TablesWidget({he,dk}){
         </table></div>
       </div>
       <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
-        <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזורי חיים | פסגות ואתגרים":"Life Cycles | Peaks & Challenges"}</h4></div>
+        <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזורי חיים | פסגות ואתגרים":"Life Cycles | Peaks & Challenges"}</h4></div>
         <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
-          <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}>{[["exit",he?"מחזור חיים":"Life Cycle"],["pk",he?"פסגה":"Peak"],["ch",he?"אתגר":"Challenge"],["hp",he?"פסגה נסתרת":"Hidden Peak"],["hc",he?"אתגר נסתר":"Hidden Chal."]].map(([k,l])=>(<th key={k} style={{...thStyle,fontSize:11}}>{l}{howCtx&&<HowButton k={k} ctx={howCtx} he={he} label={l}/>}</th>))}</tr></thead>
+          <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}>{[["exit",he?"מחזור חיים":"Life Cycle"],["pk",he?"פסגה":"Peak"],["ch",he?"אתגר":"Challenge"],["hp",he?"פסגה נסתרת":"Hidden Peak"],["hc",he?"אתגר נסתר":"Hidden Chal."]].map(([k,l])=>(<th key={k} style={{...thStyle,fontSize:fs(11)}}>{l}{howCtx&&<HowButton k={k} ctx={howCtx} he={he} label={l}/>}</th>))}</tr></thead>
           <tbody>{cycleLabels.map((label,i)=>{const span=cycleSpans(results.exit)[i];const active=cycleAt(results.age,results.exit)===i;return(
-            <tr key={i} style={{background:active?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)"))}}><td style={{...tdStyle,fontWeight:600,color:active?ac:ts,fontSize:12,whiteSpace:"nowrap"}}><div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>{active&&<span style={{display:"inline-block",width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,flexShrink:0}}/>}<span>{label}</span><span style={{fontSize:9,color:ts,opacity:.5}}>{agesText(span)}</span></div></td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:active?"#e88bb":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hc[i]}</td></tr>
+            <tr key={i} style={{background:active?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)"))}}><td style={{...tdStyle,fontWeight:600,color:active?ac:ts,fontSize:fs(12),whiteSpace:"nowrap"}}><div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>{active&&<span style={{display:"inline-block",width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,flexShrink:0}}/>}<span>{label}</span><span style={{fontSize:fs(9),color:ts,opacity:.5}}>{agesText(span)}</span></div></td><td style={{...tdStyle,fontSize:fs(18),fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td><td style={{...tdStyle,fontSize:fs(18),fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td><td style={{...tdStyle,fontSize:fs(18),fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td><td style={{...tdStyle,fontSize:fs(18),fontWeight:700,color:active?"#e88bb":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hc[i]}</td></tr>
           );})}</tbody>
         </table></div>
       </div>
       <div style={{textAlign:"center",margin:"20px 0"}}><button className="ghost" onClick={()=>{setShowExtra(!showExtra);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center",gap:8}}><span>{he?(showExtra?"פחות תוצאות":"עוד תוצאות"):(showExtra?"Hide Extra Results":"Show Extra Results")}</span><span style={{transform:showExtra?"rotate(180deg)":"rotate(0)",transition:"transform .3s",display:"inline-block"}}>▾</span></button></div>
       {showExtra&&(<div style={{animation:"fadeInUp .5s ease-out"}}>
         <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
-          <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"נשמה וביטוי":"Soul & Expression"}</h4></div>
+          <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"נשמה וביטוי":"Soul & Expression"}</h4></div>
           <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}><th style={{...thStyle,textAlign:isRtl?"right":"left",paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{he?"קטגוריה":"Category"}</th><th style={thStyle}>{he?"ערך":"Value"}</th><th style={thStyle}>{he?"ארכיטיפ":"Archetype"}</th></tr></thead>
             <tbody>{[{k:"su",l:he?"קול הנשמה":"Soul Urge",v:results.su},{k:"ex",l:he?"מספר הביטוי":"Expression",v:results.ex},{k:"pm",l:he?"חודש אישי":"Personal Month",v:results.pm},{k:"pd",l:he?"יום אישי":"Personal Day",v:results.pd}].map((row,i)=>(
-              <tr key={i} style={{background:i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)")}}><td style={{...tdLabel,paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{row.l}</td><td style={tdValue}>{row.v}{howCtx&&<HowButton k={row.k} ctx={howCtx} he={he} label={row.l}/>}</td><td style={{...tdStyle,fontSize:12,color:D[row.v]?.c||ac,opacity:.8}}>{row.v>0&&row.v<=9?(he?D[row.v]?.t:D[row.v]?.te):""}</td></tr>
+              <tr key={i} style={{background:i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)")}}><td style={{...tdLabel,paddingRight:isRtl?20:14,paddingLeft:isRtl?14:20}}>{row.l}</td><td style={tdValue}>{row.v}{howCtx&&<HowButton k={row.k} ctx={howCtx} he={he} label={row.l}/>}</td><td style={{...tdStyle,fontSize:fs(12),color:D[row.v]?.c||ac,opacity:.8}}>{row.v>0&&row.v<=9?(he?D[row.v]?.t:D[row.v]?.te):""}</td></tr>
             ))}</tbody>
           </table></div>
         </div>
         <div className="gc" style={{marginBottom:16}}>
-          <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"חובות קארמיים":"Karmic Debts"}{howCtx&&<HowButton k="kd" ctx={howCtx} he={he}/>}</h4></div>
-          {results.kd.length===0?(<div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={16}/></span><span style={{fontSize:13,color:ts,marginRight:8,marginLeft:8}}>{he?"אין חוב קארמי":"No karmic debt"}</span></div>):(<div style={{display:"flex",flexDirection:"column",gap:8}}>{results.kd.map(k=>(<div key={k} style={{padding:"12px 14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:20,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span><span style={{fontSize:12,lineHeight:1.7,color:ts}}><Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></span></div>))}</div>)}
+          <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"חובות קארמיים":"Karmic Debts"}{howCtx&&<HowButton k="kd" ctx={howCtx} he={he}/>}</h4></div>
+          {results.kd.length===0?(<div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={16}/></span><span style={{fontSize:fs(13),color:ts,marginRight:8,marginLeft:8}}>{he?"אין חוב קארמי":"No karmic debt"}</span></div>):(<div style={{display:"flex",flexDirection:"column",gap:8}}>{results.kd.map(k=>(<div key={k} style={{padding:"12px 14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:fs(20),fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span><span style={{fontSize:fs(12),lineHeight:1.7,color:ts}}><Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></span></div>))}</div>)}
         </div>
         <div className="gc" style={{marginBottom:16}}>
-          <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid{howCtx&&<HowButton k="ls" ctx={howCtx} he={he}/>}</h4>{results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
+          <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid{howCtx&&<HowButton k="ls" ctx={howCtx} he={he}/>}</h4>{results.ls.miss.length>0&&<p style={{fontSize:fs(11),color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
           <LoShu ls={results.ls} dk={dk} he={he}/>
         </div>
         <div className="gc" style={{marginBottom:16,padding:0,overflow:"hidden"}}>
-          <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:17,fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
+          <div style={{padding:"16px 20px 10px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?700:500,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
           <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(147,118,64,.02)"}}><th style={thStyle}>{he?"שנה":"Year"}</th><th style={thStyle}>{he?"שנה אישית":"P. Year"}</th><th style={thStyle}>{he?"אנרגיה":"Energy"}</th></tr></thead>
             <tbody>{results.proj.map((p,i)=>(
-              <tr key={i} style={{background:p.isCurrent?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)"))}}><td style={{...tdStyle,fontWeight:p.isCurrent?700:400,color:p.isCurrent?ac:ts,fontSize:13}}>{p.year}{p.isCurrent&&<span style={{fontSize:8,color:ac,opacity:.6,marginRight:4,marginLeft:4}}>◀</span>}</td><td style={{...tdStyle,fontSize:18,fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}{howCtx&&<HowButton k="py" ctx={{...howCtx,year:p.year}} he={he} label={he?`שנה אישית ${p.year}`:`Personal year ${p.year}`}/>}</td><td style={{...tdStyle,fontSize:11,color:p.isCurrent?ac:ts}}>{he?D[p.py]?.t:D[p.py]?.te}</td></tr>
+              <tr key={i} style={{background:p.isCurrent?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2===0?"transparent":(dk?"rgba(200,169,106,.015)":"rgba(147,118,64,.01)"))}}><td style={{...tdStyle,fontWeight:p.isCurrent?700:400,color:p.isCurrent?ac:ts,fontSize:fs(13)}}>{p.year}{p.isCurrent&&<span style={{fontSize:fs(8),color:ac,opacity:.6,marginRight:4,marginLeft:4}}>◀</span>}</td><td style={{...tdStyle,fontSize:fs(18),fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}{howCtx&&<HowButton k="py" ctx={{...howCtx,year:p.year}} he={he} label={he?`שנה אישית ${p.year}`:`Personal year ${p.year}`}/>}</td><td style={{...tdStyle,fontSize:fs(11),color:p.isCurrent?ac:ts}}>{he?D[p.py]?.t:D[p.py]?.te}</td></tr>
             ))}</tbody>
           </table></div>
         </div>
@@ -594,7 +603,7 @@ function TablesWidget({he,dk}){
 function CalculatorsWidget({he,dk}){
   const ac=dk?"#c8a96a":"#937640";
   const tm=dk?"#e8e0d0":"#2a2520";
-  const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
+  const ts=softText(dk);
   const isRtl=he;
 
   const[cat,setCat]=useState(0);
@@ -622,11 +631,11 @@ function CalculatorsWidget({he,dk}){
 
   const parseDob=(s)=>parseBirthDate(s);
 
-  const labelSt={display:"block",marginBottom:6,fontSize:11,color:`${ac}99`,fontWeight:500};
-  const thSt={padding:"10px 12px",fontSize:11,fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`};
-  const tdSt={padding:"10px 12px",fontSize:14,fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
-  const tdLb={...tdSt,fontWeight:600,color:ts,fontSize:12,textAlign:isRtl?"right":"left"};
-  const tdVl={...tdSt,fontSize:19,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"};
+  const labelSt={display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}99`,fontWeight:500};
+  const thSt={padding:"10px 12px",fontSize:fs(11),fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`};
+  const tdSt={padding:"10px 12px",fontSize:fs(14),fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
+  const tdLb={...tdSt,fontWeight:600,color:ts,fontSize:fs(12),textAlign:isRtl?"right":"left"};
+  const tdVl={...tdSt,fontSize:fs(19),fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"};
 
   const categories=[
     {i:"chart",l:he?"נומרולוגיה אישית":"Personal Numerology"},
@@ -664,13 +673,13 @@ function CalculatorsWidget({he,dk}){
   const CalcTile=({icon,title,desc,onClick})=>(
     <button type="button" className="fx" onClick={onClick} style={{display:"block",width:"100%",padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.45)",border:`1px solid ${ac}0a`,borderRadius:16,cursor:"pointer",transition:"all .3s",textAlign:"center",font:"inherit",color:"inherit"}} onMouseEnter={e=>e.currentTarget.style.borderColor=ac+"44"} onMouseLeave={e=>e.currentTarget.style.borderColor=ac+"0a"}>
       <span style={{color:ac,marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name={icon} size={24} stroke={1.3}/></span>
-      <span style={{display:"block",fontSize:13,fontWeight:600,color:ac,marginBottom:3}}>{title}</span>
-      <span style={{display:"block",fontSize:11,color:"var(--st-ink-soft)",lineHeight:1.5}}>{desc}</span>
+      <span style={{display:"block",fontSize:fs(13),fontWeight:600,color:ac,marginBottom:3}}>{title}</span>
+      <span style={{display:"block",fontSize:fs(11),color:"var(--st-ink-soft)",lineHeight:1.5}}>{desc}</span>
     </button>
   );
 
   // ── BACK BUTTON ──
-  const BackBtn=()=>(<button className="ghost" onClick={resetCalc} style={{marginBottom:14,fontSize:12,padding:"8px 16px"}}>← {he?"חזרה":"Back"}</button>);
+  const BackBtn=()=>(<button className="ghost" onClick={resetCalc} style={{marginBottom:14,fontSize:fs(12),padding:"8px 16px"}}>← {he?"חזרה":"Back"}</button>);
   /** A number's archetype title, master numbers included. */
   const numberTitleOf=(n)=>{const e=n>9?MASTER[n]:D[n];return e?(he?e.t:e.te):"";};
 
@@ -680,11 +689,11 @@ function CalculatorsWidget({he,dk}){
     {/* Category tabs */}
     <div style={{display:"flex",flexWrap:"wrap",justifyContent:"center",gap:4,marginBottom:16,padding:"2px 0"}}>
       {categories.map((c,i)=>(
-        <button type="button" key={i} aria-pressed={cat===i} onClick={()=>{setCat(i);resetCalc();AU.init();AU.p("click");}} style={{fontFamily:"inherit",flex:"0 0 auto",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .3s",whiteSpace:"nowrap",background:cat===i?(dk?"rgba(200,169,106,.1)":"rgba(147,118,64,.06)"):"transparent",color:cat===i?ac:ts,border:`1px solid ${cat===i?ac+"33":"transparent"}`}}><span style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={c.i} size={13}/>{c.l}</span></button>
+        <button type="button" key={i} aria-pressed={cat===i} onClick={()=>{setCat(i);resetCalc();AU.init();AU.p("click");}} style={{fontFamily:"inherit",flex:"0 0 auto",padding:"8px 14px",borderRadius:10,fontSize:fs(11),fontWeight:600,cursor:"pointer",transition:"all .3s",whiteSpace:"nowrap",background:cat===i?(dk?"rgba(200,169,106,.1)":"rgba(147,118,64,.06)"):"transparent",color:cat===i?ac:ts,border:`1px solid ${cat===i?ac+"33":"transparent"}`}}><span style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={c.i} size={13}/>{c.l}</span></button>
       ))}
     </div>
 
-    {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:14,textAlign:"center"}}>{error}</div>}
+    {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:fs(13),marginBottom:14,textAlign:"center"}}>{error}</div>}
 
     {/* ═══════ CATEGORY 1: Personal Numerology ═══════ */}
     {cat===0&&!calc&&(
@@ -703,7 +712,7 @@ function CalculatorsWidget({he,dk}){
     {cat===0&&calc==="allnums"&&(<div>
       <BackBtn/>
       <div className="gc" style={{marginBottom:16}}>
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="chart" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"כל המספרים שלי":"All My Numbers"}</div></div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="chart" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"כל המספרים שלי":"All My Numbers"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
           <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם פרטי...":"First name..."}/></div>
           <div><label style={labelSt}>{he?"שם משפחה":"Last Name"}</label><input className="gi" maxLength={MAX_INPUT} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם משפחה...":"Last name..."}/></div>
@@ -719,14 +728,14 @@ function CalculatorsWidget({he,dk}){
         {/* Master number alert */}
         {isMaster(results.lpm)&&(<div className="gc" style={{marginBottom:14,padding:14,textAlign:"center",background:`${MASTER[results.lpm].c}08`,border:`1px solid ${MASTER[results.lpm].c}33`}}>
           <div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="bolt" size={20} stroke={1.3}/></div>
-          <div style={{fontSize:16,fontWeight:700,color:MASTER[results.lpm].c,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מספר מאסטר":"Master Number"} {results.lpm} — {he?MASTER[results.lpm].t:MASTER[results.lpm].te}</div>
-          <p style={{fontSize:12,color:ts,lineHeight:1.7,marginTop:6}}><Locked he={he}>{MASTER[results.lpm][he?"he":"en"]}</Locked></p>
+          <div style={{fontSize:fs(16),fontWeight:700,color:MASTER[results.lpm].c,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מספר מאסטר":"Master Number"} {results.lpm} — {he?MASTER[results.lpm].t:MASTER[results.lpm].te}</div>
+          <p style={{fontSize:fs(12),color:ts,lineHeight:1.7,marginTop:6}}><Locked he={he}>{MASTER[results.lpm][he?"he":"en"]}</Locked></p>
         </div>)}
 
         {/* Core numbers */}
         <div className="gc" style={{marginBottom:14,padding:0,overflow:"hidden"}}>
           <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}>
-            <h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"תוצאות כלליות":"General Results"}</h4>
+            <h4 style={{fontSize:fs(16),fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"תוצאות כלליות":"General Results"}</h4>
           </div>
           <table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(0,0,0,.015)"}}>
@@ -740,7 +749,7 @@ function CalculatorsWidget({he,dk}){
                   <td style={{...tdLb,paddingRight:isRtl?18:12,paddingLeft:isRtl?12:18}}>{r.l}</td>
                   <td style={tdVl}>{r.v}{howCtx&&<HowButton k={r.k} ctx={howCtx} he={he} label={r.l}/>}</td>
                   {/* an age is not a number with an archetype */}
-                  <td style={{...tdSt,fontSize:11,color:D[r.v]?.c||ac,opacity:.8}}>{r.k!=="age"&&r.v>0&&r.v<=9?(he?D[r.v]?.t:D[r.v]?.te):""}</td>
+                  <td style={{...tdSt,fontSize:fs(11),color:D[r.v]?.c||ac,opacity:.8}}>{r.k!=="age"&&r.v>0&&r.v<=9?(he?D[r.v]?.t:D[r.v]?.te):""}</td>
                 </tr>
               ))}
             </tbody>
@@ -752,14 +761,14 @@ function CalculatorsWidget({he,dk}){
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
             {[{l:he?"שביל":"Path",v:results.lp},{l:he?"נשמה":"Soul",v:results.su},{l:he?"ביטוי":"Expr.",v:results.ex},{l:he?"שם":"Name",v:results.nv},{l:he?"שנה":"Year",v:results.py},{l:he?"יום":"Day",v:results.pd}].map((it,i)=>(
               <div key={i} style={{textAlign:"center"}}>
-                <div className="orb" style={{margin:"0 auto 4px",width:48,height:48,fontSize:18,color:D[it.v]?.c||ac,borderColor:(D[it.v]?.c||ac)+"44"}}>{it.v}</div>
-                <div style={{fontSize:9,color:ts}}>{it.l}</div>
-                {it.v>0&&it.v<=9&&<div style={{fontSize:8,color:D[it.v]?.c||ac,opacity:.6}}>{he?D[it.v]?.t:D[it.v]?.te}</div>}
+                <div className="orb" style={{margin:"0 auto 4px",width:48,height:48,fontSize:fs(18),color:D[it.v]?.c||ac,borderColor:(D[it.v]?.c||ac)+"44"}}>{it.v}</div>
+                <div style={{fontSize:fs(9),color:ts}}>{it.l}</div>
+                {it.v>0&&it.v<=9&&<div style={{fontSize:fs(8),color:D[it.v]?.c||ac,opacity:.6}}>{he?D[it.v]?.t:D[it.v]?.te}</div>}
               </div>
             ))}
           </div>
           <div style={{textAlign:"center",marginTop:14,padding:12,background:`${ac}06`,borderRadius:12}}>
-            <p style={{fontSize:13,lineHeight:1.9,color:ts,fontStyle:"italic"}}><Locked he={he} chip>{he?D[R(results.lp)]?.narrative:D[R(results.lp)]?.narrativeE}</Locked></p>
+            <p style={{fontSize:fs(13),lineHeight:1.9,color:ts,fontStyle:"italic"}}><Locked he={he} chip>{he?D[R(results.lp)]?.narrative:D[R(results.lp)]?.narrativeE}</Locked></p>
           </div>
         </div>
       </div>)}
@@ -769,7 +778,7 @@ function CalculatorsWidget({he,dk}){
     {cat===0&&calc==="daily"&&(<div>
       <BackBtn/>
       <div className="gc" style={{marginBottom:16}}>
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="calendar" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"נומרוסקופ יומי":"Daily Numeroscope"}</div></div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="calendar" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"נומרוסקופ יומי":"Daily Numeroscope"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
           <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
           <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
@@ -780,12 +789,12 @@ function CalculatorsWidget({he,dk}){
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
           {[{k:"pd",l:he?"יום":"Day",v:results.pd,desc:he?"האנרגיה של היום":"Today's energy"},{k:"pm",l:he?"חודש":"Month",v:results.pm,desc:he?"האנרגיה החודשית":"Monthly energy"},{k:"py",l:he?"שנה":"Year",v:results.py,desc:he?"האנרגיה השנתית":"Yearly energy"}].map((it,i)=>(
             <div key={i} className="gc" style={{textAlign:"center",padding:16}}>
-              <div style={{fontSize:9,color:ts,letterSpacing:1}}>{it.l}</div>
+              <div style={{fontSize:fs(9),color:ts,letterSpacing:1}}>{it.l}</div>
               <div style={{fontSize:36,fontWeight:700,color:D[it.v]?.c||ac,fontFamily:"'Cormorant Garamond',serif",margin:"4px 0"}}>{it.v}{howCtx&&<HowButton k={it.k} ctx={howCtx} he={he}/>}</div>
-              <div style={{fontSize:12,fontWeight:600,color:D[it.v]?.c||ac}}>{he?D[it.v]?.t:D[it.v]?.te}</div>
-              <div style={{fontSize:10,color:ts,marginTop:4}}>{it.desc}</div>
+              <div style={{fontSize:fs(12),fontWeight:600,color:D[it.v]?.c||ac}}>{he?D[it.v]?.t:D[it.v]?.te}</div>
+              <div style={{fontSize:fs(10),color:ts,marginTop:4}}>{it.desc}</div>
               {/* the year card reads the year's energy; a day or a month reads the number's own meaning */}
-              <div style={{marginTop:8,padding:"8px",background:`${ac}06`,borderRadius:8}}><p style={{fontSize:11,lineHeight:1.7,color:ts}}><Locked he={he}>{it.k==="py"?YEAR_ENERGY[it.v]?.[he?"he":"en"]:(he?D[it.v]?.s:D[it.v]?.se)}</Locked></p></div>
+              <div style={{marginTop:8,padding:"8px",background:`${ac}06`,borderRadius:8}}><p style={{fontSize:fs(11),lineHeight:1.7,color:ts}}><Locked he={he}>{it.k==="py"?YEAR_ENERGY[it.v]?.[he?"he":"en"]:(he?D[it.v]?.s:D[it.v]?.se)}</Locked></p></div>
             </div>
           ))}
         </div>
@@ -796,7 +805,7 @@ function CalculatorsWidget({he,dk}){
     {cat===0&&calc==="cycles"&&(<div>
       <BackBtn/>
       <div className="gc" style={{marginBottom:16}}>
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="refresh" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחזורי חיים":"Life Cycles"}</div></div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="refresh" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחזורי חיים":"Life Cycles"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
           <div><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
           <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
@@ -805,20 +814,20 @@ function CalculatorsWidget({he,dk}){
       </div>
       {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}>
         <div className="gc" style={{padding:0,overflow:"hidden"}}>
-          <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"פסגות ואתגרים":"Peaks & Challenges"}</h4></div>
+          <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:fs(16),fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"פסגות ואתגרים":"Peaks & Challenges"}</h4></div>
           <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}>
             <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(0,0,0,.015)"}}>
-              {[["exit",he?"מחזור":"Cycle",he?"גילי המחזורים":"Cycle ages"],["pk",he?"פסגה":"Peak",he?"פסגה":"Peak"],["ch",he?"אתגר":"Chal.",he?"אתגר":"Challenge"],["hp",he?"פ.נסתרת":"H.Peak",he?"פסגה נסתרת":"Hidden pinnacle"],["hc",he?"א.נסתר":"H.Chal.",he?"אתגר נסתר":"Hidden challenge"]].map(([k,l,full])=>(<th key={k} style={{...thSt,fontSize:10}}>{l}{howCtx&&<HowButton k={k} ctx={howCtx} he={he} label={full}/>}</th>))}
+              {[["exit",he?"מחזור":"Cycle",he?"גילי המחזורים":"Cycle ages"],["pk",he?"פסגה":"Peak",he?"פסגה":"Peak"],["ch",he?"אתגר":"Chal.",he?"אתגר":"Challenge"],["hp",he?"פ.נסתרת":"H.Peak",he?"פסגה נסתרת":"Hidden pinnacle"],["hc",he?"א.נסתר":"H.Chal.",he?"אתגר נסתר":"Hidden challenge"]].map(([k,l,full])=>(<th key={k} style={{...thSt,fontSize:fs(10)}}>{l}{howCtx&&<HowButton k={k} ctx={howCtx} he={he} label={full}/>}</th>))}
             </tr></thead>
             <tbody>
               {(he?["חיפוש","מציאה","יתד","שיא"]:["Search","Discovery","Anchor","Summit"]).map((lb,i)=>{
                 const span=cycleSpans(results.exit)[i],active=cycleAt(results.age,results.exit)===i;
                 return(<tr key={i} style={{background:active?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2?"rgba(200,169,106,.015)":"transparent")}}>
-                  <td style={{...tdSt,fontWeight:600,color:active?ac:ts,fontSize:11}}><div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"center"}}>{active&&<span style={{width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,display:"inline-block"}}/>}{lb}<span style={{fontSize:8,color:ts,opacity:.5,marginRight:2,marginLeft:2}}>{agesText(span)}</span></div></td>
-                  <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td>
-                  <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td>
-                  <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td>
-                  <td style={{...tdSt,fontSize:17,fontWeight:700,color:active?"#e88bb":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hc[i]}</td>
+                  <td style={{...tdSt,fontWeight:600,color:active?ac:ts,fontSize:fs(11)}}><div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"center"}}>{active&&<span style={{width:5,height:5,borderRadius:3,background:ac,boxShadow:`0 0 6px ${ac}66`,display:"inline-block"}}/>}{lb}<span style={{fontSize:fs(8),color:ts,opacity:.5,marginRight:2,marginLeft:2}}>{agesText(span)}</span></div></td>
+                  <td style={{...tdSt,fontSize:fs(17),fontWeight:700,color:active?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{results.pk[i]}</td>
+                  <td style={{...tdSt,fontSize:fs(17),fontWeight:700,color:active?"#e88":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.ch[i]}</td>
+                  <td style={{...tdSt,fontSize:fs(17),fontWeight:700,color:active?`${ac}bb`:ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hp[i]}</td>
+                  <td style={{...tdSt,fontSize:fs(17),fontWeight:700,color:active?"#e88bb":ts,fontFamily:"'Cormorant Garamond',serif"}}>{results.hc[i]}</td>
                 </tr>);
               })}
             </tbody>
@@ -836,7 +845,7 @@ function CalculatorsWidget({he,dk}){
         <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const ls=loShu(d.d,d.m,d.y);setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:new Date()});setResults({ls,lp:LP(d.d,d.m,d.y)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"לחשב":"Calculate"}</button>
       </div>
       {results&&animIn&&results.ls&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc">
-        <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:16,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid{howCtx&&<HowButton k="ls" ctx={howCtx} he={he}/>}</h4>{results.ls.miss.length>0&&<p style={{fontSize:11,color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
+        <div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:fs(16),fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>Lo Shu Grid{howCtx&&<HowButton k="ls" ctx={howCtx} he={he}/>}</h4>{results.ls.miss.length>0&&<p style={{fontSize:fs(11),color:ts,marginTop:4}}>{he?"חסרים: ":"Missing: "}{results.ls.miss.join(", ")}</p>}</div>
         <LoShu ls={results.ls} dk={dk} he={he}/>
       </div></div>)}
     </div>)}
@@ -853,11 +862,11 @@ function CalculatorsWidget({he,dk}){
         <button className="gb" disabled={!firstName.trim()||!dob.trim()} onClick={doPersonalCalc}>{he?"לחשב":"Calculate"}</button>
       </div>
       {results&&animIn&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc">
-        {howCtx&&<div style={{textAlign:"center",marginBottom:10,fontSize:12,color:ts}}>{he?"איך נבדק חוב קארמי":"How karmic debt is checked"}<HowButton k="kd" ctx={howCtx} he={he}/></div>}
-        {results.kd?.length===0?(<div style={{textAlign:"center",padding:16,background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={20}/></span><div style={{fontSize:14,color:ts,marginTop:6}}>{he?"אין חוב קארמי — הנשמה נקייה!":"No karmic debt — your soul is clear!"}</div></div>):(
+        {howCtx&&<div style={{textAlign:"center",marginBottom:10,fontSize:fs(12),color:ts}}>{he?"איך נבדק חוב קארמי":"How karmic debt is checked"}<HowButton k="kd" ctx={howCtx} he={he}/></div>}
+        {results.kd?.length===0?(<div style={{textAlign:"center",padding:16,background:`${ac}06`,borderRadius:12}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={20}/></span><div style={{fontSize:fs(14),color:ts,marginTop:6}}>{he?"אין חוב קארמי — הנשמה נקייה!":"No karmic debt — your soul is clear!"}</div></div>):(
           <div>{results.kd?.map(k=>(<div key={k} style={{padding:14,background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:24,fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span>
-            <span style={{fontSize:12,lineHeight:1.8,color:ts}}><Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></span>
+            <span style={{fontSize:fs(24),fontWeight:700,color:"#e88",fontFamily:"'Cormorant Garamond',serif",flexShrink:0}}>{k}</span>
+            <span style={{fontSize:fs(12),lineHeight:1.8,color:ts}}><Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></span>
           </div>))}</div>
         )}
       </div></div>)}
@@ -875,14 +884,14 @@ function CalculatorsWidget({he,dk}){
         <button className="gb" disabled={!dob.trim()} onClick={()=>{setError("");const d=parseDob(dob);if(!d){setError(he?"תאריך לא תקין":"Invalid date");return;}AU.init();AU.p("reveal");const at=new Date();setHowCtx({d:d.d,m:d.m,y:d.y,name:"",now:at});setResults({proj:yearCycle(d.d,d.m,undefined,at)});setAnimIn(false);setTimeout(()=>setAnimIn(true),50);}}>{he?"לחשב":"Calculate"}</button>
       </div>
       {results&&animIn&&results.proj&&(<div style={{animation:"fadeInUp .6s ease-out"}}><div className="gc" style={{padding:0,overflow:"hidden"}}>
-        <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:16,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
+        <div style={{padding:"14px 18px 8px",textAlign:"center",borderBottom:`1px solid ${ac}0a`}}><h4 style={{fontSize:fs(16),fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"מחזור שנים אישי":"Personal Year Cycle"}</h4></div>
         <table style={{width:"100%",borderCollapse:"collapse"}}>
           <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(0,0,0,.015)"}}><th style={thSt}>{he?"שנה":"Year"}</th><th style={thSt}>{he?"שנה אישית":"P.Y."}</th><th style={thSt}>{he?"אנרגיה":"Energy"}</th></tr></thead>
           <tbody>{results.proj.map((p,i)=>(
             <tr key={i} style={{background:p.isCurrent?(dk?"rgba(200,169,106,.06)":"rgba(200,169,106,.05)"):(i%2?"rgba(200,169,106,.015)":"transparent")}}>
-              <td style={{...tdSt,fontWeight:p.isCurrent?700:400,color:p.isCurrent?ac:ts,fontSize:12}}>{p.year}{p.isCurrent&&<span style={{fontSize:8,color:ac,marginRight:3,marginLeft:3}}>◀</span>}</td>
-              <td style={{...tdSt,fontSize:18,fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}{howCtx&&<HowButton k="py" ctx={{...howCtx,year:p.year}} he={he} label={he?`שנה אישית ${p.year}`:`Personal year ${p.year}`}/>}</td>
-              <td style={{...tdSt,fontSize:11,color:p.isCurrent?ac:ts}}>{he?D[p.py]?.t:D[p.py]?.te}</td>
+              <td style={{...tdSt,fontWeight:p.isCurrent?700:400,color:p.isCurrent?ac:ts,fontSize:fs(12)}}>{p.year}{p.isCurrent&&<span style={{fontSize:fs(8),color:ac,marginRight:3,marginLeft:3}}>◀</span>}</td>
+              <td style={{...tdSt,fontSize:fs(18),fontWeight:700,color:p.isCurrent?ac:tm,fontFamily:"'Cormorant Garamond',serif"}}>{p.py}{howCtx&&<HowButton k="py" ctx={{...howCtx,year:p.year}} he={he} label={he?`שנה אישית ${p.year}`:`Personal year ${p.year}`}/>}</td>
+              <td style={{...tdSt,fontSize:fs(11),color:p.isCurrent?ac:ts}}>{he?D[p.py]?.t:D[p.py]?.te}</td>
             </tr>
           ))}</tbody>
         </table>
@@ -905,18 +914,18 @@ function CalculatorsWidget({he,dk}){
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}>
           <div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name={calc==="love"?"heart":calc==="twin"?"flame":calc==="biz"?"briefcase":"users"} size={26} stroke={1.3}/></div>
-          <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>
+          <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>
             {calc==="love"?(he?"התאמה זוגית":"Love Compatibility"):calc==="twin"?(he?"להבה תאומה":"Twin Flame"):calc==="biz"?(he?"שותפות עסקית":"Business Match"):(he?"הורה-ילד":"Parent-Child")}
           </div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
           <div style={{padding:14,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:14}}>
-            <div style={{textAlign:"center",fontSize:11,fontWeight:600,color:ac,marginBottom:8}}>{calc==="parent"?(he?"הורה":"Parent"):(he?"צד א":"Person A")}</div>
+            <div style={{textAlign:"center",fontSize:fs(11),fontWeight:600,color:ac,marginBottom:8}}>{calc==="parent"?(he?"הורה":"Parent"):(he?"צד א":"Person A")}</div>
             <div style={{marginBottom:8}}><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" maxLength={MAX_INPUT} value={m1name} onChange={e=>setM1name(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם בעברית...":"Name..."}/></div>
             <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={m1dob} onChange={e=>setM1dob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
           </div>
           <div style={{padding:14,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:14}}>
-            <div style={{textAlign:"center",fontSize:11,fontWeight:600,color:ac,marginBottom:8}}>{calc==="parent"?(he?"ילד/ה":"Child"):(he?"צד ב":"Person B")}</div>
+            <div style={{textAlign:"center",fontSize:fs(11),fontWeight:600,color:ac,marginBottom:8}}>{calc==="parent"?(he?"ילד/ה":"Child"):(he?"צד ב":"Person B")}</div>
             <div style={{marginBottom:8}}><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" maxLength={MAX_INPUT} value={m2name} onChange={e=>setM2name(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם בעברית...":"Name..."}/></div>
             <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={m2dob} onChange={e=>setM2dob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}}/></div>
           </div>
@@ -927,43 +936,43 @@ function CalculatorsWidget({he,dk}){
       {matchRes&&(<div style={{animation:"fadeInUp .7s ease-out"}}>
         <div className="gc">
           {/* Score ring */}
-          <div style={{position:"relative",width:130,height:130,margin:"0 auto 14px"}}><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="57" fill="none" stroke={`${ac}10`} strokeWidth="5"/><circle cx="65" cy="65" r="57" fill="none" stroke={matchRes.score>=75?"#4ECDC4":matchRes.score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${matchRes.score*114*Math.PI/100} ${114*Math.PI}`} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dasharray 1.5s ease"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:30,fontWeight:700,color:ac}}>{matchRes.score}%</span><span style={{fontSize:9,color:ts}}>{he?"התאמה":"Match"}</span></div></div>
+          <div style={{position:"relative",width:130,height:130,margin:"0 auto 14px"}}><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="57" fill="none" stroke={`${ac}10`} strokeWidth="5"/><circle cx="65" cy="65" r="57" fill="none" stroke={matchRes.score>=75?"#4ECDC4":matchRes.score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${matchRes.score*114*Math.PI/100} ${114*Math.PI}`} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dasharray 1.5s ease"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:30,fontWeight:700,color:ac}}>{matchRes.score}%</span><span style={{fontSize:fs(9),color:ts}}>{he?"התאמה":"Match"}</span></div></div>
 
           {/* LP comparison */}
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,marginBottom:14,alignItems:"center"}}>
-            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m1name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(matchRes.lpm1,matchRes.lp1)}</div><div style={{fontSize:10,color:D[matchRes.lp1]?.c||ac,opacity:.7}}>{he?D[matchRes.lp1]?.t:D[matchRes.lp1]?.te}</div></div>
-            <div style={{fontSize:18,color:`${ac}66`,display:"flex",justifyContent:"center"}}>{calc==="parent"?<Icon name="heart" size={16}/>:"⟷"}</div>
-            <div style={{textAlign:"center"}}><div style={{fontSize:10,color:ts}}>{m2name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(matchRes.lpm2,matchRes.lp2)}</div><div style={{fontSize:10,color:D[matchRes.lp2]?.c||ac,opacity:.7}}>{he?D[matchRes.lp2]?.t:D[matchRes.lp2]?.te}</div></div>
+            <div style={{textAlign:"center"}}><div style={{fontSize:fs(10),color:ts}}>{m1name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(matchRes.lpm1,matchRes.lp1)}</div><div style={{fontSize:fs(10),color:D[matchRes.lp1]?.c||ac,opacity:.7}}>{he?D[matchRes.lp1]?.t:D[matchRes.lp1]?.te}</div></div>
+            <div style={{fontSize:fs(18),color:`${ac}66`,display:"flex",justifyContent:"center"}}>{calc==="parent"?<Icon name="heart" size={16}/>:"⟷"}</div>
+            <div style={{textAlign:"center"}}><div style={{fontSize:fs(10),color:ts}}>{m2name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(matchRes.lpm2,matchRes.lp2)}</div><div style={{fontSize:fs(10),color:D[matchRes.lp2]?.c||ac,opacity:.7}}>{he?D[matchRes.lp2]?.t:D[matchRes.lp2]?.te}</div></div>
           </div>
 
           {/* Twin flame badge */}
-          {calc==="twin"&&matchRes.lpm1===matchRes.lpm2&&isMaster(matchRes.lpm1)&&(<div style={{textAlign:"center",padding:12,background:`${MASTER[matchRes.lpm1].c}08`,border:`1px solid ${MASTER[matchRes.lpm1].c}33`,borderRadius:12,marginBottom:12}}><div style={{color:MASTER[matchRes.lpm1].c,display:"flex",justifyContent:"center",marginBottom:4}}><Icon name="flame" size={18}/></div><div style={{fontSize:13,fontWeight:700,color:MASTER[matchRes.lpm1].c}}>{he?"מספר מאסטר משותף!":"Shared Master Number!"} {matchRes.lpm1}</div></div>)}
+          {calc==="twin"&&matchRes.lpm1===matchRes.lpm2&&isMaster(matchRes.lpm1)&&(<div style={{textAlign:"center",padding:12,background:`${MASTER[matchRes.lpm1].c}08`,border:`1px solid ${MASTER[matchRes.lpm1].c}33`,borderRadius:12,marginBottom:12}}><div style={{color:MASTER[matchRes.lpm1].c,display:"flex",justifyContent:"center",marginBottom:4}}><Icon name="flame" size={18}/></div><div style={{fontSize:fs(13),fontWeight:700,color:MASTER[matchRes.lpm1].c}}>{he?"מספר מאסטר משותף!":"Shared Master Number!"} {matchRes.lpm1}</div></div>)}
 
           {/* Bars */}
           {[{l:he?"הרמוניה":"Harmony",v:matchRes.harmony,c:"#4ECDC4"},{l:he?"מתח":"Tension",v:matchRes.tension,c:"#E74C3C"},{l:he?"צמיחה":"Growth",v:matchRes.growth,c:"#FFD700"}].map((it,i)=>(
-            <div key={i} style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:ts}}>{it.l}</span><span style={{fontSize:11,fontWeight:700,color:it.c}}>{it.v}/10</span></div><div style={{height:5,background:dk?"rgba(20,20,40,.4)":"rgba(0,0,0,.05)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${it.v*10}%`,background:it.c,borderRadius:3,transition:"width 1.5s ease"}}/></div></div>
+            <div key={i} style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:fs(11),color:ts}}>{it.l}</span><span style={{fontSize:fs(11),fontWeight:700,color:it.c}}>{it.v}/10</span></div><div style={{height:5,background:dk?"rgba(20,20,40,.4)":"rgba(0,0,0,.05)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${it.v*10}%`,background:it.c,borderRadius:3,transition:"width 1.5s ease"}}/></div></div>
           ))}
 
           {/* Connection & Challenges */}
           {matchRes.compat&&(<div style={{marginTop:14}}>
             <div style={{padding:12,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:12,marginBottom:8}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="heart" size={14}/></span><span style={{fontSize:12,fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר":"Connection"}</span></div>
-              <p style={{fontSize:12,lineHeight:1.8,color:ts}}><Locked he={he}>{matchRes.compat[he?"he":"en"].con}</Locked></p>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="heart" size={14}/></span><span style={{fontSize:fs(12),fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר":"Connection"}</span></div>
+              <p style={{fontSize:fs(12),lineHeight:1.8,color:ts}}><Locked he={he}>{matchRes.compat[he?"he":"en"].con}</Locked></p>
             </div>
             <div style={{padding:12,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="bolt" size={14}/></span><span style={{fontSize:12,fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים":"Challenges"}</span></div>
-              <p style={{fontSize:12,lineHeight:1.8,color:ts}}><Locked he={he}>{matchRes.compat[he?"he":"en"].ch}</Locked></p>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="bolt" size={14}/></span><span style={{fontSize:fs(12),fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים":"Challenges"}</span></div>
+              <p style={{fontSize:fs(12),lineHeight:1.8,color:ts}}><Locked he={he}>{matchRes.compat[he?"he":"en"].ch}</Locked></p>
             </div>
             <div style={{padding:12,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:12}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{color:ac,display:"inline-flex"}}><Icon name="bulb" size={14}/></span><span style={{fontSize:12,fontWeight:600,color:ac}}>{he?"עצה":"Advice"}</span></div>
-              <p style={{fontSize:12,lineHeight:1.8,color:ts}}><Locked he={he}>{matchRes.compat[he?"he":"en"].tip}</Locked></p>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{color:ac,display:"inline-flex"}}><Icon name="bulb" size={14}/></span><span style={{fontSize:fs(12),fontWeight:600,color:ac}}>{he?"עצה":"Advice"}</span></div>
+              <p style={{fontSize:fs(12),lineHeight:1.8,color:ts}}><Locked he={he}>{matchRes.compat[he?"he":"en"].tip}</Locked></p>
             </div>
           </div>)}
 
           {/* Numbers table */}
-          <div style={{marginTop:14,overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(0,0,0,.015)"}}><th style={{...thSt,fontSize:10}}></th><th style={{...thSt,fontSize:10}}>{m1name.split(" ")[0]}</th><th style={{...thSt,fontSize:10}}>{m2name.split(" ")[0]}</th></tr></thead><tbody>
+          <div style={{marginTop:14,overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse"}}><thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(0,0,0,.015)"}}><th style={{...thSt,fontSize:fs(10)}}></th><th style={{...thSt,fontSize:fs(10)}}>{m1name.split(" ")[0]}</th><th style={{...thSt,fontSize:fs(10)}}>{m2name.split(" ")[0]}</th></tr></thead><tbody>
             {[{l:he?"שביל":"Path",a:comparedText(matchRes.lpm1,matchRes.lp1),b:comparedText(matchRes.lpm2,matchRes.lp2)},{l:he?"שם":"Name",a:comparedText(matchRes.nvm1,matchRes.nv1),b:comparedText(matchRes.nvm2,matchRes.nv2)},{l:he?"נשמה":"Soul",a:comparedText(matchRes.sum1,matchRes.su1),b:comparedText(matchRes.sum2,matchRes.su2)},{l:he?"ביטוי":"Expr.",a:comparedText(matchRes.exm1,matchRes.ex1),b:comparedText(matchRes.exm2,matchRes.ex2)}].map((r,i)=>(
-              <tr key={i} style={{borderBottom:`1px solid ${ac}08`}}><td style={{...tdSt,fontSize:11,color:ts,fontWeight:600}}>{r.l}</td><td style={{...tdSt,fontSize:17,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>{r.a}</td><td style={{...tdSt,fontSize:17,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>{r.b}</td></tr>
+              <tr key={i} style={{borderBottom:`1px solid ${ac}08`}}><td style={{...tdSt,fontSize:fs(11),color:ts,fontWeight:600}}>{r.l}</td><td style={{...tdSt,fontSize:fs(17),fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>{r.a}</td><td style={{...tdSt,fontSize:fs(17),fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif"}}>{r.b}</td></tr>
             ))}
           </tbody></table></div>
         </div>
@@ -973,12 +982,12 @@ function CalculatorsWidget({he,dk}){
     {/* ═══════ CATEGORY 3: Number Meanings ═══════ */}
     {cat===2&&(<div>
       <div className="gc">
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="book" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"ספריית המספרים":"Number Library"}</div></div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="book" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"ספריית המספרים":"Number Library"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
           {[1,2,3,4,5,6,7,8,9].map(n=>(
             <div key={n} onClick={()=>{setLibNum(libNum===n?null:n);AU.init();AU.p("click");}} style={{textAlign:"center",padding:"14px 6px",borderRadius:12,cursor:"pointer",border:`1.5px solid ${libNum===n?(D[n]?.c||ac)+"66":ac+"0a"}`,background:libNum===n?`${D[n]?.c||ac}0a`:"transparent",transition:"all .3s"}}>
-              <div style={{fontSize:24,fontWeight:700,color:D[n]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{n}</div>
-              <div style={{fontSize:9,color:D[n]?.c||ac,opacity:.7}}>{he?D[n]?.t:D[n]?.te}</div>
+              <div style={{fontSize:fs(24),fontWeight:700,color:D[n]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{n}</div>
+              <div style={{fontSize:fs(9),color:D[n]?.c||ac,opacity:.7}}>{he?D[n]?.t:D[n]?.te}</div>
             </div>
           ))}
         </div>
@@ -986,9 +995,9 @@ function CalculatorsWidget({he,dk}){
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
           {MASTER_NUMBERS.map(n=>(
             <div key={n} onClick={()=>{setLibNum(libNum===n?null:n);AU.init();AU.p("click");}} style={{textAlign:"center",padding:"12px 6px",borderRadius:12,cursor:"pointer",border:`1.5px solid ${libNum===n?(MASTER[n]?.c||ac)+"66":ac+"0a"}`,background:libNum===n?`${MASTER[n]?.c||ac}0a`:"transparent",transition:"all .3s"}}>
-              <div style={{fontSize:9,color:MASTER[n]?.c,letterSpacing:1}}>{he?"מאסטר":"MASTER"}</div>
-              <div style={{fontSize:22,fontWeight:700,color:MASTER[n]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{n}</div>
-              <div style={{fontSize:9,color:MASTER[n]?.c||ac,opacity:.7}}>{he?MASTER[n]?.t:MASTER[n]?.te}</div>
+              <div style={{fontSize:fs(9),color:MASTER[n]?.c,letterSpacing:1}}>{he?"מאסטר":"MASTER"}</div>
+              <div style={{fontSize:fs(22),fontWeight:700,color:MASTER[n]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{n}</div>
+              <div style={{fontSize:fs(9),color:MASTER[n]?.c||ac,opacity:.7}}>{he?MASTER[n]?.t:MASTER[n]?.te}</div>
             </div>
           ))}
         </div>
@@ -998,13 +1007,13 @@ function CalculatorsWidget({he,dk}){
           <div style={{textAlign:"center",marginBottom:10}}>
             <span style={{color:ac,display:"inline-flex"}}><Icon name={NUM_LIB[libNum].icon} size={26}/></span>
             <div style={{fontSize:28,fontWeight:700,color:(libNum<=9?D[libNum]?.c:MASTER[libNum]?.c)||ac,fontFamily:"'Cormorant Garamond',serif"}}>{libNum}</div>
-            <div style={{fontSize:12,fontWeight:600,color:(libNum<=9?D[libNum]?.c:MASTER[libNum]?.c)||ac}}>{libNum<=9?(he?D[libNum]?.t:D[libNum]?.te):(he?MASTER[libNum]?.t:MASTER[libNum]?.te)}</div>
+            <div style={{fontSize:fs(12),fontWeight:600,color:(libNum<=9?D[libNum]?.c:MASTER[libNum]?.c)||ac}}>{libNum<=9?(he?D[libNum]?.t:D[libNum]?.te):(he?MASTER[libNum]?.t:MASTER[libNum]?.te)}</div>
           </div>
-          <div style={{fontSize:11,fontWeight:600,color:ac,marginBottom:6}}>{NUM_LIB[libNum][he?"he":"en"].k}</div>
-          <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he} chip>{NUM_LIB[libNum][he?"he":"en"].p}</Locked></p>
+          <div style={{fontSize:fs(11),fontWeight:600,color:ac,marginBottom:6}}>{NUM_LIB[libNum][he?"he":"en"].k}</div>
+          <p style={{fontSize:fs(13),lineHeight:1.9,color:ts}}><Locked he={he} chip>{NUM_LIB[libNum][he?"he":"en"].p}</Locked></p>
           {libNum<=9&&(<div style={{marginTop:12,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             {[{i:"gem",l:he?"אבן":"Stone",v:D[libNum]?.stone},{i:"palette",l:he?"צבע":"Color",v:D[libNum]?.color},{i:"flame",l:he?"יסוד":"Element",v:D[libNum]?.el},{i:"briefcase",l:he?"קריירה":"Career",v:D[libNum]?.career}].map((it,i)=>(
-              <div key={i} style={{padding:8,background:`${ac}05`,borderRadius:8,textAlign:"center"}}><span style={{color:ac,display:"inline-flex"}}><Icon name={it.i} size={14}/></span><div style={{fontSize:9,color:ts}}>{it.l}</div><div style={{fontSize:11,fontWeight:600,color:ac}}><Locked he={he}>{it.v}</Locked></div></div>
+              <div key={i} style={{padding:8,background:`${ac}05`,borderRadius:8,textAlign:"center"}}><span style={{color:ac,display:"inline-flex"}}><Icon name={it.i} size={14}/></span><div style={{fontSize:fs(9),color:ts}}>{it.l}</div><div style={{fontSize:fs(11),fontWeight:600,color:ac}}><Locked he={he}>{it.v}</Locked></div></div>
             ))}
           </div>)}
         </div>)}
@@ -1014,7 +1023,7 @@ function CalculatorsWidget({he,dk}){
     {/* ═══════ CATEGORY 4: Cards ═══════ */}
     {cat===3&&(<div>
       <div className="gc" style={{marginBottom:14}}>
-        <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="cards" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"קלפי נומרולוגיה":"Numerology Cards"}</div><p style={{fontSize:11,color:ts,marginTop:4}}>{he?"לוחצים על קלף כדי להפוך אותו":"Press a card to turn it over"}</p></div>
+        <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="cards" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"קלפי נומרולוגיה":"Numerology Cards"}</div><p style={{fontSize:fs(11),color:ts,marginTop:4}}>{he?"לוחצים על קלף כדי להפוך אותו":"Press a card to turn it over"}</p></div>
         <div className="st-cards">
           {studioDeck(he).map(card=><Card key={card.number} {...card} he={he} onToggle={chimeOnOpen}/>)}
         </div>
@@ -1037,28 +1046,28 @@ function CalculatorsWidget({he,dk}){
     {cat===4&&calc==="namegen"&&(<div>
       <BackBtn/>
       <div className="gc">
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={26} stroke={1.3}/></div><div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחולל שמות":"Name Generator"}</div></div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחולל שמות":"Name Generator"}</div></div>
         <div style={{marginBottom:14}}>
           <label style={labelSt}>{he?"בחירת מספר יעד":"Choose target number"}</label>
           <div style={{display:"grid",gridTemplateColumns:"repeat(9,1fr)",gap:4}}>
             {[1,2,3,4,5,6,7,8,9].map(n=>(
               <div key={n} onClick={()=>{setGenTarget(n);AU.init();AU.p("click");}} style={{textAlign:"center",padding:"10px 4px",borderRadius:10,cursor:"pointer",border:`1.5px solid ${genTarget===n?(D[n]?.c||ac)+"66":"transparent"}`,background:genTarget===n?`${D[n]?.c||ac}0a`:"transparent",transition:"all .3s"}}>
-                <div style={{fontSize:18,fontWeight:700,color:genTarget===n?(D[n]?.c||ac):`${ac}55`,fontFamily:"'Cormorant Garamond',serif"}}>{n}</div>
+                <div style={{fontSize:fs(18),fontWeight:700,color:genTarget===n?(D[n]?.c||ac):`${ac}55`,fontFamily:"'Cormorant Garamond',serif"}}>{n}</div>
               </div>
             ))}
           </div>
         </div>
         <div style={{padding:16,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",borderRadius:14,border:`1px solid ${ac}0a`}}>
-          <div style={{textAlign:"center",marginBottom:10}}><div style={{fontSize:14,fontWeight:600,color:D[genTarget]?.c||ac}}>{he?D[genTarget]?.t:D[genTarget]?.te} — {genTarget}</div></div>
+          <div style={{textAlign:"center",marginBottom:10}}><div style={{fontSize:fs(14),fontWeight:600,color:D[genTarget]?.c||ac}}>{he?D[genTarget]?.t:D[genTarget]?.te} — {genTarget}</div></div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
             {nameIdeas(genTarget,he).map(({name,value})=>(
               <div key={name} style={{textAlign:"center",padding:"12px",background:`${ac}06`,borderRadius:10}}>
-                <div style={{fontSize:16,fontWeight:600,color:ac}}>{name}</div>
-                <div style={{fontSize:10,color:ts}}>{he?"ערך: ":"Value: "}{value>9?`${value} (${R(value)})`:value}</div>
+                <div style={{fontSize:fs(16),fontWeight:600,color:ac}}>{name}</div>
+                <div style={{fontSize:fs(10),color:ts}}>{he?"ערך: ":"Value: "}{value>9?`${value} (${R(value)})`:value}</div>
               </div>
             ))}
           </div>
-          <div style={{textAlign:"center",marginTop:10}}><p style={{fontSize:10,color:ts,fontStyle:"italic"}}>{he?"שמות אלה מותאמים לאנרגיה של מספר "+genTarget:"These names are aligned with the energy of number "+genTarget}</p></div>
+          <div style={{textAlign:"center",marginTop:10}}><p style={{fontSize:fs(10),color:ts,fontStyle:"italic"}}>{he?"שמות אלה מותאמים לאנרגיה של מספר "+genTarget:"These names are aligned with the energy of number "+genTarget}</p></div>
         </div>
       </div>
     </div>)}
@@ -1068,7 +1077,7 @@ function CalculatorsWidget({he,dk}){
       <BackBtn/>
       <div className="gc" style={{textAlign:"center"}}>
         <div style={{color:ac,marginBottom:10,display:"flex",justifyContent:"center"}}><Icon name="share" size={26} stroke={1.3}/></div>
-        <p style={{fontSize:13,color:ts,lineHeight:1.8,marginBottom:16}}>{he?"כדי לייצא תוצאות, עורכים קריאה בלשונית הקריאה ולוחצים על ״שמירת דו״ח PDF״ בסוף הקריאה.":"To export results, run a reading in the Reading tab and click 'Save Report' at the end."}</p>
+        <p style={{fontSize:fs(13),color:ts,lineHeight:1.8,marginBottom:16}}>{he?"כדי לייצא תוצאות, עורכים קריאה בלשונית הקריאה ולוחצים על ״שמירת דו״ח PDF״ בסוף הקריאה.":"To export results, run a reading in the Reading tab and click 'Save Report' at the end."}</p>
         <div style={{color:ac,opacity:.18,margin:"20px 0",display:"flex",justifyContent:"center"}}><Icon name="doc" size={40} stroke={1.2}/></div>
       </div>
     </div>)}
@@ -1128,10 +1137,10 @@ function Hero({ he, dk, onStart, onUseName, onReveal }) {
   const dValid = Boolean(born);
   const lp = born ? LPm(born.d, born.m, born.y) : 0;
   const bothReady = nm.trim() && dValid;
-  const inputSt = { flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none" };
+  const inputSt = { flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: fs(16), fontFamily: "inherit", outline: "none" };
   const circleSt = (v) => ({ width: 64, height: 64, flexShrink: 0, borderRadius: "50%", border: `1.5px solid ${ac}55`, display: "flex", alignItems: "center", justifyContent: "center", background: `radial-gradient(circle at 35% 30%,${ac}26,transparent 70%)`, boxShadow: v ? `0 0 24px ${ac}55` : "none", transition: "box-shadow .5s" });
   const numSt = { fontSize: 28, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif", lineHeight: 1 };
-  const lblSt = { fontSize: 8.5, color: ts, textTransform: "uppercase", letterSpacing: 1, marginTop: 3 };
+  const lblSt = { fontSize: fs(8.5), color: ts, textTransform: "uppercase", letterSpacing: 1, marginTop: 3 };
   const floats = [{ n: 7, x: "8%", y: "18%", s: 64, d: 0 }, { n: 3, x: "84%", y: "24%", s: 52, d: 1.2 }, { n: 9, x: "16%", y: "74%", s: 58, d: 2.1 }, { n: 1, x: "82%", y: "72%", s: 46, d: .6 }, { n: 5, x: "50%", y: "10%", s: 40, d: 1.7 }];
   return (
     <div style={{ position: "relative", width: "100%", borderRadius: 26, minHeight: "86vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "70px 18px 56px", boxShadow: dk ? "0 30px 80px rgba(0,0,0,.45)" : "0 30px 80px rgba(0,0,0,.12)" }}>
@@ -1158,7 +1167,7 @@ function Hero({ he, dk, onStart, onUseName, onReveal }) {
         </p>
 
         <div style={{ marginTop: 24, marginInline: "auto", maxWidth: 460, padding: "18px 18px 20px", borderRadius: 20, border: `1px solid ${ac}3a`, background: dk ? "rgba(12,12,28,.5)" : "rgba(255,255,255,.6)", backdropFilter: "blur(14px)", boxShadow: `0 18px 55px rgba(0,0,0,${dk ? .42 : .12})` }}>
-          <div style={{ fontSize: 10.5, color: `${ac}cc`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "מחשבון חי · המספרים מתגלים בזמן ההקלדה" : "Live · discover your numbers"}</div>
+          <div style={{ fontSize: fs(10.5), color: `${ac}cc`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "מחשבון חי · המספרים מתגלים בזמן ההקלדה" : "Live · discover your numbers"}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
             <input value={nm} maxLength={MAX_INPUT} onChange={(e) => setNm(e.target.value)} placeholder={he ? "השם המלא…" : "Your full name…"} dir={he ? "rtl" : "ltr"} style={{ ...inputSt, textAlign: he ? "right" : "left" }}/>
             <div style={circleSt(num)}><div style={{ textAlign: "center" }}><div style={numSt}>{num ? (num > 9 ? num : <RollDigit value={num}/>) : "—"}</div><div style={lblSt}>{he ? "שם" : "Name"}</div></div></div>
@@ -1167,22 +1176,22 @@ function Hero({ he, dk, onStart, onUseName, onReveal }) {
             <input value={dob} maxLength={MAX_INPUT} onChange={(e) => setDob(e.target.value)}placeholder={he ? "תאריך לידה · dd.mm.yyyy" : "Birth date · dd.mm.yyyy"} dir="ltr" onKeyDown={(e) => { if (e.key === "Enter" && bothReady) onReveal(nm, dob); }} style={{ ...inputSt, textAlign: "center", letterSpacing: 2 }}/>
             <div style={circleSt(lp)}><div style={{ textAlign: "center" }}><div style={numSt}>{lp ? (lp > 9 ? lp : <RollDigit value={lp}/>) : "—"}</div><div style={lblSt}>{he ? "שביל" : "Path"}</div></div></div>
           </div>
-          {(num > 0 || lp > 0) && <div style={{ marginTop: 11, fontSize: 12.5, color: ts, lineHeight: 1.6, animation: "fadeInUp .4s ease-out" }}>
+          {(num > 0 || lp > 0) && <div style={{ marginTop: 11, fontSize: fs(12.5), color: ts, lineHeight: 1.6, animation: "fadeInUp .4s ease-out" }}>
             {num > 0 && <span>{he ? `שם: ${(D[num]||MASTER[num])?.t||""}` : `Name: ${(D[num]||MASTER[num])?.te||""}`}</span>}
             {num > 0 && lp > 0 && <span style={{ opacity: .5 }}> · </span>}
             {lp > 0 && <span>{he ? `שביל: ${(lp <= 9 ? D[lp]?.t : MASTER[lp]?.t) || ""}` : `Path: ${(lp <= 9 ? D[lp]?.te : MASTER[lp]?.te) || ""}`}</span>}
           </div>}
-          <button className="gb" onClick={() => (bothReady ? onReveal(nm, dob) : (nm.trim() ? onUseName(nm) : onStart()))} style={{ width: "100%", marginTop: 14, padding: "14px", fontSize: 15 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="orb" size={16}/>{bothReady ? (he ? "לחשוף את הקריאה המלאה" : "Reveal my full reading") : (he ? "לקבל את הקריאה המלאה" : "Get the full reading")}</span></button>
+          <button className="gb" onClick={() => (bothReady ? onReveal(nm, dob) : (nm.trim() ? onUseName(nm) : onStart()))} style={{ width: "100%", marginTop: 14, padding: "14px", fontSize: fs(15) }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><Icon name="orb" size={16}/>{bothReady ? (he ? "לחשוף את הקריאה המלאה" : "Reveal my full reading") : (he ? "לקבל את הקריאה המלאה" : "Get the full reading")}</span></button>
         </div>
 
-        <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginTop: 24, fontSize: 12.5, color: ts }}>
+        <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginTop: 24, fontSize: fs(12.5), color: ts }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={13}/>{he ? "תוצאה מיידית" : "Instant result"}</span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="lock" size={13}/>{he ? "בלי הרשמה" : "No sign-up"}</span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="star" size={13}/>{he ? "חינם" : "Free"}</span>
         </div>
       </div>
       <div onClick={onStart} style={{ position: "absolute", bottom: 18, zIndex: 2, color: ac, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "bob 2.2s ease-in-out infinite" }}>
-        <span style={{ fontSize: 10, letterSpacing: 3, textTransform: "uppercase", opacity: .7 }}>{he ? "גלילה" : "Scroll"}</span>
+        <span style={{ fontSize: fs(10), letterSpacing: 3, textTransform: "uppercase", opacity: .7 }}>{he ? "גלילה" : "Scroll"}</span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
       </div>
     </div>
@@ -1205,13 +1214,13 @@ function HowItWorks({ he, dk }) {
   ];
   return (
     <SR><div className="gc" style={{ marginBottom: 16 }}>
-      <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 18 }}>{he ? "איך זה עובד" : "How it works"}</h2>
+      <h2 style={{ textAlign: "center", fontSize: fs(22), fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 18 }}>{he ? "איך זה עובד" : "How it works"}</h2>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
         {steps.map((s, i) => (
           <div key={i} style={{ textAlign: "center", padding: "16px 8px", background: dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)", border: `1px solid ${ac}10`, borderRadius: 14 }}>
             <div style={{ color: ac, marginBottom: 10, display: "flex", justifyContent: "center" }}><Icon name={s.i} size={26} stroke={1.3}/></div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: tm, lineHeight: 1.4 }}>{s.t}</div>
-            <div style={{ fontSize: 11, color: ts, marginTop: 4, lineHeight: 1.4 }}>{s.d}</div>
+            <div style={{ fontSize: fs(13), fontWeight: 600, color: tm, lineHeight: 1.4 }}>{s.t}</div>
+            <div style={{ fontSize: fs(11), color: ts, marginTop: 4, lineHeight: 1.4 }}>{s.d}</div>
           </div>
         ))}
       </div>
@@ -1227,20 +1236,20 @@ function WhyNumerology({ he, dk }) {
   const [open, setOpen] = useState(null);
   return (
     <SR><div className="gc" style={{ marginBottom: 16 }}>
-      <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 8 }}>{he ? "מה זו נומרולוגיה?" : "What is numerology?"}</h2>
-      <p style={{ textAlign: "center", fontSize: 14, lineHeight: 1.9, color: ts, maxWidth: 480, marginInline: "auto", marginBottom: 18 }}>
+      <h2 style={{ textAlign: "center", fontSize: fs(22), fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 8 }}>{he ? "מה זו נומרולוגיה?" : "What is numerology?"}</h2>
+      <p style={{ textAlign: "center", fontSize: fs(14), lineHeight: 1.9, color: ts, maxWidth: 480, marginInline: "auto", marginBottom: 18 }}>
         {he ? "נומרולוגיה היא שפה עתיקה שמתרגמת שם ותאריך לידה למספרים בעלי משמעות. כל מספר נושא אנרגיה, אופי ומסר — וביחד הם מציירים מפה של האישיות, של הייעוד ושל התזמון הנכון לצעדים הגדולים בחיים." : "Numerology is an ancient language that translates your name and birth date into meaningful numbers. Each number carries energy, character and a message — together they map who you are, your purpose, and the right timing for life's big moves."}
       </p>
-      <div style={{ fontSize: 11, textAlign: "center", color: `${ac}99`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "לוחצים על מספר כדי לגלות את המשמעות" : "Tap a number to reveal its meaning"}</div>
+      <div style={{ fontSize: fs(11), textAlign: "center", color: `${ac}99`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 12 }}>{he ? "לוחצים על מספר כדי לגלות את המשמעות" : "Tap a number to reveal its meaning"}</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
           const info = NUM_LIB[n]; const isOpen = open === n;
           return (
             <div key={n} onClick={() => { AU.init(); AU.p("click"); setOpen(isOpen ? null : n); }} style={{ cursor: "pointer", padding: "12px 8px", background: isOpen ? `${ac}12` : (dk ? "rgba(18,18,38,.4)" : "rgba(255,255,255,.4)"), border: `1px solid ${isOpen ? ac + "55" : ac + "10"}`, borderRadius: 12, textAlign: "center", transition: "all .3s" }}>
               <div style={{ color: ac, display: "flex", justifyContent: "center", marginBottom: 2 }}><Icon name={info.icon} size={22} stroke={1.3}/></div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{n}</div>
-              <div style={{ fontSize: 10, color: tm, fontWeight: 600, lineHeight: 1.3 }}>{info[he ? "he" : "en"].k.split(",")[0]}</div>
-              {isOpen && <div style={{ fontSize: 10.5, color: ts, lineHeight: 1.6, marginTop: 6, textAlign: "center" }}>{info[he ? "he" : "en"].p}</div>}
+              <div style={{ fontSize: fs(22), fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{n}</div>
+              <div style={{ fontSize: fs(10), color: tm, fontWeight: 600, lineHeight: 1.3 }}>{info[he ? "he" : "en"].k.split(",")[0]}</div>
+              {isOpen && <div style={{ fontSize: fs(10.5), color: ts, lineHeight: 1.6, marginTop: 6, textAlign: "center" }}>{info[he ? "he" : "en"].p}</div>}
             </div>
           );
         })}
@@ -1266,16 +1275,16 @@ function FAQ({ he, dk }) {
   ];
   return (
     <SR><div className="gc" style={{ marginBottom: 16 }}>
-      <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 16 }}>{he ? "שאלות נפוצות" : "FAQ"}</h2>
+      <h2 style={{ textAlign: "center", fontSize: fs(22), fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif", marginBottom: 16 }}>{he ? "שאלות נפוצות" : "FAQ"}</h2>
       {qa.map((item, i) => {
         const isOpen = open === i;
         return (
           <div key={i} style={{ borderBottom: `1px solid ${ac}10` }}>
             <div onClick={() => { AU.init(); AU.p("click"); setOpen(isOpen ? null : i); }} style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, padding: "14px 4px", cursor: "pointer" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: isOpen ? ac : tm, textAlign: "center" }}>{item.q}</span>
-              <span style={{ fontSize: 18, color: ac, transform: isOpen ? "rotate(45deg)" : "none", transition: "transform .3s", flexShrink: 0 }}>+</span>
+              <span style={{ fontSize: fs(14), fontWeight: 600, color: isOpen ? ac : tm, textAlign: "center" }}>{item.q}</span>
+              <span style={{ fontSize: fs(18), color: ac, transform: isOpen ? "rotate(45deg)" : "none", transition: "transform .3s", flexShrink: 0 }}>+</span>
             </div>
-            {isOpen && <p style={{ fontSize: 13, lineHeight: 1.8, color: ts, padding: "0 4px 14px", textAlign: "center" }}>{item.a}</p>}
+            {isOpen && <p style={{ fontSize: fs(13), lineHeight: 1.8, color: ts, padding: "0 4px 14px", textAlign: "center" }}>{item.a}</p>}
           </div>
         );
       })}
@@ -1285,7 +1294,7 @@ function FAQ({ he, dk }) {
 
 /** The legal pages, under the Studio's sign-in: new visitors see that screen first, before any footer. */
 function LegalLinks({ he, dk }) {
-  const link = { color: dk ? "rgba(232,224,208,.7)" : "rgba(42,37,32,.75)", fontSize: 12, textUnderlineOffset: 3 };
+  const link = { color: dk ? "rgba(232,224,208,.7)" : "rgba(42,37,32,.75)", fontSize: fs(12), textUnderlineOffset: 3 };
   return (
     <nav aria-label={he ? "מסמכים משפטיים" : "Legal"} style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginTop: 22 }}>
       <a href="#terms" style={link}>{he ? "תקנון" : "Terms"}</a>
@@ -1299,12 +1308,12 @@ function LegalLinks({ he, dk }) {
 function LandingFooter({ he, dk, onOwner }) {
   const ac = dk ? "#c8a96a" : "#937640"; const tm = dk ? "#e8e0d0" : "#2a2520";
   const ts = dk ? "rgba(232,224,208,.45)" : "rgba(42,37,32,.5)";
-  const link = { color: ts, textDecoration: "none", fontSize: 12.5, transition: "color .3s" };
+  const link = { color: ts, textDecoration: "none", fontSize: fs(12.5), transition: "color .3s" };
   return (
     <div style={{ marginTop: 24, paddingTop: 26, borderTop: `1px solid ${ac}14`, textAlign: "center" }}>
-      <div style={{ fontSize: 24, color: ac, opacity: .8 }}>✦</div>
-      <h3 style={{ fontSize: 20, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif", marginTop: 6 }}>{he ? "שני כהן אזולאי" : "Shani Cohen Azulai"}</h3>
-      <p style={{ fontSize: 12, color: ts, marginTop: 3 }}>{he ? "נומרולוגיה · מסרים · אימון אישי · הפרשת חלה" : "Numerology · Messages · Coaching · Challah"}</p>
+      <div style={{ fontSize: fs(24), color: ac, opacity: .8 }}>✦</div>
+      <h3 style={{ fontSize: fs(20), fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif", marginTop: 6 }}>{he ? "שני כהן אזולאי" : "Shani Cohen Azulai"}</h3>
+      <p style={{ fontSize: fs(12), color: ts, marginTop: 3 }}>{he ? "נומרולוגיה · מסרים · אימון אישי · הפרשת חלה" : "Numerology · Messages · Coaching · Challah"}</p>
 
       <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginTop: 16 }}>
         <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" style={{ ...link, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="whatsapp" size={15}/>{he ? "וואטסאפ" : "WhatsApp"}</a>
@@ -1312,7 +1321,7 @@ function LandingFooter({ he, dk, onOwner }) {
         {BUSINESS_EMAIL && <a href={`mailto:${BUSINESS_EMAIL}`} style={{ ...link, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="mail" size={15}/>{he ? "אימייל" : "Email"}</a>}
       </div>
 
-      <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap", marginTop: 14, fontSize: 11.5 }}>
+      <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap", marginTop: 14, fontSize: fs(11.5) }}>
         <a href="#terms" style={link}>{he ? "תקנון" : "Terms"}</a>
         <span style={{ color: `${ac}33` }}>·</span>
         <a href="#privacy" style={link}>{he ? "מדיניות פרטיות" : "Privacy"}</a>
@@ -1320,9 +1329,9 @@ function LandingFooter({ he, dk, onOwner }) {
         <a href="#refunds" style={link}>{he ? "ביטולים והחזרים" : "Cancellations & refunds"}</a>
       </div>
 
-      <p style={{ fontSize: 10.5, color: ts, opacity: .7, marginTop: 16 }}>© {2026} {he ? "שני כהן אזולאי · כל הזכויות שמורות" : "Shani Cohen Azulai · All rights reserved"}</p>
-      <div style={{ marginTop: 12, fontSize: 10, color: `${ac}22`, letterSpacing: 3 }}>✦ ✦ ✦</div>
-      <span onDoubleClick={onOwner} title="owner" style={{ display: "inline-block", marginTop: 10, fontSize: 14, color: `${ac}26`, cursor: "default", userSelect: "none" }}>·</span>
+      <p style={{ fontSize: fs(10.5), color: ts, opacity: .7, marginTop: 16 }}>© {2026} {he ? "שני כהן אזולאי · כל הזכויות שמורות" : "Shani Cohen Azulai · All rights reserved"}</p>
+      <div style={{ marginTop: 12, fontSize: fs(10), color: `${ac}22`, letterSpacing: 3 }}>✦ ✦ ✦</div>
+      <span onDoubleClick={onOwner} title="owner" style={{ display: "inline-block", marginTop: 10, fontSize: fs(14), color: `${ac}26`, cursor: "default", userSelect: "none" }}>·</span>
     </div>
   );
 }
@@ -1338,11 +1347,11 @@ function AboutShani({ he, dk }) {
     </div>
     <div className="chip" style={{ marginBottom: 10 }}>✦ {he ? "מי אני" : "About"}</div>
     <h2 className="shimmer-text" style={{ fontSize: 28, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "שני כהן אזולאי" : "Shani Cohen Azulai"}</h2>
-    <div style={{ fontSize: 12.5, color: ac, marginTop: 5, letterSpacing: .5 }}>{he ? "נומרולוגיה · מסרים · אימון אישי · הפרשת חלה" : "Numerology · Messages · Coaching · Challah"}</div>
-    <p style={{ fontSize: 14, lineHeight: 1.9, color: ts, maxWidth: 460, margin: "14px auto 0" }}>{he ? "נעים להכיר, אני שני. כבר שנים אני מלווה אנשים דרך שפת המספרים — עוזרת להם להבין מי הם, מה הייעוד שלהם, ואיך לקבל החלטות מתוך בהירות וביטחון. סביבי נבנתה קהילה של אלפי עוקבים, ועכשיו גם אתם מוזמנים למסע אישי איתי." : "I'm Shani. For years I've been guiding people through the language of numbers — helping them understand who they are, their purpose, and how to make decisions with clarity and confidence."}</p>
+    <div style={{ fontSize: fs(12.5), color: ac, marginTop: 5, letterSpacing: .5 }}>{he ? "נומרולוגיה · מסרים · אימון אישי · הפרשת חלה" : "Numerology · Messages · Coaching · Challah"}</div>
+    <p style={{ fontSize: fs(14), lineHeight: 1.9, color: ts, maxWidth: 460, margin: "14px auto 0" }}>{he ? "נעים להכיר, אני שני. כבר שנים אני מלווה אנשים דרך שפת המספרים — עוזרת להם להבין מי הם, מה הייעוד שלהם, ואיך לקבל החלטות מתוך בהירות וביטחון. סביבי נבנתה קהילה של אלפי עוקבים, ועכשיו גם אתם מוזמנים למסע אישי איתי." : "I'm Shani. For years I've been guiding people through the language of numbers — helping them understand who they are, their purpose, and how to make decisions with clarity and confidence."}</p>
     <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 18 }}>
       <a href="https://www.instagram.com/shani_cohen_8/" target="_blank" rel="noopener noreferrer" className="ghost" style={{ display: "inline-flex", alignItems: "center", gap: 7, textDecoration: "none" }}><Icon name="instagram" size={16}/>{he ? "אינסטגרם · 14K" : "Instagram · 14K"}</a>
-      <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="gb" style={{ width: "auto", padding: "13px 24px", fontSize: 14, textDecoration: "none" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="whatsapp" size={15}/>{he ? "לשיחה איתי בוואטסאפ" : "Chat on WhatsApp"}</span></a>
+      <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="gb" style={{ width: "auto", padding: "13px 24px", fontSize: fs(14), textDecoration: "none" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="whatsapp" size={15}/>{he ? "לשיחה איתי בוואטסאפ" : "Chat on WhatsApp"}</span></a>
     </div>
   </div></SR>);
 }
@@ -1354,14 +1363,14 @@ function LeadCapture({ he, dk }) {
   const submit = () => { if (!email.trim()) return; AU.init(); AU.p("reveal"); const msg = he ? `היי שני! אשמח להצטרף לרשימת התפוצה. המייל שלי: ${email}` : `Hi Shani! I'd like to join your list. My email: ${email}`; window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer"); setSent(true); };
   return (<SR><div className="gc" style={{ marginBottom: 16, textAlign: "center" }}>
     <div style={{ color: ac, display: "flex", justifyContent: "center", marginBottom: 8 }}><Icon name="mail" size={26} stroke={1.3}/></div>
-    <h2 style={{ fontSize: 21, fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "תחזית חודשית — חינם" : "Free monthly forecast"}</h2>
-    <p style={{ fontSize: 13, color: ts, maxWidth: 380, margin: "6px auto 14px", lineHeight: 1.7 }}>{he ? "השאירו מייל וקבלו ממני מסר נומרולוגי בכל ראש חודש — חינם, וניתן לבטל בכל עת." : "Leave your email for a monthly numerology message — free, cancel anytime."}</p>
-    {sent ? <div style={{ fontSize: 14, color: ac, fontWeight: 600 }}>{he ? "תודה! ההצטרפות נשלחה בוואטסאפ ✦" : "Thank you! Sent via WhatsApp ✦"}</div> :
+    <h2 style={{ fontSize: fs(21), fontWeight: he ? 700 : 500, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "תחזית חודשית — חינם" : "Free monthly forecast"}</h2>
+    <p style={{ fontSize: fs(13), color: ts, maxWidth: 380, margin: "6px auto 14px", lineHeight: 1.7 }}>{he ? "השאירו מייל וקבלו ממני מסר נומרולוגי בכל ראש חודש — חינם, וניתן לבטל בכל עת." : "Leave your email for a monthly numerology message — free, cancel anytime."}</p>
+    {sent ? <div style={{ fontSize: fs(14), color: ac, fontWeight: 600 }}>{he ? "תודה! ההצטרפות נשלחה בוואטסאפ ✦" : "Thank you! Sent via WhatsApp ✦"}</div> :
       <div style={{ display: "flex", gap: 8, maxWidth: 400, margin: "0 auto" }}>
-        <input value={email} maxLength={MAX_EMAIL} onChange={e => setEmail(e.target.value)} placeholder={he ? "כתובת המייל…" : "Your email…"} dir="ltr" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: 14, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
-        <button className="gb" onClick={submit} style={{ width: "auto", padding: "12px 18px", fontSize: 13 }}>{he ? "הצטרפו" : "Join"}</button>
+        <input value={email} maxLength={MAX_EMAIL} onChange={e => setEmail(e.target.value)} placeholder={he ? "כתובת המייל…" : "Your email…"} dir="ltr" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "12px 14px", color: tm, fontSize: fs(14), fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
+        <button className="gb" onClick={submit} style={{ width: "auto", padding: "12px 18px", fontSize: fs(13) }}>{he ? "הצטרפו" : "Join"}</button>
       </div>}
-    <p style={{ fontSize: 10, color: ts, opacity: .55, marginTop: 10 }}>{he ? "* ההרשמה נשלחת בהודעת וואטסאפ" : "* Signing up sends a WhatsApp message"}</p>
+    <p style={{ fontSize: fs(10), color: ts, opacity: .55, marginTop: 10 }}>{he ? "* ההרשמה נשלחת בהודעת וואטסאפ" : "* Signing up sends a WhatsApp message"}</p>
   </div></SR>);
 }
 
@@ -1383,27 +1392,27 @@ function SampleMap({ he, dk, onStart }) {
   return (<SR><div className="gc" style={{ marginBottom: 16 }}>
     <div style={{ textAlign: "center", marginBottom: 16 }}>
       <div className="chip" style={{ marginBottom: 10 }}>✦ {he ? "הצצה למפה" : "Sample map"}</div>
-      <h2 className="shimmer-text" style={{ fontSize: 22, fontWeight: 600, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "מה מחכה במפה האישית" : "What's inside your personal map"}</h2>
-      <p style={{ fontSize: 12.5, color: ts, marginTop: 4 }}>{he ? "דוגמה אמיתית למפה נומרולוגית" : "A real example of a numerology map"}</p>
+      <h2 className="shimmer-text" style={{ fontSize: fs(22), fontWeight: 600, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "מה מחכה במפה האישית" : "What's inside your personal map"}</h2>
+      <p style={{ fontSize: fs(12.5), color: ts, marginTop: 4 }}>{he ? "דוגמה אמיתית למפה נומרולוגית" : "A real example of a numerology map"}</p>
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16, alignItems: "center" }}>
       <div>
         {nums.map((it, i) => (
           <div key={i} className="rrow" style={{ gap: 12 }}>
-            <div className="orb" style={{ width: 46, height: 46, fontSize: 19 }}>{it.v}</div>
-            <div style={{ flex: 1 }}><div style={{ fontSize: 13.5, fontWeight: 600, color: tm }}>{it.l}</div>{it.v > 0 && (D[it.v] || MASTER[it.v]) && <div className="badge">{he ? (D[it.v] || MASTER[it.v])?.t : (D[it.v] || MASTER[it.v])?.te}</div>}</div>
+            <div className="orb" style={{ width: 46, height: 46, fontSize: fs(19) }}>{it.v}</div>
+            <div style={{ flex: 1 }}><div style={{ fontSize: fs(13.5), fontWeight: 600, color: tm }}>{it.l}</div>{it.v > 0 && (D[it.v] || MASTER[it.v]) && <div className="badge">{he ? (D[it.v] || MASTER[it.v])?.t : (D[it.v] || MASTER[it.v])?.te}</div>}</div>
           </div>
         ))}
       </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ fontSize: 10, color: `${ac}99`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>{he ? "המפה הפסיכולוגית" : "Psychological map"}</div>
+        <div style={{ fontSize: fs(10), color: `${ac}99`, textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>{he ? "המפה הפסיכולוגית" : "Psychological map"}</div>
         <div style={{ transform: "scale(.92)" }}><PsychRadar psych={demo.psych} dk={dk} he={he}/></div>
       </div>
     </div>
     <div className="divider"/>
     <div style={{ textAlign: "center" }}>
-      <p style={{ fontSize: 13, color: ts, lineHeight: 1.8, maxWidth: 480, margin: "0 auto 14px" }}>{he ? "וזו רק ההתחלה — בקריאה המלאה כאן באתר מחכים גם מחזורי חיים, חובות קארמיים, מפת לו-שו והמלצות, בחינם." : "And that's just the start — the full reading here also has life cycles, karmic debts, the Lo Shu grid and guidance, free."}</p>
-      <button className="gb" onClick={onStart} style={{ width: "auto", padding: "13px 28px", fontSize: 14 }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="map" size={16}/>{he ? "לקריאה החינמית" : "Get the free reading"}</span></button>
+      <p style={{ fontSize: fs(13), color: ts, lineHeight: 1.8, maxWidth: 480, margin: "0 auto 14px" }}>{he ? "וזו רק ההתחלה — בקריאה המלאה כאן באתר מחכים גם מחזורי חיים, חובות קארמיים, מפת לו-שו והמלצות, בחינם." : "And that's just the start — the full reading here also has life cycles, karmic debts, the Lo Shu grid and guidance, free."}</p>
+      <button className="gb" onClick={onStart} style={{ width: "auto", padding: "13px 28px", fontSize: fs(14) }}><span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="map" size={16}/>{he ? "לקריאה החינמית" : "Get the free reading"}</span></button>
     </div>
   </div></SR>);
 }
@@ -1426,14 +1435,14 @@ function LeadGate({ he, dk, results, name, onUnlock }) {
   };
   return (<SR><div className="gc" style={{ textAlign: "center", maxWidth: 460, margin: "0 auto" }}>
     <div style={{ color: ac, display: "flex", justifyContent: "center", marginBottom: 10 }}><Icon name="sparkle" size={30} stroke={1.2}/></div>
-    <h2 className="shimmer-text" style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "הקריאה מוכנה" : "Your reading is ready"}</h2>
-    <p style={{ fontSize: 15, color: tm, marginTop: 8 }}>{he ? "מצאנו " : "We found "}<strong style={{ color: ac, fontSize: 22 }}>{N}</strong>{he ? " נקודות במפה האישית" : " insights in your personal map"}</p>
-    <p style={{ fontSize: 12.5, color: ts, margin: "8px auto 16px", maxWidth: 360, lineHeight: 1.7 }}>{he ? "הזינו מספר וואטסאפ כדי לחשוף את הקריאה המלאה — חינם, ללא התחייבות." : "Enter your WhatsApp number to unlock the full reading — free, no commitment."}</p>
+    <h2 className="shimmer-text" style={{ fontSize: fs(24), fontWeight: 700, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "הקריאה מוכנה" : "Your reading is ready"}</h2>
+    <p style={{ fontSize: fs(15), color: tm, marginTop: 8 }}>{he ? "מצאנו " : "We found "}<strong style={{ color: ac, fontSize: fs(22) }}>{N}</strong>{he ? " נקודות במפה האישית" : " insights in your personal map"}</p>
+    <p style={{ fontSize: fs(12.5), color: ts, margin: "8px auto 16px", maxWidth: 360, lineHeight: 1.7 }}>{he ? "הזינו מספר וואטסאפ כדי לחשוף את הקריאה המלאה — חינם, ללא התחייבות." : "Enter your WhatsApp number to unlock the full reading — free, no commitment."}</p>
     <div style={{ display: "flex", gap: 8, maxWidth: 380, margin: "0 auto" }}>
-      <input value={phone} maxLength={MAX_INPUT} onChange={e => setPhone(e.target.value)} placeholder={he ? "מספר וואטסאפ…" : "WhatsApp number…"} dir="ltr" inputMode="tel" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "13px 15px", color: tm, fontSize: 16, fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
-      <button className="gb" onClick={submit} style={{ width: "auto", padding: "13px 20px", fontSize: 14 }}>{he ? "חשפו" : "Unlock"}</button>
+      <input value={phone} maxLength={MAX_INPUT} onChange={e => setPhone(e.target.value)} placeholder={he ? "מספר וואטסאפ…" : "WhatsApp number…"} dir="ltr" inputMode="tel" onKeyDown={e => { if (e.key === "Enter") submit(); }} style={{ flex: 1, minWidth: 0, background: dk ? "rgba(8,8,18,.6)" : "rgba(255,255,255,.8)", border: `1px solid ${ac}33`, borderRadius: 12, padding: "13px 15px", color: tm, fontSize: fs(16), fontFamily: "inherit", outline: "none", textAlign: "center" }}/>
+      <button className="gb" onClick={submit} style={{ width: "auto", padding: "13px 20px", fontSize: fs(14) }}>{he ? "חשפו" : "Unlock"}</button>
     </div>
-    <p style={{ fontSize: 10, color: ts, opacity: .65, marginTop: 10, display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center" }}><Icon name="lock" size={11}/>{he ? "הפרטים נשלחים בוואטסאפ ולא מועברים לאחרים" : "Sent by WhatsApp, never passed on to others"}</p>
+    <p style={{ fontSize: fs(10), color: ts, opacity: .65, marginTop: 10, display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "center" }}><Icon name="lock" size={11}/>{he ? "הפרטים נשלחים בוואטסאפ ולא מועברים לאחרים" : "Sent by WhatsApp, never passed on to others"}</p>
   </div></SR>);
 }
 
@@ -1445,20 +1454,20 @@ function LeadsWidget({ he, dk }) {
   const onPhone = useLayout() === "phone"; // a card per lead instead of a table too wide for the screen
   const clearAll = () => { if (window.confirm(he ? "למחוק את כל הלידים?" : "Delete all leads?")) { try { localStorage.removeItem(LEADS_STORE_KEY); } catch (e) {} setLeads([]); } };
   const exportCsv = () => { const rows = [["שם", "טלפון", "שביל גורל", "ערך שם", "קול נשמה", "שנה אישית", "חוב קארמי", "תאריך"], ...leads.map(l => [l.name, l.phone, l.lp, l.nv, l.su, l.py, l.kd, l.date])]; const csv = "﻿" + rows.map(r => r.map(csvCell).join(",")).join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "leads.csv"; a.click(); toast(he ? "קובץ הלידים נשמר בתיקיית ההורדות." : "The leads file is in your downloads."); };
-  const th = { textAlign: he ? "right" : "left", fontSize: 11, color: ac, fontWeight: 700, padding: "8px 6px", borderBottom: `1px solid ${ac}22`, whiteSpace: "nowrap" };
-  const td = { fontSize: 12.5, color: tm, padding: "9px 6px", borderBottom: `1px solid ${ac}0e`, whiteSpace: "nowrap" };
+  const th = { textAlign: he ? "right" : "left", fontSize: fs(11), color: ac, fontWeight: 700, padding: "8px 6px", borderBottom: `1px solid ${ac}22`, whiteSpace: "nowrap" };
+  const td = { fontSize: fs(12.5), color: tm, padding: "9px 6px", borderBottom: `1px solid ${ac}0e`, whiteSpace: "nowrap" };
   return (<div style={{ animation: "fadeInUp .5s ease-out" }}>
     <div style={{ textAlign: "center", marginBottom: 14 }}>
       <div style={{ color: ac, display: "flex", justifyContent: "center", marginBottom: 6 }}><Icon name="users" size={26} stroke={1.3}/></div>
-      <h2 style={{ fontSize: 22, fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "לידים" : "Leads"}</h2>
-      <p style={{ fontSize: 12, color: ts, marginTop: 3 }}>{leads.length} {he ? "לידים נשמרו במכשיר זה" : "leads on this device"}</p>
+      <h2 style={{ fontSize: fs(22), fontWeight: 700, color: ac, fontFamily: "'Cormorant Garamond',serif" }}>{he ? "לידים" : "Leads"}</h2>
+      <p style={{ fontSize: fs(12), color: ts, marginTop: 3 }}>{leads.length} {he ? "לידים נשמרו במכשיר זה" : "leads on this device"}</p>
     </div>
     <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 14, flexWrap: "wrap" }}>
-      <button className="ghost" onClick={() => setLeads(loadLeads())} style={{ fontSize: 13 }}>{he ? "רענון" : "Refresh"}</button>
-      <button className="ghost" onClick={exportCsv} disabled={!leads.length} style={{ fontSize: 13 }}>{he ? "ייצוא CSV" : "Export CSV"}</button>
-      <button className="ghost" onClick={clearAll} disabled={!leads.length} style={{ fontSize: 13 }}>{he ? "מחיקה" : "Clear"}</button>
+      <button className="ghost" onClick={() => setLeads(loadLeads())} style={{ fontSize: fs(13) }}>{he ? "רענון" : "Refresh"}</button>
+      <button className="ghost" onClick={exportCsv} disabled={!leads.length} style={{ fontSize: fs(13) }}>{he ? "ייצוא CSV" : "Export CSV"}</button>
+      <button className="ghost" onClick={clearAll} disabled={!leads.length} style={{ fontSize: fs(13) }}>{he ? "מחיקה" : "Clear"}</button>
     </div>
-    {leads.length === 0 ? <p style={{ textAlign: "center", color: ts, fontSize: 14, padding: "30px 0", lineHeight: 1.7 }}>{he ? "עדיין אין לידים. כשמבקרים ימלאו טלפון לפני הקריאה — הם יופיעו כאן." : "No leads yet. They appear here once visitors enter a phone before the reading."}</p> : onPhone ?
+    {leads.length === 0 ? <p style={{ textAlign: "center", color: ts, fontSize: fs(14), padding: "30px 0", lineHeight: 1.7 }}>{he ? "עדיין אין לידים. כשמבקרים ימלאו טלפון לפני הקריאה — הם יופיעו כאן." : "No leads yet. They appear here once visitors enter a phone before the reading."}</p> : onPhone ?
       <ul className="st-leads">
         {leads.map((l, i) => (<li key={i} className="st-panel st-lead">
           <div className="st-lead-top"><b>{l.name || "-"}</b><span className="st-lead-date">{l.date}</span></div>
@@ -1472,7 +1481,7 @@ function LeadsWidget({ he, dk }) {
           <tbody>{leads.map((l, i) => (<tr key={i}><td style={td}>{l.name || "-"}</td><td style={td}>{whatsappLink(l.phone) ? <a href={whatsappLink(l.phone)} target="_blank" rel="noopener noreferrer" style={{ color: ac, textDecoration: "none" }}>{l.phone}</a> : l.phone}</td><td style={td}>{l.lp}</td><td style={td}>{l.py}</td><td style={td}>{l.kd || "-"}</td><td style={td}>{l.date}</td></tr>))}</tbody>
         </table>
       </div>}
-    <p style={{ fontSize: 10, color: ts, opacity: .6, textAlign: "center", marginTop: 12 }}>{he ? "* נשמר מקומית בדפדפן זה. ל-CRM ענן אמיתי נדרש חיבור שרת." : "* Stored locally in this browser. A real cloud CRM needs a backend."}</p>
+    <p style={{ fontSize: fs(10), color: ts, opacity: .6, textAlign: "center", marginTop: 12 }}>{he ? "* נשמר מקומית בדפדפן זה. ל-CRM ענן אמיתי נדרש חיבור שרת." : "* Stored locally in this browser. A real cloud CRM needs a backend."}</p>
   </div>);
 }
 
@@ -1504,7 +1513,7 @@ export default function App({ view, navigate } = {}){
     try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}setLegalDoc(null);
   };
 
-  const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
+  const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const studioLook=owner&&!previewCustomer;const ts=softText(dk,studioLook);
   // Shani's interpretation content, shared with the client workspace (src/workspace)
   // the subscriber's account: the Studio opens only for a signed-in, active session
   const account=useAccount();
@@ -1583,6 +1592,8 @@ export default function App({ view, navigate } = {}){
   useEffect(()=>{if(showOwnerUI&&!legalDoc)account.activate();},[showOwnerUI,legalDoc]); // the account machinery loads only for the Studio, not under a legal page
   // the Studio's look: its theme tokens follow the dark/light switch, and its buttons answer a press with the gold ripple
   useEffect(()=>{document.documentElement.dataset.stTheme=dk?"dark":"light";},[dk]);
+  // the Studio's text size (studio.css, src/ui/type.js) applies while the Studio is on screen, not on the customer page
+  useEffect(()=>{const root=document.documentElement;root.dataset.stView=showOwnerUI?"studio":"site";return()=>{delete root.dataset.stView;};},[showOwnerUI]);
   useEffect(()=>(showOwnerUI?attachRipple(document,RIPPLE_TARGETS):undefined),[showOwnerUI]);
   const workspaceStore=showOwnerUI&&studioReady?accountStore(account):null;
   const lpBase = results ? R(results.lp) : 0; // reduced life path for D[] rich content (master carries base energy)
@@ -1656,30 +1667,30 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 .pcard{position:relative;border-radius:20px;overflow:hidden;border:1px solid ${ac}1f;background:${dk?"linear-gradient(180deg,rgba(20,20,42,.9),rgba(12,12,26,.92))":"linear-gradient(180deg,rgba(255,255,255,.92),rgba(245,240,232,.92))"};transition:transform .45s cubic-bezier(.16,1,.3,1),box-shadow .45s,border-color .45s}.pcard:hover{transform:translateY(-8px);border-color:${ac}66;box-shadow:0 24px 60px rgba(0,0,0,${dk?.5:.18}),0 0 40px ${ac}1f}
 .pmedia{position:relative;height:170px;overflow:hidden}.pmedia img{width:100%;height:100%;object-fit:cover;transition:transform 1.1s cubic-bezier(.16,1,.3,1);transform:scale(1.05)}.pcard:hover .pmedia img{transform:scale(1.16)}
 .gb{position:relative;overflow:hidden}.gb::after{content:'';position:absolute;top:0;left:0;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);transform:translateX(-140%) skewX(-18deg);pointer-events:none}.gb:hover::after{animation:shineSweep 1s ease}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:30px;border:1px solid ${ac}33;background:${ac}0d;font-size:12px;color:${ac};font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:30px;border:1px solid ${ac}33;background:${ac}0d;font-size:${fs(12)};color:${ac};font-weight:600}
 .gc{background:${dk?"linear-gradient(135deg,rgba(18,18,38,.75),rgba(12,12,28,.55))":"linear-gradient(135deg,rgba(255,255,255,.88),rgba(245,240,232,.72))"};backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid ${dk?"rgba(200,169,106,.1)":"rgba(147,118,64,.12)"};border-radius:22px;padding:28px;position:relative;overflow:hidden;transition:background .4s}.gc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,${ac}44,transparent)}
-.gi{width:100%;background:${dk?"rgba(8,8,18,.7)":"rgba(255,255,255,.75)"};border:1px solid ${dk?"rgba(200,169,106,.18)":"rgba(147,118,64,.18)"};border-radius:14px;padding:16px 20px;color:${tm};font-size:17px;font-family:inherit;outline:none;transition:all .4s}.gi::placeholder{color:${ts}}.gi:focus{border-color:${ac}88;box-shadow:0 0 30px ${ac}12}
-.gb{width:100%;padding:17px 30px;background:linear-gradient(135deg,${dk?"#c8a96a":"#b8942e"},${dk?"#b8942e":"#937640"},${dk?"#c8a96a":"#b8942e"});background-size:200% 100%;color:${dk?"#080812":"#fff"};font-family:inherit;font-size:17px;font-weight:600;border:none;border-radius:14px;cursor:pointer;transition:all .4s;letter-spacing:.5px}.gb:hover{background-position:100% 0;box-shadow:0 8px 40px ${ac}44;transform:translateY(-2px)}.gb:active{transform:translateY(0)}.gb:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
-.ghost{padding:13px 24px;background:transparent;color:${ac};font-family:inherit;font-size:15px;font-weight:500;border:1px solid ${ac}44;border-radius:12px;cursor:pointer;transition:all .3s}.ghost:hover{background:${ac}0e;border-color:${ac}88}
-.orb{width:60px;height:60px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 30% 30%,${ac}1a,${ac}06);border:1px solid ${ac}33;font-size:23px;font-weight:700;color:${ac};animation:glow 5s ease-in-out infinite;flex-shrink:0;cursor:pointer;transition:all .3s}.orb:hover{transform:scale(1.1)}
+.gi{width:100%;background:${dk?"rgba(8,8,18,.7)":"rgba(255,255,255,.75)"};border:1px solid ${dk?"rgba(200,169,106,.18)":"rgba(147,118,64,.18)"};border-radius:14px;padding:16px 20px;color:${tm};font-size:${fs(17)};font-family:inherit;outline:none;transition:all .4s}.gi::placeholder{color:${ts}}.gi:focus{border-color:${ac}88;box-shadow:0 0 30px ${ac}12}
+.gb{width:100%;padding:17px 30px;background:linear-gradient(135deg,${dk?"#c8a96a":"#b8942e"},${dk?"#b8942e":"#937640"},${dk?"#c8a96a":"#b8942e"});background-size:200% 100%;color:${dk?"#080812":"#fff"};font-family:inherit;font-size:${fs(17)};font-weight:600;border:none;border-radius:14px;cursor:pointer;transition:all .4s;letter-spacing:.5px}.gb:hover{background-position:100% 0;box-shadow:0 8px 40px ${ac}44;transform:translateY(-2px)}.gb:active{transform:translateY(0)}.gb:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+.ghost{padding:13px 24px;background:transparent;color:${ac};font-family:inherit;font-size:${fs(15)};font-weight:500;border:1px solid ${ac}44;border-radius:12px;cursor:pointer;transition:all .3s}.ghost:hover{background:${ac}0e;border-color:${ac}88}
+.orb{width:60px;height:60px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 30% 30%,${ac}1a,${ac}06);border:1px solid ${ac}33;font-size:${fs(23)};font-weight:700;color:${ac};animation:glow 5s ease-in-out infinite;flex-shrink:0;cursor:pointer;transition:all .3s}.orb:hover{transform:scale(1.1)}
 .tbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:${dk?"rgba(8,8,18,.85)":"rgba(245,240,232,.92)"};backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid ${ac}0a;transition:background .4s}
-.tbtn{padding:6px 11px;background:${dk?"rgba(18,18,38,.8)":"rgba(255,255,255,.7)"};border:1px solid ${ac}1a;border-radius:8px;color:${ac};font-size:11px;font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit}.tbtn:hover{background:${ac}12}.tbtn.act{background:${ac}1a;border-color:${ac}55}
-.home-btn{padding:6px 14px;background:${dk?"rgba(200,169,106,.08)":"rgba(147,118,64,.06)"};border:1px solid ${ac}33;border-radius:8px;color:${ac};font-size:12px;font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit;display:flex;align-items:center;gap:5px}.home-btn:hover{background:${ac}1a;border-color:${ac}66;transform:scale(1.02)}
+.tbtn{padding:6px 11px;background:${dk?"rgba(18,18,38,.8)":"rgba(255,255,255,.7)"};border:1px solid ${ac}1a;border-radius:8px;color:${ac};font-size:${fs(11)};font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit}.tbtn:hover{background:${ac}12}.tbtn.act{background:${ac}1a;border-color:${ac}55}
+.home-btn{padding:6px 14px;background:${dk?"rgba(200,169,106,.08)":"rgba(147,118,64,.06)"};border:1px solid ${ac}33;border-radius:8px;color:${ac};font-size:${fs(12)};font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit;display:flex;align-items:center;gap:5px}.home-btn:hover{background:${ac}1a;border-color:${ac}66;transform:scale(1.02)}
 .tabs{display:flex;gap:2px;padding:2px;background:${dk?"rgba(18,18,38,.4)":"rgba(0,0,0,.03)"};border-radius:12px;margin-bottom:22px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.ti{flex:1;text-align:center;padding:10px 6px;border-radius:10px;font-size:12px;font-weight:${isRtl?600:500};cursor:pointer;transition:all .3s;color:${ts};border:1px solid transparent;white-space:nowrap}.ti.act{background:${dk?"rgba(200,169,106,.08)":"rgba(147,118,64,.06)"};color:${ac};border-color:${ac}28}
+.ti{flex:1;text-align:center;padding:10px 6px;border-radius:10px;font-size:${fs(12)};font-weight:${isRtl?600:500};cursor:pointer;transition:all .3s;color:${ts};border:1px solid transparent;white-space:nowrap}.ti.act{background:${dk?"rgba(200,169,106,.08)":"rgba(147,118,64,.06)"};color:${ac};border-color:${ac}28}
 .snav{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:3px;padding:3px;background:${dk?"rgba(12,12,28,.9)":"rgba(245,240,232,.94)"};border:1px solid ${ac}14;border-radius:14px;margin-bottom:18px;animation:fadeInUp .5s ease-out .1s both}
-.snav-b{font-family:inherit;background:transparent;line-height:1.25}.snav-b:focus-visible{outline:2px solid ${ac};outline-offset:1px}
-@media (max-width:520px){.snav{grid-template-columns:repeat(3,1fr)}.snav-b{padding:9px 4px;font-size:11.5px}}
+.snav-b{font-family:inherit;background:transparent;line-height:1.25;color:${tm};font-weight:700}.snav-b:focus-visible{outline:2px solid ${ac};outline-offset:1px}
+@media (max-width:520px){.snav{grid-template-columns:repeat(3,1fr)}.snav-b{padding:9px 4px;font-size:${fs(11.5)}}}
 @media (min-width:700px){.snav{position:sticky;top:58px;z-index:60;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
 @media (min-width:1024px){.snav{grid-template-columns:repeat(auto-fit,minmax(78px,1fr))}.snav-b{padding:9px 4px 8px}.snav-b>span{flex-direction:column;gap:4px !important}}
 .rrow{display:flex;align-items:center;gap:16px;padding:14px 8px;border-bottom:1px solid ${ac}06;transition:background .3s;border-radius:10px}.rrow:hover{background:${ac}04}.rrow:last-child{border-bottom:none}
-.badge{display:inline-block;padding:4px 11px;background:${ac}0a;border:1px solid ${ac}15;border-radius:16px;font-size:11px;color:${ac}bb;margin-top:2px}
+.badge{display:inline-block;padding:4px 11px;background:${ac}0a;border:1px solid ${ac}15;border-radius:16px;font-size:${fs(11)};color:${ac}bb;margin-top:2px}
 .divider{height:1px;background:linear-gradient(90deg,transparent,${ac}33,transparent);margin:20px 0}
 .si{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:26}.sd{width:10px;height:10px;border-radius:50%;background:${ac}12;border:1px solid ${ac}1a;transition:all .5s}.sd.act{background:${ac};box-shadow:0 0 10px ${ac}55;width:12px;height:12px}.sl{width:36px;height:1px;background:${ac}1a}
-.nar-line{font-size:16px;line-height:2.2;color:${dk?"rgba(232,224,208,.55)":"rgba(0,0,0,.45)"};font-style:italic;text-align:center;margin:14px 0}
+.nar-line{font-size:${fs(16)};line-height:2.2;color:${dk?"rgba(232,224,208,.55)":"rgba(0,0,0,.45)"};font-style:italic;text-align:center;margin:14px 0}
 .rec-card{padding:16px;background:${dk?"rgba(18,18,38,.5)":"rgba(255,255,255,.45)"};border:1px solid ${ac}10;border-radius:14px;margin-bottom:10px;transition:all .3s}.rec-card:hover{border-color:${ac}33}
 .ritual-item{padding:16px;background:${dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)"};border:1px solid ${ac}0a;border-radius:12px;text-align:center}
-@media(max-width:600px){.gc{padding:22px 14px;border-radius:18px}.gb{padding:15px 22px;font-size:15px}.orb{width:50px;height:50px;font-size:19px}.nar-line{font-size:14px;line-height:2}}
+@media(max-width:600px){.gc{padding:22px 14px;border-radius:18px}.gb{padding:15px 22px;font-size:${fs(15)}}.orb{width:50px;height:50px;font-size:${fs(19)}}.nar-line{font-size:${fs(14)};line-height:2}}
 `}</style>
 
     {intro&&<Intro onDone={()=>setIntro(false)} he={he} dk={dk}/>}
@@ -1694,22 +1705,22 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     <div className={showOwnerUI?"tbar st-tbar":"tbar"}>
       <div style={{display:"flex",gap:4,alignItems:"center"}}>
         <button className="home-btn" onClick={goHome}>
-          <span style={{fontSize:14}}>✦</span>
+          <span style={{fontSize:fs(14)}}>✦</span>
           <span>{he?"בית":"Home"}</span>
         </button>
       </div>
       <div style={{display:"flex",gap:4,alignItems:"center"}}>
-        {streak>1&&<span style={{fontSize:10,color:ac,opacity:.6,display:"inline-flex",alignItems:"center",gap:3}}><Icon name="flame" size={12}/>{streak}</span>}
+        {streak>1&&<span style={{fontSize:fs(10),color:ac,opacity:.6,display:"inline-flex",alignItems:"center",gap:3}}><Icon name="flame" size={12}/>{streak}</span>}
         {showOwnerUI&&studioReady&&<button className="tbtn st-search-btn" title={he?"חיפוש מהיר (Ctrl+K)":"Quick search (Ctrl+K)"} aria-label={he?"חיפוש מהיר":"Quick search"} aria-keyshortcuts="Control+K Meta+K" onClick={()=>{AU.init();AU.p("click");openPalette();}}><Icon name="search" size={14}/><span className="st-search-text">{he?"חיפוש":"Search"}<kbd dir="ltr" aria-hidden="true">Ctrl K</kbd></span></button>}
         <button className="tbtn" onClick={()=>{setLang(lang==="he"?"en":"he");AU.init();AU.p("click");}}>{he?"EN":"עב"}</button>
         <button className="tbtn" aria-label={dk?(he?"מצב בהיר":"Light mode"):(he?"מצב כהה":"Dark mode")} onClick={()=>{setDk(!dk);AU.init();AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{dk?<Icon name="sun" size={14}/>:<Icon name="moon" size={14}/>}</button>
         <button className={`tbtn ${snd?"act":""}`} aria-label={he?"צלילים":"Sounds"} aria-pressed={snd} onClick={()=>{AU.init();setSnd(!snd);AU.p("click");}} style={{display:"inline-flex",alignItems:"center"}}>{snd?<Icon name="soundOn" size={14}/>:<Icon name="soundOff" size={14}/>}</button>
-        {owner&&!demo&&<button className="tbtn act" title={he?"מעבר בין סטודיו לתצוגת לקוח":"Toggle Studio / Customer"} onClick={()=>{const next=!previewCustomer;setPreviewCustomer(next);if(next){setTab("reading");setShowRes(false);}AU.init();AU.p("click");window.scrollTo({top:0,behavior:"smooth"});}} aria-label={previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={previewCustomer?"crown":"eye"} size={13}/><span className="tbtn-text" style={{fontSize:10.5,fontWeight:700}}>{previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")}</span></button>}
-        <button className={`tbtn ${owner?"":"act"}`} title={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):(he?"כניסת בעל עסק":"Owner login")} onClick={()=>{AU.init();AU.p("click");owner?exitOwner():enterOwner();}} aria-label={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):undefined} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={owner?"door":"crown"} size={13}/><span className="tbtn-text" style={{fontSize:10.5,fontWeight:700}}>{owner?(he?"יציאה":"Exit"):(he?"סטודיו":"Studio")}</span></button>
+        {owner&&!demo&&<button className="tbtn act" title={he?"מעבר בין סטודיו לתצוגת לקוח":"Toggle Studio / Customer"} onClick={()=>{const next=!previewCustomer;setPreviewCustomer(next);if(next){setTab("reading");setShowRes(false);}AU.init();AU.p("click");window.scrollTo({top:0,behavior:"smooth"});}} aria-label={previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={previewCustomer?"crown":"eye"} size={13}/><span className="tbtn-text" style={{fontSize:fs(10.5),fontWeight:700}}>{previewCustomer?(he?"סטודיו":"Studio"):(he?"תצוגת לקוח":"Customer")}</span></button>}
+        <button className={`tbtn ${owner?"":"act"}`} title={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):(he?"כניסת בעל עסק":"Owner login")} onClick={()=>{AU.init();AU.p("click");owner?exitOwner():enterOwner();}} aria-label={owner?(he?"יציאה ממצב בעל עסק":"Exit owner mode"):undefined} style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon name={owner?"door":"crown"} size={13}/><span className="tbtn-text" style={{fontSize:fs(10.5),fontWeight:700}}>{owner?(he?"יציאה":"Exit"):(he?"סטודיו":"Studio")}</span></button>
       </div>
     </div>
 
-    <div className={showOwnerUI?"st-root":undefined} style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?1240:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
+    <div className={showOwnerUI?"st-root":undefined} style={{position:"relative",zIndex:1,maxWidth:showOwnerUI?1360:1040,margin:"0 auto",padding:"62px 20px 70px",minHeight:"100vh"}}>
       {legalDoc?<LegalPage doc={legalDoc} he={he} dk={dk} onBack={closeLegal}/>:showOwnerUI&&!studioReady?<><AccountGate he={he} dk={dk} onLeave={exitOwner}/><LegalLinks he={he} dk={dk}/></>:(<>
       {demo&&<DemoBanner he={he} onExit={exitOwner}/>}
 
@@ -1717,22 +1728,24 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       {showOwnerUI?(
         <div style={{textAlign:"center",marginBottom:18,animation:"fadeInUp .6s ease-out"}}>
           <div style={{display:"inline-flex",alignItems:"center",gap:9,color:ac}}><Icon name="crown" size={20}/><h1 style={{fontSize:isRtl?28:32,fontWeight:700,color:ac,margin:0,fontFamily:"'Cormorant Garamond',serif"}}>{he?"הסטודיו שלי":"My Studio"}</h1></div>
-          <p style={{fontSize:12.5,color:ts,marginTop:5}}>{he?"כל הכלים שלכם — בחרו מסך:":"All your tools — choose a screen:"}</p>
-          {licensee&&<p style={{fontSize:11,color:ts,marginTop:3}}>{he?`בחשבון: ${licensee.fullName}`:`Signed in: ${licensee.fullName}`}</p>}
+          <p style={{fontSize:fs(12.5),color:ts,marginTop:5}}>{he?"כל הכלים שלכם — בחרו מסך:":"All your tools — choose a screen:"}</p>
+          {licensee&&<p style={{fontSize:fs(11),color:ts,marginTop:3}}>{he?`בחשבון: ${licensee.fullName}`:`Signed in: ${licensee.fullName}`}</p>}
         </div>
       ):(
         <>
           <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}} onReveal={(n,d)=>{setName(n);setDob(d);setStep(2);const ok=runReading(n,d);if(ok)setTimeout(()=>scrollToId("reading-section"),90);}}/>
           <HowItWorks he={he} dk={dk}/>
-          <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:11,color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · אפשר לנסות עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
+          <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:fs(11),color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · אפשר לנסות עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
         </>
       )}
       <div id="reading-section" style={{scrollMarginTop:70}}/>
 
       {/* ═══ STUDIO NAV (owner — always visible) ═══ */}
       {showOwnerUI&&<StudioNav label={he?"כלי הסטודיו":"Studio tools"} active={tab}
-        tabs={studioTools.map(tb=>({k:tb.k,l:he?tb.he:tb.en,icon:<Icon name={tb.i} size={14} stroke={1.4}/>}))}
+        tabs={studioTools.map(tb=>({k:tb.k,l:he?tb.he:tb.en,icon:<Icon name={tb.i} size={19} stroke={1.8}/>}))}
         onSelect={selectTool}/>}
+      {/* what the open screen is for, in a line or two (the owner, 2026-10-12) */}
+      {showOwnerUI&&<ScreenIntro he={he} text={SCREEN_HELP[tab]?.[he?"he":"en"]}/>}
 
       {/* ═══ INPUT TABS ═══ */}
       {!showRes&&(<>
@@ -1778,7 +1791,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 
         {tab==="cards"&&(
           <div className="st-panel st-tool" style={{padding:24,animation:"fadeInUp .5s ease-out"}}>
-            <p style={{textAlign:"center",fontSize:13,color:"var(--st-ink-soft)",marginBottom:18}}>{he?"לוחצים על קלף כדי להפוך אותו.":"Press a card to turn it over."}</p>
+            <p style={{textAlign:"center",fontSize:fs(13),color:"var(--st-ink-soft)",marginBottom:18}}>{he?"לוחצים על קלף כדי להפוך אותו.":"Press a card to turn it over."}</p>
             <div className="st-cards">
               {studioDeck(he).map(card=><Card key={card.number} {...card} he={he} onToggle={chimeOnOpen}/>)}
             </div>
@@ -1790,22 +1803,22 @@ button,a,input{-webkit-tap-highlight-color:transparent}
             <div className="si"><div className={`sd ${step>=1?"act":""}`}/><div className="sl"/><div className={`sd ${step>=2?"act":""}`}/></div>
             {step===1&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
               <div style={{textAlign:"center",marginBottom:24}}>
-                <div style={{fontSize:10,color:`${ac}66`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 1":"Step 1"}</div>
+                <div style={{fontSize:fs(10),color:`${ac}66`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 1":"Step 1"}</div>
                 <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"השם המלא":"Who are you?"}</h2>
               </div>
-              <label style={{display:"block",marginBottom:8,fontSize:12,color:`${ac}99`,fontWeight:500}}>{he?"שם מלא":"Full Name"}</label>
+              <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}99`,fontWeight:500}}>{he?"שם מלא":"Full Name"}</label>
               <input className="gi" maxLength={MAX_INPUT} placeholder={he?"השם המלא בעברית...":"Enter your name in Hebrew..."} value={name} onChange={e=>setName(e.target.value)} dir="rtl" style={{marginBottom:24,textAlign:"right"}} onKeyDown={e=>{if(e.key==="Enter"&&name.trim()){setStep(2);AU.init();AU.p("click");}}}/>
               <button className="gb" disabled={!name.trim()} onClick={()=>{setStep(2);AU.init();AU.p("click");}}>{he?"המשך ←":"Continue →"}</button>
             </div>)}
             {step===2&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
               <div style={{textAlign:"center",marginBottom:24}}>
-                <div style={{fontSize:10,color:`${ac}66`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 2":"Step 2"}</div>
+                <div style={{fontSize:fs(10),color:`${ac}66`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 2":"Step 2"}</div>
                 <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"תאריך הלידה":"When were you born?"}</h2>
               </div>
-              <label style={{display:"block",marginBottom:8,fontSize:12,color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
+              <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
               <input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{marginBottom:18,textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter"&&dob.trim())doCalc();}}/>
               <PlusOneNote he={he} color={ts} style={{marginTop:-6,marginBottom:24,textAlign:"center"}}/>
-              {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:16,textAlign:"center"}}>{error}</div>}
+              {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:fs(13),marginBottom:16,textAlign:"center"}}>{error}</div>}
               <div style={{display:"flex",gap:10}}>
                 <button className="ghost" onClick={()=>{setStep(1);AU.p("click");}}>{he?"→ חזרה":"← Back"}</button>
                 <button className="gb" disabled={!dob.trim()} onClick={doCalc} style={{flex:1}}>{he?"לגלות את הייעוד":"Reveal Your Destiny"}</button>
@@ -1821,7 +1834,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       )}
       {showRes&&results&&(showOwnerUI||!LEAD_GATE||leadDone)&&(<div className={showOwnerUI?"st-results":undefined} style={{maxWidth:showOwnerUI?undefined:640,margin:"0 auto"}}>
         <SR><div style={{textAlign:"center",marginBottom:8}}>
-          <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:5,marginBottom:6}}>{he?"הקריאה של":"The reading of"}</div>
+          <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:5,marginBottom:6}}>{he?"הקריאה של":"The reading of"}</div>
           <div style={{fontSize:isRtl?26:30,fontWeight:isRtl?700:400,color:ac,fontFamily:"'Cormorant Garamond',serif",letterSpacing:isRtl?0:3}}>{name}</div>
         </div></SR>
         <SR><div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:28}}>
@@ -1835,10 +1848,10 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <Chapter index={1} title={chapterDefs[0]?.title} subtitle={chapterDefs[0]?.sub} icon={chapterDefs[0]?.icon} isActive={nextUnrevealed===0} isRevealed={chapters[0]} onReveal={()=>revealChapter(0)} dk={dk} he={he}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>{showOwnerUI?<RevealCard {...studioDeck(he)[(lpBase||1)-1]} he={he} size="lg"/>:<TarotCard number={lpBase||1} dk={dk} flipped={true} size="lg"/>}</div>
           <p className="nar-line"><Locked he={he} chip>{he?D[lpBase]?.narrative:D[lpBase]?.narrativeE}</Locked></p>
-          {results.lp>9&&MASTER[results.lp]&&<div style={{textAlign:"center",marginTop:-6,marginBottom:8}}><span className="badge" style={{borderColor:`${ac}55`}}>{he?`מספר מאסטר ${results.lp} · ${MASTER[results.lp].t}`:`Master ${results.lp} · ${MASTER[results.lp].te}`}</span><p style={{fontSize:12.5,lineHeight:1.8,color:ts,marginTop:8}}><Locked he={he}>{he?MASTER[results.lp].he:MASTER[results.lp].en}</Locked></p></div>}
+          {results.lp>9&&MASTER[results.lp]&&<div style={{textAlign:"center",marginTop:-6,marginBottom:8}}><span className="badge" style={{borderColor:`${ac}55`}}>{he?`מספר מאסטר ${results.lp} · ${MASTER[results.lp].t}`:`Master ${results.lp} · ${MASTER[results.lp].te}`}</span><p style={{fontSize:fs(12.5),lineHeight:1.8,color:ts,marginTop:8}}><Locked he={he}>{he?MASTER[results.lp].he:MASTER[results.lp].en}</Locked></p></div>}
           <div className="divider"/>
           <div className="st-num-rows">{[{l:he?"ערך השם":"Name Value",v:results.nv},{l:he?"שביל הגורל":"Life Path",v:results.lp},{l:he?"קול הנשמה":"Soul Urge",v:results.su},{l:he?"מספר הביטוי":"Expression",v:results.ex}].map((it,i)=>{const info=D[it.v]||MASTER[it.v];return(
-            <div key={i} className="rrow"><div className="orb"><AN value={it.v} delay={i*200}/></div><div style={{flex:1}}><div style={{fontSize:14,fontWeight:isRtl?600:500,color:tm}}>{it.l}</div>{it.v>0&&info&&<div className="badge">{he?info.t:info.te}</div>}</div></div>
+            <div key={i} className="rrow"><div className="orb"><AN value={it.v} delay={i*200}/></div><div style={{flex:1}}><div style={{fontSize:fs(14),fontWeight:isRtl?600:500,color:tm}}>{it.l}</div>{it.v>0&&info&&<div className="badge">{he?info.t:info.te}</div>}</div></div>
           );})}</div>
         </Chapter>
 
@@ -1846,27 +1859,27 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <Chapter index={2} title={chapterDefs[1]?.title} subtitle={chapterDefs[1]?.sub} icon={chapterDefs[1]?.icon} isActive={nextUnrevealed===1} isRevealed={chapters[1]} onReveal={()=>revealChapter(1)} dk={dk} he={he}>
           <p className="nar-line">{he?"שביל הגורל, מספר "+results.lp+", חושף את הייעוד העמוק":"Your Life Path "+results.lp+" reveals your deepest purpose"}</p>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,margin:"16px 0"}}>
-            <div style={{padding:"16px",background:dk?"rgba(180,50,50,.06)":"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.12)",borderRadius:14,textAlign:"center"}}><div style={{color:"#d98a8a",marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="moon" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:"#e88",marginBottom:4}}>{he?"צד צל":"Shadow"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}><Locked he={he}>{he?D[lpBase]?.shadow:D[lpBase]?.shadowE}</Locked></div></div>
-            <div style={{padding:"16px",background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,textAlign:"center"}}><div style={{color:ac,marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="seed" size={18}/></div><div style={{fontSize:11,fontWeight:600,color:ac,marginBottom:4}}>{he?"צמיחה":"Growth"}</div><div style={{fontSize:12,lineHeight:1.7,color:ts}}><Locked he={he}>{he?D[lpBase]?.growth:D[lpBase]?.growthE}</Locked></div></div>
+            <div style={{padding:"16px",background:dk?"rgba(180,50,50,.06)":"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.12)",borderRadius:14,textAlign:"center"}}><div style={{color:"#d98a8a",marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="moon" size={18}/></div><div style={{fontSize:fs(11),fontWeight:600,color:"#e88",marginBottom:4}}>{he?"צד צל":"Shadow"}</div><div style={{fontSize:fs(12),lineHeight:1.7,color:ts}}><Locked he={he}>{he?D[lpBase]?.shadow:D[lpBase]?.shadowE}</Locked></div></div>
+            <div style={{padding:"16px",background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,textAlign:"center"}}><div style={{color:ac,marginBottom:7,display:"flex",justifyContent:"center"}}><Icon name="seed" size={18}/></div><div style={{fontSize:fs(11),fontWeight:600,color:ac,marginBottom:4}}>{he?"צמיחה":"Growth"}</div><div style={{fontSize:fs(12),lineHeight:1.7,color:ts}}><Locked he={he}>{he?D[lpBase]?.growth:D[lpBase]?.growthE}</Locked></div></div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:14}}>
             {[{i:"gem",l:he?"אבן":"Stone",v:D[lpBase]?.stone},{i:"orb",l:he?"קריסטל":"Crystal",v:D[lpBase]?.crystal},{i:"palette",l:he?"צבע":"Color",v:D[lpBase]?.color},{i:"calendar",l:he?"יום מזל":"Lucky Day",v:D[lpBase]?.luck}].map((it,i)=>(
-              <div key={i} style={{padding:"12px",background:dk?"rgba(18,18,38,.35)":"rgba(255,255,255,.4)",border:`1px solid ${ac}0a`,borderRadius:11,textAlign:"center"}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:3}}><Icon name={it.i} size={18}/></div><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1,marginTop:2}}>{it.l}</div><div style={{fontSize:12,fontWeight:600,color:ac,marginTop:2}}><Locked he={he}>{it.v}</Locked></div></div>
+              <div key={i} style={{padding:"12px",background:dk?"rgba(18,18,38,.35)":"rgba(255,255,255,.4)",border:`1px solid ${ac}0a`,borderRadius:11,textAlign:"center"}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:3}}><Icon name={it.i} size={18}/></div><div style={{fontSize:fs(9),color:ts,textTransform:"uppercase",letterSpacing:1,marginTop:2}}>{it.l}</div><div style={{fontSize:fs(12),fontWeight:600,color:ac,marginTop:2}}><Locked he={he}>{it.v}</Locked></div></div>
             ))}
           </div>
-          {results.kd.length>0&&(<div style={{marginTop:16}}><div className="divider"/><div style={{textAlign:"center",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{color:"#e88",display:"inline-flex"}}><Icon name="bolt" size={18}/></span><span style={{fontSize:15,fontWeight:600,color:"#e88"}}>{he?"חוב קארמי":"Karmic Debt"}</span></div>{results.kd.map(k=><div key={k} style={{padding:"14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8}}><div style={{fontSize:13,lineHeight:1.8,color:ts}}><strong style={{color:"#e88"}}>{k}</strong> — <Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></div></div>)}</div>)}
-          {results.kd.length===0&&(<div style={{textAlign:"center",marginTop:14,padding:"14px",background:`${ac}06`,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={18}/></span><span style={{fontSize:13,color:ts}}>{he?"אין חוב קארמי":"No karmic debt"}</span></div>)}
+          {results.kd.length>0&&(<div style={{marginTop:16}}><div className="divider"/><div style={{textAlign:"center",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{color:"#e88",display:"inline-flex"}}><Icon name="bolt" size={18}/></span><span style={{fontSize:fs(15),fontWeight:600,color:"#e88"}}>{he?"חוב קארמי":"Karmic Debt"}</span></div>{results.kd.map(k=><div key={k} style={{padding:"14px",background:"rgba(180,50,50,.05)",border:"1px solid rgba(180,50,50,.1)",borderRadius:12,marginBottom:8}}><div style={{fontSize:fs(13),lineHeight:1.8,color:ts}}><strong style={{color:"#e88"}}>{k}</strong> — <Locked he={he}>{KARMA[k]?.[he?"he":"en"]}</Locked></div></div>)}</div>)}
+          {results.kd.length===0&&(<div style={{textAlign:"center",marginTop:14,padding:"14px",background:`${ac}06`,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><span style={{color:ac,display:"inline-flex"}}><Icon name="dove" size={18}/></span><span style={{fontSize:fs(13),color:ts}}>{he?"אין חוב קארמי":"No karmic debt"}</span></div>)}
         </Chapter>
 
         {/* CHAPTER 3 */}
         <Chapter index={3} title={chapterDefs[2]?.title} subtitle={chapterDefs[2]?.sub} icon={chapterDefs[2]?.icon} isActive={nextUnrevealed===2} isRevealed={chapters[2]} onReveal={()=>revealChapter(2)} dk={dk} he={he}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
             {[{l:he?"יום":"Day",v:results.pd},{l:he?"חודש":"Month",v:results.pm},{l:he?"שנה":"Year",v:results.py}].map((it,i)=>(
-              <div key={i} style={{textAlign:"center",padding:"18px 8px",background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}0a`,borderRadius:14}}><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1}}>{it.l}</div><div style={{fontSize:32,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif",margin:"4px 0"}}><AN value={it.v} delay={i*200}/></div><div style={{fontSize:11,color:D[it.v]?.c||ac,opacity:.7}}>{he?D[it.v]?.t:D[it.v]?.te}</div></div>
+              <div key={i} style={{textAlign:"center",padding:"18px 8px",background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}0a`,borderRadius:14}}><div style={{fontSize:fs(9),color:ts,textTransform:"uppercase",letterSpacing:1}}>{it.l}</div><div style={{fontSize:32,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif",margin:"4px 0"}}><AN value={it.v} delay={i*200}/></div><div style={{fontSize:fs(11),color:D[it.v]?.c||ac,opacity:.7}}>{he?D[it.v]?.t:D[it.v]?.te}</div></div>
             ))}
           </div>
-          <div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:14,marginBottom:16}}><p style={{fontSize:14,lineHeight:1.9,color:ts}}><Locked he={he} chip>{YEAR_ENERGY[results.py]?.[he?"he":"en"]}</Locked></p></div>
-          <div className="divider"/><RitualWidget number={results.pd} basis={he?"לפי היום האישי":"By the personal day"} he={he} dk={dk}/>
+          <div style={{textAlign:"center",padding:"16px",background:`${ac}06`,borderRadius:14,marginBottom:16}}><p style={{fontSize:fs(14),lineHeight:1.9,color:ts}}><Locked he={he} chip>{YEAR_ENERGY[results.py]?.[he?"he":"en"]}</Locked></p></div>
+          <div className="divider"/><RitualWidget number={results.pd} basis={he?"לפי היום האישי":"By the personal day"} he={he} dk={dk} studio={showOwnerUI}/>
         </Chapter>
 
         {/* CHAPTER 4 */}
@@ -1874,30 +1887,30 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           <p className="nar-line">{he?"גוללים קדימה כדי לראות את האנרגיה של 10 השנים הקרובות":"Scroll forward to see your energy over the next 10 years"}</p>
           <YearWave proj={results.proj} dk={dk} he={he}/>
           <div className="divider"/>
-          <div style={{textAlign:"center",marginBottom:14}}><h4 style={{fontSize:17,fontWeight:isRtl?600:400,color:ac}}>{he?"מחזורי חיים":"Life Cycles"}</h4></div>
-          {[he?"חיפוש":"Search",he?"מציאה":"Discovery",he?"יתד":"Anchor",he?"שיא":"Summit"].map((label,i)=>{const span=cycleSpans(results.exit)[i];const active=cycleAt(results.age,results.exit)===i;return(<div key={i} style={{padding:"14px 16px",background:active?`${ac}0a`:"transparent",border:`1px solid ${active?ac+"33":ac+"08"}`,borderRadius:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all .3s"}}><div><div style={{fontSize:15,fontWeight:600,color:active?ac:tm}}>{label}</div><div style={{fontSize:10,color:ts}}>{he?"גילאים":"Ages"} {agesText(span)}</div></div><div style={{display:"flex",gap:8}}><div style={{textAlign:"center"}}><div style={{fontSize:8,color:ts}}>{he?"פסגה":"Peak"}</div><div style={{fontSize:20,fontWeight:700,color:ac}}>{results.pk[i]}</div></div><div style={{textAlign:"center"}}><div style={{fontSize:8,color:ts}}>{he?"אתגר":"Chal."}</div><div style={{fontSize:20,fontWeight:700,color:ts}}>{results.ch[i]}</div></div></div>{active&&<div style={{padding:"2px 8px",background:`${ac}15`,border:`1px solid ${ac}33`,borderRadius:8,fontSize:8,color:ac,letterSpacing:1,textTransform:"uppercase"}}>{he?"עכשיו":"NOW"}</div>}</div>);})}
-          <div className="divider"/><div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:17,fontWeight:isRtl?600:400,color:ac}}>Lo Shu Grid</h4></div><LoShu ls={results.ls} dk={dk} he={he}/>
+          <div style={{textAlign:"center",marginBottom:14}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?600:400,color:ac}}>{he?"מחזורי חיים":"Life Cycles"}</h4></div>
+          {[he?"חיפוש":"Search",he?"מציאה":"Discovery",he?"יתד":"Anchor",he?"שיא":"Summit"].map((label,i)=>{const span=cycleSpans(results.exit)[i];const active=cycleAt(results.age,results.exit)===i;return(<div key={i} style={{padding:"14px 16px",background:active?`${ac}0a`:"transparent",border:`1px solid ${active?ac+"33":ac+"08"}`,borderRadius:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all .3s"}}><div><div style={{fontSize:fs(15),fontWeight:600,color:active?ac:tm}}>{label}</div><div style={{fontSize:fs(10),color:ts}}>{he?"גילאים":"Ages"} {agesText(span)}</div></div><div style={{display:"flex",gap:8}}><div style={{textAlign:"center"}}><div style={{fontSize:fs(8),color:ts}}>{he?"פסגה":"Peak"}</div><div style={{fontSize:fs(20),fontWeight:700,color:ac}}>{results.pk[i]}</div></div><div style={{textAlign:"center"}}><div style={{fontSize:fs(8),color:ts}}>{he?"אתגר":"Chal."}</div><div style={{fontSize:fs(20),fontWeight:700,color:ts}}>{results.ch[i]}</div></div></div>{active&&<div style={{padding:"2px 8px",background:`${ac}15`,border:`1px solid ${ac}33`,borderRadius:8,fontSize:fs(8),color:ac,letterSpacing:1,textTransform:"uppercase"}}>{he?"עכשיו":"NOW"}</div>}</div>);})}
+          <div className="divider"/><div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?600:400,color:ac}}>Lo Shu Grid</h4></div><LoShu ls={results.ls} dk={dk} he={he}/>
         </Chapter>
 
         {/* CHAPTER 5 */}
         <Chapter index={5} title={chapterDefs[4]?.title} subtitle={chapterDefs[4]?.sub} icon={chapterDefs[4]?.icon} isActive={nextUnrevealed===4} isRevealed={chapters[4]} onReveal={()=>revealChapter(4)} dk={dk} he={he}>
           <p className="nar-line">{he?"המפה הפסיכולוגית":"Your psychological map"}</p>
           <PsychRadar psych={results.psych} dk={dk} he={he}/>
-          {(()=>{const max=Object.entries(results.psych).sort((a,b)=>b[1]-a[1])[0];const names={leadership:he?"מנהיגות":"Leadership",intuition:he?"אינטואיציה":"Intuition",creativity:he?"יצירתיות":"Creativity",stability:he?"יציבות":"Stability",ambition:he?"שאיפה":"Ambition",wisdom:he?"חכמה":"Wisdom"};return(<div style={{textAlign:"center",marginTop:14,padding:"14px",background:`${ac}06`,borderRadius:12}}><div style={{fontSize:13,fontWeight:600,color:ac,marginBottom:4}}>{he?"הכוח הדומיננטי":"Your dominant strength"}</div><div style={{fontSize:22,fontWeight:700,color:ac}}>{names[max[0]]} — {max[1]}/10</div></div>);})()}
+          {(()=>{const{dominant}=psychLevels(results.psych);const names=PSYCH_NAMES[he?"he":"en"];return(<div style={{textAlign:"center",marginTop:14,padding:"14px",background:`${ac}06`,borderRadius:12}}><div style={{fontSize:fs(13),fontWeight:600,color:ac,marginBottom:4}}>{dominant.length>1?(he?"הכוחות הדומיננטיים":"The dominant strengths"):(he?"הכוח הדומיננטי":"The dominant strength")}</div><div data-testid="psych-dominant" style={{fontSize:fs(22),fontWeight:700,color:ac}}>{dominant.map(k=>names[k]).join(" · ")||"—"}</div></div>);})()}
         </Chapter>
 
         {/* CHAPTER 6 */}
         <Chapter index={6} title={chapterDefs[5]?.title} subtitle={chapterDefs[5]?.sub} icon={chapterDefs[5]?.icon} isActive={nextUnrevealed===5} isRevealed={chapters[5]} onReveal={()=>revealChapter(5)} dk={dk} he={he}>
           <p className="nar-line">{he?"תובנות מותאמות אישית":"Personalized insights"}</p>
-          {getRecommendations(results,lang).map((rec,i)=>(<div key={i} className="rec-card"><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name={rec.icon} size={20}/></span><span style={{fontSize:15,fontWeight:600,color:ac}}>{rec.t}</span></div><p style={{fontSize:13,lineHeight:1.8,color:ts}}><Locked he={he}>{rec.d}</Locked></p></div>))}
+          {getRecommendations(results,lang).map((rec,i)=>(<div key={i} className="rec-card"><div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name={rec.icon} size={20}/></span><span style={{fontSize:fs(15),fontWeight:600,color:ac}}>{rec.t}</span></div><p style={{fontSize:fs(13),lineHeight:1.8,color:ts}}><Locked he={he}>{rec.d}</Locked></p></div>))}
           <div className="divider"/>
-          <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="target" size={22} stroke={1.3}/></div><div style={{fontSize:15,fontWeight:600,color:ac,marginTop:4}}>{he?"קריירות מתאימות":"Ideal Careers"}</div><div style={{fontSize:14,color:ts,marginTop:6,lineHeight:1.8}}><Locked he={he}>{D[lpBase]?.career}</Locked></div></div>
+          <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="target" size={22} stroke={1.3}/></div><div style={{fontSize:fs(15),fontWeight:600,color:ac,marginTop:4}}>{he?"קריירות מתאימות":"Ideal Careers"}</div><div style={{fontSize:fs(14),color:ts,marginTop:6,lineHeight:1.8}}><Locked he={he}>{D[lpBase]?.career}</Locked></div></div>
         </Chapter>
 
         {chapters[5]&&(<SR delay={250}><div style={{display:"flex",gap:10,justifyContent:"center",marginTop:18,flexWrap:"wrap"}}>
           {/* the demo keeps its interpretations blurred, so it makes no report */}
-          {!demo&&<button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);if(showOwnerUI)toast(he?"הדו״ח נשמר בתיקיית ההורדות.":"The report is in your downloads.");}} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמירת דו״ח PDF":"Save PDF"}</span></button>}
-          {showOwnerUI&&<button className="ghost" onClick={()=>setMeeting(meetingFor(results,readingName||name))} style={{width:"auto",padding:"12px 24px",fontSize:14}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="eye" size={15}/>{he?"מצב פגישה":"Meeting mode"}</span></button>}
+          {!demo&&<button className="gb" onClick={()=>{AU.init();AU.p("chapter");exportReport(results,name,he,D,showOwnerUI?licensee:null);if(showOwnerUI)toast(he?"הדו״ח נשמר בתיקיית ההורדות.":"The report is in your downloads.");}} style={{width:"auto",padding:"12px 24px",fontSize:fs(14)}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="share" size={15}/>{he?"שמירת דו״ח PDF":"Save PDF"}</span></button>}
+          {showOwnerUI&&<button className="ghost" onClick={()=>setMeeting(meetingFor(results,readingName||name))} style={{width:"auto",padding:"12px 24px",fontSize:fs(14)}}><span style={{display:"inline-flex",alignItems:"center",gap:8,justifyContent:"center"}}><Icon name="eye" size={15}/>{he?"מצב פגישה":"Meeting mode"}</span></button>}
           <button className="ghost" onClick={goHome}>{he?"קריאה חדשה":"New Reading"}</button>
         </div></SR>)}
       </div>)}
@@ -1913,12 +1926,12 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <LandingFooter he={he} dk={dk} onOwner={enterOwner}/>
       </>)}
 
-      {showOwnerUI&&<div style={{marginTop:40,textAlign:"center",fontSize:10,color:`${ac}15`,letterSpacing:3}}>✦ ✦ ✦</div>}
+      {showOwnerUI&&<div style={{marginTop:40,textAlign:"center",fontSize:fs(10),color:`${ac}15`,letterSpacing:3}}>✦ ✦ ✦</div>}
       </>)}
     </div>
 
     {/* whose licence this Studio is: shown on every screen, like on the reports */}
-    {showOwnerUI&&studioReady&&<div aria-hidden="true" style={{position:"fixed",bottom:8,insetInlineStart:10,zIndex:90,fontSize:10,color:`${ac}99`,pointerEvents:"none",letterSpacing:.3}}>{he?"מורשה ל: ":"Licensed to: "}{licensee.fullName}{licensee.phone?` · ${licensee.phone}`:""}</div>}
+    {showOwnerUI&&studioReady&&<div aria-hidden="true" style={{position:"fixed",bottom:8,insetInlineStart:10,zIndex:90,fontSize:fs(10),color:`${ac}99`,pointerEvents:"none",letterSpacing:.3}}>{he?"מורשה ל: ":"Licensed to: "}{licensee.fullName}{licensee.phone?` · ${licensee.phone}`:""}</div>}
 
     {/* meeting mode: one reading in large type, for showing a client */}
     {showOwnerUI&&studioReady&&<MeetingMode open={!!meeting} onClose={()=>setMeeting(null)} he={he} {...(meeting||{})}/>}
@@ -2002,7 +2015,7 @@ const TRAITS={
 function CompatWidget({he,dk}){
   const ac=dk?"#c8a96a":"#937640";
   const tm=dk?"#e8e0d0":"#2a2520";
-  const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
+  const ts=softText(dk);
   const isRtl=he;
 
   const[mode,setMode]=useState("couple"); // couple | profile | parent
@@ -2065,7 +2078,7 @@ function CompatWidget({he,dk}){
     },1200);
   };
 
-  const inputLabelSt={display:"block",marginBottom:5,fontSize:11,color:`${ac}99`,fontWeight:500};
+  const inputLabelSt={display:"block",marginBottom:5,fontSize:fs(11),color:`${ac}99`,fontWeight:500};
   const personBlockSt={padding:16,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:16};
   const personTitleSt={textAlign:"center",marginBottom:10};
   const dobInputSt={textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"};
@@ -2076,27 +2089,28 @@ function CompatWidget({he,dk}){
     <div className="gc" style={{padding:"6px",marginBottom:16}}>
       <div style={{display:"flex",gap:2}}>
         {[{k:"couple",i:"heart",l:he?"זוגיות":"Couple"},{k:"profile",i:"dna",l:he?"פרופיל אישי":"Profile"},{k:"parent",i:"users","l":he?"הורה-ילד":"Parent-Child"}].map(t=>(
-          <button type="button" key={t.k} aria-pressed={mode===t.k} className={`ti st-subtab ${mode===t.k?"act":""}`} onClick={()=>{setMode(t.k);setError("");AU.init();AU.p("click");}} style={{flex:1}}><span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"center"}}><Icon name={t.i} size={13}/>{t.l}</span></button>
+          <button type="button" key={t.k} aria-pressed={mode===t.k} className={`ti st-subtab ${mode===t.k?"act":""}`} onClick={()=>{setMode(t.k);setError("");AU.init();AU.p("click");}} style={{flex:1}}><span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"center"}}><Icon name={t.i} size={17}/>{t.l}</span></button>
         ))}
       </div>
+      <p className="st-subtab-help" data-testid="match-help">{MATCH_HELP[mode]?.[he?"he":"en"]}</p>
     </div>
 
-    {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:13,marginBottom:14,textAlign:"center"}}>{error}</div>}
+    {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:fs(13),marginBottom:14,textAlign:"center"}}>{error}</div>}
 
     {/* ═══ COUPLE MODE ═══ */}
     {mode==="couple"&&(<div>
       <div className="gc">
         <div style={{textAlign:"center",marginBottom:16}}>
-          <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"התאמה זוגית":"Couple Compatibility"}</div>
+          <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"התאמה זוגית":"Couple Compatibility"}</div>
         </div>
         <div className="st-pair">
           <div style={personBlockSt}>
-            <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="user" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"בן/בת זוג 1":"Partner 1"}</div></div>
+            <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="user" size={20}/></span><div style={{fontSize:fs(13),fontWeight:600,color:ac,marginTop:2}}>{he?"בן/בת זוג 1":"Partner 1"}</div></div>
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={c1name} onChange={e=>setC1name(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={c1dob} onChange={e=>setC1dob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
           </div>
           <div style={personBlockSt}>
-            <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="user" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"בן/בת זוג 2":"Partner 2"}</div></div>
+            <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="user" size={20}/></span><div style={{fontSize:fs(13),fontWeight:600,color:ac,marginTop:2}}>{he?"בן/בת זוג 2":"Partner 2"}</div></div>
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={c2name} onChange={e=>setC2name(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={c2dob} onChange={e=>setC2dob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
           </div>
@@ -2108,41 +2122,41 @@ function CompatWidget({he,dk}){
 
       {coupleRes&&!anim&&(<div style={{marginTop:16,animation:"fadeInUp .7s ease-out"}}>
         <div className="gc">
-          <div style={{position:"relative",width:130,height:130,margin:"0 auto 16px"}}><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="57" fill="none" stroke={`${ac}10`} strokeWidth="5"/><circle cx="65" cy="65" r="57" fill="none" stroke={coupleRes.score>=75?"#4ECDC4":coupleRes.score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${coupleRes.score*114*Math.PI/100} ${114*Math.PI}`} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dasharray 1.5s ease"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:32,fontWeight:700,color:ac}}>{coupleRes.score}%</span><span style={{fontSize:9,color:ts}}>{he?"התאמה":"Match"}</span></div></div>
+          <div style={{position:"relative",width:130,height:130,margin:"0 auto 16px"}}><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="57" fill="none" stroke={`${ac}10`} strokeWidth="5"/><circle cx="65" cy="65" r="57" fill="none" stroke={coupleRes.score>=75?"#4ECDC4":coupleRes.score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${coupleRes.score*114*Math.PI/100} ${114*Math.PI}`} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dasharray 1.5s ease"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:32,fontWeight:700,color:ac}}>{coupleRes.score}%</span><span style={{fontSize:fs(9),color:ts}}>{he?"התאמה":"Match"}</span></div></div>
 
           {/* Life Path comparison */}
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,marginBottom:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:10,color:ts}}>{c1name.split(" ")[0]}</div>
+              <div style={{fontSize:fs(10),color:ts}}>{c1name.split(" ")[0]}</div>
               <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(coupleRes.lpm1,coupleRes.lp1)}</div>
-              <div style={{fontSize:11,color:D[coupleRes.lp1]?.c||ac,opacity:.7}}>{he?D[coupleRes.lp1]?.t:D[coupleRes.lp1]?.te}</div>
+              <div style={{fontSize:fs(11),color:D[coupleRes.lp1]?.c||ac,opacity:.7}}>{he?D[coupleRes.lp1]?.t:D[coupleRes.lp1]?.te}</div>
             </div>
-            <div style={{fontSize:20,color:`${ac}44`}}>⟷</div>
+            <div style={{fontSize:fs(20),color:`${ac}44`}}>⟷</div>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:10,color:ts}}>{c2name.split(" ")[0]}</div>
+              <div style={{fontSize:fs(10),color:ts}}>{c2name.split(" ")[0]}</div>
               <div style={{fontSize:28,fontWeight:700,color:D[coupleRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(coupleRes.lpm2,coupleRes.lp2)}</div>
-              <div style={{fontSize:11,color:D[coupleRes.lp2]?.c||ac,opacity:.7}}>{he?D[coupleRes.lp2]?.t:D[coupleRes.lp2]?.te}</div>
+              <div style={{fontSize:fs(11),color:D[coupleRes.lp2]?.c||ac,opacity:.7}}>{he?D[coupleRes.lp2]?.t:D[coupleRes.lp2]?.te}</div>
             </div>
           </div>
 
           {/* Bars */}
           {[{l:he?"הרמוניה":"Harmony",v:coupleRes.harmony,c:"#4ECDC4"},{l:he?"מתח":"Tension",v:coupleRes.tension,c:"#E74C3C"},{l:he?"צמיחה":"Growth",v:coupleRes.growth,c:"#FFD700"}].map((it,i)=>(
-            <div key={i} style={{marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:ts}}>{it.l}</span><span style={{fontSize:12,fontWeight:700,color:it.c}}>{it.v}/10</span></div><div style={{height:6,background:dk?"rgba(20,20,40,.4)":"rgba(0,0,0,.05)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${it.v*10}%`,background:it.c,borderRadius:3,transition:"width 1.5s ease"}}/></div></div>
+            <div key={i} style={{marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:fs(11),color:ts}}>{it.l}</span><span style={{fontSize:fs(12),fontWeight:700,color:it.c}}>{it.v}/10</span></div><div style={{height:6,background:dk?"rgba(20,20,40,.4)":"rgba(0,0,0,.05)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${it.v*10}%`,background:it.c,borderRadius:3,transition:"width 1.5s ease"}}/></div></div>
           ))}
 
           {/* Connection & Challenge */}
           {coupleRes.compat&&(<div style={{marginTop:16}}>
             <div style={{padding:14,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,marginBottom:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="heart" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר אתכם":"What connects you"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{coupleRes.compat[he?"he":"en"].con}</Locked></p>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="heart" size={16}/></span><span style={{fontSize:fs(13),fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר אתכם":"What connects you"}</span></div>
+              <p style={{fontSize:fs(13),lineHeight:1.9,color:ts}}><Locked he={he}>{coupleRes.compat[he?"he":"en"].con}</Locked></p>
             </div>
             <div style={{padding:14,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:14,marginBottom:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="bolt" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:"#E74C3C"}}>{he?"האתגרים":"Challenges"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{coupleRes.compat[he?"he":"en"].ch}</Locked></p>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="bolt" size={16}/></span><span style={{fontSize:fs(13),fontWeight:600,color:"#E74C3C"}}>{he?"האתגרים":"Challenges"}</span></div>
+              <p style={{fontSize:fs(13),lineHeight:1.9,color:ts}}><Locked he={he}>{coupleRes.compat[he?"he":"en"].ch}</Locked></p>
             </div>
             <div style={{padding:14,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name="bulb" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:ac}}>{he?"עצה":"Advice"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{coupleRes.compat[he?"he":"en"].tip}</Locked></p>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name="bulb" size={16}/></span><span style={{fontSize:fs(13),fontWeight:600,color:ac}}>{he?"עצה":"Advice"}</span></div>
+              <p style={{fontSize:fs(13),lineHeight:1.9,color:ts}}><Locked he={he}>{coupleRes.compat[he?"he":"en"].tip}</Locked></p>
             </div>
           </div>)}
 
@@ -2150,16 +2164,16 @@ function CompatWidget({he,dk}){
           <div style={{marginTop:16,overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse"}}>
               <thead><tr style={{background:dk?"rgba(200,169,106,.03)":"rgba(0,0,0,.02)"}}>
-                <th style={{padding:"8px 10px",fontSize:11,fontWeight:700,color:ac,textAlign:"center"}}></th>
-                <th style={{padding:"8px 10px",fontSize:11,fontWeight:700,color:ac,textAlign:"center"}}>{c1name.split(" ")[0]||"1"}</th>
-                <th style={{padding:"8px 10px",fontSize:11,fontWeight:700,color:ac,textAlign:"center"}}>{c2name.split(" ")[0]||"2"}</th>
+                <th style={{padding:"8px 10px",fontSize:fs(11),fontWeight:700,color:ac,textAlign:"center"}}></th>
+                <th style={{padding:"8px 10px",fontSize:fs(11),fontWeight:700,color:ac,textAlign:"center"}}>{c1name.split(" ")[0]||"1"}</th>
+                <th style={{padding:"8px 10px",fontSize:fs(11),fontWeight:700,color:ac,textAlign:"center"}}>{c2name.split(" ")[0]||"2"}</th>
               </tr></thead>
               <tbody>
                 {[{l:he?"שביל הגורל":"Life Path",a:comparedText(coupleRes.lpm1,coupleRes.lp1),b:comparedText(coupleRes.lpm2,coupleRes.lp2)},{l:he?"ערך השם":"Name",a:comparedText(coupleRes.nvm1,coupleRes.nv1),b:comparedText(coupleRes.nvm2,coupleRes.nv2)},{l:he?"קול הנשמה":"Soul",a:comparedText(coupleRes.sum1,coupleRes.su1),b:comparedText(coupleRes.sum2,coupleRes.su2)},{l:he?"ביטוי":"Expression",a:comparedText(coupleRes.exm1,coupleRes.ex1),b:comparedText(coupleRes.exm2,coupleRes.ex2)}].map((r,i)=>(
                   <tr key={i} style={{borderBottom:`1px solid ${ac}08`}}>
-                    <td style={{padding:"8px 10px",fontSize:12,color:ts,fontWeight:600}}>{r.l}</td>
-                    <td style={{padding:"8px 10px",fontSize:18,fontWeight:700,color:ac,textAlign:"center",fontFamily:"'Cormorant Garamond',serif"}}>{r.a}</td>
-                    <td style={{padding:"8px 10px",fontSize:18,fontWeight:700,color:ac,textAlign:"center",fontFamily:"'Cormorant Garamond',serif"}}>{r.b}</td>
+                    <td style={{padding:"8px 10px",fontSize:fs(12),color:ts,fontWeight:600}}>{r.l}</td>
+                    <td style={{padding:"8px 10px",fontSize:fs(18),fontWeight:700,color:ac,textAlign:"center",fontFamily:"'Cormorant Garamond',serif"}}>{r.a}</td>
+                    <td style={{padding:"8px 10px",fontSize:fs(18),fontWeight:700,color:ac,textAlign:"center",fontFamily:"'Cormorant Garamond',serif"}}>{r.b}</td>
                   </tr>
                 ))}
               </tbody>
@@ -2173,10 +2187,10 @@ function CompatWidget({he,dk}){
     {mode==="profile"&&(<div>
       <div className="gc">
         <div style={{textAlign:"center",marginBottom:16}}>
-          <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"פרופיל אישיותי":"Personality Profile"}</div>
+          <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"פרופיל אישיותי":"Personality Profile"}</div>
         </div>
         <div style={personBlockSt}>
-          <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="dna" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"הפרטים":"Your Details"}</div></div>
+          <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="dna" size={20}/></span><div style={{fontSize:fs(13),fontWeight:600,color:ac,marginTop:2}}>{he?"הפרטים":"Your Details"}</div></div>
           <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={pName} onChange={e=>setPName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
           <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={pDob} onChange={e=>setPDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
         </div>
@@ -2188,34 +2202,34 @@ function CompatWidget({he,dk}){
       {profileRes&&!anim&&(<div style={{marginTop:16,animation:"fadeInUp .7s ease-out"}}>
         <div className="gc">
           <div style={{textAlign:"center",marginBottom:16}}>
-            <div style={{fontSize:10,color:ts}}>{pName}</div>
+            <div style={{fontSize:fs(10),color:ts}}>{pName}</div>
             <div data-testid="profile-lp" style={{fontSize:36,fontWeight:700,color:D[profileRes.lp]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(profileRes.lpm,profileRes.lp)}</div>
-            <div style={{fontSize:16,color:D[profileRes.lp]?.c||ac,fontWeight:600}}>{he?D[profileRes.lp]?.t:D[profileRes.lp]?.te}</div>
+            <div style={{fontSize:fs(16),color:D[profileRes.lp]?.c||ac,fontWeight:600}}>{he?D[profileRes.lp]?.t:D[profileRes.lp]?.te}</div>
           </div>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
             {[{l:he?"ערך השם":"Name",v:profileRes.nv},{l:he?"קול הנשמה":"Soul",v:profileRes.su},{l:he?"ביטוי":"Expression",v:profileRes.ex}].map((it,i)=>(
-              <div key={i} style={numBadgeSt}><div style={{fontSize:9,color:ts,letterSpacing:.5}}>{it.l}</div><div style={{fontSize:22,fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif",margin:"2px 0"}}>{it.v}</div>{it.v>0&&it.v<=9&&D[it.v]&&<div style={{fontSize:9,color:D[it.v].c,opacity:.7}}>{he?D[it.v].t:D[it.v].te}</div>}</div>
+              <div key={i} style={numBadgeSt}><div style={{fontSize:fs(9),color:ts,letterSpacing:.5}}>{it.l}</div><div style={{fontSize:fs(22),fontWeight:700,color:ac,fontFamily:"'Cormorant Garamond',serif",margin:"2px 0"}}>{it.v}</div>{it.v>0&&it.v<=9&&D[it.v]&&<div style={{fontSize:fs(9),color:D[it.v].c,opacity:.7}}>{he?D[it.v].t:D[it.v].te}</div>}</div>
             ))}
           </div>
 
           {/* Strengths */}
           <div style={{padding:14,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,marginBottom:10}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="star" size={16}/></span><span style={{fontSize:14,fontWeight:600,color:"#4ECDC4"}}>{he?"חוזקות":"Strengths"}</span></div>
-            {profileRes.traits?.[he?"he":"en"]?.str?.map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0"}}><span style={{color:"#4ECDC4",fontSize:10}}>✦</span><span style={{fontSize:13,color:ts}}><Locked he={he}>{s}</Locked></span></div>))}
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="star" size={16}/></span><span style={{fontSize:fs(14),fontWeight:600,color:"#4ECDC4"}}>{he?"חוזקות":"Strengths"}</span></div>
+            {profileRes.traits?.[he?"he":"en"]?.str?.map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0"}}><span style={{color:"#4ECDC4",fontSize:fs(10)}}>✦</span><span style={{fontSize:fs(13),color:ts}}><Locked he={he}>{s}</Locked></span></div>))}
           </div>
 
           {/* Challenges */}
           <div style={{padding:14,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:14,marginBottom:10}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="flame" size={16}/></span><span style={{fontSize:14,fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים":"Challenges"}</span></div>
-            {profileRes.traits?.[he?"he":"en"]?.ch?.map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0"}}><span style={{color:"#E74C3C",fontSize:10}}>✦</span><span style={{fontSize:13,color:ts}}><Locked he={he}>{s}</Locked></span></div>))}
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="flame" size={16}/></span><span style={{fontSize:fs(14),fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים":"Challenges"}</span></div>
+            {profileRes.traits?.[he?"he":"en"]?.ch?.map((s,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0"}}><span style={{color:"#E74C3C",fontSize:fs(10)}}>✦</span><span style={{fontSize:fs(13),color:ts}}><Locked he={he}>{s}</Locked></span></div>))}
           </div>
 
           {/* Soul Lesson */}
           <div style={{padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14,textAlign:"center"}}>
             <div style={{color:ac,marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="star" size={20} stroke={1.3}/></div>
-            <div style={{fontSize:12,fontWeight:600,color:ac,marginBottom:6}}>{he?"שיעור הנשמה":"Soul Lesson"}</div>
-            <p style={{fontSize:14,lineHeight:1.9,color:ts,fontStyle:"italic"}}><Locked he={he}>{profileRes.traits?.[he?"he":"en"]?.soul}</Locked></p>
+            <div style={{fontSize:fs(12),fontWeight:600,color:ac,marginBottom:6}}>{he?"שיעור הנשמה":"Soul Lesson"}</div>
+            <p style={{fontSize:fs(14),lineHeight:1.9,color:ts,fontStyle:"italic"}}><Locked he={he}>{profileRes.traits?.[he?"he":"en"]?.soul}</Locked></p>
           </div>
         </div>
       </div>)}
@@ -2225,16 +2239,16 @@ function CompatWidget({he,dk}){
     {mode==="parent"&&(<div>
       <div className="gc">
         <div style={{textAlign:"center",marginBottom:16}}>
-          <div style={{fontSize:10,color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"חיבור הורה-ילד":"Parent-Child Connection"}</div>
+          <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"חיבור הורה-ילד":"Parent-Child Connection"}</div>
         </div>
         <div className="st-pair">
           <div style={personBlockSt}>
-            <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="users" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"הורה":"Parent"}</div></div>
+            <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="users" size={20}/></span><div style={{fontSize:fs(13),fontWeight:600,color:ac,marginTop:2}}>{he?"הורה":"Parent"}</div></div>
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={parentName} onChange={e=>setParentName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={parentDob} onChange={e=>setParentDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
           </div>
           <div style={personBlockSt}>
-            <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="user" size={20}/></span><div style={{fontSize:13,fontWeight:600,color:ac,marginTop:2}}>{he?"ילד/ה":"Child"}</div></div>
+            <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="user" size={20}/></span><div style={{fontSize:fs(13),fontWeight:600,color:ac,marginTop:2}}>{he?"ילד/ה":"Child"}</div></div>
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"שם מלא":"Full Name"}</label><input className="gi" maxLength={MAX_INPUT} value={childName} onChange={e=>setChildName(e.target.value)} placeholder={he?"שם בעברית...":"Name in Hebrew..."} dir="rtl" style={{textAlign:"right"}}/></div>
             <div style={{marginBottom:12}}><label style={inputLabelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={childDob} onChange={e=>setChildDob(e.target.value)} placeholder="dd.mm.yyyy" dir="ltr" style={dobInputSt}/></div>
           </div>
@@ -2246,42 +2260,42 @@ function CompatWidget({he,dk}){
 
       {pcRes&&!anim&&(<div style={{marginTop:16,animation:"fadeInUp .7s ease-out"}}>
         <div className="gc">
-          <div style={{position:"relative",width:130,height:130,margin:"0 auto 16px"}}><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="57" fill="none" stroke={`${ac}10`} strokeWidth="5"/><circle cx="65" cy="65" r="57" fill="none" stroke={pcRes.score>=75?"#4ECDC4":pcRes.score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${pcRes.score*114*Math.PI/100} ${114*Math.PI}`} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dasharray 1.5s ease"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:32,fontWeight:700,color:ac}}>{pcRes.score}%</span><span style={{fontSize:9,color:ts}}>{he?"התאמה":"Match"}</span></div></div>
+          <div style={{position:"relative",width:130,height:130,margin:"0 auto 16px"}}><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="57" fill="none" stroke={`${ac}10`} strokeWidth="5"/><circle cx="65" cy="65" r="57" fill="none" stroke={pcRes.score>=75?"#4ECDC4":pcRes.score>=50?ac:"#E67E22"} strokeWidth="5" strokeDasharray={`${pcRes.score*114*Math.PI/100} ${114*Math.PI}`} strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition:"stroke-dasharray 1.5s ease"}}/></svg><div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:32,fontWeight:700,color:ac}}>{pcRes.score}%</span><span style={{fontSize:fs(9),color:ts}}>{he?"התאמה":"Match"}</span></div></div>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,marginBottom:16,alignItems:"center"}}>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:10,color:ts}}>{he?"הורה":"Parent"}</div>
+              <div style={{fontSize:fs(10),color:ts}}>{he?"הורה":"Parent"}</div>
               <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpP]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(pcRes.lpmP,pcRes.lpP)}</div>
-              <div style={{fontSize:11,color:D[pcRes.lpP]?.c||ac,opacity:.7}}>{he?D[pcRes.lpP]?.t:D[pcRes.lpP]?.te}</div>
+              <div style={{fontSize:fs(11),color:D[pcRes.lpP]?.c||ac,opacity:.7}}>{he?D[pcRes.lpP]?.t:D[pcRes.lpP]?.te}</div>
             </div>
             <div style={{color:`${ac}66`,display:"flex",justifyContent:"center"}}><Icon name="heart" size={18}/></div>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:10,color:ts}}>{he?"ילד/ה":"Child"}</div>
+              <div style={{fontSize:fs(10),color:ts}}>{he?"ילד/ה":"Child"}</div>
               <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpC]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(pcRes.lpmC,pcRes.lpC)}</div>
-              <div style={{fontSize:11,color:D[pcRes.lpC]?.c||ac,opacity:.7}}>{he?D[pcRes.lpC]?.t:D[pcRes.lpC]?.te}</div>
+              <div style={{fontSize:fs(11),color:D[pcRes.lpC]?.c||ac,opacity:.7}}>{he?D[pcRes.lpC]?.t:D[pcRes.lpC]?.te}</div>
             </div>
           </div>
 
           {pcRes.compat&&(<div>
             <div style={{padding:14,background:`${ac}06`,border:`1px solid ${ac}12`,borderRadius:14,marginBottom:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="link" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר ביניכם":"What connects you"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{pcRes.compat[he?"he":"en"].con}</Locked></p>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#4ECDC4",display:"inline-flex"}}><Icon name="link" size={16}/></span><span style={{fontSize:fs(13),fontWeight:600,color:"#4ECDC4"}}>{he?"מה מחבר ביניכם":"What connects you"}</span></div>
+              <p style={{fontSize:fs(13),lineHeight:1.9,color:ts}}><Locked he={he}>{pcRes.compat[he?"he":"en"].con}</Locked></p>
             </div>
             <div style={{padding:14,background:"rgba(180,50,50,.04)",border:"1px solid rgba(180,50,50,.1)",borderRadius:14,marginBottom:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="bolt" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים בקשר":"Relationship challenges"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{pcRes.compat[he?"he":"en"].ch}</Locked></p>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:"#E74C3C",display:"inline-flex"}}><Icon name="bolt" size={16}/></span><span style={{fontSize:fs(13),fontWeight:600,color:"#E74C3C"}}>{he?"אתגרים בקשר":"Relationship challenges"}</span></div>
+              <p style={{fontSize:fs(13),lineHeight:1.9,color:ts}}><Locked he={he}>{pcRes.compat[he?"he":"en"].ch}</Locked></p>
             </div>
             <div style={{padding:14,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name="bulb" size={16}/></span><span style={{fontSize:13,fontWeight:600,color:ac}}>{he?"עצה להורה":"Advice for parent"}</span></div>
-              <p style={{fontSize:13,lineHeight:1.9,color:ts}}><Locked he={he}>{pcRes.compat[he?"he":"en"].tip}</Locked></p>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><span style={{color:ac,display:"inline-flex"}}><Icon name="bulb" size={16}/></span><span style={{fontSize:fs(13),fontWeight:600,color:ac}}>{he?"עצה להורה":"Advice for parent"}</span></div>
+              <p style={{fontSize:fs(13),lineHeight:1.9,color:ts}}><Locked he={he}>{pcRes.compat[he?"he":"en"].tip}</Locked></p>
             </div>
           </div>)}
 
           {/* What the child teaches the parent */}
           <div style={{marginTop:14,padding:16,background:dk?"rgba(18,18,38,.4)":"rgba(255,255,255,.4)",border:`1px solid ${ac}15`,borderRadius:14,textAlign:"center"}}>
             <div style={{color:ac,marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={20} stroke={1.3}/></div>
-            <div style={{fontSize:12,fontWeight:600,color:ac,marginBottom:6}}>{he?"מה הילד בא ללמד את ההורה":"What the child comes to teach you"}</div>
-            <p style={{fontSize:14,lineHeight:1.9,color:ts,fontStyle:"italic"}}><Locked he={he}>{he?D[pcRes.lpC]?.growth:D[pcRes.lpC]?.growthE}</Locked></p>
+            <div style={{fontSize:fs(12),fontWeight:600,color:ac,marginBottom:6}}>{he?"מה הילד בא ללמד את ההורה":"What the child comes to teach you"}</div>
+            <p style={{fontSize:fs(14),lineHeight:1.9,color:ts,fontStyle:"italic"}}><Locked he={he}>{he?D[pcRes.lpC]?.growth:D[pcRes.lpC]?.growthE}</Locked></p>
           </div>
         </div>
       </div>)}
@@ -2296,21 +2310,21 @@ function AffirmWidget({he,dk}){
   const msg=AFFIRMATIONS[seed%AFFIRMATIONS.length];
   return(<div style={{textAlign:"center",padding:"16px 0"}}>
     <div style={{color:ac,marginBottom:12,opacity:.3,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={28} stroke={1.2}/></div>
-    <p style={{fontSize:12,color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)",marginBottom:16}}>{he?"ההודעה להיום":"Your message today"}</p>
-    {!rev?(<div onClick={()=>{setRev(true);AU.init();AU.p("card");}} style={{cursor:"pointer",padding:"28px 20px",background:dk?"rgba(18,18,38,.5)":"rgba(255,255,255,.6)",border:`1.5px solid ${ac}28`,borderRadius:16,maxWidth:300,margin:"0 auto",transition:"all .3s"}}><div style={{color:ac,opacity:.4,marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="orb" size={20}/></div><div style={{fontSize:13,color:ac,letterSpacing:2}}>{he?"לחשיפה":"Reveal"}</div></div>):(<div style={{animation:"fadeInUp .8s ease-out",padding:"24px 20px",background:`${ac}06`,border:`1px solid ${ac}1a`,borderRadius:16,maxWidth:320,margin:"0 auto"}}><div style={{fontSize:17,lineHeight:2.2,color:dk?"#e8e0d0":"#2a2520",fontWeight:500,fontStyle:"italic"}}>"{msg[he?"he":"en"]}"</div><div style={{marginTop:10,fontSize:10,color:`${ac}55`,letterSpacing:2}}>✦ {today.toLocaleDateString(he?"he-IL":"en-US")} ✦</div></div>)}
+    <p style={{fontSize:fs(12),color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)",marginBottom:16}}>{he?"ההודעה להיום":"Your message today"}</p>
+    {!rev?(<div onClick={()=>{setRev(true);AU.init();AU.p("card");}} style={{cursor:"pointer",padding:"28px 20px",background:dk?"rgba(18,18,38,.5)":"rgba(255,255,255,.6)",border:`1.5px solid ${ac}28`,borderRadius:16,maxWidth:300,margin:"0 auto",transition:"all .3s"}}><div style={{color:ac,opacity:.4,marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="orb" size={20}/></div><div style={{fontSize:fs(13),color:ac,letterSpacing:2}}>{he?"לחשיפה":"Reveal"}</div></div>):(<div style={{animation:"fadeInUp .8s ease-out",padding:"24px 20px",background:`${ac}06`,border:`1px solid ${ac}1a`,borderRadius:16,maxWidth:320,margin:"0 auto"}}><div style={{fontSize:fs(17),lineHeight:2.2,color:dk?"#e8e0d0":"#2a2520",fontWeight:500,fontStyle:"italic"}}>"{msg[he?"he":"en"]}"</div><div style={{marginTop:10,fontSize:fs(10),color:`${ac}55`,letterSpacing:2}}>✦ {today.toLocaleDateString(he?"he-IL":"en-US")} ✦</div></div>)}
   </div>);
 }
 
 // ═══════════════════ RITUAL WIDGET ═══════════════════
 /** The daily ritual for `number`; `basis` names which number it is (a day has three, each its own calculation). */
-function RitualWidget({number,basis,how,he,dk}){
-  const ac=dk?"#c8a96a":"#937640";const ts=dk?"rgba(232,224,208,.4)":"rgba(42,37,32,.4)";
+function RitualWidget({number,basis,how,he,dk,studio=true}){
+  const ac=dk?"#c8a96a":"#937640";const ts=softText(dk,studio);
   const info=D[number]||D[1];const r=info.ritual;
-  return(<div><div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:2}}><Icon name="candle" size={18}/></div><div style={{fontSize:14,fontWeight:600,color:ac,marginTop:4}}>{he?"טקס יומי":"Daily Ritual"}</div>
-    {basis&&<div data-testid="ritual-basis" style={{fontSize:12,color:ts,marginTop:2}}>{basis}: <b style={{color:ac}}>{number}</b>{how}</div>}</div>
+  return(<div><div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:2}}><Icon name="candle" size={18}/></div><div style={{fontSize:fs(14),fontWeight:600,color:ac,marginTop:4}}>{he?"טקס יומי":"Daily Ritual"}</div>
+    {basis&&<div data-testid="ritual-basis" style={{fontSize:fs(12),color:ts,marginTop:2}}>{basis}: <b style={{color:ac}}>{number}</b>{how}</div>}</div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
       {[{i:"target",l:he?"מילת מפתח":"Focus Word",v:he?r.word:r.wordE},{i:"bolt",l:he?"פעולה":"Action",v:he?r.act:r.actE},{i:"mirror",l:he?"התבוננות":"Reflection",v:he?r.reflect:r.reflectE},{i:"candle",l:he?"מיקרו-טקס":"Micro Ritual",v:he?r.micro:r.microE}].map((it,i)=>(
-        <div key={i} className="ritual-item"><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:5}}><Icon name={it.i} size={16}/></div><div style={{fontSize:9,color:ts,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>{it.l}</div><div style={{fontSize:12,lineHeight:1.7,color:dk?"rgba(232,224,208,.55)":"rgba(0,0,0,.45)"}}><Locked he={he}>{it.v}</Locked></div></div>
+        <div key={i} className="ritual-item"><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:5}}><Icon name={it.i} size={16}/></div><div style={{fontSize:fs(9),color:ts,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>{it.l}</div><div style={{fontSize:fs(12),lineHeight:1.7,color:dk?"rgba(232,224,208,.55)":"rgba(0,0,0,.45)"}}><Locked he={he}>{it.v}</Locked></div></div>
       ))}
     </div>
   </div>);

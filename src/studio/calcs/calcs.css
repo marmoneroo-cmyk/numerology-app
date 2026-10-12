@@ -15,6 +15,7 @@
   background: transparent;
   color: var(--st-ink-soft);
   font: 500 13px/1.4 var(--st-body);
+  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
   cursor: pointer;
 }
 .calc-chip[aria-pressed="true"] {
@@ -30,13 +31,13 @@
   display: block;
   margin-bottom: 6px;
   color: var(--st-gold-text);
-  font-size: 12px;
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
   font-weight: 500;
 }
 .calc-note {
   margin: 8px 0 0;
   color: var(--st-ink-faint);
-  font-size: 12px;
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
   line-height: 1.6;
 }
 .calc-result {
@@ -56,11 +57,11 @@
 .calc-title {
   display: block;
   color: var(--st-ink-soft);
-  font-size: 12px;
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
 }
 .calc-result .calc-title {
   display: inline;
-  font-size: 15px;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
 }
 .calc-grid {
   display: grid;
@@ -74,7 +75,7 @@
 .calc-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
   font-variant-numeric: tabular-nums;
 }
 .calc-table th,
@@ -97,7 +98,7 @@
 .calc-value {
   color: var(--st-gold-text);
   font-family: var(--st-display);
-  font-size: 20px;
+  font-size: max(var(--ts-min, 0px), calc(20px * var(--ts, 1)));
   font-weight: 700;
 }
 .calc-differs {

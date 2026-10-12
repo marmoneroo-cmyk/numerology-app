@@ -10,6 +10,7 @@ import { PLAN_KEYS, planLabel, statusLabel, auditLine, dateTime, generatePasswor
 import { AccountError } from "./service.js";
 import { countLabel } from "../workspace/format.js";
 import { useLayout } from "../studio/useMediaQuery.js";
+import { fs } from "../ui/type.js";
 
 export default function AdminScreen({ account, he, dk }) {
   const c = colors(dk);
@@ -24,7 +25,7 @@ export default function AdminScreen({ account, he, dk }) {
     return (
       <Card dir={he ? "rtl" : "ltr"}>
         <ScreenTitle c={c} size={24} style={{ marginBottom: 8 }}>{he ? "חשבונות" : "Accounts"}</ScreenTitle>
-        <p role="status" style={{ margin: 0, lineHeight: 1.8, fontSize: 14 }}>
+        <p role="status" style={{ margin: 0, lineHeight: 1.8, fontSize: fs(14) }}>
           {he
             ? "כדי לנהל חשבונות צריך אימות דו-שלבי. מפעילים אותו ב\"החשבון שלי\", ומאז הכניסה היא עם סיסמה וקוד מהטלפון."
             : "Managing accounts needs two-step verification. Turn it on under \"My account\"; from then on you sign in with a password and a code from your phone."}
@@ -85,16 +86,16 @@ function AccountList({ admin, he, c, go, selectedId = null, refreshKey = 0 }) {
               onClick={() => go({ name: "details", userId: a.id })}
             >
               <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", fontSize: 15 }}>{a.fullName || a.email}{a.role === "admin" ? ` · ${he ? "מנהל/ת" : "admin"}` : ""}</span>
-                <span style={{ display: "block", fontSize: 12, color: c.ts, direction: "ltr", textAlign: he ? "right" : "left" }}>{a.email}</span>
-                <span style={{ display: "block", fontSize: 12, color: a.status === "suspended" ? c.danger : c.ts }}>
+                <span style={{ display: "block", fontSize: fs(15) }}>{a.fullName || a.email}{a.role === "admin" ? ` · ${he ? "מנהל/ת" : "admin"}` : ""}</span>
+                <span style={{ display: "block", fontSize: fs(12), color: c.ts, direction: "ltr", textAlign: he ? "right" : "left" }}>{a.email}</span>
+                <span style={{ display: "block", fontSize: fs(12), color: a.status === "suspended" ? c.danger : c.ts }}>
                   {[planLabel(a.plan, he), statusLabel(a.status, he), countLabel(a.devices, "devices", he), countLabel(a.clients, "clients", he),
                     a.lastSeenAt ? (he ? `נראה ${dateTime(a.lastSeenAt)}` : `seen ${dateTime(a.lastSeenAt)}`) : he ? "עוד לא נכנס" : "never signed in"].join(" · ")}
                 </span>
               </span>
             </button>
           ))}
-          {shown.length === 0 && <p style={{ fontSize: 13, color: c.ts }}>{he ? "אין חשבונות שמתאימים." : "No matching accounts."}</p>}
+          {shown.length === 0 && <p style={{ fontSize: fs(13), color: c.ts }}>{he ? "אין חשבונות שמתאימים." : "No matching accounts."}</p>}
         </Card>
       )}
     </>
@@ -132,18 +133,18 @@ function Handover({ email, password, warnings = [], he, c }) {
   return (
     <div data-testid="handover" style={{ border: `1px solid ${c.line}`, borderRadius: 14, padding: 14, margin: "12px 0" }}>
       {warnings.length > 0 && (
-        <p role="alert" style={{ margin: "0 0 10px", fontSize: 13, color: c.danger, lineHeight: 1.6 }}>
+        <p role="alert" style={{ margin: "0 0 10px", fontSize: fs(13), color: c.danger, lineHeight: 1.6 }}>
           {warnings.map((w) => (WARNINGS[w] || [w, w])[he ? 0 : 1]).join(" ")}
         </p>
       )}
-      <p style={{ margin: "0 0 8px", fontSize: 13, color: c.ts }}>
+      <p style={{ margin: "0 0 8px", fontSize: fs(13), color: c.ts }}>
         {he
           ? "העבירו את הפרטים למנוי/ה (למשל בוואטסאפ), ובקשו להחליף את הסיסמה ולהפעיל אימות דו-שלבי בכניסה הראשונה. הסיסמה לא תוצג שוב."
           : "Send these to the subscriber (e.g. on WhatsApp), and ask them to change the password and turn on two-step verification at the first sign-in. The password is not shown again."}
       </p>
-      <p dir="ltr" style={{ margin: 0, fontFamily: "monospace", fontSize: 14, textAlign: he ? "right" : "left" }}>{email}<br />{password}</p>
+      <p dir="ltr" style={{ margin: 0, fontFamily: "monospace", fontSize: fs(14), textAlign: he ? "right" : "left" }}>{email}<br />{password}</p>
       <button className="ghost" style={{ ...btnGhost, marginTop: 10 }} onClick={copy}>{he ? "העתקת פרטי הכניסה" : "Copy sign-in details"}</button>
-      {copied && <span role="status" style={{ fontSize: 12, color: c.ok, marginInlineStart: 8 }}>{he ? "הועתק" : "Copied"}</span>}
+      {copied && <span role="status" style={{ fontSize: fs(12), color: c.ok, marginInlineStart: 8 }}>{he ? "הועתק" : "Copied"}</span>}
     </div>
   );
 }
@@ -229,7 +230,7 @@ function CreateAccount({ admin, he, c, go, onChanged }) {
           {(id) => <input id={id} ref={keep("password")} className="gi" dir="ltr" autoComplete="off" value={form.password} onChange={set("password")} onBlur={touch("password")} />}
         </Field>
         <button className="ghost" style={{ ...btnGhost, marginBottom: 14 }} onClick={() => setForm({ ...form, password: generatePassword() })}>{he ? "סיסמה אחרת" : "Another password"}</button>
-        {error && <p role="alert" style={{ color: c.danger, fontSize: 13 }}>{error}</p>}
+        {error && <p role="alert" style={{ color: c.danger, fontSize: fs(13) }}>{error}</p>}
         <button className="gb" style={btnPrimary} onClick={submit} disabled={busy}>{he ? "פתיחת החשבון" : "Open the account"}</button>
       </Card>
     </>
@@ -267,11 +268,11 @@ function AccountDetails({ admin, he, c, me, go, userId, onChanged }) {
       <BackButton onClick={() => go({ name: "list" })}>{he ? "חזרה לחשבונות" : "Back to accounts"}</BackButton>
       <Card>
         <ScreenTitle c={c} size={26}>{a.fullName || a.email}</ScreenTitle>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: c.ts }}>
+        <p style={{ margin: "6px 0 0", fontSize: fs(13), color: c.ts }}>
           <span dir="ltr">{a.email}</span>{a.phone ? ` · ${a.phone}` : ""} · {statusLabel(a.status, he)} · {he ? `נפתח ${dateTime(a.createdAt)}` : `opened ${dateTime(a.createdAt)}`}
         </p>
-        <p style={{ margin: "4px 0 0", fontSize: 13, color: c.ts }}>{`${countLabel(a.clients, "clients", he)} · ${countLabel(a.readings, "readings", he)}`}</p>
-        {message && <p role="alert" style={{ color: c.danger, fontSize: 13 }}>{message}</p>}
+        <p style={{ margin: "4px 0 0", fontSize: fs(13), color: c.ts }}>{`${countLabel(a.clients, "clients", he)} · ${countLabel(a.readings, "readings", he)}`}</p>
+        {message && <p role="alert" style={{ color: c.danger, fontSize: fs(13) }}>{message}</p>}
       </Card>
       <PlanCard a={a} isMe={isMe} he={he} c={c} onSave={(patch) => act(() => admin.updateAccount(a.id, patch))} />
       <Card style={{ padding: 16 }}>
@@ -291,7 +292,7 @@ function AccountDetails({ admin, he, c, me, go, userId, onChanged }) {
       <DeviceList devices={devices} he={he} c={c} onRevoke={(d) => act(() => admin.revokeDevice(d.id))} />
       <Card style={{ padding: "16px 14px" }}>
         <SectionTitle c={c}>{he ? "יומן פעולות" : "Activity"}</SectionTitle>
-        <ul aria-label={he ? "יומן פעולות" : "Activity log"} style={{ listStyle: "none", margin: 0, padding: 0, fontSize: 13 }}>
+        <ul aria-label={he ? "יומן פעולות" : "Activity log"} style={{ listStyle: "none", margin: 0, padding: 0, fontSize: fs(13) }}>
           {audit.map((e) => (
             <li key={e.id} style={{ padding: "6px 0", borderBottom: `1px solid ${c.line}` }}>
               <span style={{ color: c.ts }}>{dateTime(e.at)}</span> · {auditLine(e, he)}
@@ -346,8 +347,8 @@ function DeviceList({ devices, he, c, onRevoke }) {
         {devices.map((d) => (
           <li key={d.id} className="rrow" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", opacity: d.status === "revoked" ? 0.55 : 1 }}>
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: 14 }}>{d.label}{d.current ? ` · ${he ? "פתוח עכשיו" : "open now"}` : ""}{d.status === "revoked" ? ` · ${he ? "בוטל" : "revoked"}` : ""}</span>
-              <span style={{ display: "block", fontSize: 11, color: c.ts }}>{he ? `נוסף ${dateTime(d.createdAt)} · נראה ${dateTime(d.lastSeenAt)}` : `added ${dateTime(d.createdAt)} · seen ${dateTime(d.lastSeenAt)}`}</span>
+              <span style={{ fontSize: fs(14) }}>{d.label}{d.current ? ` · ${he ? "פתוח עכשיו" : "open now"}` : ""}{d.status === "revoked" ? ` · ${he ? "בוטל" : "revoked"}` : ""}</span>
+              <span style={{ display: "block", fontSize: fs(11), color: c.ts }}>{he ? `נוסף ${dateTime(d.createdAt)} · נראה ${dateTime(d.lastSeenAt)}` : `added ${dateTime(d.createdAt)} · seen ${dateTime(d.lastSeenAt)}`}</span>
             </span>
             {d.status === "approved" && (
               <ConfirmAction c={c} label={he ? "ביטול" : "Revoke"} ariaLabel={he ? `ביטול ${d.label}` : `Revoke ${d.label}`}
@@ -357,7 +358,7 @@ function DeviceList({ devices, he, c, onRevoke }) {
             )}
           </li>
         ))}
-        {devices.length === 0 && <li style={{ fontSize: 13, color: c.ts }}>{he ? "עוד לא נכנסו מאף מכשיר." : "No device has signed in yet."}</li>}
+        {devices.length === 0 && <li style={{ fontSize: fs(13), color: c.ts }}>{he ? "עוד לא נכנסו מאף מכשיר." : "No device has signed in yet."}</li>}
       </ul>
     </Card>
   );

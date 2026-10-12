@@ -10,6 +10,7 @@ import { Card, Field, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton,
 import { parseDmy, formatDmy, formatStamp, readingTypeLabel, matchTypeLabel, personName, errorText, comparedText } from "./format.js";
 import ReadingSummary from "../reading/ReadingSummary.jsx";
 import Locked from "../demo/DemoLock.jsx";
+import { fs } from "../ui/type.js";
 
 export default function ReadingView({ store, go, he, c, now, readingId }) {
   const content = useContent();
@@ -82,10 +83,10 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
       <BackButton onClick={back}>{he ? "חזרה לתיק" : "Back to the file"}</BackButton>
       <Card>
         <ScreenTitle c={c}>{readingTypeLabel(reading.type, he)}</ScreenTitle>
-        <div style={{ fontSize: 13, color: c.ts, marginTop: 4 }}>
+        <div style={{ fontSize: fs(13), color: c.ts, marginTop: 4 }}>
           {client.fullName} · {he ? `חושב ל-${formatStamp(reading.computedFor)}` : `computed for ${formatStamp(reading.computedFor)}`}
         </div>
-        <div style={{ fontSize: 11, color: c.ts, marginTop: 2 }}>{he ? `גרסת מנוע ${reading.engineVersion}` : `Engine version ${reading.engineVersion}`}</div>
+        <div style={{ fontSize: fs(11), color: c.ts, marginTop: 2 }}>{he ? `גרסת מנוע ${reading.engineVersion}` : `Engine version ${reading.engineVersion}`}</div>
       </Card>
 
       {reading.type === "map" && <MapResult reading={reading} he={he} c={c} content={content} />}
@@ -106,7 +107,7 @@ export default function ReadingView({ store, go, he, c, now, readingId }) {
         </Field>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <button className="gb" style={btnPrimary} onClick={saveNotes}>{he ? "שמירת סיכום" : "Save summary"}</button>
-          {status && <span role="status" style={{ fontSize: 13, color: status.ok ? c.ok : c.danger }}>{status.text}</span>}
+          {status && <span role="status" style={{ fontSize: fs(13), color: status.ok ? c.ok : c.danger }}>{status.text}</span>}
         </div>
       </Card>
 
@@ -151,7 +152,7 @@ function MapResult({ reading, he, c, content }) {
         <Card>
           <SectionTitle c={c}>{he ? "חובות קארמיים" : "Karmic debts"}</SectionTitle>
           {r.kd.map((k, i) => (
-            <p key={i} style={{ margin: "0 0 6px", fontSize: 14, lineHeight: 1.6 }}>
+            <p key={i} style={{ margin: "0 0 6px", fontSize: fs(14), lineHeight: 1.6 }}>
               <strong style={{ color: c.ac }}>{k}</strong> · <Locked he={he}>{content.KARMA[k]?.[lang] || ""}</Locked>
             </p>
           ))}
@@ -163,8 +164,8 @@ function MapResult({ reading, he, c, content }) {
           <SectionTitle c={c}>{he ? "תובנות מרכזיות" : "Key insights"}</SectionTitle>
           {recs.map((x, i) => (
             <div key={i} style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: 14, color: c.ac }}>{x.t}</div>
-              <div style={{ fontSize: 13, color: c.tm, lineHeight: 1.6 }}>
+              <div style={{ fontSize: fs(14), color: c.ac }}>{x.t}</div>
+              <div style={{ fontSize: fs(13), color: c.tm, lineHeight: 1.6 }}>
                 <Locked he={he}>{x.d}</Locked>
               </div>
             </div>
@@ -186,10 +187,10 @@ function CycleTable({ proj, he, c, content }) {
         <div key={i} className="rrow" style={{ display: "flex", gap: 12, alignItems: "center", fontWeight: p.isCurrent ? 600 : 400 }}>
           <span style={{ width: 52, color: p.isCurrent ? c.ac : c.ts, fontVariantNumeric: "tabular-nums" }}>{p.year}</span>
           <span className="badge">{p.py}</span>
-          <span style={{ fontSize: 13, color: c.tm, flex: 1 }}>
+          <span style={{ fontSize: fs(13), color: c.tm, flex: 1 }}>
             <Locked he={he}>{content.YEAR_ENERGY[p.py]?.[lang] || numberTitle(content, p.py, he)}</Locked>
           </span>
-          {p.isCurrent && <span style={{ fontSize: 11, color: c.ac }}>{he ? "השנה" : "this year"}</span>}
+          {p.isCurrent && <span style={{ fontSize: fs(11), color: c.ac }}>{he ? "השנה" : "this year"}</span>}
         </div>
       ))}
     </Card>
@@ -200,7 +201,7 @@ function Score({ score, he, c, label }) {
   return (
     <div style={{ textAlign: "center", marginBottom: 12 }}>
       <div style={{ fontSize: 46, fontFamily: display, color: c.ac, lineHeight: 1 }}>{`${score}%`}</div>
-      <div style={{ fontSize: 13, color: c.ts }}>{label || (he ? "התאמה" : "match")}</div>
+      <div style={{ fontSize: fs(13), color: c.ts }}>{label || (he ? "התאמה" : "match")}</div>
     </div>
   );
 }
@@ -213,8 +214,8 @@ function CompatText({ entry, he, c }) {
     <div style={{ marginTop: 14 }}>
       {[[he ? "מה מחבר" : "What connects", t.con], [he ? "האתגר" : "The challenge", t.ch], [he ? "עצה" : "Advice", t.tip]].map(([h, v]) => v && (
         <div key={h} style={{ marginBottom: 10 }}>
-          <div style={{ fontSize: 12, color: c.ac }}>{h}</div>
-          <div style={{ fontSize: 14, lineHeight: 1.6 }}>
+          <div style={{ fontSize: fs(12), color: c.ac }}>{h}</div>
+          <div style={{ fontSize: fs(14), lineHeight: 1.6 }}>
             <Locked he={he}>{v}</Locked>
           </div>
         </div>
@@ -227,7 +228,7 @@ function CompatText({ entry, he, c }) {
 function PeopleTable({ rows, names, c }) {
   return (
     <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, fontVariantNumeric: "tabular-nums" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: fs(13), fontVariantNumeric: "tabular-nums" }}>
         <thead>
           <tr style={{ color: c.ac }}>
             <th style={{ padding: "6px", textAlign: "start", borderBottom: `1px solid ${c.line}` }} />
@@ -254,7 +255,7 @@ function MatchResult({ reading, he, c, content }) {
   return (
     <Card>
       <Score score={r.score} he={he} c={c} label={he ? `התאמה ${matchTypeLabel(matchType, he)}` : `${matchTypeLabel(matchType, he)} match`} />
-      <div style={{ display: "flex", justifyContent: "center", gap: 18, fontSize: 13, color: c.ts, marginBottom: 14, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", justifyContent: "center", gap: 18, fontSize: fs(13), color: c.ts, marginBottom: 14, flexWrap: "wrap" }}>
         <span>{he ? `הרמוניה ${r.harmony}/10` : `Harmony ${r.harmony}/10`}</span>
         <span>{he ? `מתח ${r.tension}/10` : `Tension ${r.tension}/10`}</span>
         <span>{he ? `צמיחה ${r.growth}/10` : `Growth ${r.growth}/10`}</span>

@@ -13,6 +13,7 @@
   background: transparent;
   color: var(--st-gold-text);
   font: 600 12px/1 var(--st-body);
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
   vertical-align: middle;
   cursor: pointer;
 }
@@ -57,7 +58,7 @@
 .how-head h3 {
   margin: 0;
   color: var(--st-gold-text);
-  font-size: 16px;
+  font-size: max(var(--ts-min, 0px), calc(16px * var(--ts, 1)));
   font-weight: 600;
 }
 .how-close {
@@ -66,7 +67,7 @@
   border-radius: 8px;
   background: none;
   color: var(--st-ink-soft);
-  font-size: 22px;
+  font-size: max(var(--ts-min, 0px), calc(22px * var(--ts, 1)));
   line-height: 1;
   cursor: pointer;
 }
@@ -78,7 +79,7 @@
   gap: 10px;
   margin: 0;
   padding-inline-start: 22px;
-  font-size: 14px;
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
   line-height: 1.55;
 }
 .how-steps li span {
@@ -92,15 +93,15 @@
   background: var(--st-gold-wash);
   color: var(--st-ink);
   font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
-  font-size: 13px;
+  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
   overflow-wrap: anywhere;
 }
 .how-result {
   margin: 14px 0 0;
   color: var(--st-ink-soft);
-  font-size: 14px;
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
 }
 .how-result b {
   color: var(--st-gold-text);
-  font-size: 18px;
+  font-size: max(var(--ts-min, 0px), calc(18px * var(--ts, 1)));
 }

@@ -53,6 +53,6 @@ describe("the demo's reading", { timeout: 20000 }, () => {
     await waitFor(() => expect(container.querySelector(".nar-line .demo-locked")).toBeTruthy(), LONG);
     const story = container.querySelector(".nar-line .demo-locked");
     expect(story.getAttribute("aria-hidden")).toBe("true");
-    expect(screen.getByRole("note").textContent).toContain("הפירושים המלאים מטושטשים");
+    expect(screen.getByRole("note", { name: "הדגמה" }).textContent).toContain("הפירושים המלאים מטושטשים");
   });
 });

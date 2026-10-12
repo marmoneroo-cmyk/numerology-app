@@ -20,13 +20,13 @@
   margin: 0;
   color: var(--st-gold-text);
   font-family: var(--st-display);
-  font-size: 24px;
+  font-size: max(var(--ts-min, 0px), calc(24px * var(--ts, 1)));
   font-weight: 600;
 }
 .rs-head p {
   margin: 0;
   color: var(--st-ink-soft);
-  font-size: 14px;
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
 }
 .rs-note {
   margin: 0 0 12px;
@@ -35,7 +35,7 @@
   border-radius: 10px;
   background: var(--st-gold-wash);
   color: var(--st-ink);
-  font-size: 13px;
+  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
   line-height: 1.6;
 }
 .rs-grid {
@@ -56,14 +56,14 @@
 .rs-group h3 {
   margin: 0 0 8px;
   color: var(--st-gold-text);
-  font-size: 13px;
+  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
   font-weight: 600;
   letter-spacing: 0.3px;
 }
 .rs-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: max(var(--ts-min, 0px), calc(14px * var(--ts, 1)));
   font-variant-numeric: tabular-nums;
 }
 .rs-table th,
@@ -83,14 +83,14 @@
 .rs-num {
   color: var(--st-gold-text);
   font-family: var(--st-display);
-  font-size: 22px;
+  font-size: max(var(--ts-min, 0px), calc(22px * var(--ts, 1)));
   font-weight: 700;
   text-align: center !important;
   white-space: nowrap;
 }
 .rs-meaning {
   color: var(--st-ink-soft);
-  font-size: 13px;
+  font-size: max(var(--ts-min, 0px), calc(13px * var(--ts, 1)));
 }
 .rs-how {
   width: 28px;
@@ -101,7 +101,7 @@
 }
 .rs-cycles thead th {
   color: var(--st-gold-text);
-  font-size: 12.5px;
+  font-size: max(var(--ts-min, 0px), calc(12.5px * var(--ts, 1)));
   font-weight: 600;
   text-align: center;
 }
@@ -110,7 +110,7 @@
 }
 .rs-ages {
   color: var(--st-ink-faint);
-  font-size: 12.5px;
+  font-size: max(var(--ts-min, 0px), calc(12.5px * var(--ts, 1)));
 }
 .rs-now > * {
   background: var(--st-gold-wash);
@@ -121,7 +121,7 @@
   border-radius: 999px;
   background: var(--st-gold-solid);
   color: var(--st-on-gold);
-  font-size: 11px;
+  font-size: max(var(--ts-min, 0px), calc(11px * var(--ts, 1)));
   font-weight: 600;
 }
 

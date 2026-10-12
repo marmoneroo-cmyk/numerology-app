@@ -5,6 +5,7 @@ import { countLabel } from "../workspace/format.js";
 import { planLabel, dateTime, MIN_PASSWORD, NEW_PASSWORD_PROBLEMS } from "./labels.js";
 import { QrCode, qrMatrix } from "./qr.jsx";
 import PasswordInput from "./PasswordInput.jsx";
+import { fs } from "../ui/type.js";
 
 export default function AccountScreen({ account, he, dk }) {
   const c = colors(dk);
@@ -13,7 +14,7 @@ export default function AccountScreen({ account, he, dk }) {
     <div dir={he ? "rtl" : "ltr"} style={{ color: c.tm }}>
       <Card>
         <ScreenTitle c={c} size={26}>{he ? "החשבון שלי" : "My account"}</ScreenTitle>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: c.ts }}>
+        <p style={{ margin: "6px 0 0", fontSize: fs(13), color: c.ts }}>
           {profile.email} · {he ? `מסלול: ${planLabel(profile.plan, he)}` : `Plan: ${planLabel(profile.plan, he)}`} · {he ? `עד ${countLabel(profile.deviceLimit, "devices", he)}` : `up to ${countLabel(profile.deviceLimit, "devices", he)}`}
         </p>
       </Card>
@@ -59,7 +60,7 @@ function Details({ account, he, c }) {
       </Field>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <button className="gb" style={btnPrimary} onClick={save}>{he ? "שמירת הפרטים" : "Save details"}</button>
-        {status && <span role="status" style={{ fontSize: 13, color: status.ok ? c.ok : c.danger }}>{status.text}</span>}
+        {status && <span role="status" style={{ fontSize: fs(13), color: status.ok ? c.ok : c.danger }}>{status.text}</span>}
       </div>
     </Card>
   );
@@ -122,7 +123,7 @@ function Password({ account, he, c }) {
         </Field>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <button className="gb" type="submit" style={btnPrimary}>{he ? "החלפת סיסמה" : "Change password"}</button>
-          {done && <span role="status" style={{ fontSize: 13, color: c.ok }}>{he ? "הסיסמה הוחלפה" : "Password changed"}</span>}
+          {done && <span role="status" style={{ fontSize: fs(13), color: c.ok }}>{he ? "הסיסמה הוחלפה" : "Password changed"}</span>}
         </div>
       </form>
     </Card>
@@ -197,20 +198,20 @@ function TwoStep({ account, he, c }) {
     <Card>
       <SectionTitle c={c}>{he ? "אימות דו-שלבי" : "Two-step verification"}</SectionTitle>
       {active ? (
-        <p role="status" style={{ margin: 0, fontSize: 14, color: c.ok }}>{he ? "האימות הדו-שלבי פעיל" : "Two-step verification is on"}</p>
+        <p role="status" style={{ margin: 0, fontSize: fs(14), color: c.ok }}>{he ? "האימות הדו-שלבי פעיל" : "Two-step verification is on"}</p>
       ) : !setup ? (
         <>
-          <p style={{ margin: "0 0 12px", fontSize: 13, color: c.ts, lineHeight: 1.7 }}>
+          <p style={{ margin: "0 0 12px", fontSize: fs(13), color: c.ts, lineHeight: 1.7 }}>
             {he
               ? "כניסה עם סיסמה וגם קוד מאפליקציית אימות בטלפון (למשל Google Authenticator). חובה למנהלי מערכת."
               : "Sign in with your password and a code from an authenticator app on your phone. Required for admins."}
           </p>
-          {error && <p role="alert" style={{ color: c.danger, fontSize: 13 }}>{error}</p>}
+          {error && <p role="alert" style={{ color: c.danger, fontSize: fs(13) }}>{error}</p>}
           <button ref={focusIf("start")} className="ghost" style={btnGhost} onClick={begin} disabled={starting}>{he ? "הפעלת אימות דו-שלבי" : "Turn on two-step verification"}</button>
         </>
       ) : (
         <form onSubmit={confirm} noValidate>
-          <p ref={focusIf("setup")} tabIndex={-1} style={{ margin: "0 0 10px", fontSize: 13, lineHeight: 1.7, outline: "none" }}>
+          <p ref={focusIf("setup")} tabIndex={-1} style={{ margin: "0 0 10px", fontSize: fs(13), lineHeight: 1.7, outline: "none" }}>
             {he
               ? "באפליקציית האימות בטלפון מוסיפים חשבון וסורקים את הקוד. מעכשיו האפליקציה מציגה קוד בן 6 ספרות שמתחלף כל 30 שניות: מקלידים אותו כאן."
               : "In the authenticator app on your phone, add an account and scan this code. The app then shows a 6-digit code that changes every 30 seconds: type it here."}
@@ -221,7 +222,7 @@ function TwoStep({ account, he, c }) {
             <img src={setup.qr} alt={qrLabel} width={243} height={243} style={{ background: "#fff", borderRadius: 8, padding: 12 }} />
           )}
           {setup.uri?.startsWith("otpauth://") && (
-            <p style={{ margin: "10px 0 0", fontSize: 13 }}>
+            <p style={{ margin: "10px 0 0", fontSize: fs(13) }}>
               <a href={setup.uri} style={{ color: c.ac }}>{he ? "בטלפון? פתיחה ישירה באפליקציית האימות" : "On your phone? Open it in the authenticator app"}</a>
             </p>
           )}
@@ -255,18 +256,18 @@ function ManualKey({ secret, he, c }) {
     }
   };
   return (
-    <div style={{ margin: "14px 0", fontSize: 13, lineHeight: 1.7 }}>
+    <div style={{ margin: "14px 0", fontSize: fs(13), lineHeight: 1.7 }}>
       <p style={{ margin: "0 0 4px", fontWeight: 600 }}>{he ? "לא מצליחים לסרוק? מקלידים את המפתח:" : "Cannot scan? Type the key instead:"}</p>
       <ul style={{ margin: "0 0 8px", paddingInlineStart: 18, color: c.ts }}>
         <li>{he ? "ב-Google Authenticator: לוחצים על + ואז “הזנת מפתח הגדרה” (Enter a setup key)." : "Google Authenticator: tap + then “Enter a setup key”."}</li>
         <li>{he ? "ב-Microsoft Authenticator: לוחצים על + ואז “חשבון אחר” (Other account) ואז “הזן קוד באופן ידני” (Enter code manually)." : "Microsoft Authenticator: tap + then “Other account” then “Enter code manually”."}</li>
         <li>{he ? "שם החשבון: סטודיו. המפתח: זה שכאן למטה." : "Account name: Studio. Key: the one below."}</li>
       </ul>
-      <p dir="ltr" style={{ margin: "0 0 8px", fontFamily: "monospace", fontSize: 17, letterSpacing: 1, wordBreak: "break-word", textAlign: he ? "right" : "left" }}>{groupKey(secret)}</p>
+      <p dir="ltr" style={{ margin: "0 0 8px", fontFamily: "monospace", fontSize: fs(17), letterSpacing: 1, wordBreak: "break-word", textAlign: he ? "right" : "left" }}>{groupKey(secret)}</p>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <button className="ghost" type="button" style={btnGhost} onClick={copy}>{he ? "העתקת המפתח" : "Copy the key"}</button>
         {/* always in the page, so screen readers announce what appears in it */}
-        <span role="status" style={{ fontSize: 13, color: copied ? c.ok : c.danger }}>
+        <span role="status" style={{ fontSize: fs(13), color: copied ? c.ok : c.danger }}>
           {copied === null ? "" : copied ? (he ? "המפתח הועתק" : "Key copied") : he ? "ההעתקה לא הצליחה. אפשר לסמן את המפתח ולהעתיק." : "Copying failed. Select the key and copy it."}
         </span>
       </div>
@@ -292,18 +293,18 @@ function Devices({ account, he, c }) {
   return (
     <Card style={{ padding: "16px 14px" }}>
       <SectionTitle c={c}>{he ? `מכשירים (${approved.length} מתוך ${account.profile.deviceLimit})` : `Devices (${approved.length} of ${account.profile.deviceLimit})`}</SectionTitle>
-      <p style={{ margin: "0 0 10px", fontSize: 12, color: c.ts, lineHeight: 1.7 }}>
+      <p style={{ margin: "0 0 10px", fontSize: fs(12), color: c.ts, lineHeight: 1.7 }}>
         {he
           ? "החשבון עובד במכשיר אחד בכל רגע. כדי לפנות מקום למכשיר חדש, הסירו מכשיר שכבר לא בשימוש."
           : "The account works on one device at a time. To make room for a new device, remove one you no longer use."}
       </p>
-      {message && <p role="alert" style={{ color: c.danger, fontSize: 13, margin: "0 0 8px" }}>{message}</p>}
+      {message && <p role="alert" style={{ color: c.danger, fontSize: fs(13), margin: "0 0 8px" }}>{message}</p>}
       <ul aria-label={he ? "המכשירים בחשבון" : "Devices on the account"} style={{ listStyle: "none", margin: 0, padding: 0 }}>
         {approved.map((d) => (
           <li key={d.id} className="rrow" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: 14 }}>{d.label}{d.current ? ` · ${he ? "המכשיר הזה" : "this device"}` : ""}</span>
-              <span style={{ display: "block", fontSize: 11, color: c.ts }}>
+              <span style={{ fontSize: fs(14) }}>{d.label}{d.current ? ` · ${he ? "המכשיר הזה" : "this device"}` : ""}</span>
+              <span style={{ display: "block", fontSize: fs(11), color: c.ts }}>
                 {he ? `נוסף ${dateTime(d.createdAt)} · נראה לאחרונה ${dateTime(d.lastSeenAt)}` : `added ${dateTime(d.createdAt)} · last seen ${dateTime(d.lastSeenAt)}`}
               </span>
             </span>

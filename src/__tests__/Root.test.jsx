@@ -54,7 +54,7 @@ describe("Root", { timeout: 25000 }, () => {
     vi.stubGlobal("indexedDB", { open });
     render(<Root storage={localStorage} />);
     fireEvent.click(await screen.findByRole("link", { name: SALES.he.hero.tryIt }));
-    const banner = await screen.findByRole("note", {}, LONG);
+    const banner = await screen.findByRole("note", { name: "הדגמה" }, LONG);
     expect((await screen.findAllByText(/רחל כהן/, {}, LONG)).length).toBeGreaterThan(0);
     expect(fetches.filter((url) => url.includes("supabase.co"))).toEqual([]);
     expect(open).not.toHaveBeenCalled();

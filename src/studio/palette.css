@@ -25,7 +25,7 @@
   box-shadow: 0 24px 60px var(--st-shadow);
   color: var(--st-ink);
   font-family: var(--st-body);
-  font-size: 15px;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
   line-height: 1.6;
   animation: st-palette-in 0.2s ease-out;
 }
@@ -46,7 +46,7 @@
   background: transparent;
   color: var(--st-ink);
   font: inherit;
-  font-size: 16px; /* 16px also keeps iOS from zooming in */
+  font-size: max(var(--ts-min, 0px), calc(16px * var(--ts, 1))); /* 16px also keeps iOS from zooming in */
   outline: none;
   appearance: none;
 }
@@ -98,7 +98,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
   color: var(--st-ink-faint);
 }
 
@@ -112,7 +112,7 @@
   margin: 0;
   padding: 8px 16px;
   border-top: 1px solid var(--st-line);
-  font-size: 12px;
+  font-size: max(var(--ts-min, 0px), calc(12px * var(--ts, 1)));
   color: var(--st-ink-faint);
 }
 
