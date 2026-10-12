@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* App inside Root: entering and leaving the Studio go through `navigate`; the demo says what it is and stays in memory. */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, within, waitFor } from "@testing-library/react";
 import App from "../App.jsx";
 import { AccountProvider } from "../account/AccountContext.jsx";
 import { ToastProvider } from "../studio/Toasts.jsx";
@@ -69,6 +69,31 @@ describe("App inside Root", { timeout: 20000 }, () => {
     fireEvent.change(name, { target: { value: "הדר" } }); // 5+4+2 = 11, as the reading gives it
     expect(await within(circle).findByText("11", {}, LONG)).toBeTruthy();
     expect((await screen.findAllByTestId("psych-note", {}, LONG))[0].textContent).toBe("הגרף יחסי לתכונה החזקה ביותר: היא מגיעה עד הקצה, והשאר לפי היחס אליה. ״לא מודגש״ פירושו שאף מספר לא נותן לתכונה נקודות.");
+  });
+
+  it("leaves Shani's page as it was designed (2026-10-12): no Studio text size, the wave at its own width, the cycle's badge at the row's end", async () => {
+    // Arrange: a reading on the customer page, past the lead gate
+    localStorage.setItem("numerology_lead_done", "1");
+    show("customer");
+    expect(document.documentElement.dataset.stView).toBe("site");
+    fireEvent.change(await screen.findByPlaceholderText("השם המלא בעברית...", {}, LONG), { target: { value: "מאיה לוי" } });
+    fireEvent.click(screen.getByRole("button", { name: "המשך ←" }));
+    const date = await screen.findByPlaceholderText("dd.mm.yyyy", {}, LONG);
+    fireEvent.change(date, { target: { value: "19.04.1986" } });
+    fireEvent.keyDown(date, { key: "Enter" });
+
+    // Act: open the chapters one by one, up to the life map
+    await waitFor(() => {
+      const next = screen.queryByText("לחצו לחשיפה ▾");
+      if (next) fireEvent.click(next);
+      expect(screen.getByText("מחזורי חיים")).toBeTruthy();
+    }, LONG);
+
+    // Assert
+    const wave = document.querySelector('svg[viewBox="0 0 520 230"]');
+    expect(wave.style.width).toBe("");
+    const badge = screen.getAllByText("עכשיו").find((el) => el.tagName === "SPAN");
+    expect(badge.parentElement.style.justifyContent).toBe("space-between");
   });
 
   it("leaves the Studio for the sales page through navigate", async () => {

@@ -7,7 +7,7 @@
  * fixed overlay. It never asks for the browser's full screen (that fails on phones and inside some frames); it
  * fills the window instead. Its text is larger than the Studio's (--ts in meeting.css).
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { prefersReducedMotion } from "./motion.js";
 import Locked from "../demo/DemoLock.jsx";
@@ -36,7 +36,17 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select
  */
 export default function MeetingMode({ open, onClose, he = true, person, eyebrow, main, numbers = [], text, sections = [] }) {
   const dialogRef = useRef(null);
+  const barRef = useRef(null);
   const closeRef = useRef(null);
+
+  // a section reached from the bar starts below it, however many rows the bar takes (on a phone it wraps)
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    const measure = () => dialogRef.current?.style.setProperty("--st-meet-bar-h", `${barRef.current?.offsetHeight ?? 0}px`);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [open]);
 
   // while open: the page behind stays still and the focus moves in; both go back on close.
   // The lock goes on <html>: the app clips overflow on html and body, so <html> scrolls the
@@ -58,6 +68,8 @@ export default function MeetingMode({ open, onClose, he = true, person, eyebrow,
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => {
+      // a window over the meeting (a number's "?") answers its own keys first
+      if (e.defaultPrevented) return;
       if (e.key === "Escape") {
         e.preventDefault();
         onClose();
@@ -98,7 +110,7 @@ export default function MeetingMode({ open, onClose, he = true, person, eyebrow,
       dir={he ? "rtl" : "ltr"}
       lang={he ? "he" : "en"}
     >
-      <div className="st-meet-bar">
+      <div ref={barRef} className="st-meet-bar">
         {sections.length > 0 && (
           <nav className="st-meet-jumps" aria-label={t.sections}>
             {sections.map((s) => (

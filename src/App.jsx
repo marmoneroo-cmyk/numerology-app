@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import { jsPDF } from "jspdf";
 import WorkspaceApp from "./workspace/WorkspaceApp.jsx";
 import { ContentContext } from "./workspace/content.js";
@@ -38,6 +38,8 @@ import NameCompare from "./studio/calcs/NameCompare.jsx";
 import { fs } from "./ui/type.js";
 import ScreenIntro from "./studio/ScreenIntro.jsx";
 import { psychLevels, PSYCH_NAMES, LEVEL_WORDS } from "./reading/psych.js";
+/** The tarot deck and its art load with the קלפים tab only. */
+const TarotScreen = lazy(() => import("./studio/tarot/TarotScreen.jsx"));
 import { SCREEN_HELP, MATCH_HELP } from "./studio/screenHelp.js";
 
 /** The Studio's buttons that get the gold ripple (studio.css gives them room for it). */
@@ -46,7 +48,7 @@ const RIPPLE_TARGETS = ".fx, .gb, .ghost, .tbtn, .home-btn, .snav-b";
  * Secondary text. The Studio's is strong enough to read on both themes (the owner, 2026-10-12: the light theme
  * looked washed out); the customer page keeps the pale one it was designed with.
  */
-const softText = (dk, studio = true) => studio ? (dk ? "rgba(232,224,208,.7)" : "rgba(31,27,23,.78)") : (dk ? "rgba(232,224,208,.4)" : "rgba(42,37,32,.4)");
+const softText = (dk, studio = false) => studio ? (dk ? "rgba(232,224,208,.7)" : "rgba(31,27,23,.78)") : (dk ? "rgba(232,224,208,.4)" : "rgba(42,37,32,.4)");
 /** The longest text a field takes: any real name or date fits, and a runaway paste is cut short. */
 const MAX_INPUT = 120;
 /** The longest an email address can be. */
@@ -362,7 +364,7 @@ function RevealCard({delay=450,...card}){
 }
 
 // ═══════════════════ PSYCHOLOGICAL RADAR ═══════════════════
-function PsychRadar({psych,dk,he}){
+function PsychRadar({psych,dk,he,studio=false}){
   const ac=dk?"#c8a96a":"#937640";const s=300;const cx=s/2;const cy=s/2;const r=110;
   const lang=he?"he":"en";const{items}=psychLevels(psych);
   // the trait colours, deeper on the light theme so the words stay readable on cream
@@ -378,24 +380,30 @@ function PsychRadar({psych,dk,he}){
     {pts.map((p,i)=><g key={i}><circle cx={p.x} cy={p.y} r={4.5} fill={p.col} opacity=".85"><animate attributeName="r" values="3.5;5.5;3.5" dur={`${3+i*.5}s`} repeatCount="indefinite"/></circle></g>)}
     {pts.map((p,i)=><text key={`l${i}`} x={p.lx} y={p.ly} textAnchor="middle" dominantBaseline="middle" fontSize="13" fontWeight="600" fill={p.col} fontFamily="Heebo, sans-serif">{p.name}<tspan x={p.lx} dy="16" fontSize="13" fontWeight="700" fill={p.col} opacity={p.level==="none"?.7:1} data-level={p.level}>{p.word}</tspan></text>)}
   </svg>
-  <p data-testid="psych-note" style={{fontSize:fs(12),textAlign:"center",color:softText(dk),margin:"6px auto 0",maxWidth:420,lineHeight:1.6}}>{note}</p></>);
+  <p data-testid="psych-note" style={studio?{fontSize:fs(12),textAlign:"center",color:softText(dk,true),margin:"6px auto 0",maxWidth:420,lineHeight:1.6}:{fontSize:fs(11),textAlign:"center",color:dk?"rgba(232,224,208,.55)":"rgba(42,37,32,.6)",margin:"6px 0 0"}}>{note}</p></>);
 }
 
 // ═══════════════════ THE LIFE MAP (chapter 4, and meeting mode) ═══════════════════
 /** The next ten years, the four life cycles with their pinnacle and challenge, and the Lo Shu grid. */
-function LifeMap({results,dk,he,studio=true}){
+/**
+ * `studio`: the Studio's layout (the wave grows to its column, the cycle's badge sits by its name); the customer
+ * page keeps the one it was designed with. `live`: the reading is of today; a saved one marks its own cycle
+ * "at the reading" rather than "now".
+ */
+function LifeMap({results,dk,he,studio=false,live=true}){
   const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const ts=softText(dk,studio);const isRtl=he;
+  const badgeText=live?(he?"עכשיו":"NOW"):(he?"בזמן הקריאה":"AT THE READING");
   return(<>
-    <YearWave proj={results.proj} dk={dk} he={he}/>
+    <YearWave proj={results.proj} dk={dk} he={he} fit={studio}/>
     <div className="divider"/>
     <div style={{textAlign:"center",marginBottom:14}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?600:400,color:ac}}>{he?"מחזורי חיים":"Life Cycles"}</h4></div>
-    {[he?"חיפוש":"Search",he?"מציאה":"Discovery",he?"יתד":"Anchor",he?"שיא":"Summit"].map((label,i)=>{const span=cycleSpans(results.exit)[i];const active=cycleAt(results.age,results.exit)===i;return(<div key={i} style={{padding:"14px 16px",background:active?`${ac}0a`:"transparent",border:`1px solid ${active?ac+"33":ac+"08"}`,borderRadius:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all .3s"}}><div><div style={{display:"flex",alignItems:"center",gap:8,fontSize:fs(15),fontWeight:600,color:active?ac:tm}}>{label}{active&&<span style={{padding:"2px 8px",background:`${ac}15`,border:`1px solid ${ac}33`,borderRadius:8,fontSize:fs(9),color:ac,letterSpacing:1,textTransform:"uppercase"}}>{he?"עכשיו":"NOW"}</span>}</div><div style={{fontSize:fs(10),color:ts}}>{he?"גילאים":"Ages"} {agesText(span)}</div></div><div style={{display:"flex",gap:8}}><div style={{textAlign:"center"}}><div style={{fontSize:fs(8),color:ts}}>{he?"פסגה":"Peak"}</div><div style={{fontSize:fs(20),fontWeight:700,color:ac}}>{results.pk[i]}</div></div><div style={{textAlign:"center"}}><div style={{fontSize:fs(8),color:ts}}>{he?"אתגר":"Chal."}</div><div style={{fontSize:fs(20),fontWeight:700,color:ts}}>{results.ch[i]}</div></div></div></div>);})}
+    {[he?"חיפוש":"Search",he?"מציאה":"Discovery",he?"יתד":"Anchor",he?"שיא":"Summit"].map((label,i)=>{const span=cycleSpans(results.exit)[i];const active=cycleAt(results.age,results.exit)===i;const badge=active&&<span style={{padding:"2px 8px",background:`${ac}15`,border:`1px solid ${ac}33`,borderRadius:8,fontSize:studio?fs(9):fs(8),color:ac,letterSpacing:1,textTransform:"uppercase"}}>{badgeText}</span>;return(<div key={i} style={{padding:"14px 16px",background:active?`${ac}0a`:"transparent",border:`1px solid ${active?ac+"33":ac+"08"}`,borderRadius:12,marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all .3s"}}><div><div style={studio?{display:"flex",alignItems:"center",gap:8,fontSize:fs(15),fontWeight:600,color:active?ac:tm}:{fontSize:fs(15),fontWeight:600,color:active?ac:tm}}>{label}{studio&&badge}</div><div style={{fontSize:fs(10),color:ts}}>{he?"גילאים":"Ages"} {agesText(span)}</div></div><div style={{display:"flex",gap:8}}><div style={{textAlign:"center"}}><div style={{fontSize:fs(8),color:ts}}>{he?"פסגה":"Peak"}</div><div style={{fontSize:fs(20),fontWeight:700,color:ac}}>{results.pk[i]}</div></div><div style={{textAlign:"center"}}><div style={{fontSize:fs(8),color:ts}}>{he?"אתגר":"Chal."}</div><div style={{fontSize:fs(20),fontWeight:700,color:ts}}>{results.ch[i]}</div></div></div>{!studio&&badge}</div>);})}
     <div className="divider"/><div style={{textAlign:"center",marginBottom:12}}><h4 style={{fontSize:fs(17),fontWeight:isRtl?600:400,color:ac}}>Lo Shu Grid</h4></div><LoShu ls={results.ls} dk={dk} he={he}/>
   </>);
 }
 
 // ═══════════════════ YEARLY WAVE TIMELINE ═══════════════════
-function YearWave({proj,dk,he}){
+function YearWave({proj,dk,he,fit=false}){
   const ac=dk?"#c8a96a":"#937640";
   const w=520,h=200,pad=40;const usable=w-pad*2;const step=usable/(proj.length-1);
   const points=proj.map((p,i)=>{const x=pad+i*step;const e=YEAR_ENERGY[p.py]||{level:5};const y=h-pad-(e.level/10)*(h-pad*2);return{...p,x,y,energy:e};});
@@ -404,7 +412,7 @@ function YearWave({proj,dk,he}){
   const areaD=pathD+` L${points[points.length-1].x},${h-pad} L${points[0].x},${h-pad} Z`;
   const[hover,setHover]=useState(null);
   return(<div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",padding:"8px 0"}}>
-    <svg width={w} height={h+30} viewBox={`0 0 ${w} ${h+30}`} style={{display:"block",minWidth:w,width:"100%",maxWidth:760,height:"auto",margin:"0 auto"}}>
+    <svg width={w} height={h+30} viewBox={`0 0 ${w} ${h+30}`} style={fit?{display:"block",minWidth:w,width:"100%",maxWidth:760,height:"auto",margin:"0 auto"}:{display:"block",minWidth:w}}>
       {[.25,.5,.75].map(f=><line key={f} x1={pad} y1={h-pad-(f)*(h-pad*2)} x2={w-pad} y2={h-pad-(f)*(h-pad*2)} stroke={ac} strokeWidth=".3" opacity=".08"/>)}
       <path d={areaD} fill={`url(#waveGrad)`} opacity=".15"/><defs><linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={ac}/><stop offset="1" stopColor={ac} stopOpacity="0"/></linearGradient></defs>
       <path d={pathD} fill="none" stroke={ac} strokeWidth="2" opacity=".6" strokeLinecap="round"/>
@@ -412,7 +420,8 @@ function YearWave({proj,dk,he}){
         <circle cx={p.x} cy={p.y} r={p.isCurrent?7:hover===i?6:3.5} fill={p.isCurrent?ac:hover===i?ac:`${ac}88`} opacity={p.isCurrent?1:hover===i?.9:.6}>{p.isCurrent&&<animate attributeName="r" values="6;9;6" dur="3s" repeatCount="indefinite"/>}</circle>
         <text x={p.x} y={h-pad+16} textAnchor="middle" fontSize="9" fill={p.isCurrent?ac:`${ac}55`} fontWeight={p.isCurrent?"700":"400"}>{p.year}</text>
         <text x={p.x} y={p.y-12} textAnchor="middle" fontSize="11" fontWeight="700" fill={ac} opacity={p.isCurrent||hover===i?1:0} style={{transition:"opacity .3s"}}>{p.py}</text>
-        {hover===i&&!p.isCurrent&&(<foreignObject x={p.x-80} y={p.y-65} width={160} height={50}><div style={{background:dk?"rgba(15,15,30,.95)":"rgba(255,255,255,.95)",border:`1px solid ${ac}33`,borderRadius:8,padding:"6px 10px",textAlign:"center",fontSize:fs(10),color:dk?"#e8e0d0":"#2a2520",backdropFilter:"blur(10px)"}}><div style={{fontWeight:700,color:ac}}>{p.year} — {he?D[p.py]?.t:D[p.py]?.te}</div><div style={{opacity:.6,marginTop:2}}><Locked he={he}>{p.energy[he?"he":"en"]}</Locked></div></div></foreignObject>)}
+        {/* plain pixels: the drawing scales as a whole, and its box has a fixed size */}
+        {hover===i&&!p.isCurrent&&(<foreignObject x={p.x-80} y={p.y-65} width={160} height={50}><div style={{background:dk?"rgba(15,15,30,.95)":"rgba(255,255,255,.95)",border:`1px solid ${ac}33`,borderRadius:8,padding:"6px 10px",textAlign:"center",fontSize:10,color:dk?"#e8e0d0":"#2a2520",backdropFilter:"blur(10px)"}}><div style={{fontWeight:700,color:ac}}>{p.year} — {he?D[p.py]?.t:D[p.py]?.te}</div><div style={{opacity:.6,marginTop:2}}><Locked he={he}>{p.energy[he?"he":"en"]}</Locked></div></div></foreignObject>)}
       </g>))}
     </svg>
   </div>);
@@ -448,7 +457,7 @@ function Chapter({index,title,subtitle,icon,children,isActive,isRevealed,onRevea
     </div>);
   return(<div style={{animation:"fadeInUp .8s ease-out",padding:"12px 0"}}>
     <div style={{textAlign:"center",marginBottom:20}}>
-      <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:4,marginBottom:4}}>{`— ${index < 10 ? "0" : ""}${index} —`}</div>
+      <div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:4,marginBottom:4}}>{`— ${index < 10 ? "0" : ""}${index} —`}</div>
       <div style={{marginBottom:8,color:ac,display:"flex",justifyContent:"center"}}><Icon name={icon} size={26} stroke={1.3}/></div>
       <h3 style={{fontSize:fs(22),fontWeight:600,color:ac,marginBottom:4,fontFamily:"'Cormorant Garamond',serif"}}>{title}</h3>
       <div style={{fontSize:fs(13),color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)"}}>{subtitle}</div>
@@ -527,7 +536,7 @@ const NUM_LIB={
 function TablesWidget({he,dk}){
   const ac=dk?"#c8a96a":"#937640";
   const tm=dk?"#e8e0d0":"#2a2520";
-  const ts=softText(dk);
+  const ts=softText(dk,true); // a Studio tool
   const isRtl=he;
   const[firstName,setFirstName]=useState("");
   const[lastName,setLastName]=useState("");
@@ -547,13 +556,13 @@ function TablesWidget({he,dk}){
   const cycleLabels=he?["חיפוש","מציאה","יתד","שיא"]:["Search","Discovery","Anchor","Summit"];
   return(<div style={{animation:"fadeInUp .5s ease-out"}}>
     <div className="gc" style={{marginBottom:20}}>
-      <div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:4,marginBottom:6}}>{he?"פרטים למילוי":"Enter Details"}</div></div>
+      <div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:4,marginBottom:6}}>{he?"פרטים למילוי":"Enter Details"}</div></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-        <div><label style={{display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}99`,fontWeight:500}}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} placeholder={he?"שם פרטי...":"First name..."} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
-        <div><label style={{display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}99`,fontWeight:500}}>{he?"שם משפחה":"Last Name"}</label><input className="gi" maxLength={MAX_INPUT} placeholder={he?"שם משפחה...":"Last name..."} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}cc`,fontWeight:500}}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} placeholder={he?"שם פרטי...":"First name..."} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}cc`,fontWeight:500}}>{he?"שם משפחה":"Last Name"}</label><input className="gi" maxLength={MAX_INPUT} placeholder={he?"שם משפחה...":"Last name..."} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr",gap:8,marginBottom:14}}>
-        <div><label style={{display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doCalc();}}/></div>
+        <div><label style={{display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}cc`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter")doCalc();}}/></div>
         <PlusOneNote he={he} color={ts}/>
       </div>
       {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:fs(13),marginBottom:14,textAlign:"center"}}>{error}</div>}
@@ -616,7 +625,7 @@ function TablesWidget({he,dk}){
 function CalculatorsWidget({he,dk}){
   const ac=dk?"#c8a96a":"#937640";
   const tm=dk?"#e8e0d0":"#2a2520";
-  const ts=softText(dk);
+  const ts=softText(dk,true); // a Studio tool
   const isRtl=he;
 
   const[cat,setCat]=useState(0);
@@ -644,7 +653,7 @@ function CalculatorsWidget({he,dk}){
 
   const parseDob=(s)=>parseBirthDate(s);
 
-  const labelSt={display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}99`,fontWeight:500};
+  const labelSt={display:"block",marginBottom:6,fontSize:fs(11),color:`${ac}cc`,fontWeight:500};
   const thSt={padding:"10px 12px",fontSize:fs(11),fontWeight:700,color:ac,textAlign:"center",borderBottom:`2px solid ${ac}22`};
   const tdSt={padding:"10px 12px",fontSize:fs(14),fontWeight:500,color:tm,textAlign:"center",borderBottom:`1px solid ${ac}08`};
   const tdLb={...tdSt,fontWeight:600,color:ts,fontSize:fs(12),textAlign:isRtl?"right":"left"};
@@ -725,7 +734,7 @@ function CalculatorsWidget({he,dk}){
     {cat===0&&calc==="allnums"&&(<div>
       <BackBtn/>
       <div className="gc" style={{marginBottom:16}}>
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="chart" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"כל המספרים שלי":"All My Numbers"}</div></div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="chart" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"כל המספרים שלי":"All My Numbers"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
           <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם פרטי...":"First name..."}/></div>
           <div><label style={labelSt}>{he?"שם משפחה":"Last Name"}</label><input className="gi" maxLength={MAX_INPUT} value={lastName} onChange={e=>setLastName(e.target.value)} dir="rtl" style={{textAlign:"right"}} placeholder={he?"שם משפחה...":"Last name..."}/></div>
@@ -791,7 +800,7 @@ function CalculatorsWidget({he,dk}){
     {cat===0&&calc==="daily"&&(<div>
       <BackBtn/>
       <div className="gc" style={{marginBottom:16}}>
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="calendar" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"נומרוסקופ יומי":"Daily Numeroscope"}</div></div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="calendar" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"נומרוסקופ יומי":"Daily Numeroscope"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
           <div><label style={labelSt}>{he?"שם פרטי":"First Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
           <div><label style={labelSt}>{he?"תאריך לידה":"Date of Birth"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
@@ -818,7 +827,7 @@ function CalculatorsWidget({he,dk}){
     {cat===0&&calc==="cycles"&&(<div>
       <BackBtn/>
       <div className="gc" style={{marginBottom:16}}>
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="refresh" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחזורי חיים":"Life Cycles"}</div></div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="refresh" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחזורי חיים":"Life Cycles"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
           <div><label style={labelSt}>{he?"שם":"Name"}</label><input className="gi" maxLength={MAX_INPUT} value={firstName} onChange={e=>setFirstName(e.target.value)} dir="rtl" style={{textAlign:"right"}}/></div>
           <div><label style={labelSt}>{he?"תאריך לידה":"DOB"}</label><input className="gi" maxLength={MAX_INPUT} value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" placeholder="dd.mm.yyyy" style={{textAlign:"center",letterSpacing:3}} onKeyDown={e=>{if(e.key==="Enter")doPersonalCalc();}}/></div>
@@ -927,7 +936,7 @@ function CalculatorsWidget({he,dk}){
       <div className="gc" style={{marginBottom:16}}>
         <div style={{textAlign:"center",marginBottom:16}}>
           <div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name={calc==="love"?"heart":calc==="twin"?"flame":calc==="biz"?"briefcase":"users"} size={26} stroke={1.3}/></div>
-          <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>
+          <div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>
             {calc==="love"?(he?"התאמה זוגית":"Love Compatibility"):calc==="twin"?(he?"להבה תאומה":"Twin Flame"):calc==="biz"?(he?"שותפות עסקית":"Business Match"):(he?"הורה-ילד":"Parent-Child")}
           </div>
         </div>
@@ -954,7 +963,7 @@ function CalculatorsWidget({he,dk}){
           {/* LP comparison */}
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,marginBottom:14,alignItems:"center"}}>
             <div style={{textAlign:"center"}}><div style={{fontSize:fs(10),color:ts}}>{m1name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp1]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(matchRes.lpm1,matchRes.lp1)}</div><div style={{fontSize:fs(10),color:D[matchRes.lp1]?.c||ac,opacity:.7}}>{he?D[matchRes.lp1]?.t:D[matchRes.lp1]?.te}</div></div>
-            <div style={{fontSize:fs(18),color:`${ac}66`,display:"flex",justifyContent:"center"}}>{calc==="parent"?<Icon name="heart" size={16}/>:"⟷"}</div>
+            <div style={{fontSize:fs(18),color:`${ac}bb`,display:"flex",justifyContent:"center"}}>{calc==="parent"?<Icon name="heart" size={16}/>:"⟷"}</div>
             <div style={{textAlign:"center"}}><div style={{fontSize:fs(10),color:ts}}>{m2name.split(" ")[0]}</div><div style={{fontSize:26,fontWeight:700,color:D[matchRes.lp2]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(matchRes.lpm2,matchRes.lp2)}</div><div style={{fontSize:fs(10),color:D[matchRes.lp2]?.c||ac,opacity:.7}}>{he?D[matchRes.lp2]?.t:D[matchRes.lp2]?.te}</div></div>
           </div>
 
@@ -995,7 +1004,7 @@ function CalculatorsWidget({he,dk}){
     {/* ═══════ CATEGORY 3: Number Meanings ═══════ */}
     {cat===2&&(<div>
       <div className="gc">
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="book" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"ספריית המספרים":"Number Library"}</div></div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="book" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"ספריית המספרים":"Number Library"}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
           {[1,2,3,4,5,6,7,8,9].map(n=>(
             <div key={n} onClick={()=>{setLibNum(libNum===n?null:n);AU.init();AU.p("click");}} style={{textAlign:"center",padding:"14px 6px",borderRadius:12,cursor:"pointer",border:`1.5px solid ${libNum===n?(D[n]?.c||ac)+"66":ac+"0a"}`,background:libNum===n?`${D[n]?.c||ac}0a`:"transparent",transition:"all .3s"}}>
@@ -1036,7 +1045,7 @@ function CalculatorsWidget({he,dk}){
     {/* ═══════ CATEGORY 4: Cards ═══════ */}
     {cat===3&&(<div>
       <div className="gc" style={{marginBottom:14}}>
-        <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="cards" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"קלפי נומרולוגיה":"Numerology Cards"}</div><p style={{fontSize:fs(11),color:ts,marginTop:4}}>{he?"לוחצים על קלף כדי להפוך אותו":"Press a card to turn it over"}</p></div>
+        <div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="cards" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"קלפי נומרולוגיה":"Numerology Cards"}</div><p style={{fontSize:fs(11),color:ts,marginTop:4}}>{he?"לוחצים על קלף כדי להפוך אותו":"Press a card to turn it over"}</p></div>
         <div className="st-cards">
           {studioDeck(he).map(card=><Card key={card.number} {...card} he={he} onToggle={chimeOnOpen}/>)}
         </div>
@@ -1059,7 +1068,7 @@ function CalculatorsWidget({he,dk}){
     {cat===4&&calc==="namegen"&&(<div>
       <BackBtn/>
       <div className="gc">
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחולל שמות":"Name Generator"}</div></div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{color:ac,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={26} stroke={1.3}/></div><div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:3,marginTop:4}}>{he?"מחולל שמות":"Name Generator"}</div></div>
         <div style={{marginBottom:14}}>
           <label style={labelSt}>{he?"בחירת מספר יעד":"Choose target number"}</label>
           <div style={{display:"grid",gridTemplateColumns:"repeat(9,1fr)",gap:4}}>
@@ -1526,7 +1535,7 @@ export default function App({ view, navigate } = {}){
     try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}setLegalDoc(null);
   };
 
-  const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const studioLook=owner&&!previewCustomer;const ts=softText(dk,studioLook);
+  const he=lang==="he";const isRtl=he;const ac=dk?"#c8a96a":"#937640";const tm=dk?"#e8e0d0":"#2a2520";const showOwnerUI=owner&&!previewCustomer;const ts=softText(dk,showOwnerUI); // the Studio (owner console) vs. the public customer page
   // Shani's interpretation content, shared with the client workspace (src/workspace)
   // the subscriber's account: the Studio opens only for a signed-in, active session
   const account=useAccount();
@@ -1536,6 +1545,7 @@ export default function App({ view, navigate } = {}){
   const[openRequest,setOpenRequest]=useState(null);
   const[meeting,setMeeting]=useState(null);
   const[paletteOpen,setPaletteOpen]=useState(false);
+  const[cardDeck,setCardDeck]=useState("tarot"); // the קלפים tab: the tarot, or the number cards 1-9
   const[paletteClients,setPaletteClients]=useState([]);
   // quick search's "today's card": a new number remounts the deck in "היום", which then deals at once
   const[deckDeal,setDeckDeal]=useState(0);
@@ -1601,7 +1611,6 @@ export default function App({ view, navigate } = {}){
     {icon:"compass",title:he?"הדרך קדימה":"Path Forward",sub:he?"המלצות וטקסים":"Guidance and rituals"},
   ]:[];
 
-  const showOwnerUI = owner && !previewCustomer; // owner console vs. public customer landing
   useEffect(()=>{if(showOwnerUI&&!legalDoc)account.activate();},[showOwnerUI,legalDoc]); // the account machinery loads only for the Studio, not under a legal page
   // the Studio's look: its theme tokens follow the dark/light switch, and its buttons answer a press with the gold ripple
   useEffect(()=>{document.documentElement.dataset.stTheme=dk?"dark":"light";},[dk]);
@@ -1610,6 +1619,8 @@ export default function App({ view, navigate } = {}){
   useEffect(()=>(showOwnerUI?attachRipple(document,RIPPLE_TARGETS):undefined),[showOwnerUI]);
   const workspaceStore=showOwnerUI&&studioReady?accountStore(account):null;
   const lpBase = results ? R(results.lp) : 0; // reduced life path for D[] rich content (master carries base energy)
+  /** Whether a date is today, on this device's clock. */
+  const isToday=(d)=>{const n=new Date();return !!d&&d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();};
   /**
    * A reading in large type for the client: the life path, three more numbers and its meaning, and then the whole
    * map, made for `at` (a saved reading's own date and +1; a live reading's date otherwise).
@@ -1685,7 +1696,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
 .gb{position:relative;overflow:hidden}.gb::after{content:'';position:absolute;top:0;left:0;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);transform:translateX(-140%) skewX(-18deg);pointer-events:none}.gb:hover::after{animation:shineSweep 1s ease}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:30px;border:1px solid ${ac}33;background:${ac}0d;font-size:${fs(12)};color:${ac};font-weight:600}
 .gc{background:${dk?"linear-gradient(135deg,rgba(18,18,38,.75),rgba(12,12,28,.55))":"linear-gradient(135deg,rgba(255,255,255,.88),rgba(245,240,232,.72))"};backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid ${dk?"rgba(200,169,106,.1)":"rgba(147,118,64,.12)"};border-radius:22px;padding:28px;position:relative;overflow:hidden;transition:background .4s}.gc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,${ac}44,transparent)}
-.gi{width:100%;background:${dk?"rgba(8,8,18,.7)":"rgba(255,255,255,.75)"};border:1px solid ${dk?"rgba(200,169,106,.18)":"rgba(147,118,64,.18)"};border-radius:14px;padding:16px 20px;color:${tm};font-size:${fs(17)};font-family:inherit;outline:none;transition:all .4s}.gi::placeholder{color:${ts}}.gi:focus{border-color:${ac}88;box-shadow:0 0 30px ${ac}12}
+.gi{width:100%;background:${dk?"rgba(8,8,18,.7)":"rgba(255,255,255,.75)"};border:1px solid ${dk?"rgba(200,169,106,.18)":"rgba(147,118,64,.18)"};border-radius:14px;padding:16px 20px;color:${tm};font-size:${fs(17)};font-family:inherit;outline:none;transition:all .4s}.gi::placeholder{color:${showOwnerUI?(dk?"rgba(232,224,208,.45)":"rgba(31,27,23,.55)"):ts}}.gi:focus{border-color:${ac}88;box-shadow:0 0 30px ${ac}12}
 .gb{width:100%;padding:17px 30px;background:linear-gradient(135deg,${dk?"#c8a96a":"#b8942e"},${dk?"#b8942e":"#937640"},${dk?"#c8a96a":"#b8942e"});background-size:200% 100%;color:${dk?"#080812":"#fff"};font-family:inherit;font-size:${fs(17)};font-weight:600;border:none;border-radius:14px;cursor:pointer;transition:all .4s;letter-spacing:.5px}.gb:hover{background-position:100% 0;box-shadow:0 8px 40px ${ac}44;transform:translateY(-2px)}.gb:active{transform:translateY(0)}.gb:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
 .ghost{padding:13px 24px;background:transparent;color:${ac};font-family:inherit;font-size:${fs(15)};font-weight:500;border:1px solid ${ac}44;border-radius:12px;cursor:pointer;transition:all .3s}.ghost:hover{background:${ac}0e;border-color:${ac}88}
 .orb{width:60px;height:60px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 30% 30%,${ac}1a,${ac}06);border:1px solid ${ac}33;font-size:${fs(23)};font-weight:700;color:${ac};animation:glow 5s ease-in-out infinite;flex-shrink:0;cursor:pointer;transition:all .3s}.orb:hover{transform:scale(1.1)}
@@ -1751,7 +1762,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         <>
           <Hero he={he} dk={dk} onStart={()=>scrollToId("reading-section")} onUseName={(n)=>{AU.init();AU.p("click");setName(n);setStep(2);setTimeout(()=>scrollToId("reading-section"),60);}} onReveal={(n,d)=>{setName(n);setDob(d);setStep(2);const ok=runReading(n,d);if(ok)setTimeout(()=>scrollToId("reading-section"),90);}}/>
           <HowItWorks he={he} dk={dk}/>
-          <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:fs(11),color:`${ac}99`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · אפשר לנסות עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
+          <div style={{textAlign:"center",margin:"4px 0 14px"}}><span style={{fontSize:fs(11),color:`${ac}cc`,textTransform:"uppercase",letterSpacing:3}}>{he?"✦ קריאה חינמית · אפשר לנסות עכשיו ✦":"✦ Free reading · try now ✦"}</span></div>
         </>
       )}
       <div id="reading-section" style={{scrollMarginTop:70}}/>
@@ -1801,16 +1812,30 @@ button,a,input{-webkit-tap-highlight-color:transparent}
           <div className="gc st-tool-wide st-daily" style={{animation:"fadeInUp .5s ease-out"}}>
             <AffirmWidget he={he} dk={dk}/>
             <div className="divider"/>
-            <RitualWidget number={dailyRitualNumber()} basis={he?"לפי מספר היום בחודש":"By the day-of-month number"} how={<HowButton k="daily" ctx={{now:new Date()}} he={he}/>} he={he} dk={dk}/>
+            <RitualWidget number={dailyRitualNumber()} basis={he?"לפי מספר היום בחודש":"By the day-of-month number"} how={<HowButton k="daily" ctx={{now:new Date()}} he={he}/>} he={he} dk={dk} studio/>
           </div>
         )}
 
         {tab==="cards"&&(
-          <div className="st-panel st-tool" style={{padding:24,animation:"fadeInUp .5s ease-out"}}>
-            <p style={{textAlign:"center",fontSize:fs(13),color:"var(--st-ink-soft)",marginBottom:18}}>{he?"לוחצים על קלף כדי להפוך אותו.":"Press a card to turn it over."}</p>
-            <div className="st-cards">
-              {studioDeck(he).map(card=><Card key={card.number} {...card} he={he} onToggle={chimeOnOpen}/>)}
+          <div className="st-tool-wide" style={{animation:"fadeInUp .5s ease-out"}}>
+            {/* two decks (the owner, 2026-10-12): the full tarot, and the number cards 1-9 */}
+            <div className="st-switch" role="group" aria-label={he?"החפיסה":"The deck"}>
+              {[["tarot",he?"טארוט":"Tarot"],["numbers",he?"קלפי המספרים":"Number cards"]].map(([k,l])=>(
+                <button key={k} type="button" className={`fx st-switch-b${cardDeck===k?" act":""}`} aria-pressed={cardDeck===k} onClick={()=>setCardDeck(k)}>{l}</button>
+              ))}
             </div>
+            {cardDeck==="tarot"?(
+              <Suspense fallback={<p role="status" style={{textAlign:"center",color:"var(--st-ink-soft)",fontSize:fs(14)}}>{he?"טוענים את החפיסה…":"Loading the deck…"}</p>}>
+                <TarotScreen he={he}/>
+              </Suspense>
+            ):(
+              <div className="st-panel" style={{padding:24}}>
+                <p style={{textAlign:"center",fontSize:fs(13),color:"var(--st-ink-soft)",marginBottom:18}}>{he?"לוחצים על קלף כדי להפוך אותו.":"Press a card to turn it over."}</p>
+                <div className="st-cards">
+                  {studioDeck(he).map(card=><Card key={card.number} {...card} he={he} onToggle={chimeOnOpen}/>)}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1819,19 +1844,19 @@ button,a,input{-webkit-tap-highlight-color:transparent}
             <div className="si"><div className={`sd ${step>=1?"act":""}`}/><div className="sl"/><div className={`sd ${step>=2?"act":""}`}/></div>
             {step===1&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
               <div style={{textAlign:"center",marginBottom:24}}>
-                <div style={{fontSize:fs(10),color:`${ac}66`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 1":"Step 1"}</div>
+                <div style={{fontSize:fs(10),color:`${ac}bb`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 1":"Step 1"}</div>
                 <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"השם המלא":"Who are you?"}</h2>
               </div>
-              <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}99`,fontWeight:500}}>{he?"שם מלא":"Full Name"}</label>
+              <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}cc`,fontWeight:500}}>{he?"שם מלא":"Full Name"}</label>
               <input className="gi" maxLength={MAX_INPUT} placeholder={he?"השם המלא בעברית...":"Enter your name in Hebrew..."} value={name} onChange={e=>setName(e.target.value)} dir="rtl" style={{marginBottom:24,textAlign:"right"}} onKeyDown={e=>{if(e.key==="Enter"&&name.trim()){setStep(2);AU.init();AU.p("click");}}}/>
               <button className="gb" disabled={!name.trim()} onClick={()=>{setStep(2);AU.init();AU.p("click");}}>{he?"המשך ←":"Continue →"}</button>
             </div>)}
             {step===2&&(<div className="gc" style={{animation:"fadeInUp .5s ease-out"}}>
               <div style={{textAlign:"center",marginBottom:24}}>
-                <div style={{fontSize:fs(10),color:`${ac}66`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 2":"Step 2"}</div>
+                <div style={{fontSize:fs(10),color:`${ac}bb`,textTransform:"uppercase",letterSpacing:4,marginBottom:5}}>{he?"שלב 2":"Step 2"}</div>
                 <h2 style={{fontSize:isRtl?24:26,fontWeight:isRtl?600:400,color:tm}}>{he?"תאריך הלידה":"When were you born?"}</h2>
               </div>
-              <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}99`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
+              <label style={{display:"block",marginBottom:8,fontSize:fs(12),color:`${ac}cc`,fontWeight:500}}>{he?"תאריך לידה":"Date of Birth"}</label>
               <input className="gi" maxLength={MAX_INPUT} placeholder="dd.mm.yyyy" value={dob} onChange={e=>setDob(e.target.value)} dir="ltr" style={{marginBottom:18,textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"}} onKeyDown={e=>{if(e.key==="Enter"&&dob.trim())doCalc();}}/>
               <PlusOneNote he={he} color={ts} style={{marginTop:-6,marginBottom:24,textAlign:"center"}}/>
               {error&&<div style={{padding:"10px 14px",background:"rgba(180,50,50,.12)",border:"1px solid rgba(180,50,50,.25)",borderRadius:10,color:"#e8a0a0",fontSize:fs(13),marginBottom:16,textAlign:"center"}}>{error}</div>}
@@ -1850,7 +1875,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
       )}
       {showRes&&results&&(showOwnerUI||!LEAD_GATE||leadDone)&&(<div className={showOwnerUI?"st-results":undefined} style={{maxWidth:showOwnerUI?undefined:640,margin:"0 auto"}}>
         <SR><div style={{textAlign:"center",marginBottom:8}}>
-          <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:5,marginBottom:6}}>{he?"הקריאה של":"The reading of"}</div>
+          <div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:5,marginBottom:6}}>{he?"הקריאה של":"The reading of"}</div>
           <div style={{fontSize:isRtl?26:30,fontWeight:isRtl?700:400,color:ac,fontFamily:"'Cormorant Garamond',serif",letterSpacing:isRtl?0:3}}>{name}</div>
         </div></SR>
         <SR><div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:28}}>
@@ -1907,7 +1932,7 @@ button,a,input{-webkit-tap-highlight-color:transparent}
         {/* CHAPTER 5 */}
         <Chapter index={5} title={chapterDefs[4]?.title} subtitle={chapterDefs[4]?.sub} icon={chapterDefs[4]?.icon} isActive={nextUnrevealed===4} isRevealed={chapters[4]} onReveal={()=>revealChapter(4)} dk={dk} he={he}>
           <p className="nar-line">{he?"המפה הפסיכולוגית":"Your psychological map"}</p>
-          <PsychRadar psych={results.psych} dk={dk} he={he}/>
+          <PsychRadar psych={results.psych} dk={dk} he={he} studio={showOwnerUI}/>
           {(()=>{const{dominant}=psychLevels(results.psych);const names=PSYCH_NAMES[he?"he":"en"];return(<div style={{textAlign:"center",marginTop:14,padding:"14px",background:`${ac}06`,borderRadius:12}}><div style={{fontSize:fs(13),fontWeight:600,color:ac,marginBottom:4}}>{dominant.length>1?(he?"הכוחות הדומיננטיים":"The dominant strengths"):(he?"הכוח הדומיננטי":"The dominant strength")}</div><div data-testid="psych-dominant" style={{fontSize:fs(22),fontWeight:700,color:ac}}>{dominant.map(k=>names[k]).join(" · ")||"—"}</div></div>);})()}
         </Chapter>
 
@@ -1943,13 +1968,13 @@ button,a,input{-webkit-tap-highlight-color:transparent}
     </div>
 
     {/* whose licence this Studio is: shown on every screen, like on the reports */}
-    {showOwnerUI&&studioReady&&<div aria-hidden="true" style={{position:"fixed",bottom:8,insetInlineStart:10,zIndex:90,fontSize:fs(10),color:`${ac}99`,pointerEvents:"none",letterSpacing:.3}}>{he?"מורשה ל: ":"Licensed to: "}{licensee.fullName}{licensee.phone?` · ${licensee.phone}`:""}</div>}
+    {showOwnerUI&&studioReady&&<div aria-hidden="true" style={{position:"fixed",bottom:8,insetInlineStart:10,zIndex:90,fontSize:fs(10),color:`${ac}cc`,pointerEvents:"none",letterSpacing:.3}}>{he?"מורשה ל: ":"Licensed to: "}{licensee.fullName}{licensee.phone?` · ${licensee.phone}`:""}</div>}
 
     {/* meeting mode: a reading in large type for showing a client, then its whole map: the summary and the life map */}
     {showOwnerUI&&studioReady&&<MeetingMode open={!!meeting} onClose={()=>setMeeting(null)} he={he} person={meeting?.person} main={meeting?.main} numbers={meeting?.numbers} text={meeting?.text}
       sections={meeting?[
         {id:"summary",title:he?"סיכום המפה":"Map summary",ownTitle:true,content:<ContentContext.Provider value={workspaceContent}><ReadingSummary r={meeting.r} name={meeting.person} now={meeting.at} add={meeting.add} he={he}/></ContentContext.Provider>},
-        {id:"life",title:he?"מפת החיים":"Life map",content:<div className="st-meet-narrow"><LifeMap results={meeting.r} dk={dk} he={he}/></div>},
+        {id:"life",title:he?"מפת החיים":"Life map",content:<div className="st-meet-narrow"><LifeMap results={meeting.r} dk={dk} he={he} studio live={isToday(meeting.at)}/></div>},
       ]:[]}/>}
 
     {/* quick search: tools, clients and actions, from the top bar or Ctrl+K */}
@@ -2031,7 +2056,7 @@ const TRAITS={
 function CompatWidget({he,dk}){
   const ac=dk?"#c8a96a":"#937640";
   const tm=dk?"#e8e0d0":"#2a2520";
-  const ts=softText(dk);
+  const ts=softText(dk,true); // a Studio tool
   const isRtl=he;
 
   const[mode,setMode]=useState("couple"); // couple | profile | parent
@@ -2094,7 +2119,7 @@ function CompatWidget({he,dk}){
     },1200);
   };
 
-  const inputLabelSt={display:"block",marginBottom:5,fontSize:fs(11),color:`${ac}99`,fontWeight:500};
+  const inputLabelSt={display:"block",marginBottom:5,fontSize:fs(11),color:`${ac}cc`,fontWeight:500};
   const personBlockSt={padding:16,background:dk?"rgba(18,18,38,.3)":"rgba(255,255,255,.3)",border:`1px solid ${ac}0a`,borderRadius:16};
   const personTitleSt={textAlign:"center",marginBottom:10};
   const dobInputSt={textAlign:"center",letterSpacing:3,fontFamily:"'Cormorant Garamond',serif"};
@@ -2117,7 +2142,7 @@ function CompatWidget({he,dk}){
     {mode==="couple"&&(<div>
       <div className="gc">
         <div style={{textAlign:"center",marginBottom:16}}>
-          <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"התאמה זוגית":"Couple Compatibility"}</div>
+          <div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:3}}>{he?"התאמה זוגית":"Couple Compatibility"}</div>
         </div>
         <div className="st-pair">
           <div style={personBlockSt}>
@@ -2203,7 +2228,7 @@ function CompatWidget({he,dk}){
     {mode==="profile"&&(<div>
       <div className="gc">
         <div style={{textAlign:"center",marginBottom:16}}>
-          <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"פרופיל אישיותי":"Personality Profile"}</div>
+          <div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:3}}>{he?"פרופיל אישיותי":"Personality Profile"}</div>
         </div>
         <div style={personBlockSt}>
           <div style={personTitleSt}><span style={{color:ac,display:"inline-flex"}}><Icon name="dna" size={20}/></span><div style={{fontSize:fs(13),fontWeight:600,color:ac,marginTop:2}}>{he?"הפרטים":"Your Details"}</div></div>
@@ -2255,7 +2280,7 @@ function CompatWidget({he,dk}){
     {mode==="parent"&&(<div>
       <div className="gc">
         <div style={{textAlign:"center",marginBottom:16}}>
-          <div style={{fontSize:fs(10),color:`${ac}55`,textTransform:"uppercase",letterSpacing:3}}>{he?"חיבור הורה-ילד":"Parent-Child Connection"}</div>
+          <div style={{fontSize:fs(10),color:`${ac}aa`,textTransform:"uppercase",letterSpacing:3}}>{he?"חיבור הורה-ילד":"Parent-Child Connection"}</div>
         </div>
         <div className="st-pair">
           <div style={personBlockSt}>
@@ -2284,7 +2309,7 @@ function CompatWidget({he,dk}){
               <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpP]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(pcRes.lpmP,pcRes.lpP)}</div>
               <div style={{fontSize:fs(11),color:D[pcRes.lpP]?.c||ac,opacity:.7}}>{he?D[pcRes.lpP]?.t:D[pcRes.lpP]?.te}</div>
             </div>
-            <div style={{color:`${ac}66`,display:"flex",justifyContent:"center"}}><Icon name="heart" size={18}/></div>
+            <div style={{color:`${ac}bb`,display:"flex",justifyContent:"center"}}><Icon name="heart" size={18}/></div>
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:fs(10),color:ts}}>{he?"ילד/ה":"Child"}</div>
               <div style={{fontSize:28,fontWeight:700,color:D[pcRes.lpC]?.c||ac,fontFamily:"'Cormorant Garamond',serif"}}>{comparedText(pcRes.lpmC,pcRes.lpC)}</div>
@@ -2327,13 +2352,13 @@ function AffirmWidget({he,dk}){
   return(<div style={{textAlign:"center",padding:"16px 0"}}>
     <div style={{color:ac,marginBottom:12,opacity:.3,display:"flex",justifyContent:"center"}}><Icon name="sparkle" size={28} stroke={1.2}/></div>
     <p style={{fontSize:fs(12),color:dk?"rgba(232,224,208,.35)":"rgba(0,0,0,.3)",marginBottom:16}}>{he?"ההודעה להיום":"Your message today"}</p>
-    {!rev?(<div onClick={()=>{setRev(true);AU.init();AU.p("card");}} style={{cursor:"pointer",padding:"28px 20px",background:dk?"rgba(18,18,38,.5)":"rgba(255,255,255,.6)",border:`1.5px solid ${ac}28`,borderRadius:16,maxWidth:300,margin:"0 auto",transition:"all .3s"}}><div style={{color:ac,opacity:.4,marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="orb" size={20}/></div><div style={{fontSize:fs(13),color:ac,letterSpacing:2}}>{he?"לחשיפה":"Reveal"}</div></div>):(<div style={{animation:"fadeInUp .8s ease-out",padding:"24px 20px",background:`${ac}06`,border:`1px solid ${ac}1a`,borderRadius:16,maxWidth:320,margin:"0 auto"}}><div style={{fontSize:fs(17),lineHeight:2.2,color:dk?"#e8e0d0":"#2a2520",fontWeight:500,fontStyle:"italic"}}>"{msg[he?"he":"en"]}"</div><div style={{marginTop:10,fontSize:fs(10),color:`${ac}55`,letterSpacing:2}}>✦ {today.toLocaleDateString(he?"he-IL":"en-US")} ✦</div></div>)}
+    {!rev?(<div onClick={()=>{setRev(true);AU.init();AU.p("card");}} style={{cursor:"pointer",padding:"28px 20px",background:dk?"rgba(18,18,38,.5)":"rgba(255,255,255,.6)",border:`1.5px solid ${ac}28`,borderRadius:16,maxWidth:300,margin:"0 auto",transition:"all .3s"}}><div style={{color:ac,opacity:.4,marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="orb" size={20}/></div><div style={{fontSize:fs(13),color:ac,letterSpacing:2}}>{he?"לחשיפה":"Reveal"}</div></div>):(<div style={{animation:"fadeInUp .8s ease-out",padding:"24px 20px",background:`${ac}06`,border:`1px solid ${ac}1a`,borderRadius:16,maxWidth:320,margin:"0 auto"}}><div style={{fontSize:fs(17),lineHeight:2.2,color:dk?"#e8e0d0":"#2a2520",fontWeight:500,fontStyle:"italic"}}>"{msg[he?"he":"en"]}"</div><div style={{marginTop:10,fontSize:fs(10),color:`${ac}aa`,letterSpacing:2}}>✦ {today.toLocaleDateString(he?"he-IL":"en-US")} ✦</div></div>)}
   </div>);
 }
 
 // ═══════════════════ RITUAL WIDGET ═══════════════════
 /** The daily ritual for `number`; `basis` names which number it is (a day has three, each its own calculation). */
-function RitualWidget({number,basis,how,he,dk,studio=true}){
+function RitualWidget({number,basis,how,he,dk,studio=false}){
   const ac=dk?"#c8a96a":"#937640";const ts=softText(dk,studio);
   const info=D[number]||D[1];const r=info.ritual;
   return(<div><div style={{textAlign:"center",marginBottom:14}}><div style={{color:ac,display:"flex",justifyContent:"center",marginBottom:2}}><Icon name="candle" size={18}/></div><div style={{fontSize:fs(14),fontWeight:600,color:ac,marginTop:4}}>{he?"טקס יומי":"Daily Ritual"}</div>

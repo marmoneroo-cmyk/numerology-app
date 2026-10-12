@@ -148,6 +148,29 @@ describe("MeetingMode", () => {
     expect(scrolled).toEqual(["st-meet-life", "st-meet-summary"]);
   });
 
+  it("leaves Tab alone when a window over the meeting (a number's '?') has already taken it", () => {
+    // Arrange: a window that keeps Tab on its own button, as the "?" explanation does
+    render(<Page open sections={SECTIONS} />);
+    const takeTab = (e) => {
+      if (e.key === "Tab") e.preventDefault();
+    };
+    document.addEventListener("keydown", takeTab, true);
+    onTestFinished(() => document.removeEventListener("keydown", takeTab, true));
+    const elsewhere = screen.getByRole("button", { name: OPENER });
+    elsewhere.focus();
+
+    // Act
+    fireEvent.keyDown(elsewhere, { key: "Tab" });
+
+    // Assert: the meeting did not pull the focus back to its own close button
+    expect(document.activeElement).toBe(elsewhere);
+  });
+
+  it("tells its sections how tall the bar is, so a section reached from it starts below it", () => {
+    render(<Page open sections={SECTIONS} />);
+    expect(screen.getByRole("dialog").style.getPropertyValue("--st-meet-bar-h")).toMatch(/^\d+px$/);
+  });
+
   it("keeps Tab inside the meeting: past the last control it comes back to the first, and the other way round", () => {
     // Arrange
     render(<Page open sections={SECTIONS} />);

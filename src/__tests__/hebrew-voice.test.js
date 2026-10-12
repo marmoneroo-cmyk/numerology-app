@@ -23,6 +23,8 @@ const NOT_YOUR = new Set([
   "תאריך", "ותאריך", "התאריך", "ערך", "צריך", "שצריך", "איך", "ואיך", "בתוך", "מתוך", "תוך", "כך", "וכך", "דרך", "הדרך",
   "שבדרך", "מסך", "המסך", "במסך", "ובמסך", "למסך", "להפוך", "המשך", "בהמשך", "להמשיך", "שמושך", "סמך", "לסמוך", "להסתמך",
   "מוסמך", "המסמך", "ארוך", "הנמוך", "התווך", "שייך", "תומך", "מרכך", "להעריך", "צורך", "הצורך",
+  "מלך", // the tarot's kings
+  "הפוך", // a tarot card drawn upside down
 ]);
 // quotes that must read as they do elsewhere: another app's own button, and the old wording kept to translate saved readings
 const KEPT_AS_THEY_ARE = ["“הזן קוד באופן ידני”", ...Object.keys(HEBREW_REWORDING)];

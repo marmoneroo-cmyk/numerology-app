@@ -68,6 +68,24 @@ async function readingFor(name, date) {
 }
 
 describe("the Studio", () => {
+  it("shows a saved map in meeting mode as it was saved: its life cycle marked 'בזמן הקריאה', not 'עכשיו'", async () => {
+    // Arrange: the sample client דנה שמיר has a map saved on another day
+    studio();
+    await signedIn();
+    tool("לקוחות");
+    const row = (await screen.findAllByRole("button", { name: /דנה שמיר/ }, SIGNED_IN)).find((b) => b.textContent.includes("03.03.1992"));
+    fireEvent.click(row);
+    fireEvent.click(await screen.findByRole("button", { name: /^\d{1,2}\.\d{1,2}\.\d{4} · מפה נומרולוגית/ }, SIGNED_IN));
+
+    // Act
+    fireEvent.click(await screen.findByRole("button", { name: "מצב פגישה" }, SIGNED_IN));
+
+    // Assert
+    const lifeMap = within(within(await screen.findByRole("dialog", { name: "מצב פגישה" })).getByRole("region", { name: "מפת החיים" }));
+    expect(lifeMap.getByText("בזמן הקריאה")).toBeTruthy();
+    expect(lifeMap.queryByText("עכשיו")).toBeNull();
+  });
+
   it("opens on 'היום', and a recent client opens beside the list, but only once", async () => {
     studio();
     const panel = (await signedIn()).closest("section");

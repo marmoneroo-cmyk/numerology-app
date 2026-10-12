@@ -1,8 +1,8 @@
 /*
- * Meeting mode (MeetingMode.jsx): one reading in large type over the whole
- * window. It scrolls inside itself when the reading is taller than the window.
- * Rules on the close button sit under .st-meet so they win over .fx in any
- * load order.
+ * Meeting mode (MeetingMode.jsx): a reading in large type over the whole window,
+ * its opening and then the whole map (the summary and the life map), under a bar
+ * that stays at the top. It scrolls inside itself. Rules on the bar's buttons sit
+ * under .st-meet so they win over .fx in any load order.
  */
 .st-meet {
   /* larger than the Studio's text (src/ui/type.js), for a client across the table */
@@ -209,7 +209,8 @@
   max-width: 1240px;
   margin: clamp(32px, 6vh, 64px) auto 0;
   text-align: start;
-  scroll-margin-top: 96px;
+  /* the bar's own height, measured by MeetingMode (it wraps to two rows on a phone) */
+  scroll-margin-top: calc(var(--st-meet-bar-h, 84px) + 14px);
 }
 /* the life map reads down a column: on a wide screen its rows would leave the numbers far from their names */
 .st-meet-narrow {

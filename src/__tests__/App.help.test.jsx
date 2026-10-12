@@ -96,6 +96,22 @@ describe("the explanation on every Studio screen", () => {
     }
   });
 
+  it("opens the קלפים tab on the tarot, with the number cards a press away (the owner, 2026-10-12)", async () => {
+    // Arrange
+    studio();
+    fireEvent.click(within(await screen.findByRole("navigation", { name: "כלי הסטודיו" })).getByRole("button", { name: "קלפים" }));
+
+    // Assert: the tarot loads with the tab, every card of it in the gallery
+    expect(await screen.findByRole("button", { name: "לשלוף קלף" }, { timeout: 8000 })).toBeTruthy();
+    expect(within(screen.getByRole("list", { name: "כל הקלפים" })).getAllByRole("button")).toHaveLength(78);
+    expect(screen.getByRole("button", { name: "טארוט" }).getAttribute("aria-pressed")).toBe("true");
+
+    // Act and assert: the number cards
+    fireEvent.click(screen.getByRole("button", { name: "קלפי המספרים" }));
+    expect(screen.getByText("לוחצים על קלף כדי להפוך אותו.")).toBeTruthy();
+    expect(screen.queryByRole("list", { name: "כל הקלפים" })).toBeNull();
+  });
+
   it("explains the comparison that is chosen in the התאמה tab", async () => {
     // Arrange
     studio();

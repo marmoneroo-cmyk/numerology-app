@@ -7,7 +7,8 @@ export function colors(dk) {
   return {
     ac: dk ? "#c8a96a" : "#937640",
     tm: dk ? "#e8e0d0" : "#2a2520",
-    ts: dk ? "rgba(232,224,208,.62)" : "rgba(42,37,32,.62)",
+    // the Studio's secondary text, as App.jsx's softText (the owner, 2026-10-12: the light theme looked washed out)
+    ts: dk ? "rgba(232,224,208,.7)" : "rgba(31,27,23,.78)",
     line: dk ? "rgba(200,169,106,.16)" : "rgba(147,118,64,.2)",
     soft: dk ? "rgba(18,18,38,.35)" : "rgba(255,255,255,.45)",
     warn: dk ? "#e7b16b" : "#8a5a14",

@@ -79,6 +79,40 @@
   margin-top: 2px;
   color: var(--st-gold-text);
 }
+/* a choice between two or three views of a screen (the decks of the קלפים tab) */
+.st-switch {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  margin: 0 auto 18px;
+  padding: 4px;
+  border: 1px solid var(--st-line);
+  border-radius: 999px;
+  background: var(--st-panel);
+}
+.st-switch-b {
+  min-height: 42px;
+  padding: 8px 22px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  color: var(--st-ink);
+  font: inherit;
+  font-size: max(var(--ts-min, 0px), calc(15px * var(--ts, 1)));
+  font-weight: 700;
+  cursor: pointer;
+}
+.st-switch-b.act {
+  border-color: var(--st-gold);
+  background: var(--st-gold-wash);
+  color: var(--st-gold-text);
+}
+.st-switch-b:focus-visible {
+  outline: 2px solid var(--st-gold);
+  outline-offset: 2px;
+}
+
 /* the same, for the comparison chosen in the התאמה tab */
 .st-subtab-help {
   margin: 8px 6px 2px;
