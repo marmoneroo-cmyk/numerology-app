@@ -43,7 +43,8 @@ const SHANI = { fullName: "שני כהן אזולאי", birthDate: "1990-08-15" 
 const AVIR = { fullName: "אביר אזולאי", birthDate: "1987-11-03" };
 const yearReadingOf = (clientId, over = {}) => ({
   clientId, type: "yearCycle", input: { birthDate: "1990-08-15", add: false }, result: { proj: [{ year: 2026, py: 6, isCurrent: true }] },
-  engineVersion: "1.0.0", computedFor: NOW.toISOString(), ...over,
+  // made by engine 4 (the last birthday's year), so it is shown as saved; older ones are worked out again (saved.js)
+  engineVersion: "4.0.0", computedFor: NOW.toISOString(), ...over,
 });
 const click = (name) => fireEvent.click(screen.getByRole("button", { name }));
 const tap = async (name) => fireEvent.click(await screen.findByRole("button", { name }));
@@ -174,7 +175,7 @@ describe("workspace", () => {
     expect((await screen.findByTestId("rs-py")).textContent).toBe("6");
     expect(["rs-pm", "rs-pd"].map((id) => screen.getByTestId(id).textContent)).toEqual(["7", "3"]);
     // the screen says the numbers were worked out again
-    expect(screen.getByText(/המספרים שתלויים בשנה האישית חושבו מחדש בלי ה-\+1/)).toBeTruthy();
+    expect(screen.getByText(/המספרים שתלויים בשנה האישית חושבו מחדש לפי הכללים של היום: בלי \+1, ולפי יום ההולדת האחרון/)).toBeTruthy();
     // meeting mode and the PDF get the same numbers
     click("מצב פגישה");
     expect(openMeeting.mock.calls[0][0]).toMatchObject({ py: 6, pm: 7, pd: 3 });

@@ -5,7 +5,7 @@
  * from the number beside it.
  */
 import {
-  LV, VOW, R, reduce, isMaster, LP, LPm, NV, CA, CH, cycleSpans, karmicDebt, reductionChain, loShu,
+  LV, VOW, R, reduce, isMaster, LP, LPm, NV, CA, CH, lastBirthdayYear, cycleSpans, karmicDebt, reductionChain, loShu,
   nameCounts, dominantNumbers, missingNumbers, charValue,
 } from "../engine/index.js";
 import { agesText } from "./ages.js";
@@ -124,7 +124,7 @@ function age({ d, m, y, now }, he) {
   return { steps, result };
 }
 
-/** The personal year of calendar year `year`: the digits of the birth day and month with those of the year. */
+/** The personal year of year `year`: the digits of the birth day and month with those of the year. */
 function personalYear({ d, m, year }, he) {
   const ds = digitsOf(`${pad2(d)}${pad2(m)}${year}`);
   const base = reduceSteps(sum(ds), false, he);
@@ -132,8 +132,14 @@ function personalYear({ d, m, year }, he) {
   return { steps, result: base.result };
 }
 
-/** The personal year on `now`: that of its calendar year. */
-const yearOf = ({ d, m, now }, he) => personalYear({ d, m, year: now.getFullYear() }, he);
+/** The personal year on `now`: that of the year of the last birthday, saying so when it is last year. */
+function yearOf({ d, m, now }, he) {
+  const year = lastBirthdayYear(d, m, now);
+  const worked = personalYear({ d, m, year }, he);
+  if (year === now.getFullYear()) return worked;
+  const why = step(he ? `יום ההולדת של השנה עוד לא הגיע, אז השנה האישית היא של ${year}` : `This year's birthday has not come yet, so the personal year is that of ${year}`);
+  return { ...worked, steps: [why, ...worked.steps] };
+}
 
 /** The personal month: the personal year, plus the month. */
 function personalMonth(ctx, he) {
@@ -355,7 +361,7 @@ const BUILDERS = {
   ex: (ctx, he) => nameNumber("ex", ctx.name, he),
   lp: lifePath,
   age,
-  py: (ctx, he) => personalYear({ d: ctx.d, m: ctx.m, year: ctx.year ?? ctx.now.getFullYear() }, he),
+  py: (ctx, he) => (ctx.year == null ? yearOf(ctx, he) : personalYear({ d: ctx.d, m: ctx.m, year: ctx.year }, he)),
   pm: personalMonth,
   pd: personalDay,
   hy: hiddenYear,

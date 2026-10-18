@@ -34,8 +34,20 @@ const isVowel = (c) => NEW_VOWELS.has(c);
 const refSU = (s) => reduce(letters(s, isVowel), true);
 const refEX = (s) => reduce(letters(s, (c) => !isVowel(c)), true);
 const pad = (n) => String(n).padStart(2, "0");
-// the personal year on `now` with no +1 (the owner, 2026-10-12), plus the month; the day adds the day
-const refPM = (d, m, now) => reduce(reduce(digitSum(`${pad(d)}${pad(m)}${now.getFullYear()}`)) + now.getMonth() + 1);
+// the year of the last birthday on `now` (the owner, 2026-10-18): this year once the birthday has come
+const refLastYear = (d, m, now) => {
+  const month = now.getMonth() + 1;
+  return month > m || (month === m && now.getDate() >= d) ? now.getFullYear() : now.getFullYear() - 1;
+};
+// the personal year on `now`: of the last birthday's year, no +1 (the owner, 2026-10-12)
+const refPY = (d, m, now) => reduce(digitSum(`${pad(d)}${pad(m)}${refLastYear(d, m, now)}`));
+// two years back to ten ahead of the last birthday's year, each by the shipped PY without its +1
+const refProj = (d, m, now) => {
+  const cy = refLastYear(d, m, now);
+  return Array.from({ length: 13 }, (_, i) => ({ year: cy - 2 + i, py: legacy.PY(d, m, cy - 2 + i, false), isCurrent: i === 2 }));
+};
+// the personal year plus the month; the day adds the day
+const refPM = (d, m, now) => reduce(refPY(d, m, now) + now.getMonth() + 1);
 const refPD = (d, m, now) => reduce(refPM(d, m, now) + now.getDate());
 const chain = (n) => {
   const out = [n];
@@ -49,7 +61,7 @@ const refKarmic = (d, m, y, nm) => {
   return [...new Set(found)];
 };
 /** The parts of a map the owner did not change, which must still equal the shipped code's. */
-const kept = ({ su, ex, pm, pd, kd, psych, ...rest }) => rest;
+const kept = ({ su, ex, py, pm, pd, kd, proj, psych, ...rest }) => rest;
 // since the second round of 2026-10-11 (the owner's temporary defaults): the live calculator keeps the
 // master numbers, and the psychological map has no filler, only the points of its rules
 const refLive = (s) => {
@@ -222,12 +234,15 @@ describe.each(CLOCKS.map(([label, now], i) => [label, now, i]))("engine matches 
     const res = sweep(cases.keys(), (k) => {
       const [d, m, y, nm, lang] = cases[k];
       const got = engine.fullCalc(d, m, y, nm, now);
-      const changed = { su: got.su, ex: got.ex, pm: got.pm, pd: got.pd, kd: got.kd };
-      const wanted = { su: refSU(nm), ex: refEX(nm), pm: refPM(d, m, now), pd: refPD(d, m, now), kd: refKarmic(d, m, y, nm) };
+      const changed = { su: got.su, ex: got.ex, py: got.py, pm: got.pm, pd: got.pd, kd: got.kd, proj: got.proj };
+      const wanted = {
+        su: refSU(nm), ex: refEX(nm), py: refPY(d, m, now), pm: refPM(d, m, now), pd: refPD(d, m, now), kd: refKarmic(d, m, y, nm),
+        proj: refProj(d, m, now),
+      };
       // the recommendation rules did not change: both read the engine's own map
       return [
-        [kept(got), kept(defaults[k]), changed, defaults[k].pm, engine.getRecommendations(got, lang)],
-        [kept(wants[k].map), kept(wants[k].map), wanted, wanted.pm, reworded(legacy.getRecommendations(got, lang))],
+        [kept(got), kept(defaults[k]), changed, defaults[k].py, defaults[k].pm, engine.getRecommendations(got, lang)],
+        [kept(wants[k].map), kept(wants[k].map), wanted, wanted.py, wanted.pm, reworded(legacy.getRecommendations(got, lang))],
       ];
     });
     expect(res.mismatches).toEqual([]);
@@ -237,8 +252,11 @@ describe.each(CLOCKS.map(([label, now], i) => [label, now, i]))("engine matches 
   it("the psychological map: the points of its rules, 0 where none, and the shipped value wherever a trait has points", () => {
     const r = rng(2000 + i);
     const cases = Array.from({ length: 800 }, () => [1 + Math.floor(r() * 31), 1 + Math.floor(r() * 12), 1900 + Math.floor(r() * 131), pick(r, NAMES)]).filter(([, , , nm]) => !nm.includes("ה"));
-    freeze(now);
-    const shipped = cases.map(([d, m, y, nm]) => legacy.fullCalc(d, m, y, nm, false).psych);
+    // the shipped code read its clock's calendar year: a clock in the last birthday's year gives it that year's
+    const shipped = cases.map(([d, m, y, nm]) => {
+      freeze(new Date(refLastYear(d, m, now), 5, 15, 12));
+      return legacy.fullCalc(d, m, y, nm, false).psych;
+    });
     freeze(DECOY);
     const res = sweep(cases.keys(), (k) => {
       const [d, m, y, nm] = cases[k];

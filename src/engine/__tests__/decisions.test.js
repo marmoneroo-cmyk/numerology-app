@@ -97,11 +97,13 @@ describe("the three numbers of a day, each its own calculation", () => {
     expect([9, 10, 29, 31].map((day) => E.dailyRitualNumber(ON(day, 10)))).toEqual([9, 1, 2, 4]);
   });
 
-  it("keeps the personal year from June 30 to July 1 (no +1, the owner, 2026-10-12), and moves it on January 1", () => {
+  it("keeps the personal year from June 30 to July 1 and over January 1 (no +1), and moves it on the birthday (the owner, 2026-10-18)", () => {
     const at = (date) => [E.personalYearOn(MAYA.d, MAYA.m, date), E.PM(MAYA.d, MAYA.m, date), E.PD(MAYA.d, MAYA.m, date)];
     expect(at(ON(30, 6))).toEqual([6, 3, 6]); // 24 → 6; 6+6 = 12 → 3; 3+30 = 33 → 6
     expect(at(ON(1, 7))).toEqual([6, 4, 5]); // still 6; 6+7 = 13 → 4; 4+1 = 5
-    expect(at(ON(1, 1, 2027))).toEqual([7, 8, 9]); // 1+9+0+4+2+0+2+7 = 25 → 7; 7+1 = 8; 8+1 = 9
+    expect(at(ON(1, 1, 2027))).toEqual([6, 7, 8]); // the 2027 birthday has not come: still 6; 6+1 = 7; 7+1 = 8
+    expect(at(ON(18, 4, 2027))).toEqual([6, 1, 1]); // the day before it: 6; 6+4 = 10 → 1; 1+18 = 19 → 1
+    expect(at(ON(19, 4, 2027))).toEqual([7, 2, 3]); // on it: 1+9+0+4+2+0+2+7 = 25 → 7; 7+4 = 11 → 2; 2+19 = 21 → 3
   });
 });
 

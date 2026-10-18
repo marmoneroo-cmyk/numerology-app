@@ -20,6 +20,7 @@ export {
   CA,
   PY,
   personalYearOn,
+  lastBirthdayYear,
   PM,
   PD,
   CH,

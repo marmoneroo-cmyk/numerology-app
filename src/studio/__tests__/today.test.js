@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import {
   upcomingBirthdays, recentClients, greetingLink, whatsappLink, greetingText, initialsOf,
-  followUpText, checkInText, newYearText, isNewYearMonth, quietClients,
+  followUpText, checkInText, quietClients,
 } from "../today.js";
 
 describe("every message to a client is impersonal in Hebrew", () => {
   // the sales page's check (src/sales/__tests__/content.test.js): no singular "you", whoever the client is
   const SINGULAR_YOU = /(?<![א-ת])(אתה|שלך|לך|עליך|אליך|ממך|אותך|בך|שלומך|תוכל|תוכלי|הנך)(?![א-ת])/;
   it.each([1, 5, 9, undefined])("with personal year %s", (personalYear) => {
-    for (const make of [greetingText, followUpText, checkInText, newYearText]) {
+    for (const make of [greetingText, followUpText, checkInText]) {
       expect(make("רחל כהן", true, { personalYear, signature: "שני" })).not.toMatch(SINGULAR_YOU);
     }
   });
@@ -26,15 +26,6 @@ describe("messages that bring clients back", () => {
     );
     expect(checkInText("רחל כהן", true)).toBe("היי רחל, מזמן לא דיברנו! אם מתאים, אפשר לקבוע פגישה ולראות יחד מה מחכה בהמשך.");
     expect(checkInText("Rachel", false, { personalYear: 1 })).toContain("your personal year now is 1 — a year of new beginnings");
-  });
-
-  it("in January: the new personal year (it changes with the calendar year: no +1 since 2026-10-12)", () => {
-    expect(newYearText("רחל כהן", true, { personalYear: 2, signature: "שני" })).toBe(
-      "היי רחל, שנה אישית חדשה התחילה: 2 — שנה של שיתוף, קשרים וסבלנות שמשתלמת. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.\nשני",
-    );
-    // without a birth date there is no year to name, and no "it has been a while" to a client seen yesterday
-    expect(newYearText("רחל כהן", true, {})).toBe("היי רחל, שנה אישית חדשה התחילה. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.");
-    expect([isNewYearMonth(new Date(2027, 0, 1)), isNewYearMonth(new Date(2027, 0, 31)), isNewYearMonth(new Date(2027, 1, 1)), isNewYearMonth(new Date(2026, 6, 1))]).toEqual([true, true, false, false]);
   });
 });
 
@@ -278,7 +269,7 @@ describe("greetingText", () => {
   });
 
   it("leaves out a blank signature, for every message", () => {
-    for (const make of [followUpText, checkInText, newYearText]) expect(make("רחל כהן", true, { personalYear: 5, signature: " " }).includes("\n")).toBe(false);
+    for (const make of [followUpText, checkInText]) expect(make("רחל כהן", true, { personalYear: 5, signature: " " }).includes("\n")).toBe(false);
   });
 
   it("leaves out a blank signature", () => {

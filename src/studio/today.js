@@ -145,23 +145,6 @@ export function checkInText(fullName, he, { personalYear, signature } = {}) {
   return withSignature(text, signature);
 }
 
-/** In January, when every personal year moves on: the new year, and an offer to meet. */
-export function newYearText(fullName, he, { personalYear, signature } = {}) {
-  const wish = wishFor(personalYear);
-  let text;
-  if (he) {
-    const year = wish ? `: ${personalYear} — ${wish.he}` : "";
-    text = `${hiTo(fullName, true)}, שנה אישית חדשה התחילה${year}. אם מתאים, אפשר לקבוע פגישה ולראות יחד מה היא מביאה.`;
-  } else {
-    const year = wish ? `: ${personalYear} — ${wish.en}` : "";
-    text = `${hiTo(fullName, false)}, your new personal year has begun${year}. If it suits you, we can meet and see what it brings.`;
-  }
-  return withSignature(text, signature);
-}
-
-/** January: every client's personal year moves on with the calendar year (no +1 since 2026-10-12, the owner). */
-export const isNewYearMonth = (now) => now.getMonth() === 0;
-
 /** Half a year, in days: a client quiet this long is worth a word. */
 export const QUIET_DAYS = 182;
 

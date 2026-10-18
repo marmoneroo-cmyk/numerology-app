@@ -111,8 +111,8 @@ describe("the method since 2026-10-11 (the owner's answers to the calculation au
   it("the personal month is the personal year plus the month; the personal day adds the day", () => {
     // October: personal year 6 (no +1); 6 + 10 = 16 -> 7; 7 + 5 = 12 -> 3
     expect([engine.PM(15, 8, OCT_5_2026), engine.PD(15, 8, OCT_5_2026)]).toEqual([7, 3]);
-    // March: 6 + 3 = 9; 9 + 5 = 14 -> 5
-    expect([engine.PM(15, 8, MARCH_5_2026), engine.PD(15, 8, MARCH_5_2026)]).toEqual([9, 5]);
+    // March, before the August birthday: the 2025 year 1+5+0+8+2+0+2+5 = 23 -> 5 (the owner, 2026-10-18); 5 + 3 = 8; 8 + 5 = 13 -> 4
+    expect([engine.PM(15, 8, MARCH_5_2026), engine.PD(15, 8, MARCH_5_2026)]).toEqual([8, 4]);
   });
 
   it("a karmic debt is 13, 14, 16 or 19 anywhere on the way down: the date, the name, the soul or the consonants", () => {

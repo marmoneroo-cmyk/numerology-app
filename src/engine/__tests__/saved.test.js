@@ -81,8 +81,9 @@ describe("other readings", () => {
     expect(withoutPlusOne(saved).input).toEqual({ birthDate: "1990-09-15", add: false });
   });
 
-  it("a reading saved without the +1 is shown as it is", () => {
-    const saved = savedMap({ input: { name: NAME, birthDate: "1990-09-15", add: false } });
+  it("a reading saved without the +1, whose year the last birthday does not change, is shown as it is", () => {
+    // the September birthday came before October 5: the year is 2026's either way
+    const saved = { ...savedMap({ input: { name: NAME, birthDate: "1990-09-15", add: false } }), result: fullCalc(15, 9, 1990, NAME, AT) };
     expect(withoutPlusOne(saved)).toBe(saved);
   });
 
@@ -93,7 +94,8 @@ describe("other readings", () => {
 
   it("marks what it worked out again, so the screen can say so; a reading shown as saved has no mark", () => {
     expect(withoutPlusOne(savedMap()).recalculated).toBe(true);
-    expect(withoutPlusOne(savedMap({ input: { name: NAME, birthDate: "1990-09-15", add: false } })).recalculated).toBeUndefined();
+    const plain = { ...savedMap({ input: { name: NAME, birthDate: "1990-09-15", add: false } }), result: fullCalc(15, 9, 1990, NAME, AT) };
+    expect(withoutPlusOne(plain).recalculated).toBeUndefined();
   });
 
   it("shows a map it can't work out again as it is, rather than failing the client's whole file", () => {

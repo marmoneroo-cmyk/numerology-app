@@ -24,7 +24,10 @@
 // 3.0.0: no +1 (the owner, 2026-10-12): the personal year is the birth day and month with the current year all
 //        year round, and so are the personal month and day and the years table built on it; saved readings
 //        that had it are shown without it (saved.js)
-export const ENGINE_VERSION = "3.0.0";
+// 4.0.0: the personal year goes by the last birthday (the owner, 2026-10-18): the birth day and month with the
+//        year of the last birthday on the date, so it changes on the birthday, not on January 1; the personal
+//        month and day and the years table follow it; saved readings made before are shown by it (saved.js)
+export const ENGINE_VERSION = "4.0.0";
 
 /** Hebrew letter values, final forms included. Any other character counts 0. Frozen: shared by every reading. */
 export const LV = Object.freeze({
@@ -94,18 +97,25 @@ export function CA(d, m, y, now = new Date()) {
   return age;
 }
 
-/**
- * Personal year for calendar year `yr`: the birth day and month with that year, reduced. No +1 (the owner,
- * 2026-10-12): it changes on January 1.
- */
+/** Personal year for year `yr`: the birth day and month with that year, reduced. No +1 (the owner, 2026-10-12). */
 export const PY = (d, m, yr) => R(sumChars(dateDigits(d, m, yr)));
 
-/** The personal year on a date: that of its calendar year. */
-export const personalYearOn = (d, m, now = new Date()) => PY(d, m, now.getFullYear());
+/**
+ * The year of the last birthday on `now` (the owner, 2026-10-18): this year from the birthday on, last year
+ * before it. A February 29 birthday comes on March 1 in a year without one.
+ */
+export function lastBirthdayYear(d, m, now = new Date()) {
+  const month = now.getMonth() + 1;
+  const had = month > m || (month === m && now.getDate() >= d);
+  return had ? now.getFullYear() : now.getFullYear() - 1;
+}
 
-/** Personal years from two years before `now`'s year to ten after it. */
+/** The personal year on a date: that of the year of the last birthday, so it changes on the birthday. */
+export const personalYearOn = (d, m, now = new Date()) => PY(d, m, lastBirthdayYear(d, m, now));
+
+/** Personal years from two years before the year of the last birthday to ten after it; that year is current. */
 export function yearCycle(d, m, now = new Date()) {
-  const cy = now.getFullYear();
+  const cy = lastBirthdayYear(d, m, now);
   const proj = [];
   for (let i = -2; i <= 10; i++) {
     const yr = cy + i;
@@ -115,7 +125,7 @@ export function yearCycle(d, m, now = new Date()) {
 }
 
 /**
- * Personal month: the personal year on `now` plus its calendar month (the owner, 2026-10-11; before, the
+ * Personal month: the personal year on `now` (by the last birthday) plus its calendar month (the owner, 2026-10-11; before, the
  * birth day and month plus the month, without the year).
  */
 export const PM = (d, m, now = new Date()) => R(personalYearOn(d, m, now) + now.getMonth() + 1);

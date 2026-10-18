@@ -9,7 +9,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useLoad } from "../workspace/ui.jsx";
 import { NotFoundError, toYmd } from "../data/store.js";
 import {
-  checkInText, followUpText, greetingLink, greetingText, initialsOf, isNewYearMonth, newYearText, quietClients,
+  checkInText, followUpText, greetingLink, greetingText, initialsOf, quietClients,
   recentClients, shareLink, upcomingBirthdays,
 } from "./today.js";
 import { WEEK_DAYS, dueBy, lifePathCounts, weekAhead, weekEnd } from "./dashboard.js";
@@ -514,37 +514,24 @@ function FollowUps({ he, due, clients, onOpenReading, onDone, failed, greetAnyon
   );
 }
 
-/** In January, the clients shown before "show all". */
-const NEW_YEAR_FIRST = 8;
-
 /**
- * Clients worth a word: the ones quiet for half a year, with their personal year now; in January, when every
- * personal year moves on, every client with their new year (the most recent first, the rest on asking).
+ * Clients worth a word: the ones quiet for half a year, with their personal year now. (Until 2026-10-18 January
+ * listed every client with a new year; the personal year now turns on each birthday, and the birthday greeting
+ * carries it.)
  */
 function Reconnect({ he, clients, now, personalYear, greetAnyone, signature }) {
-  const [showAll, setShowAll] = useState(false);
-  const newYear = isNewYearMonth(now);
-  // a client with no birth date has no personal year to send
-  const everyone = newYear ? recentClients(clients, Infinity).filter((c) => c.birthDate) : [];
-  const list = newYear
-    ? everyone.slice(0, showAll ? everyone.length : NEW_YEAR_FIRST).map((client) => ({ client, months: null }))
-    : quietClients(clients, now);
+  const list = quietClients(clients, now);
   if (!list.length) {
-    if (newYear) return <p className="st-today-quiet">{he ? "אין עדיין לקוחות עם תאריך לידה." : "No clients with a birth date yet."}</p>;
     return <p className="st-today-quiet">{he ? "לכל הלקוחות הייתה פעילות בחצי השנה האחרונה." : "Every client had activity in the last half year."}</p>;
   }
-  const more = newYear && !showAll && everyone.length > NEW_YEAR_FIRST;
   return (
     <>
       <ul className="st-today-rows">
         {list.map(({ client, months }) => {
           const year = client.birthDate ? personalYear(client.birthDate, now) : undefined;
-          const make = newYear ? newYearText : checkInText;
-          const text = make(client.fullName, he, { personalYear: year, signature });
+          const text = checkInText(client.fullName, he, { personalYear: year, signature });
           const link = messageLink(client, text, greetAnyone);
-          const about = newYear
-            ? year && (he ? `שנה אישית חדשה: ${year}` : `New personal year: ${year}`)
-            : he ? `פעילות אחרונה לפני ${months} חודשים` : `Last activity ${months} months ago`;
+          const about = he ? `פעילות אחרונה לפני ${months} חודשים` : `Last activity ${months} months ago`;
           return (
             <li key={client.id} className="st-today-row">
               <Initials name={client.fullName} />
@@ -561,11 +548,6 @@ function Reconnect({ he, clients, now, personalYear, greetAnyone, signature }) {
           );
         })}
       </ul>
-      {more && (
-        <button type="button" className="st-today-btn st-today-small fx" onClick={() => setShowAll(true)}>
-          {he ? `להציג את כל ${everyone.length} הלקוחות` : `Show all ${everyone.length} clients`}
-        </button>
-      )}
     </>
   );
 }
@@ -724,7 +706,7 @@ export default function Today({ he, store, now = () => new Date(), day, lifePath
           </WithClients>
         </Panel>
         {hasClients && (
-          <Panel title={isNewYearMonth(today) ? (he ? "השנה האישית החדשה" : "The new personal year") : he ? "כדאי לחזור אליהם" : "Worth getting back to"} rise={4}>
+          <Panel title={he ? "כדאי לחזור אליהם" : "Worth getting back to"} rise={4}>
             <Reconnect {...messages} clients={load.data} now={today} personalYear={personalYear} />
           </Panel>
         )}

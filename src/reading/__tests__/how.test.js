@@ -197,3 +197,19 @@ describe("reduction", () => {
     expect(reduction(7)).toEqual({ steps: [], result: 7, master: false });
   });
 });
+
+describe("the personal year by the last birthday (the owner, 2026-10-18)", () => {
+  const now = new Date(2026, 9, 18, 12);
+  it("says when the birthday has not come yet, and sums last year's digits", () => {
+    const how = howFor("py", { d: 11, m: 11, now }, true);
+    expect(how.result).toBe(4);
+    expect(how.steps[0].text).toBe("יום ההולדת של השנה עוד לא הגיע, אז השנה האישית היא של 2025");
+    expect(how.steps[1].math).toBe("1+1+1+1+2+0+2+5 = 13");
+    expect(howFor("pm", { d: 11, m: 11, now }, true).result).toBe(5);
+  });
+  it("adds no such step once the birthday has come", () => {
+    const how = howFor("py", { d: 18, m: 10, now }, false);
+    expect(how.result).toBe(2);
+    expect(how.steps[0].math).toBe("1+8+1+0+2+0+2+6 = 20");
+  });
+});

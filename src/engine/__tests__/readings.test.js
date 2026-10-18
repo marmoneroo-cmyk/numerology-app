@@ -124,7 +124,13 @@ describe("cycle, ritual number and master base", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(now);
     const wants = [];
-    for (let m = 1; m <= 12; m++) for (let d = 1; d <= 31; d++) wants.push([d, m, handlers.yearCycleButton({ d, m }, false)]);
+    // the shipped button read its clock's calendar year; since 2026-10-18 the table centres on the last birthday's
+    // year, so the shipped button is run under a clock in that year
+    const lastYear = (d, m) => (now.getMonth() + 1 > m || (now.getMonth() + 1 === m && now.getDate() >= d) ? now.getFullYear() : now.getFullYear() - 1);
+    for (let m = 1; m <= 12; m++) for (let d = 1; d <= 31; d++) {
+      vi.setSystemTime(new Date(lastYear(d, m), 5, 15, 12));
+      wants.push([d, m, handlers.yearCycleButton({ d, m }, false)]);
+    }
     vi.setSystemTime(new Date(1999, 2, 3, 4)); // a decoy clock: the engine must use `now`, not the system clock
     const bad = wants.filter(([d, m, want]) => !isDeepStrictEqual(engine.yearCycle(d, m, now), want));
     expect(bad.slice(0, 3)).toEqual([]);

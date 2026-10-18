@@ -264,24 +264,12 @@ describe("Today", () => {
       expect(within(screen.getByRole("heading", { name: "מעקבים שהגיע זמנם" }).closest("section")).getByText("אין מעקבים שהגיע זמנם.")).toBeTruthy();
     });
 
-    it("in January, offers every client their new year: eight first, the rest on asking", async () => {
-      const JANUARY = new Date(2027, 0, 3, 10);
-      const many = Array.from({ length: 11 }, (_, i) => ({ id: `c${i}`, fullName: `לקוח ${i + 1}`, birthDate: "1990-03-06", phone: "050-7654321", updatedAt: ago(i + 1, JANUARY), lastActivityAt: ago(i + 1, JANUARY) }));
-      renderToday(fakeStore(many), { now: () => JANUARY });
-      const panel = (await screen.findByRole("heading", { name: "השנה האישית החדשה" })).closest("section");
-      expect(within(panel).getAllByRole("listitem")).toHaveLength(8);
-      fireEvent.click(within(panel).getByRole("button", { name: "להציג את כל 11 הלקוחות" }));
-      expect(within(panel).getAllByRole("listitem")).toHaveLength(11);
-      expect(within(panel).queryByRole("button", { name: /להציג את כל/ })).toBeNull();
-    });
-
-    it("in January, offers every recent client their new personal year", async () => {
+    it("in January too, lists only the quiet clients: the personal year turns on each birthday (the owner, 2026-10-18)", async () => {
       const JANUARY = new Date(2027, 0, 3, 10);
       renderToday(fakeStore([{ ...YOSSI_NOW, phone: "050-7654321", updatedAt: ago(2, JANUARY), lastActivityAt: ago(2, JANUARY) }]), { now: () => JANUARY });
-      const panel = (await screen.findByRole("heading", { name: "השנה האישית החדשה" })).closest("section");
-      expect(within(panel).getByText("שנה אישית חדשה: 5")).toBeTruthy();
-      const href = within(panel).getByRole("link", { name: "הודעה ליוסי לוי" }).getAttribute("href");
-      expect(decodeURIComponent(href.split("?text=")[1])).toContain("שנה אישית חדשה התחילה: 5");
+      const panel = (await screen.findByRole("heading", { name: "כדאי לחזור אליהם" })).closest("section");
+      expect(within(panel).queryByText("יוסי לוי")).toBeNull();
+      expect(screen.queryByRole("heading", { name: "השנה האישית החדשה" })).toBeNull();
     });
   });
 
