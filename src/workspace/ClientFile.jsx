@@ -1,6 +1,6 @@
 /** A client's file: details, core numbers, the readings history and attached files. */
 import { useId, useRef, useState } from "react";
-import { LPm, NV, SU, CA, personalYearOn, withoutPlusOne } from "../engine/index.js";
+import { LPm, NV, SU, CA, personalYearOn, lastBirthdayYear, withoutPlusOne } from "../engine/index.js";
 import { ValidationError, LIMITS } from "../data/validation.js";
 import { useContent, numberTitle } from "./content.js";
 import { Card, Num, Loading, ErrorCard, SectionTitle, ScreenTitle, BackButton, ConfirmAction, useLoad, rowButton, tilesGrid, btnPrimary, btnGhost } from "./ui.jsx";
@@ -32,6 +32,7 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
     nv: NV(client.fullName),
     su: SU(client.fullName),
     py: personalYearOn(p.d, p.m, today),
+    pyYear: lastBirthdayYear(p.d, p.m, today), // the year it is of: last year's until the birthday
     age: CA(p.d, p.m, p.y, today),
   };
   const howCtx = p && { d: p.d, m: p.m, y: p.y, name: client.fullName, now: today };
@@ -111,7 +112,7 @@ export default function ClientFile({ store, go, he, c, now, clientId }) {
             <Num testId="num-lp" label={he ? "שביל הגורל" : "Life path"} value={nums.lp} title={numberTitle(content, nums.lp, he)} c={c} how={<HowButton k="lp" ctx={howCtx} he={he} />} />
             <Num testId="num-nv" label={he ? "ערך השם" : "Name number"} value={nums.nv} title={numberTitle(content, nums.nv, he)} c={c} how={<HowButton k="nv" ctx={howCtx} he={he} />} />
             <Num testId="num-su" label={he ? "קול הנשמה" : "Soul"} value={nums.su} title={numberTitle(content, nums.su, he)} c={c} how={<HowButton k="su" ctx={howCtx} he={he} />} />
-            <Num testId="num-py" label={he ? `שנה אישית ${today.getFullYear()}` : `Personal year ${today.getFullYear()}`} value={nums.py} title={numberTitle(content, nums.py, he)} c={c} how={<HowButton k="py" ctx={howCtx} he={he} />} />
+            <Num testId="num-py" label={he ? `שנה אישית ${nums.pyYear}` : `Personal year ${nums.pyYear}`} value={nums.py} title={numberTitle(content, nums.py, he)} c={c} how={<HowButton k="py" ctx={howCtx} he={he} />} />
           </div>
         )}
 

@@ -85,6 +85,17 @@ describe("workspace", () => {
     expect(screen.getByText(/גיל 36/)).toBeTruthy();
   });
 
+  it("names the personal year by the last birthday's year (the owner, 2026-10-18)", async () => {
+    await setup(async (s) => {
+      await s.clients.create({ fullName: "דנה לוי", birthDate: "1990-12-25" });
+    });
+    await openClient("דנה לוי");
+    // 5.10.2026, before the December birthday: the 2025 year, 2+5+1+2+2+0+2+5 = 19 → 1
+    expect((await screen.findByTestId("num-py")).textContent).toBe("1");
+    expect(screen.getByText("שנה אישית 2025")).toBeTruthy();
+    expect(screen.queryByText("שנה אישית 2026")).toBeNull();
+  });
+
   it("works in English too", async () => {
     await setup(null, { he: false });
     expect(await screen.findByText(/No clients yet/)).toBeTruthy();
