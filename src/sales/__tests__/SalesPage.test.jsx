@@ -66,6 +66,17 @@ describe("the sales page", () => {
     expect([whatsapp.getAttribute("target"), whatsapp.getAttribute("rel")]).toEqual(["_blank", "noopener noreferrer"]);
   });
 
+  it("links to Shani's own site, in both languages (2026-10-25: the two sites point at each other)", () => {
+    for (const he of [true, false]) {
+      const { unmount } = render(<SalesPage he={he} onLanguage={() => {}} />);
+      const t = he ? SALES.he : SALES.en;
+      const link = within(screen.getByRole("contentinfo")).getByRole("link", { name: t.footer.site });
+      expect(link.getAttribute("href")).toBe("https://www.shani-cohen.com/");
+      unmount();
+    }
+    expect(SALES.he.footer.site).toBe("שני כהן אזולאי · נומרולוגיה וערבי הפרשות חלה");
+  });
+
   it("answers the common questions in place, each one opening by itself", () => {
     const { container } = render(<SalesPage he onLanguage={() => {}} />);
     const questions = container.querySelectorAll("details");
