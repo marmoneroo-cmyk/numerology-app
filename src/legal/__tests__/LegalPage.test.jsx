@@ -2,7 +2,7 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
 import LegalPage from "../LegalPage.jsx";
-import { LEGAL_DOCS, LEGAL_EMAIL, LEGAL_UPDATED, OPERATOR_NAME, buildLegalDocs, phoneOf } from "../content.js";
+import { LEGAL_DOCS, LEGAL_EMAIL, LEGAL_UPDATED, OPERATOR_NAME, OPERATOR_ID, buildLegalDocs, phoneOf } from "../content.js";
 import { LEGAL_HASHES } from "../../routes.js";
 import { PRICE_MONTHLY, SALES_WHATSAPP, TRIAL_DAYS } from "../../sales/config.js";
 
@@ -235,8 +235,15 @@ describe("legal pages", () => {
       const plain = allText(unnamed[doc].he) + allText(unnamed[doc].en);
       expect(plain).toContain("מפעיל השירות");
       expect(plain).not.toMatch(/null|undefined|Example Ltd/);
-      expect(allText(named[doc].he)).toContain("מפעיל השירות, Example Ltd.");
-      expect(allText(named[doc].en)).toContain("the service operator, Example Ltd.");
+      expect(allText(named[doc].he)).toContain(`מפעיל השירות, Example Ltd (עוסק פטור ${OPERATOR_ID}).`);
+      expect(allText(named[doc].en)).toContain(`the service operator, Example Ltd (exempt dealer no. ${OPERATOR_ID}).`);
+    }
+  });
+
+  it("names the owner and her exempt-dealer number as the operator on every page", () => {
+    for (const doc of DOCS) {
+      expect(allText(LEGAL_DOCS[doc].he)).toContain("מפעיל השירות, שני כהן אזולאי (עוסק פטור 305561607)");
+      expect(allText(LEGAL_DOCS[doc].he) + allText(LEGAL_DOCS[doc].en)).not.toContain("עדן");
     }
   });
 

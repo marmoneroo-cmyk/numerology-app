@@ -30,12 +30,17 @@ export function phoneOf(digits, he) {
 export const LEGAL_EMAIL = "shlomi.cohen4444@gmail.com";
 
 /** The operator's legal name (the owner, 2026-10-11). While it is null the pages say only "מפעיל השירות"; once set, they show it after that. */
-export const OPERATOR_NAME = "עדן כהן";
+export const OPERATOR_NAME = "שני כהן אזולאי";
+
+/** The operator's business number, an exempt dealer (the owner, 2026-10-30). Shown after the name. */
+export const OPERATOR_ID = "305561607";
 
 /** Who runs the service, at the end of a sentence: the neutral term, followed by the legal name once it is known. */
 function operator(name, he) {
   const term = he ? "מפעיל השירות" : "the service operator";
-  return name ? `${term}, ${name}` : term;
+  if (!name) return term;
+  const id = he ? `עוסק פטור ${OPERATOR_ID}` : `exempt dealer no. ${OPERATOR_ID}`;
+  return `${term}, ${name} (${id})`;
 }
 
 function terms(name) {
