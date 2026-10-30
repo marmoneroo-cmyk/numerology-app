@@ -5,6 +5,7 @@ import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/re
 import Root from "../Root.jsx";
 import { SAVED_LOGIN_KEY } from "../routes.js";
 import { SALES } from "../sales/content.js";
+import { SALES_TITLE } from "../pageTitle.js";
 
 /** A 2D context that accepts every drawing call: the background canvases draw stars the tests do not look at. */
 const canvas2d = new Proxy({}, { get: (store, key) => (key in store ? store[key] : () => canvas2d), set: (store, key, value) => ((store[key] = value), true) });
@@ -86,6 +87,18 @@ describe("Root", { timeout: 25000 }, () => {
     fireEvent.click(screen.getByRole("button", { name: "חזרה לאתר" }));
     expect(await salesTitle()).toBeTruthy();
     expect(location.hash).toBe("");
+  });
+
+  it("names the open page in the tab's title, and the sales page again once it is back", async () => {
+    history.replaceState(null, "", "/#accessibility");
+    render(<Root storage={localStorage} />);
+    expect(await screen.findByRole("heading", { level: 1, name: "הצהרת נגישות" })).toBeTruthy();
+    expect(document.title).toBe("הצהרת נגישות · הסטודיו");
+    fireEvent.click(screen.getByRole("button", { name: "חזרה לאתר" }));
+    expect(await salesTitle()).toBeTruthy();
+    expect(document.title).toBe(SALES_TITLE.he);
+    fireEvent.click(screen.getByRole("link", { name: SALES.he.footer.terms }));
+    await waitFor(() => expect(document.title).toBe("תנאי שימוש · הסטודיו"));
   });
 
   it("opens the Studio in a browser that keeps a login, and says #studio in the address", async () => {

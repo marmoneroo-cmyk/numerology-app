@@ -5,6 +5,7 @@
 import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { nextRoute, hasSavedLogin, hashFor, browserStorage } from "./routes.js";
 import { countView } from "./analytics.js";
+import { pageTitle } from "./pageTitle.js";
 import SalesPage from "./sales/SalesPage.jsx";
 import LegalPage from "./legal/LegalPage.jsx";
 
@@ -40,6 +41,11 @@ export default function Root({ storage = browserStorage() }) {
   routeRef.current = route;
   // a legal page opened by a link here: closing it goes back to where the visitor was
   const legalOpenedHere = useRef(false);
+
+  // the tab names the page that is open: every hash shares index.html, and with it one <title>
+  useEffect(() => {
+    document.title = pageTitle(route, he);
+  }, [route, he]);
 
   useEffect(() => {
     // a kept login opened the Studio from the plain address: say so in the address, so back and reload agree
