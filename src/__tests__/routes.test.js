@@ -13,7 +13,7 @@ describe("routes", () => {
     for (const hash of ["#studio", "#owner", "#admin"]) expect(viewOf(hash)).toBe("studio");
     expect(viewOf("#customer")).toBe("customer");
     expect(viewOf("#demo")).toBe("demo");
-    for (const hash of ["#terms", "#privacy", "#refunds"]) expect(viewOf(hash)).toBe("legal");
+    for (const hash of ["#terms", "#privacy", "#refunds", "#accessibility"]) expect(viewOf(hash)).toBe("legal");
     for (const hash of ["#reading-section", "#__proto__", "#constructor", "#toString", "#Studio"]) expect(viewOf(hash)).toBeNull();
   });
 
@@ -46,7 +46,7 @@ describe("routes", () => {
     expect(hashFor("home")).toBe("");
     expect(hashFor("demo")).toBe("#demo");
     expect(hashFor("studio")).toBe("#studio");
-    expect(ROUTE_HASHES).toEqual(expect.arrayContaining(["studio", "demo", "customer", "terms", "privacy", "refunds"]));
+    expect(ROUTE_HASHES).toEqual(expect.arrayContaining(["studio", "demo", "customer", "terms", "privacy", "refunds", "accessibility"]));
   });
 
   it("knows a kept login only by its key, and takes unreadable storage as none", () => {
@@ -68,6 +68,6 @@ describe("routes", () => {
     expect(opensOnSalesPage("#sales-faq", none)).toBe(true); // an anchor on the page
     expect(opensOnSalesPage("", null)).toBe(true); // storage blocked: no kept login
     expect(opensOnSalesPage("", loggedIn)).toBe(false); // a kept login opens the Studio
-    for (const hash of ["#demo", "#studio", "#customer", "#owner", "#terms", "#privacy", "#refunds"]) expect([hash, opensOnSalesPage(hash, none)]).toEqual([hash, false]);
+    for (const hash of ["#demo", "#studio", "#customer", "#owner", "#terms", "#privacy", "#refunds", "#accessibility"]) expect([hash, opensOnSalesPage(hash, none)]).toEqual([hash, false]);
   });
 });

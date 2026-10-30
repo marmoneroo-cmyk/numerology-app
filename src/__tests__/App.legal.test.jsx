@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /*
- * The terms, privacy and refund pages: the footer opens them, and so does a link straight to
- * #terms, #privacy or #refunds. None of them waits for a sign-in.
+ * The terms, privacy, refund and accessibility pages: the footer opens them, and so does a link straight to
+ * #terms, #privacy, #refunds or #accessibility. None of them waits for a sign-in.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, cleanup, waitFor, within } from "@testing-library/react";
@@ -95,6 +95,19 @@ describe("the legal pages", () => {
     const links = await screen.findByRole("navigation", { name: "מסמכים משפטיים" });
     fireEvent.click(within(links).getByRole("link", { name: "מדיניות פרטיות" }));
     expect(await h1("privacy")).toBeTruthy();
+  });
+
+  it("link the accessibility statement from the customer page's footer and the sign-in screen", async () => {
+    localStorage.setItem("numerology_owner_mode", "customer");
+    page();
+    fireEvent.click(await screen.findByRole("link", { name: "הצהרת נגישות" }));
+    expect(await h1("accessibility")).toBeTruthy();
+    cleanup();
+    localStorage.clear();
+    history.replaceState(null, "", "/");
+    page(); // the Studio is the default view
+    const links = await screen.findByRole("navigation", { name: "מסמכים משפטיים" });
+    expect(within(links).getByRole("link", { name: "הצהרת נגישות" }).getAttribute("href")).toBe("#accessibility");
   });
 
   it("follow the address from one policy to another", async () => {

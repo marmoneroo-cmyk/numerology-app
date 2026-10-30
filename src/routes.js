@@ -1,11 +1,11 @@
 /**
  * Which screen an address shows. Only the hash is read: it names a view (#studio, #customer, #demo) or a
- * legal page (#terms, #privacy, #refunds). Pure, so the rules are tested on their own.
+ * legal page (#terms, #privacy, #refunds, #accessibility). Pure, so the rules are tested on their own.
  */
 import { SUPABASE_URL } from "./account/config.js";
 
 /** The legal pages a link opens by name. */
-export const LEGAL_HASHES = ["terms", "privacy", "refunds"];
+export const LEGAL_HASHES = ["terms", "privacy", "refunds", "accessibility"];
 
 /** The hashes that name a view of the app; #owner and #admin are older names of the Studio. */
 const APP_VIEWS = { studio: "studio", owner: "studio", admin: "studio", customer: "customer", demo: "demo" };

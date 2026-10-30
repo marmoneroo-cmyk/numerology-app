@@ -1,14 +1,30 @@
 /*
- * The legal pages: terms of use, privacy policy, and cancellation and refunds, in Hebrew and English.
- * Each page is { title, sections: [{ title, paragraphs: [...], items?: [...] }] }. LegalPage.jsx shows them
- * and turns the contact address into a mailto link wherever it appears.
+ * The legal pages: terms of use, privacy policy, cancellation and refunds, and the accessibility statement, in
+ * Hebrew and English. Each page is { title, sections: [{ title, paragraphs: [...], items?: [...] }] }.
+ * LegalPage.jsx shows them and turns the contact address into a mailto link wherever it appears.
  *
  * The text describes how the website and the Studio work today, and nothing more. A lawyer should review it
  * before it is relied on. The Hebrew speaks to readers in the plural or impersonally, never in the singular.
  */
+import { PRICE_MONTHLY, SALES_WHATSAPP, TRIAL_DAYS } from "../sales/config.js";
 
 /** The "last updated" date on every legal page (YYYY-MM-DD). Change it whenever a page changes. */
-export const LEGAL_UPDATED = "2026-10-13";
+export const LEGAL_UPDATED = "2026-10-30";
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/** "7.10.2026" in Hebrew, "7 October 2026" in English, from a YYYY-MM-DD date. */
+export function formatDate(iso, he) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return he ? `${day}.${month}.${year}` : `${day} ${MONTHS[month - 1]} ${year}`;
+}
+
+/** The owner's number as people dial it: "052-400-0820" in Israel, "+972 52-400-0820" from abroad. */
+export function phoneOf(digits, he) {
+  const local = digits.startsWith("972") ? digits.slice(3) : digits.replace(/^0/, "");
+  const grouped = `${local.slice(0, 2)}-${local.slice(2, 5)}-${local.slice(5)}`;
+  return he ? `0${grouped}` : `+972 ${grouped}`;
+}
 
 /** The address for every legal matter: questions, privacy requests and cancellations. */
 export const LEGAL_EMAIL = "shlomi.cohen4444@gmail.com";
@@ -71,8 +87,11 @@ function terms(name) {
           paragraphs: [
             `מנויים שומרים בסטודיו מידע על הלקוחות שלהם, וגם קבצים בגודל של עד 20 מגה-בייט כל אחד.`,
             `כל מנוי קובע איזה מידע לשמור ולאיזו מטרה, והוא האחראי למידע הזה, גם לפי חוק הגנת הפרטיות, התשמ"א-1981.`,
-            `מפעיל השירות מחזיק את המידע ומעבד אותו עבור המנוי.`,
+            `מפעיל השירות מחזיק את המידע ומעבד אותו עבור המנוי: רק כדי לתת את השירות, ולפי ההוראות של המנוי.`,
+            `מפעיל השירות שומר את המידע בסודיות, ומודיע למנוי בלי דיחוי על כל אירוע אבטחה חמור שנוגע למידע.`,
+            `בסיום המנוי אפשר לייצא את המידע. מפעיל השירות מוחק אותו בתוך 30 ימים מסיום המנוי.`,
             `יש לשמור בסטודיו רק מידע וקבצים שמותר לשמור.`,
+            `מידע על קטינים נשמר בסטודיו רק בהסכמת הורה. המנוי אחראי לקבל את ההסכמה הזאת.`,
             `דוחות PDF שמנוי מייצא נחתמים בשמו, והמנוי אחראי לתוכן שהוא מוסר ללקוחותיו.`,
           ],
         },
@@ -177,8 +196,11 @@ function terms(name) {
           paragraphs: [
             `Subscribers keep data about their own clients in the Studio, including files of up to 20 MB each.`,
             `Each subscriber decides what to store and why, and is responsible for that data, including under the Protection of Privacy Law, 5741-1981.`,
-            `The service operator holds and processes the data on the subscriber's behalf.`,
+            `The service operator holds and processes the data on the subscriber's behalf: only to provide the Service, and according to the subscriber's instructions.`,
+            `The service operator keeps the data confidential, and tells the subscriber without delay of any serious security incident that affects it.`,
+            `When the subscription ends, the data can be exported. The service operator deletes it within 30 days of the end of the subscription.`,
             `Store in the Studio only data and files that you are allowed to keep.`,
+            `Data about minors is kept in the Studio only with a parent's consent. The subscriber is responsible for obtaining that consent.`,
             `PDF reports a subscriber exports are signed with the subscriber's name, and the subscriber is responsible for what they give their clients.`,
           ],
         },
@@ -311,9 +333,9 @@ function privacy(name) {
           paragraphs: [`איננו מעבירים מידע אישי לאחרים, מלבד לספקי השירות שלהלן ומלבד מה שהדין מחייב. ספקי השירות:`],
           items: [
             `Supabase: מסד הנתונים, אחסון הקבצים והכניסה לחשבונות. המידע נשמר בשרתים באיחוד האירופי, בפרנקפורט שבגרמניה, והקבצים נשמרים באזור אחסון פרטי.`,
-            `Vercel: אחסון האתר וסטטיסטיקת הביקורים.`,
+            `Vercel: אחסון האתר וסטטיסטיקת הביקורים. Vercel שומרת מידע גם בשרתים בארצות הברית.`,
             `Unsplash: תמונת הרקע בעמוד הקריאה החינמית.`,
-            `Google (Gmail): משלוח הודעות הדוא"ל של החשבונות.`,
+            `Google (Gmail): משלוח הודעות הדוא"ל של החשבונות. Google שומרת מידע גם בשרתים בארצות הברית.`,
             `WhatsApp: הודעות שתבחרו לשלוח אלינו.`,
           ],
         },
@@ -334,7 +356,7 @@ function privacy(name) {
           title: "כמה זמן המידע נשמר",
           paragraphs: [
             `יומן הביקורת נשמר לכ-400 ימים.`,
-            `פרטי החשבון ומידע הלקוחות נשמרים כל עוד החשבון פעיל. לשאלות על מחיקת מידע אחרי סגירת חשבון, פנו אלינו.`,
+            `פרטי החשבון ומידע הלקוחות נשמרים כל עוד החשבון פעיל. בסיום המנוי אפשר לייצא את המידע, והוא נמחק בתוך 30 ימים מסיום המנוי.`,
             `עותקים שנשמרים בדפדפן או במכשיר נשארים בו עד שמוחקים אותם.`,
           ],
         },
@@ -433,9 +455,9 @@ function privacy(name) {
           paragraphs: [`We do not pass personal information to others, except to the service providers below and where the law requires it. Our service providers:`],
           items: [
             `Supabase: the database, file storage and account sign-in. The data is stored on servers in the European Union, in Frankfurt, Germany, and files are kept in a private storage area.`,
-            `Vercel: website hosting and visit statistics.`,
+            `Vercel: website hosting and visit statistics. Vercel also stores data on servers in the United States.`,
             `Unsplash: the background image on the free reading page.`,
-            `Google (Gmail): sending the account emails.`,
+            `Google (Gmail): sending the account emails. Google also stores data on servers in the United States.`,
             `WhatsApp: messages you choose to send us.`,
           ],
         },
@@ -456,7 +478,7 @@ function privacy(name) {
           title: "How long data is kept",
           paragraphs: [
             `The audit log is kept for about 400 days.`,
-            `Account details and client data are kept while the account is active. For questions about deleting data after an account is closed, contact us.`,
+            `Account details and client data are kept while the account is active. When the subscription ends, the data can be exported, and it is deleted within 30 days of the end of the subscription.`,
             `Copies kept in a browser or on a device stay there until they are deleted.`,
           ],
         },
@@ -505,7 +527,8 @@ function refunds(name) {
           title: "המנוי לסטודיו",
           paragraphs: [
             `הסטודיו הוא תוכנה בתשלום, במנוי, לנומרולוגים. את המנוי מסדירים ישירות מול מפעיל השירות, והוא פותח את החשבון.`,
-            `המחיר, תקופת המנוי ואופן התשלום נקבעים בהתקשרות בין המנוי לבין מפעיל השירות.`,
+            `מחיר המנוי הוא ${PRICE_MONTHLY} ש"ח לחודש, והחיוב הוא חודשי.`,
+            `המנוי מתחיל ב-${TRIAL_DAYS} ימי ניסיון חינם.`,
           ],
         },
         {
@@ -519,17 +542,14 @@ function refunds(name) {
         {
           title: "דמי ביטול",
           paragraphs: [
-            `בביטול בתוך 14 הימים אנחנו רשאים לגבות דמי ביטול של עד 5% ממחיר העסקה או 100 ש"ח, לפי הנמוך מביניהם.`,
-            `ממנויים שהם צרכנים נגבה דמי ביטול רק כאשר החוק מתיר זאת.`,
+            `בביטול בתוך 14 הימים הראשונים אנחנו רשאים לגבות דמי ביטול של עד 5% ממחיר העסקה או 100 ש"ח, לפי הנמוך מביניהם.`,
+            `דמי הביטול האלה חלים רק על ביטול בתוך 14 הימים הראשונים. ממנויים שהם צרכנים נגבה אותם רק כאשר החוק מתיר זאת.`,
           ],
         },
         {
           title: "איך מבטלים",
-          paragraphs: [
-            `אפשר לבטל בהודעה בדוא"ל: ${LEGAL_EMAIL}`,
-            `בהודעה כדאי לציין את השם ואת כתובת הדוא"ל של החשבון.`,
-            `לפני סגירת החשבון מומלץ לייצא קובץ גיבוי של סביבת העבודה.`,
-          ],
+          paragraphs: [`אפשר לבטל בכל אחת מהדרכים שבהן המנוי נמכר. בהודעה כדאי לציין את השם ואת כתובת הדוא"ל של החשבון.`],
+          items: [`בדוא"ל: ${LEGAL_EMAIL}`, `ב-WhatsApp: ${phoneOf(SALES_WHATSAPP, true)}`, `בטלפון: ${phoneOf(SALES_WHATSAPP, true)}`],
         },
         {
           title: "החזר כספי",
@@ -537,7 +557,12 @@ function refunds(name) {
         },
         {
           title: "הפסקת המנוי",
-          paragraphs: [`אפשר לפנות אלינו בכל זמן כדי להפסיק את המנוי.`, `מדיניות זו אינה גורעת מזכויות שהחוק מקנה.`],
+          paragraphs: [
+            `המנוי הוא עסקה מתמשכת. לפי סעיף 13ד לחוק הגנת הצרכן, אפשר להפסיק אותו בכל עת, בלי דמי ביטול, בכל אחת מהדרכים שלמעלה.`,
+            `החיוב ייפסק בתוך 3 ימי עסקים מיום מסירת הודעת הביטול.`,
+            `לפני סגירת החשבון מומלץ לייצא קובץ גיבוי של סביבת העבודה.`,
+            `מדיניות זו אינה גורעת מזכויות שהחוק מקנה.`,
+          ],
         },
         {
           title: "שינויים במדיניות",
@@ -564,7 +589,8 @@ function refunds(name) {
           title: "The Studio subscription",
           paragraphs: [
             `The Studio is paid subscription software for numerology practitioners. The subscription is arranged directly with the service operator, who opens the account.`,
-            `The price, the subscription period and the way of paying are set in the agreement between the subscriber and the service operator.`,
+            `The subscription costs ${PRICE_MONTHLY} NIS a month, billed monthly.`,
+            `The subscription starts with a free ${TRIAL_DAYS}-day trial.`,
           ],
         },
         {
@@ -578,17 +604,14 @@ function refunds(name) {
         {
           title: "Cancellation fee",
           paragraphs: [
-            `On a cancellation within the 14 days we may charge a cancellation fee of up to 5% of the price or 100 NIS, whichever is lower.`,
-            `From subscribers who are consumers we charge a cancellation fee only where the law allows it.`,
+            `On a cancellation within the first 14 days we may charge a cancellation fee of up to 5% of the price or 100 NIS, whichever is lower.`,
+            `This fee applies only to a cancellation within the first 14 days. From subscribers who are consumers we charge it only where the law allows it.`,
           ],
         },
         {
           title: "How to cancel",
-          paragraphs: [
-            `To cancel, email us at ${LEGAL_EMAIL}`,
-            `Please include the name and email address of the account.`,
-            `Before the account is closed, we recommend exporting a backup file of the workspace.`,
-          ],
+          paragraphs: [`A subscription can be cancelled through any of the channels it is sold through. Please include the name and email address of the account.`],
+          items: [`By email: ${LEGAL_EMAIL}`, `On WhatsApp: ${phoneOf(SALES_WHATSAPP, false)}`, `By phone: ${phoneOf(SALES_WHATSAPP, false)}`],
         },
         {
           title: "Refunds",
@@ -596,7 +619,12 @@ function refunds(name) {
         },
         {
           title: "Ending the subscription",
-          paragraphs: [`You can contact us at any time to end the subscription.`, `This policy does not limit any rights the law gives you.`],
+          paragraphs: [
+            `The subscription is an ongoing transaction. Under section 13D of the Consumer Protection Law, it can be ended at any time, with no cancellation fee, through any of the channels above.`,
+            `Billing stops within 3 business days of the cancellation notice.`,
+            `Before the account is closed, we recommend exporting a backup file of the workspace.`,
+            `This policy does not limit any rights the law gives you.`,
+          ],
         },
         {
           title: "Changes to this policy",
@@ -611,9 +639,130 @@ function refunds(name) {
   };
 }
 
-/** All three pages, naming the operator as `name` (see OPERATOR_NAME). */
+/*
+ * The accessibility statement (regulation 35 of the Equal Rights for Persons with Disabilities (Service
+ * Accessibility Adjustments) Regulations, 2013). Each arrangement it names is in the code: lang and dir on the
+ * pages, native buttons and links, :focus-visible, labelled fields (sales page, sign-in, client screens),
+ * prefers-reduced-motion, and the contrast the legal page tests hold. The limitations are what the code still lacks.
+ */
+function accessibility(name) {
+  return {
+    he: {
+      title: "הצהרת נגישות",
+      sections: [
+        {
+          title: "כללי",
+          paragraphs: [
+            `אנחנו פועלים כדי שהאתר והסטודיו יהיו נגישים גם לאנשים עם מוגבלות.`,
+            `האתר והסטודיו מופעלים על ידי ${operator(name, true)}. כשכתוב כאן "אנחנו", הכוונה למפעיל השירות.`,
+            `הצהרה זו נכתבה לאור תקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), התשע"ג-2013.`,
+          ],
+        },
+        {
+          title: "רמת הנגישות",
+          paragraphs: [
+            `ההתאמות נעשו לפי התקן הישראלי ת"י 5568, שמבוסס על הנחיות WCAG 2.0, ברמה AA.`,
+            `השירות עומד בתקן בעמידה חלקית: חלק מהמסכים עדיין אינם נגישים במלואם. הפרטים בסעיף "מגבלות ידועות".`,
+          ],
+        },
+        {
+          title: "ההתאמות שנעשו",
+          paragraphs: [`בין ההתאמות:`],
+          items: [
+            `השפה וכיוון הכתיבה מוגדרים בקוד העמודים (עברית מימין לשמאל, אנגלית משמאל לימין), כך שקוראי מסך מקריאים את הטקסט נכון.`,
+            `אפשר לנווט במקלדת: רוב הפעולות הן כפתורים וקישורים רגילים, שמגיעים אליהם במקש Tab.`,
+            `מסגרת בולטת מסמנת את הרכיב שבפוקוס בזמן ניווט במקלדת.`,
+            `לשדות בעמוד המכירה, בכניסה לסטודיו ובמסכי ניהול הלקוחות יש תוויות שקוראי מסך מקריאים.`,
+            `כשמוגדרת במכשיר העדפה להפחתת תנועה, האנימציות והמעברים מקוצרים או מבוטלים.`,
+            `ניגודיות הצבעים בעמוד המכירה ובעמודים המשפטיים נבדקה: הטקסט הרגיל עומד ביחס ניגודיות של 4.5:1 לפחות.`,
+            `כשנפתח עמוד משפטי, הפוקוס עובר לכותרת שלו, כך שקורא מסך מתחיל לקרוא משם.`,
+          ],
+        },
+        {
+          title: "מגבלות ידועות",
+          paragraphs: [`אלה החלקים שעדיין אינם נגישים במלואם. אנחנו פועלים לשפר אותם:`],
+          items: [
+            `בכניסה להדגמה ולסטודיו מוצגת אנימציית פתיחה של כ-5 שניות, ואי אפשר לדלג עליה. היא מוצגת גם כשמוגדרת העדפה להפחתת תנועה.`,
+            `בחלק ממסכי ההדגמה והסטודיו יש תוויות שאינן מקושרות לשדות שלהן, ורכיבים לחיצים שאי אפשר להגיע אליהם במקלדת.`,
+            `בחלק ממסכי ההדגמה והסטודיו יש טקסט משני בצבע חלש, בניגודיות נמוכה מ-4.5:1.`,
+            `בגרסה האנגלית של ההדגמה והסטודיו, שפת העמוד אינה מוגדרת בקוד כאנגלית.`,
+            `דוח המפה בקובץ PDF נשמר כתמונה, ולכן קוראי מסך אינם יכולים להקריא אותו.`,
+          ],
+        },
+        {
+          title: "פנייה בנושא נגישות",
+          paragraphs: [
+            `נתקלתם בבעיית נגישות, או שיש לכם הצעה לשיפור? הפניות בנושא נגישות מטופלות על ידי ${operator(name, true)}. אפשר לפנות:`,
+          ],
+          items: [`בטלפון או ב-WhatsApp: ${phoneOf(SALES_WHATSAPP, true)}`, `בדוא"ל: ${LEGAL_EMAIL}`],
+        },
+        {
+          title: "עדכון ההצהרה",
+          paragraphs: [`הצהרה זו עודכנה לאחרונה ב-${formatDate(LEGAL_UPDATED, true)}.`],
+        },
+      ],
+    },
+    en: {
+      title: "Accessibility Statement",
+      sections: [
+        {
+          title: "About this statement",
+          paragraphs: [
+            `We work to make the website and the Studio accessible to people with disabilities too.`,
+            `The website and the Studio are run by ${operator(name, false)}. "We" and "us" mean the service operator.`,
+            `This statement was written with the Equal Rights for Persons with Disabilities (Service Accessibility Adjustments) Regulations, 5773-2013, in mind.`,
+          ],
+        },
+        {
+          title: "Accessibility level",
+          paragraphs: [
+            `The adjustments follow Israeli Standard SI 5568, which is based on the WCAG 2.0 guidelines, at level AA.`,
+            `The Service partially conforms to the standard: some screens are not yet fully accessible. The details are under "Known limitations".`,
+          ],
+        },
+        {
+          title: "Adjustments made",
+          paragraphs: [`Among the adjustments:`],
+          items: [
+            `The language and text direction are set in the pages' code (Hebrew right to left, English left to right), so screen readers read the text correctly.`,
+            `The Service can be used with a keyboard: most actions are ordinary buttons and links, reached with the Tab key.`,
+            `A clear outline marks the element in focus while navigating with a keyboard.`,
+            `The fields on the sales page, at the Studio sign-in and on the client screens have labels that screen readers read out.`,
+            `When the device is set to reduce motion, animations and transitions are shortened or turned off.`,
+            `Colour contrast on the sales page and the legal pages has been checked: regular text has a contrast ratio of at least 4.5:1.`,
+            `When a legal page opens, the focus moves to its title, so a screen reader starts reading there.`,
+          ],
+        },
+        {
+          title: "Known limitations",
+          paragraphs: [`These parts are not yet fully accessible. We are working to improve them:`],
+          items: [
+            `Entering the demo or the Studio shows an opening animation of about 5 seconds that cannot be skipped. It shows even when the device is set to reduce motion.`,
+            `Some screens of the demo and the Studio have labels that are not linked to their fields, and clickable elements that cannot be reached with a keyboard.`,
+            `Some screens of the demo and the Studio have faint secondary text, with contrast below 4.5:1.`,
+            `In the English version of the demo and the Studio, the page language is not set to English in the code.`,
+            `The PDF map report is saved as an image, so screen readers cannot read it.`,
+          ],
+        },
+        {
+          title: "Accessibility contact",
+          paragraphs: [
+            `Found an accessibility problem, or have a suggestion? Accessibility requests are handled by ${operator(name, false)}. Contact:`,
+          ],
+          items: [`By phone or WhatsApp: ${phoneOf(SALES_WHATSAPP, false)}`, `By email: ${LEGAL_EMAIL}`],
+        },
+        {
+          title: "Updates to this statement",
+          paragraphs: [`This statement was last updated on ${formatDate(LEGAL_UPDATED, false)}.`],
+        },
+      ],
+    },
+  };
+}
+
+/** All four pages, naming the operator as `name` (see OPERATOR_NAME). */
 export function buildLegalDocs(name) {
-  return { terms: terms(name), privacy: privacy(name), refunds: refunds(name) };
+  return { terms: terms(name), privacy: privacy(name), refunds: refunds(name), accessibility: accessibility(name) };
 }
 
 /** The pages as the site shows them. */

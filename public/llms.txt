@@ -14,3 +14,4 @@
 - [תנאי שימוש](https://studio.shani-cohen.com/#terms)
 - [מדיניות פרטיות](https://studio.shani-cohen.com/#privacy)
 - [מדיניות ביטולים והחזרים](https://studio.shani-cohen.com/#refunds)
+- [הצהרת נגישות](https://studio.shani-cohen.com/#accessibility)

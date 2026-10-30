@@ -1062,8 +1062,8 @@ const OWNER_STORE_KEY = "numerology_owner_mode";
 const LEADS_STORE_KEY = "numerology_leads_v1";
 const LEAD_DONE_KEY = "numerology_lead_done";
 const LEAD_GATE = true; // gate the full reading behind a contact detail (customer view only)
-/** The pages a link opens by name, before any sign-in: #terms, #privacy and #refunds. */
-const LEGAL_PAGES = ["terms", "privacy", "refunds"];
+/** The pages a link opens by name, before any sign-in: #terms, #privacy, #refunds and #accessibility. */
+const LEGAL_PAGES = ["terms", "privacy", "refunds", "accessibility"];
 const legalFromHash = () => { try { const page = location.hash.slice(1); return LEGAL_PAGES.includes(page) ? page : null; } catch (e) { return null; } };
 const loadLeads = () => { try { return JSON.parse(localStorage.getItem(LEADS_STORE_KEY) || "[]") || []; } catch (e) { return []; } };
 const saveLead = (lead) => { try { const a = loadLeads(); a.unshift(lead); localStorage.setItem(LEADS_STORE_KEY, JSON.stringify(a.slice(0, 1000))); } catch (e) {} };
@@ -1260,6 +1260,7 @@ function LegalLinks({ he, dk }) {
       <a href="#terms" style={link}>{he ? "תקנון" : "Terms"}</a>
       <a href="#privacy" style={link}>{he ? "מדיניות פרטיות" : "Privacy"}</a>
       <a href="#refunds" style={link}>{he ? "ביטולים והחזרים" : "Cancellations & refunds"}</a>
+      <a href="#accessibility" style={link}>{he ? "הצהרת נגישות" : "Accessibility"}</a>
     </nav>
   );
 }
@@ -1287,6 +1288,8 @@ function LandingFooter({ he, dk, onOwner }) {
         <a href="#privacy" style={link}>{he ? "מדיניות פרטיות" : "Privacy"}</a>
         <span style={{ color: `${ac}33` }}>·</span>
         <a href="#refunds" style={link}>{he ? "ביטולים והחזרים" : "Cancellations & refunds"}</a>
+        <span style={{ color: `${ac}33` }}>·</span>
+        <a href="#accessibility" style={link}>{he ? "הצהרת נגישות" : "Accessibility"}</a>
       </div>
 
       <p style={{ fontSize: fs(10.5), color: ts, opacity: .7, marginTop: 16 }}>© {2026} {he ? "שני כהן אזולאי · כל הזכויות שמורות" : "Shani Cohen Azulai · All rights reserved"}</p>

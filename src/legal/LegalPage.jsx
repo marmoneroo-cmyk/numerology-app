@@ -1,13 +1,12 @@
 /**
- * A legal page (terms of use, privacy policy, or cancellation and refunds) in Hebrew or English, from ./content.js.
+ * A legal page (terms of use, privacy policy, cancellation and refunds, or the accessibility statement) in Hebrew or English, from ./content.js.
  * The contact address becomes a mailto link wherever it appears, and the focus moves to the title when a page
  * opens, so a screen reader starts reading there.
  */
 import { useEffect, useRef } from "react";
-import { LEGAL_DOCS, LEGAL_EMAIL, LEGAL_UPDATED } from "./content.js";
+import { LEGAL_DOCS, LEGAL_EMAIL, LEGAL_UPDATED, formatDate } from "./content.js";
 import { fs } from "../ui/type.js";
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const BODY_FONT = "'Heebo','Noto Sans Hebrew',Arial,sans-serif";
 const DISPLAY_FONT = "'Cormorant Garamond',Georgia,serif";
 
@@ -25,12 +24,6 @@ function palette(dk) {
     goldText: dk ? "#c8a96a" : "#6f5629",
     line: dk ? "rgba(200,169,106,.35)" : "rgba(147,118,64,.4)",
   };
-}
-
-/** "7.10.2026" in Hebrew, "7 October 2026" in English, from a YYYY-MM-DD date. */
-function formatDate(iso, he) {
-  const [year, month, day] = iso.split("-").map(Number);
-  return he ? `${day}.${month}.${year}` : `${day} ${MONTHS[month - 1]} ${year}`;
 }
 
 /** The text, with each mention of the contact address as a mailto link, kept left to right inside Hebrew. */
@@ -93,7 +86,7 @@ function Section({ section, colors, link }) {
 }
 
 /**
- * @param {{ doc: "terms" | "privacy" | "refunds", he?: boolean, dk?: boolean, onBack?: () => void }} props
+ * @param {{ doc: "terms" | "privacy" | "refunds" | "accessibility", he?: boolean, dk?: boolean, onBack?: () => void }} props
  *   doc: which page; any other value renders nothing. he: Hebrew (right to left) or English. dk: the dark theme.
  *   onBack: called by the "back to the site" button, which shows only when it is given.
  */

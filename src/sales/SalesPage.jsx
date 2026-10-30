@@ -48,6 +48,7 @@ export default function SalesPage({ he = true, onLanguage }) {
           <a href="#terms">{t.footer.terms}</a>
           <a href="#privacy">{t.footer.privacy}</a>
           <a href="#refunds">{t.footer.refunds}</a>
+          <a href="#accessibility">{t.footer.accessibility}</a>
           {/* Shani's own site, which links back here: each site helps the other be found */}
           <a href="https://www.shani-cohen.com/">{t.footer.site}</a>
         </nav>

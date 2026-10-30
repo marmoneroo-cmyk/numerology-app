@@ -59,6 +59,7 @@ describe("the sales page", () => {
     expect(within(footer).getByRole("link", { name: SALES.he.footer.terms }).getAttribute("href")).toBe("#terms");
     expect(within(footer).getByRole("link", { name: SALES.he.footer.privacy }).getAttribute("href")).toBe("#privacy");
     expect(within(footer).getByRole("link", { name: SALES.he.footer.refunds }).getAttribute("href")).toBe("#refunds");
+    expect(within(footer).getByRole("link", { name: SALES.he.footer.accessibility }).getAttribute("href")).toBe("#accessibility");
     expect(screen.getByRole("link", { name: SALES.he.privacy.more }).getAttribute("href")).toBe("#privacy");
     // and the owner's WhatsApp, in a new tab
     const whatsapp = within(footer).getByRole("link", { name: SALES.he.footer.whatsapp });

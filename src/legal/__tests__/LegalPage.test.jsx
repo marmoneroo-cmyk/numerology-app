@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, within } from "@testing-library/react";
 import LegalPage from "../LegalPage.jsx";
-import { LEGAL_DOCS, LEGAL_EMAIL, LEGAL_UPDATED, OPERATOR_NAME, buildLegalDocs } from "../content.js";
+import { LEGAL_DOCS, LEGAL_EMAIL, LEGAL_UPDATED, OPERATOR_NAME, buildLegalDocs, phoneOf } from "../content.js";
+import { LEGAL_HASHES } from "../../routes.js";
+import { PRICE_MONTHLY, SALES_WHATSAPP, TRIAL_DAYS } from "../../sales/config.js";
 
-const DOCS = ["terms", "privacy", "refunds"];
+const DOCS = ["terms", "privacy", "refunds", "accessibility"];
 const LANGUAGES = [
-  { he: true, key: "he", name: "Hebrew", dir: "rtl", date: "13.10.2026", updated: "עודכן לאחרונה" },
-  { he: false, key: "en", name: "English", dir: "ltr", date: "13 October 2026", updated: "Last updated" },
+  { he: true, key: "he", name: "Hebrew", dir: "rtl", date: "30.10.2026", updated: "עודכן לאחרונה" },
+  { he: false, key: "en", name: "English", dir: "ltr", date: "30 October 2026", updated: "Last updated" },
 ];
 
 /** Every string a page shows: its title, and each section's title, paragraphs and items. */
@@ -135,6 +137,79 @@ describe("legal pages", () => {
     expect(en).not.toContain("Google Fonts");
     expect(en).toContain("inspect");
     expect(en).toContain("corrected");
+  });
+
+  it("has a page for every legal address, and an address for every page", () => {
+    expect(Object.keys(LEGAL_DOCS).sort()).toEqual([...LEGAL_HASHES].sort());
+    expect([...DOCS].sort()).toEqual([...LEGAL_HASHES].sort());
+  });
+
+  it("writes the owner's number as people dial it", () => {
+    expect(phoneOf("972524000820", true)).toBe("052-400-0820");
+    expect(phoneOf("972524000820", false)).toBe("+972 52-400-0820");
+    expect(phoneOf("0524000820", true)).toBe("052-400-0820");
+  });
+
+  it("states on the refunds page the price and the trial from the sales config, billed monthly, never 'set at signup'", () => {
+    const he = allText(LEGAL_DOCS.refunds.he);
+    expect(he).toContain(`${PRICE_MONTHLY} ש"ח לחודש`);
+    expect(he).toContain("החיוב הוא חודשי");
+    expect(he).toContain(`${TRIAL_DAYS} ימי ניסיון חינם`);
+    expect(he).not.toContain("נקבעים בהתקשרות");
+    const en = allText(LEGAL_DOCS.refunds.en);
+    expect(en).toContain(`${PRICE_MONTHLY} NIS a month, billed monthly`);
+    expect(en).toContain(`free ${TRIAL_DAYS}-day trial`);
+    expect(en).not.toContain("set in the agreement");
+  });
+
+  it("takes a cancellation through every channel the Studio is sold through: email, WhatsApp and phone", () => {
+    const how = (lang) => LEGAL_DOCS.refunds[lang].sections.find((s) => s.items?.some((item) => item.includes(LEGAL_EMAIL)));
+    expect(how("he").items).toEqual([`בדוא"ל: ${LEGAL_EMAIL}`, `ב-WhatsApp: ${phoneOf(SALES_WHATSAPP, true)}`, `בטלפון: ${phoneOf(SALES_WHATSAPP, true)}`]);
+    expect(how("en").items).toEqual([`By email: ${LEGAL_EMAIL}`, `On WhatsApp: ${phoneOf(SALES_WHATSAPP, false)}`, `By phone: ${phoneOf(SALES_WHATSAPP, false)}`]);
+    const { container } = render(<LegalPage doc="refunds" />);
+    expect(within(container.querySelector("ul")).getByRole("link", { name: LEGAL_EMAIL })).toBeTruthy();
+  });
+
+  it("lets an ongoing subscription stop at any time with no fee, billing ending within 3 business days (s.13D)", () => {
+    const he = allText(LEGAL_DOCS.refunds.he);
+    expect(he).toContain("סעיף 13ד לחוק הגנת הצרכן");
+    expect(he).toContain("אפשר להפסיק אותו בכל עת, בלי דמי ביטול");
+    expect(he).toContain("החיוב ייפסק בתוך 3 ימי עסקים");
+    // the 5% or 100 NIS fee belongs to the first 14 days only
+    expect(he).toContain("דמי הביטול האלה חלים רק על ביטול בתוך 14 הימים הראשונים");
+    const en = allText(LEGAL_DOCS.refunds.en);
+    expect(en).toContain("section 13D of the Consumer Protection Law");
+    expect(en).toContain("ended at any time, with no cancellation fee");
+    expect(en).toContain("Billing stops within 3 business days");
+    expect(en).toContain("applies only to a cancellation within the first 14 days");
+  });
+
+  it("binds the operator in the terms to process client data only for the service, keep it confidential, report incidents and delete it", () => {
+    const he = allText(LEGAL_DOCS.terms.he);
+    for (const phrase of ["רק כדי לתת את השירות, ולפי ההוראות של המנוי", "בסודיות", "בלי דיחוי על כל אירוע אבטחה חמור", "אפשר לייצא את המידע", "בתוך 30 ימים מסיום המנוי", "רק בהסכמת הורה"]) expect(he).toContain(phrase);
+    const en = allText(LEGAL_DOCS.terms.en);
+    for (const phrase of ["only to provide the Service, and according to the subscriber's instructions", "confidential", "without delay of any serious security incident", "the data can be exported", "within 30 days of the end of the subscription", "only with a parent's consent"]) expect(en).toContain(phrase);
+    // the privacy page says the same about deletion
+    expect(allText(LEGAL_DOCS.privacy.he)).toContain("נמחק בתוך 30 ימים מסיום המנוי");
+    expect(allText(LEGAL_DOCS.privacy.en)).toContain("deleted within 30 days of the end of the subscription");
+  });
+
+  it("says on the privacy page which providers store data in the United States, besides Supabase in Frankfurt", () => {
+    const items = (lang) => LEGAL_DOCS.privacy[lang].sections.find((s) => s.items?.some((item) => item.startsWith("Supabase"))).items;
+    for (const provider of ["Vercel", "Google"]) {
+      expect(items("he").find((item) => item.startsWith(provider))).toContain("בארצות הברית");
+      expect(items("en").find((item) => item.startsWith(provider))).toContain("United States");
+    }
+    expect(items("he").find((item) => item.startsWith("Supabase"))).toContain("פרנקפורט");
+  });
+
+  it("states on the accessibility page the standard, the honest level, the limitations, the contacts and the date", () => {
+    const he = render(<LegalPage doc="accessibility" />).container.textContent;
+    for (const phrase of ['ת"י 5568', "WCAG", "AA", "עמידה חלקית", "התשע\"ג-2013", "מגבלות ידועות", "כ-5 שניות", "הפחתת תנועה", phoneOf(SALES_WHATSAPP, true), LEGAL_EMAIL, "30.10.2026"]) expect(he).toContain(phrase);
+    expect(screen.getByRole("link", { name: LEGAL_EMAIL })).toBeTruthy();
+    cleanup();
+    const en = render(<LegalPage doc="accessibility" he={false} />).container.textContent;
+    for (const phrase of ["SI 5568", "WCAG", "partially conforms", "Known limitations", "about 5 seconds", "reduce motion", phoneOf(SALES_WHATSAPP, false), LEGAL_EMAIL, "30 October 2026"]) expect(en).toContain(phrase);
   });
 
   it("gives 14 days to cancel on the refunds page, and the fee cap the law allows", () => {
